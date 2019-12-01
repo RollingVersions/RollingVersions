@@ -1,0 +1,6 @@
+.git
+.circleci
+.github
+node_modules
+src
+key
