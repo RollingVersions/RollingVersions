@@ -16,11 +16,11 @@ if (!process.env.CIRCLE_SHA1) {
 }
 
 export default createDeployment({
-  namespace: 'web-app-template',
-  name: 'web-app-template-' + process.env.ENVIRONMENT,
+  namespace: 'changelogversion',
+  name: 'changelogversion-' + process.env.ENVIRONMENT,
   containerPort: 3000,
   replicaCount: 2,
-  image: `${process.env.DOCKERHUB_USERNAME}/web-app-template:${process.env.CIRCLE_SHA1}`,
+  image: `${process.env.DOCKERHUB_USERNAME}/changelogversion:${process.env.CIRCLE_SHA1}`,
   container: {
     env: [{name: 'ENV_VAR', value: 'Hello Env Var'}],
   },

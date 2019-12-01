@@ -122,6 +122,6 @@ commands:
           name: Wait for rollout to complete
           command: |
             npx jskube rollout status \
-                    deployment/web-app-template-<< parameters.environment >> \
-                    --namespace web-app-template \
+                    deployment/changelogversion-<< parameters.environment >> \
+                    --namespace changelogversion \
                     --kubeconfig=/dev/null

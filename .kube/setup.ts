@@ -2,20 +2,20 @@ import createIngress from './createIngress';
 import createServiceAccount from './createServiceAccount';
 
 export default [
-  ...createServiceAccount({namespace: 'web-app-template'}),
+  ...createServiceAccount({namespace: 'changelogversion'}),
   ...createIngress({
-    name: 'web-app-template-staging',
-    namespace: 'web-app-template',
-    serviceName: 'web-app-template-staging',
-    hosts: ['web-app-template.staging.makewebtech.org'],
+    name: 'changelogversion-staging',
+    namespace: 'changelogversion',
+    serviceName: 'changelogversion-staging',
+    hosts: ['changelogversion.staging.makewebtech.org'],
     enableTLS: true,
     stagingTLS: true,
   }),
   ...createIngress({
-    name: 'web-app-template-production',
-    namespace: 'web-app-template',
-    serviceName: 'web-app-template-production',
-    hosts: ['web-app-template.makewebtech.org'],
+    name: 'changelogversion-production',
+    namespace: 'changelogversion',
+    serviceName: 'changelogversion-production',
+    hosts: ['changelogversion.makewebtech.org'],
     enableTLS: true,
     stagingTLS: true,
   }),
