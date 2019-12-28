@@ -8,3 +8,4 @@ coverage
 
 lib/
 dist/
+yarn-error.log
