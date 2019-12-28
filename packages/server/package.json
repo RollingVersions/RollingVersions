@@ -1,0 +1,76 @@
+{
+  "name": "changelogversion-server",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Add changelogs to PRs and use them to determine the version of npm packages",
+  "author": "Forbes Lindesay <forbes@lindesay.co.uk> (https://www.forbeslindesay.co.uk)",
+  "repository": "https://github.com/ForbesLindesay/changelogversion.git",
+  "homepage": "https://github.com/ForbesLindesay/changelogversion",
+  "bugs": "https://github.com/ForbesLindesay/changelogversion/issues",
+  "scripts": {
+    "build": "tsc",
+    "postbuild": "rimraf lib/**/__tests__",
+    "dev": "yarn build && concurrently -n build,run \"yarn build --watch --preserveWatchOutput\" \"nodemon\"",
+    "start": "probot run ./index.js"
+  },
+  "dependencies": {
+    "@authentication/cookie": "^0.1.2",
+    "@authentication/github": "^0.1.1",
+    "changelogversion-utils": "0.0.0",
+    "probot": "^9.0.1"
+  },
+  "devDependencies": {
+    "@forbeslindesay/tsconfig": "^2.0.0",
+    "@types/express": "^4.17.2",
+    "@types/jest": "^24.0.21",
+    "concurrently": "^5.0.0",
+    "nodemon": "^1.17.2",
+    "rimraf": "^3.0.0",
+    "smee-client": "^1.0.2",
+    "ts-node": "^8.5.3",
+    "typescript": "^3.6.4"
+  },
+  "nodemonConfig": {
+    "exec": "npm start",
+    "watch": [
+      ".env",
+      "."
+    ]
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx"
+    ],
+    "globals": {
+      "ts-jest": {
+        "isolatedModules": true
+      }
+    },
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/src/**/__tests__/**/*.test.ts?(x)"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "prettier --write",
+      "tslint -t verbose -p .",
+      "git add"
+    ],
+    "*.{md,json,yaml,js,jsx}": [
+      "prettier --write",
+      "git add"
+    ]
+  }
+}

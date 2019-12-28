@@ -6,6 +6,13 @@ export const SectionTitle: {[type in ChangeType]: string} = {
   fix: 'Bug Fixes',
 };
 export type ChangeType = 'breaking' | 'feat' | 'refactor' | 'perf' | 'fix';
+export const ChangeTypes = [
+  'breaking',
+  'feat',
+  'refactor',
+  'perf',
+  'fix',
+] as const;
 export interface ChangeLogEntry {
   type: ChangeType;
   title: string;
@@ -16,6 +23,11 @@ export interface PackagePullChangeLog {
   changes: ChangeLogEntry[];
 }
 export default interface PullChangeLog {
-  submitted: boolean;
+  /**
+   * The latest commit on the PR at the time this Change Log was submitted.
+   *
+   * The change log should be confirmed after each new commit.
+   */
+  submittedAtCommitSha: string | null;
   packages: PackagePullChangeLog[];
 }

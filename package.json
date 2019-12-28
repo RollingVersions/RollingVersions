@@ -1,51 +1,33 @@
 {
-  "name": "changelogversion",
+  "name": "changelogversion-monorepo",
   "private": true,
-  "description": "Add changelogs to PRs and use them to determine the version of npm packages",
-  "author": "Forbes Lindesay <forbes@lindesay.co.uk> (https://www.forbeslindesay.co.uk)",
-  "repository": "https://github.com/ForbesLindesay/changelogversion.git",
-  "homepage": "https://github.com/ForbesLindesay/changelogversion",
-  "bugs": "https://github.com/ForbesLindesay/changelogversion/issues",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "tsc",
-    "postbuild": "rimraf lib/**/__tests__",
+    "build": "yarn wsrun --stages build",
     "dev": "yarn build && concurrently -n build,run \"yarn build --watch --preserveWatchOutput\" \"nodemon\"",
     "start": "probot run ./index.js",
-    "lint": "tslint './src/**/*.{ts,tsx}' -t verbose -p .",
+    "lint": "tslint './packages/*/src/**/*.{ts,tsx}' -t verbose -p .",
     "prettier:write": "prettier --ignore-path .gitignore --write './**/*.{md,json,yaml,js,jsx,ts,tsx}'",
     "prettier:check": "prettier --ignore-path .gitignore --list-different './**/*.{md,json,yaml,js,jsx,ts,tsx}'",
     "test": "jest",
     "ci:test": "jest --silent --maxWorkers=2"
   },
-  "dependencies": {
-    "@authentication/cookie": "^0.1.2",
-    "@authentication/github": "^0.1.1",
-    "probot": "^9.0.1"
-  },
   "devDependencies": {
     "@forbeslindesay/tsconfig": "^2.0.0",
-    "@types/express": "^4.17.2",
     "@types/jest": "^24.0.21",
     "concurrently": "^5.0.0",
     "husky": "^3.0.9",
     "jest": "^24.9.0",
     "jskube": "^1.1.2",
     "lint-staged": "^9.4.2",
-    "nodemon": "^1.17.2",
-    "prettier": "^1.18.2",
-    "rimraf": "^3.0.0",
-    "smee-client": "^1.0.2",
+    "prettier": "^1.19.1",
     "ts-jest": "^24.1.0",
     "ts-node": "^8.5.3",
     "tslint": "^6.0.0-beta0",
-    "typescript": "^3.6.4"
-  },
-  "nodemonConfig": {
-    "exec": "npm start",
-    "watch": [
-      ".env",
-      "."
-    ]
+    "typescript": "^3.6.4",
+    "wsrun": "^5.0.0"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -64,7 +46,7 @@
     },
     "testEnvironment": "node",
     "testMatch": [
-      "<rootDir>/src/**/__tests__/**/*.test.ts?(x)"
+      "<rootDir>/packages/*/src/**/__tests__/**/*.test.ts?(x)"
     ]
   },
   "husky": {
@@ -73,7 +55,7 @@
     }
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx}": [
+    "packages/*/src/**/*.{ts,tsx}": [
       "prettier --write",
       "tslint -t verbose -p .",
       "git add"

@@ -2,7 +2,10 @@
   "extends": "@forbeslindesay/tsconfig",
   "compilerOptions": {
     "outDir": "lib",
+    "incremental": true,
+    "rootDir": "src",
+    "tsBuildInfoFile": "lib/.tsbuildinfo",
     "esModuleInterop": true
   },
-  "include": ["packages/*/src"]
+  "include": ["src"]
 }
