@@ -10,6 +10,7 @@ import {
 } from 'changelogversion-utils/lib/GitHub';
 // tslint:disable-next-line:no-implicit-dependencies
 import {Request, Response} from 'express';
+import {json} from 'body-parser';
 import {
   handleAuthCallback,
   getGitHubAccessTokenOrRedirectForAuth,
@@ -19,6 +20,8 @@ import {
 import getPermissionLevel, {Permission} from './getPermissionLevel';
 import getClient from './getClient';
 import staticServer from './static';
+import {PullRequest} from './types';
+import PullChangeLog from 'changelogversion-utils/lib/PullChangeLog';
 
 function attempt<T, S>(fn: () => T, fallback: (ex: any) => S) {
   try {
@@ -83,8 +86,9 @@ export default function(app: Application) {
     `/:owner/:repo/pulls/:pull_number/json`,
     async (req, res, next) => {
       try {
-        const userAuth = getGitHubAccessTokenOrRedirectForAuth(req, res, next);
+        const userAuth = getGitHubAccessToken(req, res);
         if (userAuth === null) {
+          res.status(401).send('You must be authenticated first');
           return;
         }
         const params = await parseParams(req, res, next);
@@ -102,11 +106,15 @@ export default function(app: Application) {
             pull_number: params.pull_number,
           })
         ).data.head.sha;
-        const pullRequest = {
-          owner: params.owner,
-          repo: params.repo,
-          pull_number: params.pull_number,
+        const pullRequest: PullRequest = {
           headSha,
+          changeLogState: (
+            await readComment(github, {
+              number: params.pull_number,
+              owner: params.owner,
+              repo: params.repo,
+            })
+          ).state,
           currentVersions: [
             ...(
               await listPackages(github, {
@@ -117,14 +125,7 @@ export default function(app: Application) {
             ).entries(),
           ],
         };
-        res.json({
-          comment: await readComment(github, {
-            number: params.pull_number,
-            owner: params.owner,
-            repo: params.repo,
-          }),
-          pullRequest,
-        });
+        res.json(pullRequest);
       } catch (ex) {
         next(ex);
       }
@@ -133,6 +134,7 @@ export default function(app: Application) {
 
   app.router.post(
     `/:owner/:repo/pulls/:pull_number`,
+    json(),
     async (req, res, next) => {
       try {
         const userAuth = getGitHubAccessToken(req, res);
@@ -152,16 +154,10 @@ export default function(app: Application) {
             .send('You do not have permission to edit this changelog');
           return;
         }
+
         const github = await getClient(app, params);
 
-        // TODO: save the updated status here
-        res.json(
-          await readComment(github, {
-            number: params.pull_number,
-            owner: params.owner,
-            repo: params.repo,
-          }),
-        );
+        await updatePRWithState(github, params, req.body);
       } catch (ex) {
         next(ex);
       }
@@ -290,5 +286,32 @@ export default function(app: Application) {
     await writeComment(github, existingComment, $pullRequest, state, APP_URL);
 
     await updateStatus(github, $pullRequest, state, APP_URL);
+  }
+  async function updatePRWithState(
+    github: Octokit,
+    pullRequest: {
+      owner: string;
+      repo: string;
+      pull_number: number;
+    },
+    state: PullChangeLog,
+  ) {
+    const headSha = (await github.pulls.get(pullRequest)).data.head.sha;
+    const pr = {
+      owner: pullRequest.owner,
+      repo: pullRequest.repo,
+      number: pullRequest.pull_number,
+      headSha,
+      currentVersions: await listPackages(github, {
+        owner: pullRequest.owner,
+        repo: pullRequest.repo,
+        headSha,
+      }),
+    };
+    const {existingComment} = await readComment(github, pr);
+
+    await writeComment(github, existingComment, pr, state, APP_URL);
+
+    await updateStatus(github, pr, state, APP_URL);
   }
 }

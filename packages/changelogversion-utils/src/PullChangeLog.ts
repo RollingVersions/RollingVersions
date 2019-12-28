@@ -5,6 +5,13 @@ export const SectionTitle: {readonly [type in ChangeType]: string} = {
   perf: 'Performance Improvements',
   fix: 'Bug Fixes',
 };
+export const Placeholder: {readonly [type in ChangeType]: string} = {
+  breaking: 'Add a breaking change...',
+  feat: 'Add a new feature...',
+  refactor: 'Add a refactor...',
+  perf: 'Add a performance improvement...',
+  fix: 'Add a bug fix...',
+};
 export type ChangeType = 'breaking' | 'feat' | 'refactor' | 'perf' | 'fix';
 export const ChangeTypes = [
   'breaking',
