@@ -17,9 +17,12 @@
     "@types/jest": "^24.0.21",
     "@types/semver": "^6.2.0",
     "rimraf": "^3.0.0",
-    "typescript": "^3.6.4"
+    "typescript": "^3.7.4"
   },
   "dependencies": {
+    "@types/pacote": "^9.5.0",
+    "libnpmconfig": "^1.2.1",
+    "pacote": "^10.3.0",
     "semver": "^7.1.1"
   }
 }

@@ -1,5 +1,6 @@
 import {URL} from 'url';
 import Octokit = require('@octokit/rest');
+import {valid, gt, prerelease} from 'semver';
 import {
   COMMENT_PREFIX,
   PullRequst,
@@ -9,6 +10,8 @@ import {
 } from './Rendering';
 import {readState} from './CommentState';
 import PullChangeLog from './PullChangeLog';
+import {PackageInfo, Platform, VersionTag} from './Platforms';
+import {getNpmVersion} from './Npm';
 
 function isObject(
   value: unknown,
@@ -16,11 +19,68 @@ function isObject(
   return value && typeof value === 'object';
 }
 
+function mapMap<TKey, TValue, TResultValue>(
+  mapObj: Map<TKey, TValue>,
+  mapFn: (value: TValue, key: TKey) => TResultValue,
+) {
+  return new Map(
+    [...mapObj.entries()].map(([key, value]) => {
+      return [key, mapFn(value, key)];
+    }),
+  );
+}
+
+function getVersionTag(
+  allTags: Octokit.ReposListTagsResponse,
+  packageName: string,
+  registryVersion: string | null,
+  isMonoRepo: boolean,
+): VersionTag | null {
+  const tags = allTags
+    .map((tag) => {
+      if (!isMonoRepo && valid(tag.name)) {
+        return {
+          ...tag,
+          version: tag.name,
+        };
+      }
+      const split = tag.name.split('@');
+      const version = split.pop()!;
+      const name = split.join('@');
+      if (name === packageName && valid(version)) {
+        return {...tag, version};
+      }
+      return null;
+    })
+    .filter(<T>(v: T): v is Exclude<T, null> => v !== null);
+  if (registryVersion) {
+    return tags.find((t) => t.version === registryVersion) || null;
+  } else if (tags.some((t) => !prerelease(t.version))) {
+    return tags
+      .filter((t) => !prerelease(t.version))
+      .reduce((a, b) => {
+        if (gt(a.version, b.version)) {
+          return a;
+        } else {
+          return b;
+        }
+      });
+  } else {
+    return null;
+  }
+}
+
 export async function listPackages(
   github: Pick<Octokit, 'repos'>,
   pr: Pick<PullRequst, 'owner' | 'repo' | 'headSha'>,
 ) {
-  const packages: Array<{packageName: string; notToBePublished: boolean}> = [];
+  const allTags = (
+    await github.repos.listTags({
+      owner: pr.owner,
+      repo: pr.repo,
+    })
+  ).data;
+  const packages = new Map<string, Array<Omit<PackageInfo, 'versionTag'>>>();
   let ref: string | undefined = pr.headSha;
   let root: Octokit.Response<Octokit.ReposGetContentsResponse>;
   try {
@@ -53,20 +113,27 @@ export async function listPackages(
         await walk(item);
       }
     } else {
-      const content = entry.data.content
-        ? Buffer.from(entry.data.content, 'base64').toString('utf8')
-        : '';
-      let result: unknown;
-      try {
-        result = JSON.parse(content);
-      } catch (ex) {
-        // ignore
-      }
-      if (isObject(result) && typeof result.name === 'string') {
-        packages.push({
-          packageName: result.name,
-          notToBePublished: result.private === true,
-        });
+      if (item.path.endsWith('/package.json')) {
+        const content = entry.data.content
+          ? Buffer.from(entry.data.content, 'base64').toString('utf8')
+          : '';
+        let result: unknown;
+        try {
+          result = JSON.parse(content);
+        } catch (ex) {
+          // ignore
+        }
+        if (isObject(result) && typeof result.name === 'string') {
+          packages.set(result.name, packages.get(result.name) || []);
+          const registryVersion =
+            result.private === true ? null : await getNpmVersion(result.name);
+          packages.get(result.name)!.push({
+            platform: Platform.npm,
+            packageName: result.name,
+            notToBePublished: result.private === true,
+            registryVersion,
+          });
+        }
       }
     }
   }
@@ -77,7 +144,22 @@ export async function listPackages(
   } else {
     await walk(root.data);
   }
-  return packages;
+
+  return mapMap(packages, (pkgInfos) =>
+    pkgInfos.map(
+      (pkg): PackageInfo => {
+        return {
+          ...pkg,
+          versionTag: getVersionTag(
+            allTags,
+            pkg.packageName,
+            pkg.registryVersion,
+            packages.size === 1,
+          ),
+        };
+      },
+    ),
+  );
 }
 
 export async function readComment(

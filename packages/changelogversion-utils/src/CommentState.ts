@@ -2,6 +2,8 @@ import PullChangeLog from './PullChangeLog';
 
 const stateRegex = /\n\n<!-- """ChangeLogVersion State Start""" (.*) """ChangeLogVersion State End""" -->/;
 export function readState(body?: string): PullChangeLog | undefined {
+  if (!body) return undefined;
+
   const match = stateRegex.exec(body);
 
   if (match) {

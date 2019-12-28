@@ -1,25 +1,24 @@
 import {Application, Context, Octokit} from 'probot';
-import {GitHubAPI} from 'probot/lib/github';
 import {URL} from 'url';
 // tslint:disable-next-line:no-implicit-dependencies
 import Webhooks = require('@octokit/webhooks');
-import GitHubAuthentication from '@authentication/github';
-import Cookie from '@authentication/cookie';
 import {
   readComment,
   writeComment,
   updateStatus,
+  listPackages,
 } from 'changelogversion-utils/lib/GitHub';
 // tslint:disable-next-line:no-implicit-dependencies
 import {Request, Response} from 'express';
-
-const githubTokenCookie = new Cookie<string>('github_account', {
-  maxAge: '1 days',
-});
-
-const gitHubAuthentication = new GitHubAuthentication<{path: string}>({
-  callbackURL: '/__/auth/github',
-});
+import {
+  handleAuthCallback,
+  getGitHubAccessTokenOrRedirectForAuth,
+  getGitHubAccessToken,
+  authCallbackPath,
+} from './auth';
+import getPermissionLevel, {Permission} from './getPermissionLevel';
+import getClient from './getClient';
+import staticServer from './static';
 
 function attempt<T, S>(fn: () => T, fallback: (ex: any) => S) {
   try {
@@ -38,12 +37,6 @@ const APP_URL = attempt(
     throw new Error(`APP_URL should be a valid URL: ${ex.message}`);
   },
 );
-
-enum Permission {
-  None,
-  View,
-  Edit,
-}
 
 export default function(app: Application) {
   // Your code here
@@ -80,102 +73,70 @@ export default function(app: Application) {
     }
     return {owner, repo, pull_number: parseInt(pull_number, 10)};
   }
-  async function getPermissionLevel({
-    owner,
-    repo,
-    pull_number,
-    userAuth,
-  }: {
-    owner: string;
-    repo: string;
-    pull_number: number;
-    userAuth: string;
-  }): Promise<Permission> {
-    const octokit = new Octokit({auth: userAuth});
-
-    const authenticated = await octokit.users.getAuthenticated();
-    let pull;
-    try {
-      pull = await octokit.pulls.get({owner, repo, pull_number});
-    } catch (ex) {
-      return Permission.None;
-    }
-    if (pull.data.merged) {
-      return Permission.View;
-    }
-    if (pull.data.user.login === authenticated.data.login) {
-      return Permission.Edit;
-    }
-    const permission = await octokit.repos.getCollaboratorPermissionLevel({
-      owner,
-      repo,
-      username: authenticated.data.login,
-    });
-    if (
-      permission.data.permission === 'admin' ||
-      permission.data.permission === 'write'
-    ) {
-      return Permission.Edit;
-    }
-    return Permission.View;
-  }
-  async function getClient({
-    owner,
-    repo,
-  }: {
-    owner: string;
-    repo: string;
-    pull_number: number;
-  }) {
-    const installation = await (await app.auth()).apps.getRepoInstallation({
-      owner,
-      repo,
-    });
-    if (installation.status !== 200) {
-      throw new Error(
-        `Changelog Version does not seem to be installed for ${owner}`,
-      );
-    }
-    const installationID = installation.data.id;
-    const github = await app.auth(installationID);
-    return github;
-  }
 
   app.router.get(`/:owner/:repo/pulls/:pull_number`, async (req, res, next) => {
-    try {
-      const userAuth = githubTokenCookie.get(req, res);
-      if (!userAuth) {
-        gitHubAuthentication.redirectToProvider(req, res, next, {
-          state: {path: req.url},
-        });
-        return;
-      }
-      const params = await parseParams(req, res, next);
-      const permission = await getPermissionLevel({...params, userAuth});
-      if (permission === Permission.None) {
-        next();
-        return;
-      }
-      const github = await getClient(params);
-      // TODO: render UI for editing changelog
-      res.json(
-        await readComment(github, {
-          number: params.pull_number,
-          owner: params.owner,
-          repo: params.repo,
-        }),
-      );
-    } catch (ex) {
-      next(ex);
+    if (getGitHubAccessTokenOrRedirectForAuth(req, res, next)) {
+      next();
     }
   });
+  app.router.get(
+    `/:owner/:repo/pulls/:pull_number/json`,
+    async (req, res, next) => {
+      try {
+        const userAuth = getGitHubAccessTokenOrRedirectForAuth(req, res, next);
+        if (userAuth === null) {
+          return;
+        }
+        const params = await parseParams(req, res, next);
+        const permission = await getPermissionLevel({...params, userAuth});
+        if (permission === Permission.None) {
+          next();
+          return;
+        }
+        const github = await getClient(app, params);
+        // TODO: render UI for editing changelog
+        const headSha = (
+          await github.pulls.get({
+            owner: params.owner,
+            repo: params.repo,
+            pull_number: params.pull_number,
+          })
+        ).data.head.sha;
+        const pullRequest = {
+          owner: params.owner,
+          repo: params.repo,
+          pull_number: params.pull_number,
+          headSha,
+          currentVersions: [
+            ...(
+              await listPackages(github, {
+                owner: params.owner,
+                repo: params.repo,
+                headSha,
+              })
+            ).entries(),
+          ],
+        };
+        res.json({
+          comment: await readComment(github, {
+            number: params.pull_number,
+            owner: params.owner,
+            repo: params.repo,
+          }),
+          pullRequest,
+        });
+      } catch (ex) {
+        next(ex);
+      }
+    },
+  );
 
   app.router.post(
     `/:owner/:repo/pulls/:pull_number`,
     async (req, res, next) => {
       try {
-        const userAuth = githubTokenCookie.get(req, res);
-        if (!userAuth) {
+        const userAuth = getGitHubAccessToken(req, res);
+        if (userAuth === null) {
           res.status(401).send('You must be authenticated first');
           return;
         }
@@ -191,7 +152,7 @@ export default function(app: Application) {
             .send('You do not have permission to edit this changelog');
           return;
         }
-        const github = await getClient(params);
+        const github = await getClient(app, params);
 
         // TODO: save the updated status here
         res.json(
@@ -207,22 +168,9 @@ export default function(app: Application) {
     },
   );
 
-  app.router.get(gitHubAuthentication.callbackPath, async (req, res, next) => {
-    try {
-      if (gitHubAuthentication.userCancelledLogin(req)) {
-        res.send('Authentication Failed');
-        return;
-      }
-      const {
-        accessToken,
-        state,
-      } = await gitHubAuthentication.completeAuthentication(req, res);
-      githubTokenCookie.set(req, res, accessToken);
-      res.redirect(state!.path);
-    } catch (ex) {
-      next(ex);
-    }
-  });
+  app.router.get(authCallbackPath, handleAuthCallback());
+
+  app.router.use(staticServer);
 
   app.on('installation', async (context) => {
     for (const r of context.payload.repositories) {
@@ -232,54 +180,89 @@ export default function(app: Application) {
           repo: r.name,
         })
       ).data;
-      // TODO: pagination
-      const pulls = await context.github.pulls.list({
-        owner: repo.owner.login,
-        repo: repo.name,
-        state: 'open',
-        base: repo.default_branch,
-        per_page: 100,
-      });
-      for (const pull of pulls) {
-        await updatePR(context.github, {
-          owner: repo.owner.login,
-          repo: repo.name,
-          number: pull.number,
-          headSha: pull.head.sha,
-        });
-      }
+      await onUpdateRepoDebounced(context.github, repo);
     }
   });
 
-  app.on('pull_request.opened', onUpdate);
-  app.on('pull_request.edited', onUpdate);
-  app.on('pull_request.synchronize', onUpdate);
+  app.on('pull_request.opened', onUpdatePullRequest);
+  app.on('pull_request.edited', onUpdatePullRequest);
+  app.on('pull_request.synchronize', onUpdatePullRequest);
+  app.on('release', async (context) => {
+    await onUpdateRepoDebounced(context.github, context.payload.repository);
+  });
   app.on('push', async (context) => {
     if (
       'refs/heads/' + context.payload.repository.default_branch ===
       context.payload.ref
     ) {
-      const repo = context.payload.repository;
-      // TODO: pagination
-      const pulls = await context.github.pulls.list({
-        owner: repo.owner.login,
-        repo: repo.name,
-        state: 'open',
-        base: repo.default_branch,
-        per_page: 100,
-      });
-      for (const pull of pulls) {
-        await updatePR(context.github, {
-          owner: context.payload.repository.owner.login,
-          repo: context.payload.repository.name,
-          number: pull.number,
-          headSha: pull.head.sha,
-        });
-      }
+      await onUpdateRepoDebounced(context.github, context.payload.repository);
     }
   });
 
-  async function onUpdate(
+  const timeouts = new Map<
+    string,
+    | {pending: true; timeout: NodeJS.Timeout; resolve: () => void}
+    | {pending: false; done: Promise<void>}
+  >();
+  async function onUpdateRepoDebounced(
+    github: Octokit,
+    repo: Webhooks.PayloadRepository | Octokit.ReposGetResponse,
+  ) {
+    for (
+      let timeout = timeouts.get(repo.full_name);
+      timeout !== undefined;
+      timeout = timeouts.get(repo.full_name)
+    ) {
+      if (timeout.pending) {
+        clearTimeout(timeout.timeout);
+        timeout.resolve();
+        timeouts.delete(repo.full_name);
+      } else {
+        await timeout.done;
+      }
+    }
+    await new Promise((resolve, reject) => {
+      timeouts.set(repo.full_name, {
+        pending: true,
+        resolve,
+        timeout: setTimeout(() => {
+          const done = onUpdateRepo(github, repo).then(resolve, reject);
+          timeouts.set(repo.full_name, {
+            pending: false,
+            done: done.then(() => {
+              timeouts.delete(repo.full_name);
+            }),
+          });
+          // We debounce by 10 seconds to allow for registry package publishing,
+          // which might happen later than the github tag publishing.
+          // This also helps to
+        }, 10_000),
+      });
+    });
+  }
+  async function onUpdateRepo(
+    github: Octokit,
+    repo: Webhooks.PayloadRepository | Octokit.ReposGetResponse,
+  ) {
+    // TODO: pagination
+    const pulls = await github.pulls.list({
+      owner: repo.owner.login,
+      repo: repo.name,
+      state: 'open',
+      base: repo.default_branch,
+      per_page: 100,
+    });
+    for (const pull of pulls) {
+      await updatePR(github, {
+        owner: repo.owner.login,
+        repo: repo.name,
+        number: pull.number,
+        headSha: pull.head.sha,
+      });
+    }
+  }
+
+  async function onUpdatePullRequest(
     context: Context<Webhooks.WebhookPayloadPullRequest>,
   ) {
     await updatePR(context.github, {
@@ -300,8 +283,7 @@ export default function(app: Application) {
   ) {
     const $pullRequest = {
       ...pullRequest,
-      // TODO: get current versions
-      currentVersions: new Map(),
+      currentVersions: await listPackages(github, pullRequest),
     };
     const {existingComment, state} = await readComment(github, pullRequest);
 

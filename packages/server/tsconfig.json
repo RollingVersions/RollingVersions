@@ -5,7 +5,8 @@
     "incremental": true,
     "rootDir": "src",
     "tsBuildInfoFile": "lib/.tsbuildinfo",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "lib": ["DOM"]
   },
   "include": ["src"]
 }

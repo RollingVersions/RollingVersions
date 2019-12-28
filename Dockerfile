@@ -14,6 +14,7 @@ RUN yarn install --production \
 ADD packages/changelogversion/lib /app/packages/changelogversion/lib
 ADD packages/changelogversion-utils/lib /app/packages/changelogversion-utils/lib
 ADD packages/server/lib /app/packages/server/lib
+ADD packages/server/dist /app/packages/server/dist
 
 RUN yarn install --production
 

@@ -6,6 +6,7 @@ import PullChangeLog, {
 } from './PullChangeLog';
 import {writeState} from './CommentState';
 import {getNewVersion} from './Versioning';
+import {PackageInfo} from './Platforms';
 
 export const COMMENT_PREFIX = `<!-- This comment is maintained by Changelog Version. Do not edit it manually! -->\n\n`;
 
@@ -35,15 +36,29 @@ export interface PullRequst {
   owner: string;
   repo: string;
   number: number;
-  currentVersions: Map<string, string | null>;
+  currentVersions: Map<string, Array<PackageInfo>>;
 }
 
 export function getVersionShift(
-  currentVersion: string | null | undefined,
+  currentVersion: PackageInfo[],
   changes: readonly Pick<ChangeLogEntry, 'type'>[],
 ) {
+  // if we want to support not knowing the previous version:
+  // if (currentVersion === undefined) {
+  //   const bump = getVersionBump(changes);
+  //   switch (bump) {
+  //     case 'major':
+  //       return '(↑.-.-)';
+  //     case 'minor':
+  //       return '(-.↑.-)';
+  //     case 'patch':
+  //       return '(-.-.↑)';
+  //     default:
+  //       return 'no new release';
+  //   }
+  // }
   return `(${currentVersion || 'unreleased'} → ${getNewVersion(
-    currentVersion || null,
+    currentVersion,
     changes,
   ) || 'no new release'})`;
 }
@@ -52,7 +67,7 @@ export function getUrlForChangeLog(
   changeLogVersionURL: URL,
 ) {
   const url = new URL(
-    `/${pullRequest.owner}/${pullRequest.repo}/${pullRequest.number}`,
+    `/${pullRequest.owner}/${pullRequest.repo}/pulls/${pullRequest.number}`,
     changeLogVersionURL,
   );
   return url;
@@ -98,7 +113,7 @@ export function renderCommentWithoutState(
       return `This PR will not result in a new version of ${pkg.packageName} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
     }
     return `## Change Log for ${pkg.packageName} ${getVersionShift(
-      pullRequest.currentVersions.get(pkg.packageName),
+      pullRequest.currentVersions.get(pkg.packageName) || [],
       pkg.changes,
     )}\n\n[Edit changelog](${url.href})${outdated}`;
   }
@@ -114,7 +129,7 @@ export function renderCommentWithoutState(
     .map(
       (pkg) =>
         `## ${pkg.packageName} ${getVersionShift(
-          pullRequest.currentVersions.get(pkg.packageName),
+          pullRequest.currentVersions.get(pkg.packageName) || [],
           pkg.changes,
         )}`,
     )

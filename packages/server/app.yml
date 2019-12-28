@@ -20,7 +20,7 @@ name: Changelog Version
 description: Add changelogs to PRs and use them to determine the version of npm packages
 
 # Set to true when your GitHub App is available to the public or false when it is only accessible to the owner of the app.
-public: true
+public: false
 
 # The list of events the GitHub App subscribes to.
 # Uncomment the event names below to enable them.
@@ -47,11 +47,11 @@ default_events:
   # - project_card
   # - project_column
   # - public
-  # - pull_request
+  - pull_request
   # - pull_request_review
   # - pull_request_review_comment
-  # - push
-  # - release
+  - push
+  - release
   # - repository
   # - repository_import
   # - status

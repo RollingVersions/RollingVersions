@@ -1,0 +1,4 @@
+{
+  "extends": "@forbeslindesay/tsconfig",
+  "exclude": ["node_modules", "src", "lib"]
+}

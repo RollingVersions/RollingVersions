@@ -6,8 +6,8 @@
   ],
   "scripts": {
     "build": "yarn wsrun --stages build",
-    "dev": "yarn build && concurrently -n build,run \"yarn build --watch --preserveWatchOutput\" \"nodemon\"",
-    "start": "probot run ./index.js",
+    "dev": "yarn build && concurrently -n build,run \"yarn wsrun --exclude server build --watch --preserveWatchOutput\" \"yarn workspace changelogversion-server dev\"",
+    "start": "yarn workspace changelogversion-server start",
     "lint": "tslint './packages/*/src/**/*.{ts,tsx}' -t verbose -p .",
     "prettier:write": "prettier --ignore-path .gitignore --write './**/*.{md,json,yaml,js,jsx,ts,tsx}'",
     "prettier:check": "prettier --ignore-path .gitignore --list-different './**/*.{md,json,yaml,js,jsx,ts,tsx}'",
@@ -26,7 +26,7 @@
     "ts-jest": "^24.1.0",
     "ts-node": "^8.5.3",
     "tslint": "^6.0.0-beta0",
-    "typescript": "^3.6.4",
+    "typescript": "^3.7.4",
     "wsrun": "^5.0.0"
   },
   "jest": {
@@ -58,6 +58,10 @@
     "packages/*/src/**/*.{ts,tsx}": [
       "prettier --write",
       "tslint -t verbose -p .",
+      "git add"
+    ],
+    "packages/*/webpack.config.ts": [
+      "prettier --write",
       "git add"
     ],
     "*.{md,json,yaml,js,jsx}": [
