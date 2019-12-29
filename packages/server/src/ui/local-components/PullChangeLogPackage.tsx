@@ -43,14 +43,14 @@ export default function PullChangeLogPackage({
         onChangeLogChange={onChangeLogChange}
       />
       <div className="flex">
-        <div className="flex-grow">
+        <div className="flex-grow" style={{flexBasis: 0}}>
           <PullChangeLogEntrySection
             type="breaking"
             changeLog={changeLog}
             onChangeLogChange={onChangeLogChange}
           />
         </div>
-        <div className="flex-grow">
+        <div className="flex-grow" style={{flexBasis: 0}}>
           <PullChangeLogEntrySection
             type="feat"
             changeLog={changeLog}
@@ -63,7 +63,7 @@ export default function PullChangeLogPackage({
             onChangeLogChange={onChangeLogChange}
           />
         </div>
-        <div className="flex-grow">
+        <div className="flex-grow" style={{flexBasis: 0}}>
           <PullChangeLogEntrySection
             type="fix"
             changeLog={changeLog}

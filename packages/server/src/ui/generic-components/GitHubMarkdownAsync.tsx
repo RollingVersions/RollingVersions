@@ -10,7 +10,9 @@ export default function GitHubMarkdownAsync({source}: {source: string}) {
   const [err, setError] = React.useState<Error | undefined>(undefined);
   React.useEffect(() => {
     if (!GitHubMarkdownPromise) {
-      GitHubMarkdownPromise = import('./GitHubMarkdown');
+      GitHubMarkdownPromise = import(
+        /* webpackPrefetch: true */ './GitHubMarkdown'
+      );
     }
     GitHubMarkdownPromise.then((r) => {
       GitHubMarkdownCache = r;

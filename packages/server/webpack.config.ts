@@ -28,11 +28,13 @@ const outputFolder = `${__dirname}/dist`;
 const config: webpack.Configuration = {
   entry: `${__dirname}/src/ui/index.tsx`,
 
-  performance: {
-    hints: 'error',
-    maxEntrypointSize: 300000,
-    maxAssetSize: 500000,
-  },
+  performance: DEV
+    ? false
+    : {
+        hints: 'error',
+        maxEntrypointSize: 300000,
+        maxAssetSize: 500000,
+      },
 
   devServer: {
     // we rely on our actual dev server to serve the html files so you can
