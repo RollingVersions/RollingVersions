@@ -2,6 +2,8 @@ FROM node:12-alpine
 
 WORKDIR /app
 
+ENV NODE_ENV=production
+
 COPY package.json /app/package.json
 COPY yarn.lock /app/yarn.lock
 ADD packages/changelogversion/package.json /app/packages/changelogversion/package.json

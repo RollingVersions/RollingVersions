@@ -6,6 +6,9 @@ import HtmlWebpackHarddiskPlugin from 'html-webpack-harddisk-plugin';
 import CompressionWebpackPlugin from 'compression-webpack-plugin';
 import {CleanWebpackPlugin} from 'clean-webpack-plugin';
 import * as dotenv from 'dotenv-extended';
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const PurgecssPlugin = require('purgecss-webpack-plugin');
+const glob = require('glob-all');
 
 dotenv.load();
 
@@ -24,6 +27,12 @@ assert(
 const outputFolder = `${__dirname}/dist`;
 const config: webpack.Configuration = {
   entry: `${__dirname}/src/ui/index.tsx`,
+
+  performance: {
+    hints: 'error',
+    maxEntrypointSize: 300000,
+    maxAssetSize: 500000,
+  },
 
   devServer: {
     // we rely on our actual dev server to serve the html files so you can
@@ -48,6 +57,7 @@ const config: webpack.Configuration = {
             loader: require.resolve('ts-loader'),
             include: [`${__dirname}/src`],
             options: {
+              compilerOptions: {module: 'ESNext'},
               transpileOnly: true, // use transpileOnly mode to speed-up compilation
             },
           },
@@ -55,13 +65,19 @@ const config: webpack.Configuration = {
           {
             test: /\.css$/,
             use: [
-              'style-loader',
+              DEV ? 'style-loader' : MiniCssExtractPlugin.loader,
               {loader: 'css-loader', options: {importLoaders: 1}},
               {
                 loader: 'postcss-loader',
                 options: {
                   ident: 'postcss',
-                  plugins: [require('tailwindcss'), require('autoprefixer')],
+                  plugins: [
+                    require('tailwindcss'),
+                    require('autoprefixer'),
+                    require('cssnano')({
+                      preset: 'default',
+                    }),
+                  ],
                 },
               },
             ],
@@ -113,12 +129,27 @@ const config: webpack.Configuration = {
     publicPath: '/',
     path: outputFolder,
     filename: removeHashInDev('static/js/[name].[chunkhash:8].js'),
-    chunkFilename: removeHashInDev('static/js/[name].[chunkhash:8].chunk.js'),
+    // Some of the chunks have been given explit long names, costing an extra ~10KB
+    // chunkFilename: removeHashInDev('static/js/[name].[chunkhash:8].chunk.js'),
+    chunkFilename: DEV
+      ? 'static/js/[name].chunk.js'
+      : 'static/js/[chunkhash:8].chunk.js',
   },
 
   plugins: [
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
+    }),
+
+    new PurgecssPlugin({
+      paths: [
+        `${__dirname}/src/ui/index.ejs`,
+        ...glob.sync(`${__dirname}/src/**/*.{tsx,ts}`),
+      ],
+    }),
+
+    new MiniCssExtractPlugin({
+      filename: removeHashInDev('static/css/[name].[chunkhash:8].css'),
     }),
 
     // Generate index.html

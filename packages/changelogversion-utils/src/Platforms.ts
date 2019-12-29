@@ -1,4 +1,4 @@
-import Octokit = require('@octokit/rest');
+import Octokit from '@octokit/rest';
 
 export type VersionTag = Octokit.ReposListTagsResponseItem & {version: string};
 export enum Platform {

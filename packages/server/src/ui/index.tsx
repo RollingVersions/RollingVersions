@@ -1,5 +1,5 @@
 import './index.css';
-import React = require('react');
+import React from 'react';
 import {render} from 'react-dom';
 import {BrowserRouter, Switch, Route} from 'react-router-dom';
 import Home from './pages/Home';

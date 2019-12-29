@@ -1,15 +1,11 @@
-import React = require('react');
+import React from 'react';
 import {
   PackagePullChangeLog,
   ChangeType,
   SectionTitle,
   Placeholder,
 } from 'changelogversion-utils/lib/PullChangeLog';
-import Markdown = require('react-markdown');
-import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/prism-async-light';
-import SyntaxHighlighterStyle from 'react-syntax-highlighter/dist/esm/styles/prism/ghcolors';
-const SyntaxHighligherSupportedLanguages: string[] = require('react-syntax-highlighter/dist/esm/languages/prism/supported-languages')
-  .default;
+import GitHubMarkdown from '../generic-components/GitHubMarkdownAsync';
 
 interface PullChangeLogEntrySectionProps {
   type: ChangeType;
@@ -34,7 +30,7 @@ export default function PullChangeLogEntrySection({
           <li key={i}>
             <div style={{position: 'relative'}}>
               {entry.title ? (
-                <Markdown className="markdown" source={entry.title} />
+                <GitHubMarkdown source={entry.title} />
               ) : (
                 <span style={{color: 'gray'}}>{Placeholder[type]}</span>
               )}
@@ -61,37 +57,7 @@ export default function PullChangeLogEntrySection({
             {entry.title && (
               <div style={{position: 'relative'}}>
                 {entry.body ? (
-                  <Markdown
-                    className="markdown"
-                    source={entry.body}
-                    renderers={{
-                      code: (props) => {
-                        const aliases = {
-                          ts: 'typescript',
-                          js: 'javascript',
-                        };
-                        const language: string | null = props.language
-                          ? props.language.toLowerCase() in aliases
-                            ? (aliases as any)[props.language.toLowerCase()]
-                            : props.language.toLowerCase()
-                          : null;
-                        return (
-                          <SyntaxHighlighter
-                            style={SyntaxHighlighterStyle}
-                            language={
-                              language &&
-                              SyntaxHighligherSupportedLanguages.includes(
-                                language,
-                              )
-                                ? language
-                                : 'text'
-                            }
-                            children={props.value}
-                          />
-                        );
-                      },
-                    }}
-                  />
+                  <GitHubMarkdown source={entry.body} />
                 ) : (
                   <span style={{color: 'gray'}}>Optional details</span>
                 )}

@@ -1,7 +1,7 @@
 import {Application, Context, Octokit} from 'probot';
 import {URL} from 'url';
 // tslint:disable-next-line:no-implicit-dependencies
-import Webhooks = require('@octokit/webhooks');
+import Webhooks from '@octokit/webhooks';
 import {
   readComment,
   writeComment,

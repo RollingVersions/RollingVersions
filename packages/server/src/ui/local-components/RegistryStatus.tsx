@@ -1,4 +1,4 @@
-import React = require('react');
+import React from 'react';
 import {PackageInfo} from 'changelogversion-utils/lib/Platforms';
 import {PackagePullChangeLog} from 'changelogversion-utils/lib/PullChangeLog';
 

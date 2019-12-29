@@ -1,7 +1,7 @@
-import React = require('react');
+import React from 'react';
 import {useParams} from 'react-router-dom';
 import usePullRequest from '../hooks/usePullRequest';
-import PullChangeLogEntry from '../local-components/PullChangeLogEntry';
+import PullChangeLogPackage from '../local-components/PullChangeLogPackage';
 
 interface Params {
   owner: string;
@@ -30,7 +30,7 @@ export default function PullChangeLog() {
         .slice()
         .sort(([a], [b]) => (a < b ? -1 : 1))
         .map(([name, packageInfo]) => (
-          <PullChangeLogEntry
+          <PullChangeLogPackage
             key={name}
             packageInfo={packageInfo}
             changeLog={

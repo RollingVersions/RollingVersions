@@ -1,5 +1,5 @@
 import {URL} from 'url';
-import Octokit = require('@octokit/rest');
+import Octokit from '@octokit/rest';
 import {valid, gt, prerelease} from 'semver';
 import {
   COMMENT_PREFIX,

@@ -1,20 +1,20 @@
-import React = require('react');
+import React from 'react';
 import {PackageInfo} from 'changelogversion-utils/lib/Platforms';
 import {PackagePullChangeLog} from 'changelogversion-utils/lib/PullChangeLog';
 import RegistryStatus, {publishingSettingsChosen} from './RegistryStatus';
 import PullChangeLogEntrySection from './PullChangeLogEntrySection';
 require('./PullChangeLogEntry.css');
 
-interface PullChangeLogEntry {
+interface PullChangeLogPackageProps {
   packageInfo: PackageInfo[];
   changeLog: PackagePullChangeLog;
   onChangeLogChange: (log: PackagePullChangeLog) => void;
 }
-export default function PullChangeLogEntry({
+export default function PullChangeLogPackage({
   packageInfo,
   changeLog,
   onChangeLogChange,
-}: PullChangeLogEntry) {
+}: PullChangeLogPackageProps) {
   const title = (
     <h2 className="font-sans text-3xl text-blue-800 font-light mt-4">
       {changeLog.packageName}
