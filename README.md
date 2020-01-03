@@ -1,53 +1,48 @@
-# web-app-template
+# Changelog Version
 
-A template for a node app using TypeScript deployed to kubernetes
+Add changelogs to PRs and use them to determine the version of npm packages
 
-## Setting up Kubernetes
+It has no state of its own. The changelog for each PR is stored along with the corresponding PR (in a comment). The CLI tool will require a GitHub API token to read the changelog, and write to releases. It will require an npm token to publish to npm.
 
-TODO
+## Web Endpoints
 
-## Setting up the repo
+### Authentication
 
-1. Hit "Use This Template" to create the repository
-1. Enable [CircleCI](https://circleci.com/add-projects/gh/ForbesLindesay)
-1. In Settings
-   1. Disable "Wikis"
-   1. Disable "Projects"
-   1. Disable "Allow merge commits"
-   1. Disable "Allow rebase merging"
-   1. Enable "Automatically delete head branches"
-1. Create a new branch
-1. Commit initial code to the branch (be sure to replace all refernces to web-app-template, and remove these instructions from the README)
-1. Push the new branch and create a PR
-1. In Settings -> Branch Protection, create a new rule
-   1. Use "master" as the branch name pattern
-   1. Enable "Require status checks to pass before merging"
-   1. Select the unit tests as required
-   1. Enable "Include administrators"
-   1. Enable "Restrict who can push to matching branches"
-1. Merge the PR
+1. authenticate to GitHub using OAuth as the user
+1. fetch the PR using the user's OAuth token
+1. check the user has "admin" or "write" permission
+1. fetch the installation ID for the given repository
+1. authenticate to GitHub using the installation ID - use this for subsequent requests
 
-## Setting up a new app
+### Render Editor
 
-1. Replace web-app-template with the name of your app in all files
-1. Point the DNS for your domain name at your loadbalancer's external IP (which you can get by running `kubectl get svc --namespace=ingress-nginx`)
-1. Run `npx jskube .kube/setup.ts` - N.B. this will attempt to get an SSL certificate, so you must first point the DNS records at your loadbalancer.
-1. Run `npx jskube .kube/deployment-placeholder.ts` (optional). If you do this, you should be able to load the website at the domain name you selected, but you will have to bypass a warning about a certificate error as it will be using the letsencrypt staging ssl certificate.
-1. Once the certificate is issued successfully and you are happy with the domain name of your service, you can set `stagingTLS` to `false` in `.kube/setup.ts` and re-run `npx jskube .kube/setup.ts` to request production TLS certificates.
+1. read the changelog from as single GitHub comment
 
+### Update
 
-## Deploying locally
+1. write the changelog by upserting a single GitHub comment
+1. update a status from pending (no changelog) to success (a changelog is present, even an empty one)
 
-1. build the typescript etc. `yarn build`
-1. build an initial image `docker build -t forbeslindesay/web-app-template:hotfix-01 .`
-1. push `docker push forbeslindesay/web-app-template:hotfix-01"`
-1. deploy `ENVIRONMENT=staging DOCKERHUB_USERNAME=forbeslindesay CIRCLE_SHA1=hotfix-01 jskube apply -f .kube/deployment`
+## Events
 
-## Setting up Circle CI
+On pull request open/update:
 
-After you follow the instructions for "Setting up a new app". You can configure CI to deploy your app.
+1. add a comment (if not already present) with a link to edit the changelog and the current status of the changelog
+1. add a status that's pending (for no changelog) or success (a changelog is present, even an empty one)
 
-1. Run `jskube get-env-vars --user cicd --namespace ${namespace}` to get the environment variables for connecting to kubernetes
-1. Get your dockerhub username and password as `DOCKERHUB_USERNAME` and `DOCKERHUB_PASS`
-1. Add the environment variables to Circle CI -> web-app-template -> Settings -> Environment Variables
- (https://circleci.com/gh/ForbesLindesay/web-app-template/edit#env-vars)
+## CLI
+
+### Publish (--dry-run)?
+
+1. get the latest version for each package from npm
+1. get the last deployed commit for each package via tags (error if no tag matching latest npm package name with instructions on tagging a specific commit)
+1. for each commit between current and the last deployed
+1. get the associated pull request
+1. get and merge the change logs
+1. log out the merged release notes
+1. check we have permission to publish the npm package
+1. check we have permission to write to GitHub releases
+1. abort if the latest commit does not match the currently building commit
+1. if not dry run
+1. create the GitHub release with changelog
+1. publish the npm package

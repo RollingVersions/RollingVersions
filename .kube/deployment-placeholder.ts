@@ -2,8 +2,8 @@ import createDeployment from './createDeployment';
 
 export default [
   ...createDeployment({
-    namespace: 'web-app-template',
-    name: 'web-app-template-staging',
+    namespace: 'changelogversion',
+    name: 'changelogversion-staging',
     containerPort: 5678,
     replicaCount: 1,
     image: `hashicorp/http-echo`,
@@ -14,8 +14,8 @@ export default [
     },
   }),
   ...createDeployment({
-    namespace: 'web-app-template',
-    name: 'web-app-template-production',
+    namespace: 'changelogversion',
+    name: 'changelogversion-production',
     containerPort: 5678,
     replicaCount: 1,
     image: `hashicorp/http-echo`,

@@ -1,0 +1,28 @@
+{
+  "name": "changelogversion-utils",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Add changelogs to PRs and use them to determine the version of npm packages",
+  "author": "Forbes Lindesay <forbes@lindesay.co.uk> (https://www.forbeslindesay.co.uk)",
+  "repository": "https://github.com/ForbesLindesay/changelogversion.git",
+  "homepage": "https://github.com/ForbesLindesay/changelogversion",
+  "bugs": "https://github.com/ForbesLindesay/changelogversion/issues",
+  "scripts": {
+    "build": "tsc",
+    "postbuild": "rimraf lib/**/__tests__"
+  },
+  "devDependencies": {
+    "@forbeslindesay/tsconfig": "^2.0.0",
+    "@octokit/rest": "^16.36.0",
+    "@types/jest": "^24.0.21",
+    "@types/semver": "^6.2.0",
+    "rimraf": "^3.0.0",
+    "typescript": "^3.7.4"
+  },
+  "dependencies": {
+    "@types/pacote": "^9.5.0",
+    "libnpmconfig": "^1.2.1",
+    "pacote": "^10.3.0",
+    "semver": "^7.1.1"
+  }
+}
