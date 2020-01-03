@@ -86,10 +86,7 @@ export default function createDeployment({
               name,
               image,
               ports: [{containerPort}],
-              envFrom: [
-                {secretRef: {name: 'mariadb-user-creds'}},
-                {configMapRef: {name: ''}},
-              ],
+              envFrom: [{secretRef: {name}}, {configMapRef: {name}}],
             },
 
             ...(supportingContainers || []),
