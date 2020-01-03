@@ -1,5 +1,6 @@
 import createIngress from './createIngress';
 import createServiceAccount from './createServiceAccount';
+import createConfigMap from './createConfigMap';
 
 export default [
   ...createServiceAccount({namespace: 'changelogversion'}),
@@ -7,16 +8,35 @@ export default [
     name: 'changelogversion-staging',
     namespace: 'changelogversion',
     serviceName: 'changelogversion-staging',
-    hosts: ['changelogversion.staging.makewebtech.org'],
+    hosts: ['staging.changelogversion.com'],
     enableTLS: true,
-    stagingTLS: true,
+    stagingTLS: false,
   }),
   ...createIngress({
     name: 'changelogversion-production',
     namespace: 'changelogversion',
     serviceName: 'changelogversion-production',
-    hosts: ['changelogversion.makewebtech.org'],
+    hosts: ['changelogversion.com'],
     enableTLS: true,
-    stagingTLS: true,
+    stagingTLS: false,
+  }),
+
+  createConfigMap({
+    name: 'changelogversion-staging',
+    namespace: 'changelogversion',
+    data: {
+      APP_ID: '50319',
+      APP_URL: 'https://staging.changelogversion.com',
+      BASE_URL: 'https://staging.changelogversion.com',
+    },
+  }),
+  createConfigMap({
+    name: 'changelogversion-production',
+    namespace: 'changelogversion',
+    data: {
+      APP_ID: '50318',
+      APP_URL: 'https://changelogversion.com',
+      BASE_URL: 'https://changelogversion.com',
+    },
   }),
 ];
