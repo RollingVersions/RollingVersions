@@ -5,6 +5,7 @@ import {PackagePullChangeLog} from 'changelogversion-utils/lib/PullChangeLog';
 interface RegistryStatusProps {
   packageInfo: PackageInfo[];
   changeLog: PackagePullChangeLog;
+  disabled: boolean;
   onChangeLogChange: (log: PackagePullChangeLog) => void;
 }
 
@@ -22,11 +23,17 @@ export function publishingSettingsChosen({
 export default function RegistryStatus({
   packageInfo,
   changeLog,
+  disabled,
   onChangeLogChange,
 }: RegistryStatusProps) {
   const platform = packageInfo.map((p) => p.platform).join(', ');
   if (packageInfo.every((p) => p.notToBePublished)) {
-    return <p>This package is not published on any registry.</p>;
+    return (
+      <p>
+        This package is not published on any registry, but git tags/releases
+        will still be created for it if you add a changelog.
+      </p>
+    );
   }
   if (
     packageInfo.some((p) => p.versionTag) ||
@@ -49,6 +56,9 @@ export default function RegistryStatus({
     }
   }
   if (!changeLog.publishInitialVersionAs) {
+    if (disabled) {
+      return <p>This package has not yet been selected to be published.</p>;
+    }
     return (
       <>
         <button
@@ -80,17 +90,19 @@ export default function RegistryStatus({
           This package wil be published <strong>publicly</strong> on the{' '}
           {platform} registry.
         </p>
-        <button
-          type="button"
-          onClick={() =>
-            onChangeLogChange({
-              ...changeLog,
-              publishInitialVersionAs: 'private',
-            })
-          }
-        >
-          Make private
-        </button>
+        {!disabled && (
+          <button
+            type="button"
+            onClick={() =>
+              onChangeLogChange({
+                ...changeLog,
+                publishInitialVersionAs: 'private',
+              })
+            }
+          >
+            Make private
+          </button>
+        )}
       </>
     );
   } else {
@@ -100,17 +112,19 @@ export default function RegistryStatus({
           This package wil be published <strong>privately</strong> on the{' '}
           {platform} registry.
         </p>
-        <button
-          type="button"
-          onClick={() =>
-            onChangeLogChange({
-              ...changeLog,
-              publishInitialVersionAs: 'public',
-            })
-          }
-        >
-          Make public
-        </button>
+        {!disabled && (
+          <button
+            type="button"
+            onClick={() =>
+              onChangeLogChange({
+                ...changeLog,
+                publishInitialVersionAs: 'public',
+              })
+            }
+          >
+            Make public
+          </button>
+        )}
       </>
     );
   }

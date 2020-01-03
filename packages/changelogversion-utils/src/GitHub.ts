@@ -2,7 +2,7 @@ import {URL} from 'url';
 import Octokit from '@octokit/rest';
 import {valid, gt, prerelease} from 'semver';
 import {
-  COMMENT_PREFIX,
+  COMMENT_GUID,
   PullRequst,
   renderComment,
   getUrlForChangeLog,
@@ -180,7 +180,7 @@ export async function readComment(
     per_page: 100,
   });
   const existingComment = comments.data.find((comment) =>
-    comment.body.includes(COMMENT_PREFIX),
+    comment.body.includes(COMMENT_GUID),
   );
   return {
     existingComment: existingComment?.id,

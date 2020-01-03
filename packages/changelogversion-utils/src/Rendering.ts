@@ -5,10 +5,11 @@ import PullChangeLog, {
   SectionTitle,
 } from './PullChangeLog';
 import {writeState} from './CommentState';
-import {getNewVersion} from './Versioning';
+import {getNewVersion, getCurrentVerion} from './Versioning';
 import {PackageInfo, PackageInfos} from './Platforms';
 
-export const COMMENT_PREFIX = `<!-- This comment is maintained by Changelog Version. Do not edit it manually! -->\n\n`;
+export const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
+const COMMENT_PREFIX = `<!-- This comment is maintained by Changelog Version. Do not edit it manually! -->\n<!-- ${COMMENT_GUID} -->\n\n`;
 
 export function changesToMarkdown(
   changes: readonly (ChangeLogEntry & {readonly pr?: number})[],
@@ -57,10 +58,9 @@ export function getVersionShift(
   //       return 'no new release';
   //   }
   // }
-  return `(${currentVersion || 'unreleased'} → ${getNewVersion(
-    currentVersion,
-    changes,
-  ) || 'no new release'})`;
+  return `(${getCurrentVerion(currentVersion) ||
+    'unreleased'} → ${getNewVersion(currentVersion, changes) ||
+    'no new release'})`;
 }
 export function getUrlForChangeLog(
   pullRequest: PullRequst,
@@ -107,37 +107,44 @@ export function renderCommentWithoutState(
       ? ``
       : `\n\n> **Change log has not been updated since latest commit** [Update Changelog](${url.href})`;
 
-  if (changeLog.packages.length === 1) {
-    const pkg = changeLog.packages[0];
-    if (pkg.changes.length === 0) {
-      return `This PR will not result in a new version of ${pkg.packageName} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
+  const packages = Object.keys(pullRequest.currentVersions).sort();
+  if (packages.length === 1) {
+    const pkg = changeLog.packages.find((p) => p.packageName === packages[0]);
+    if (!pkg || pkg.changes.length === 0) {
+      return `This PR will not result in a new version of ${packages[0]} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
     }
     return `## Change Log for ${pkg.packageName} ${getVersionShift(
       pullRequest.currentVersions[pkg.packageName] || [],
       pkg.changes,
-    )}\n\n[Edit changelog](${url.href})${outdated}`;
+    )}\n\n${changesToMarkdown(pkg.changes, 3)}\n\n[Edit changelog](${
+      url.href
+    })${outdated}`;
   }
   if (!changeLog.packages.some((pkg) => pkg.changes.length)) {
-    return `This PR will not result in a new version of the following packages as there are no user facing changes:\n\n${changeLog.packages
-      .map((pkg) => `- ${pkg.packageName}`)
+    return `This PR will not result in a new version of the following packages as there are no user facing changes:\n\n${packages
+      .map((pkg) => `- ${pkg}`)
       .join('\n')}\n\n[Add changes to trigger a release](${
       url.href
     })${outdated}`;
   }
+
+  const packagesWithoutChanges = packages.filter((packageName) => {
+    const pkg = changeLog.packages.find((p) => p.packageName === packageName);
+    return !pkg || !pkg.changes.length;
+  });
   return `## Change Logs\n\n${changeLog.packages
     .filter((pkg) => pkg.changes.length)
     .map(
       (pkg) =>
-        `## ${pkg.packageName} ${getVersionShift(
+        `### ${pkg.packageName} ${getVersionShift(
           pullRequest.currentVersions[pkg.packageName] || [],
           pkg.changes,
-        )}`,
+        )}\n\n${changesToMarkdown(pkg.changes, 4)}`,
     )
     .join('\n\n')}${
-    changeLog.packages.some((pkg) => !pkg.changes.length)
-      ? `## Packages With No Changes\n\nThe following packages have no user facing changes, so won't be released:\n\n${changeLog.packages
-          .filter((pkg) => !pkg.changes.length)
-          .map((pkg) => `- ${pkg.packageName}`)
+    packagesWithoutChanges.length
+      ? `\n\n## Packages With No Changes\n\nThe following packages have no user facing changes, so won't be released:\n\n${packagesWithoutChanges
+          .map((pkg) => `- ${pkg}`)
           .join('\n')}`
       : ``
   }\n\n[Edit changelogs](${url.href})${outdated}`;

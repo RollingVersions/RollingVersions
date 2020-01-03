@@ -27,4 +27,17 @@ test('readState', () => {
       "submittedAtCommitSha": "-->",
     }
   `);
+  expect(
+    readState(
+      writeState('Comment', {
+        submittedAtCommitSha: '-->',
+        packages: [],
+      }).replace(/\n/g, '\r\n'),
+    ),
+  ).toMatchInlineSnapshot(`
+    Object {
+      "packages": Array [],
+      "submittedAtCommitSha": "-->",
+    }
+  `);
 });

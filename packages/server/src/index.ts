@@ -115,6 +115,7 @@ export default function(app: Application) {
         ).state;
         const pullRequest: PullRequest = {
           headSha,
+          permission,
           changeLogState,
           currentVersions:
             packageInfoCache && packageInfoCache.headSha === headSha
@@ -157,7 +158,9 @@ export default function(app: Application) {
 
         const github = await getClient(app, params);
 
-        await updatePRWithState(github, params, req.body);
+        const body: PullRequest['changeLogState'] = req.body;
+        await updatePRWithState(github, params, body);
+        res.status(200).send('ok');
       } catch (ex) {
         next(ex);
       }
@@ -311,21 +314,30 @@ export default function(app: Application) {
       repo: string;
       pull_number: number;
     },
-    state: PullChangeLog,
+    state: PullRequest['changeLogState'],
   ) {
     const headSha = (await github.pulls.get(pullRequest)).data.head.sha;
+    const {existingComment, state: oldState} = await readComment(github, {
+      owner: pullRequest.owner,
+      repo: pullRequest.repo,
+      number: pullRequest.pull_number,
+    });
+    const currentVersions =
+      oldState.packageInfoCache && oldState.packageInfoCache.headSha === headSha
+        ? oldState.packageInfoCache.packages
+        : await listPackages(github, {
+            owner: pullRequest.owner,
+            repo: pullRequest.repo,
+            headSha,
+          });
+
     const pr = {
       owner: pullRequest.owner,
       repo: pullRequest.repo,
       number: pullRequest.pull_number,
       headSha,
-      currentVersions: await listPackages(github, {
-        owner: pullRequest.owner,
-        repo: pullRequest.repo,
-        headSha,
-      }),
+      currentVersions,
     };
-    const {existingComment, state: oldState} = await readComment(github, pr);
 
     const st = {...state, packageInfoCache: oldState.packageInfoCache};
 

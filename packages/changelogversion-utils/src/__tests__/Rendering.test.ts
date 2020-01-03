@@ -1,4 +1,6 @@
-import {renderReleaseNotes} from '../Rendering';
+import {URL} from 'url';
+import {renderReleaseNotes, renderCommentWithoutState} from '../Rendering';
+import {Platform} from '../Platforms';
 
 test('renderReleaseNotes', () => {
   expect(
@@ -39,5 +41,108 @@ test('renderReleaseNotes', () => {
     ### Bug Fixes
 
     - Library no longer crashes your app (#1)"
+  `);
+});
+
+test('renderCommentWithoutState', () => {
+  expect(
+    renderCommentWithoutState(
+      {
+        owner: 'Foo',
+        repo: 'bar',
+        number: 10,
+        headSha: 'd38990d3d54749a1408e7ca29e139e3c9743aa2e',
+        currentVersions: {
+          'changelogversion\u002dutils': [
+            {
+              platform: Platform.npm,
+              packageName: 'changelogversion\u002dutils',
+              notToBePublished: true,
+              registryVersion: null,
+              versionTag: null,
+            },
+          ],
+          changelogversion: [
+            {
+              platform: Platform.npm,
+              packageName: 'changelogversion',
+              notToBePublished: true,
+              registryVersion: null,
+              versionTag: null,
+            },
+          ],
+          'changelogversion\u002dserver': [
+            {
+              platform: Platform.npm,
+              packageName: 'changelogversion\u002dserver',
+              notToBePublished: true,
+              registryVersion: null,
+              versionTag: null,
+            },
+          ],
+        },
+      },
+      {
+        submittedAtCommitSha: 'd38990d3d54749a1408e7ca29e139e3c9743aa2e',
+        packages: [
+          {
+            packageName: 'changelogversion',
+            changes: [
+              {type: 'feat', title: 'Something awesome was added', body: ''},
+            ],
+          },
+        ],
+        packageInfoCache: {
+          headSha: 'd38990d3d54749a1408e7ca29e139e3c9743aa2e',
+          packages: {
+            'changelogversion\u002dutils': [
+              {
+                platform: Platform.npm,
+                packageName: 'changelogversion\u002dutils',
+                notToBePublished: true,
+                registryVersion: null,
+                versionTag: null,
+              },
+            ],
+            changelogversion: [
+              {
+                platform: Platform.npm,
+                packageName: 'changelogversion',
+                notToBePublished: true,
+                registryVersion: null,
+                versionTag: null,
+              },
+            ],
+            'changelogversion\u002dserver': [
+              {
+                platform: Platform.npm,
+                packageName: 'changelogversion\u002dserver',
+                notToBePublished: true,
+                registryVersion: null,
+                versionTag: null,
+              },
+            ],
+          },
+        },
+      },
+      new URL('https://example.com'),
+    ),
+  ).toMatchInlineSnapshot(`
+    "## Change Logs
+
+    ### changelogversion (unreleased → 1.0.0)
+
+    #### New Features
+
+    - Something awesome was added
+
+    ## Packages With No Changes
+
+    The following packages have no user facing changes, so won't be released:
+
+    - changelogversion-server
+    - changelogversion-utils
+
+    [Edit changelogs](https://example.com/Foo/bar/pulls/10)"
   `);
 });

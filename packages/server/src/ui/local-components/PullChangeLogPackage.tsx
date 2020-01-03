@@ -8,15 +8,17 @@ require('./PullChangeLogEntry.css');
 interface PullChangeLogPackageProps {
   packageInfo: PackageInfo[];
   changeLog: PackagePullChangeLog;
+  disabled: boolean;
   onChangeLogChange: (log: PackagePullChangeLog) => void;
 }
 export default function PullChangeLogPackage({
   packageInfo,
   changeLog,
+  disabled,
   onChangeLogChange,
 }: PullChangeLogPackageProps) {
   const title = (
-    <h2 className="font-sans text-3xl text-blue-800 font-light mt-4">
+    <h2 className="font-sans text-3xl text-blue-800 font-light mt-8 mb-4">
       {changeLog.packageName}
     </h2>
   );
@@ -25,6 +27,7 @@ export default function PullChangeLogPackage({
       <>
         {title}
         <RegistryStatus
+          disabled={disabled}
           packageInfo={packageInfo}
           changeLog={changeLog}
           onChangeLogChange={onChangeLogChange}
@@ -38,6 +41,7 @@ export default function PullChangeLogPackage({
     <>
       {title}
       <RegistryStatus
+        disabled={disabled}
         packageInfo={packageInfo}
         changeLog={changeLog}
         onChangeLogChange={onChangeLogChange}
@@ -46,6 +50,7 @@ export default function PullChangeLogPackage({
         <div className="flex-grow" style={{flexBasis: 0}}>
           <PullChangeLogEntrySection
             type="breaking"
+            disabled={disabled}
             changeLog={changeLog}
             onChangeLogChange={onChangeLogChange}
           />
@@ -53,12 +58,14 @@ export default function PullChangeLogPackage({
         <div className="flex-grow" style={{flexBasis: 0}}>
           <PullChangeLogEntrySection
             type="feat"
+            disabled={disabled}
             changeLog={changeLog}
             onChangeLogChange={onChangeLogChange}
           />
 
           <PullChangeLogEntrySection
             type="refactor"
+            disabled={disabled}
             changeLog={changeLog}
             onChangeLogChange={onChangeLogChange}
           />
@@ -66,12 +73,14 @@ export default function PullChangeLogPackage({
         <div className="flex-grow" style={{flexBasis: 0}}>
           <PullChangeLogEntrySection
             type="fix"
+            disabled={disabled}
             changeLog={changeLog}
             onChangeLogChange={onChangeLogChange}
           />
 
           <PullChangeLogEntrySection
             type="perf"
+            disabled={disabled}
             changeLog={changeLog}
             onChangeLogChange={onChangeLogChange}
           />

@@ -1,6 +1,5 @@
 import React from 'react';
 import {PullRequest} from '../../types';
-import PullChangeLog from 'changelogversion-utils/lib/PullChangeLog';
 
 export default function usePullRequest({
   owner,
@@ -46,12 +45,13 @@ export default function usePullRequest({
     pullRequest,
     error,
     updating: updatesInFlight > 0,
-    update: async (state: PullChangeLog): Promise<void> => {
+    update: async (state: PullRequest['changeLogState']): Promise<void> => {
       setUpdatesInFlight((v) => v + 1);
       try {
         try {
           setPullRequest((pr) => pr && {...pr, changeLogState: state});
           const res = await fetch(path, {
+            method: 'POST',
             body: JSON.stringify(state),
             headers: {'Content-Type': 'application/json'},
           });
