@@ -1,3 +1,5 @@
+import {PackageInfos} from './Platforms';
+
 export const SectionTitle: {readonly [type in ChangeType]: string} = {
   breaking: 'Breaking Changes',
   feat: 'New Features',
@@ -38,4 +40,8 @@ export default interface PullChangeLog {
    */
   readonly submittedAtCommitSha: string | null;
   readonly packages: PackagePullChangeLog[];
+  readonly packageInfoCache?: {
+    headSha: string;
+    packages: PackageInfos;
+  };
 }

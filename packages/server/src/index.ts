@@ -106,24 +106,24 @@ export default function(app: Application) {
             pull_number: params.pull_number,
           })
         ).data.head.sha;
+        const {packageInfoCache, ...changeLogState} = (
+          await readComment(github, {
+            number: params.pull_number,
+            owner: params.owner,
+            repo: params.repo,
+          })
+        ).state;
         const pullRequest: PullRequest = {
           headSha,
-          changeLogState: (
-            await readComment(github, {
-              number: params.pull_number,
-              owner: params.owner,
-              repo: params.repo,
-            })
-          ).state,
-          currentVersions: [
-            ...(
-              await listPackages(github, {
-                owner: params.owner,
-                repo: params.repo,
-                headSha,
-              })
-            ).entries(),
-          ],
+          changeLogState,
+          currentVersions:
+            packageInfoCache && packageInfoCache.headSha === headSha
+              ? packageInfoCache.packages
+              : await listPackages(github, {
+                  owner: params.owner,
+                  repo: params.repo,
+                  headSha,
+                }),
         };
         res.json(pullRequest);
       } catch (ex) {
@@ -268,6 +268,7 @@ export default function(app: Application) {
       headSha: context.payload.pull_request.head.sha,
     });
   }
+
   async function updatePR(
     github: Octokit,
     pullRequest: {
@@ -277,16 +278,32 @@ export default function(app: Application) {
       headSha: string;
     },
   ) {
-    const $pullRequest = {
-      ...pullRequest,
-      currentVersions: await listPackages(github, pullRequest),
+    const {existingComment, state: oldState} = await readComment(
+      github,
+      pullRequest,
+    );
+
+    const currentVersions =
+      oldState.packageInfoCache &&
+      oldState.packageInfoCache.headSha === pullRequest.headSha
+        ? oldState.packageInfoCache.packages
+        : await listPackages(github, pullRequest);
+
+    const state: PullChangeLog = {
+      ...oldState,
+      packageInfoCache: {
+        headSha: pullRequest.headSha,
+        packages: currentVersions,
+      },
     };
-    const {existingComment, state} = await readComment(github, pullRequest);
 
-    await writeComment(github, existingComment, $pullRequest, state, APP_URL);
+    const pr = {...pullRequest, currentVersions};
 
-    await updateStatus(github, $pullRequest, state, APP_URL);
+    await writeComment(github, existingComment, pr, state, APP_URL);
+
+    await updateStatus(github, pr, state, APP_URL);
   }
+
   async function updatePRWithState(
     github: Octokit,
     pullRequest: {
@@ -308,10 +325,12 @@ export default function(app: Application) {
         headSha,
       }),
     };
-    const {existingComment} = await readComment(github, pr);
+    const {existingComment, state: oldState} = await readComment(github, pr);
 
-    await writeComment(github, existingComment, pr, state, APP_URL);
+    const st = {...state, packageInfoCache: oldState.packageInfoCache};
 
-    await updateStatus(github, pr, state, APP_URL);
+    await writeComment(github, existingComment, pr, st, APP_URL);
+
+    await updateStatus(github, pr, st, APP_URL);
   }
 }

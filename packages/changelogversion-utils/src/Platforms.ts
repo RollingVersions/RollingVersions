@@ -11,3 +11,4 @@ export interface PackageInfo {
   registryVersion: string | null;
   versionTag: VersionTag | null;
 }
+export type PackageInfos = {[name: string]: PackageInfo[] | undefined};

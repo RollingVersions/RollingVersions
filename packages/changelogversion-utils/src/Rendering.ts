@@ -6,7 +6,7 @@ import PullChangeLog, {
 } from './PullChangeLog';
 import {writeState} from './CommentState';
 import {getNewVersion} from './Versioning';
-import {PackageInfo} from './Platforms';
+import {PackageInfo, PackageInfos} from './Platforms';
 
 export const COMMENT_PREFIX = `<!-- This comment is maintained by Changelog Version. Do not edit it manually! -->\n\n`;
 
@@ -36,7 +36,7 @@ export interface PullRequst {
   owner: string;
   repo: string;
   number: number;
-  currentVersions: Map<string, Array<PackageInfo>>;
+  currentVersions: PackageInfos;
 }
 
 export function getVersionShift(
@@ -113,7 +113,7 @@ export function renderCommentWithoutState(
       return `This PR will not result in a new version of ${pkg.packageName} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
     }
     return `## Change Log for ${pkg.packageName} ${getVersionShift(
-      pullRequest.currentVersions.get(pkg.packageName) || [],
+      pullRequest.currentVersions[pkg.packageName] || [],
       pkg.changes,
     )}\n\n[Edit changelog](${url.href})${outdated}`;
   }
@@ -129,7 +129,7 @@ export function renderCommentWithoutState(
     .map(
       (pkg) =>
         `## ${pkg.packageName} ${getVersionShift(
-          pullRequest.currentVersions.get(pkg.packageName) || [],
+          pullRequest.currentVersions[pkg.packageName] || [],
           pkg.changes,
         )}`,
     )

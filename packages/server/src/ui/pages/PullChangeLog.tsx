@@ -26,9 +26,13 @@ export default function PullChangeLog() {
   return (
     <>
       <h1>ChangeLog</h1>
-      {pr.pullRequest.currentVersions
+      {Object.entries(pr.pullRequest.currentVersions)
         .slice()
         .sort(([a], [b]) => (a < b ? -1 : 1))
+        .filter(
+          <S, T>(v: [S, T]): v is [S, Exclude<T, undefined>] =>
+            v[1] !== undefined,
+        )
         .map(([name, packageInfo]) => (
           <PullChangeLogPackage
             key={name}

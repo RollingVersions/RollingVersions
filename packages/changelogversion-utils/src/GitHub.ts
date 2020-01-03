@@ -10,7 +10,7 @@ import {
 } from './Rendering';
 import {readState} from './CommentState';
 import PullChangeLog from './PullChangeLog';
-import {PackageInfo, Platform, VersionTag} from './Platforms';
+import {PackageInfo, Platform, VersionTag, PackageInfos} from './Platforms';
 import {getNpmVersion} from './Npm';
 
 function isObject(
@@ -73,7 +73,7 @@ function getVersionTag(
 export async function listPackages(
   github: Pick<Octokit, 'repos'>,
   pr: Pick<PullRequst, 'owner' | 'repo' | 'headSha'>,
-) {
+): Promise<PackageInfos> {
   const allTags = (
     await github.repos.listTags({
       owner: pr.owner,
@@ -145,7 +145,8 @@ export async function listPackages(
     await walk(root.data);
   }
 
-  return mapMap(packages, (pkgInfos) =>
+  const result: PackageInfos = {};
+  for (const [key, pkgInfo] of mapMap(packages, (pkgInfos) =>
     pkgInfos.map(
       (pkg): PackageInfo => {
         return {
@@ -159,7 +160,10 @@ export async function listPackages(
         };
       },
     ),
-  );
+  )) {
+    result[key] = pkgInfo;
+  }
+  return result;
 }
 
 export async function readComment(
@@ -167,7 +171,7 @@ export async function readComment(
   pr: Pick<PullRequst, 'owner' | 'repo' | 'number'>,
 ): Promise<{
   existingComment: number | undefined;
-  state: PullChangeLog | undefined;
+  state: PullChangeLog;
 }> {
   const comments = await github.issues.listComments({
     issue_number: pr.number,
@@ -180,7 +184,10 @@ export async function readComment(
   );
   return {
     existingComment: existingComment?.id,
-    state: readState(existingComment?.body),
+    state: readState(existingComment?.body) || {
+      submittedAtCommitSha: null,
+      packages: [],
+    },
   };
 }
 

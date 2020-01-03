@@ -28,7 +28,7 @@ export default function PullChangeLogEntrySection({
           {type, title: '', body: ''},
         ].map((entry, i) => (
           <li key={i}>
-            <div style={{position: 'relative'}}>
+            <div style={{position: 'relative', minHeight: '1rem'}}>
               {entry.title ? (
                 <GitHubMarkdown source={entry.title} />
               ) : (
@@ -55,7 +55,7 @@ export default function PullChangeLogEntrySection({
               />
             </div>
             {entry.title && (
-              <div style={{position: 'relative'}}>
+              <div style={{position: 'relative', minHeight: '2rem'}}>
                 {entry.body ? (
                   <GitHubMarkdown source={entry.body} />
                 ) : (
