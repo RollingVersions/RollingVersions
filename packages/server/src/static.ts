@@ -6,7 +6,7 @@ const staticServer = express.Router();
 
 staticServer.use(
   '/static',
-  express.static(`${__dirname}/../../../dist/static`, {
+  express.static(`${__dirname}/../dist/static`, {
     maxAge: 365 * 24 * 60 * 60 * 1000,
     immutable: true,
     index: false,
