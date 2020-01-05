@@ -11,6 +11,7 @@ interface Secrets {
   WEBHOOK_SECRET: string;
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
+  SECURE_KEY: string;
 }
 export default function secrets(data: {staging: Secrets; production: Secrets}) {
   return [

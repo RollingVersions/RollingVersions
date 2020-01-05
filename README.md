@@ -6,6 +6,8 @@ It has no state of its own. The changelog for each PR is stored along with the c
 
 ## Web Endpoints
 
+Get Logs: `kubectl logs -lapp=changelogversion-staging --namespace changelogversion --tail=100`
+
 ### Authentication
 
 1. authenticate to GitHub using OAuth as the user
