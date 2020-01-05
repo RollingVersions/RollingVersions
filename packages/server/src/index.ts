@@ -78,7 +78,24 @@ export default function(app: Application) {
   }
 
   app.router.get(`/:owner/:repo/pulls/:pull_number`, async (req, res, next) => {
-    if (getGitHubAccessTokenOrRedirectForAuth(req, res, next)) {
+    const userAuth = getGitHubAccessTokenOrRedirectForAuth(req, res, next);
+    if (userAuth) {
+      try {
+        const params = await parseParams(req, res, next);
+        const permission = await getPermissionLevel({...params, userAuth});
+        if (permission === Permission.None) {
+          res
+            .status(404)
+            .send(
+              'Either this PR does not exist, you do not have acess to it, or Changelog Version is not installed on this repository.',
+            );
+          next();
+          return;
+        }
+      } catch (ex) {
+        next(ex);
+        return;
+      }
       next();
     }
   });
@@ -94,6 +111,11 @@ export default function(app: Application) {
         const params = await parseParams(req, res, next);
         const permission = await getPermissionLevel({...params, userAuth});
         if (permission === Permission.None) {
+          res
+            .status(404)
+            .send(
+              'Either this PR does not exist, you do not have acess to it, or Changelog Version is not installed on this repository.',
+            );
           next();
           return;
         }
