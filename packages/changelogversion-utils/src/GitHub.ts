@@ -1,6 +1,5 @@
 import {URL} from 'url';
 import Octokit from '@octokit/rest';
-import {valid, gt, prerelease} from 'semver';
 import {
   COMMENT_GUID,
   PullRequst,
@@ -10,65 +9,9 @@ import {
 } from './Rendering';
 import {readState} from './CommentState';
 import PullChangeLog from './PullChangeLog';
-import {PackageInfo, Platform, VersionTag, PackageInfos} from './Platforms';
-import {getNpmVersion} from './Npm';
-
-function isObject(
-  value: unknown,
-): value is Record<string | number | symbol, unknown> {
-  return value && typeof value === 'object';
-}
-
-function mapMap<TKey, TValue, TResultValue>(
-  mapObj: Map<TKey, TValue>,
-  mapFn: (value: TValue, key: TKey) => TResultValue,
-) {
-  return new Map(
-    [...mapObj.entries()].map(([key, value]) => {
-      return [key, mapFn(value, key)];
-    }),
-  );
-}
-
-function getVersionTag(
-  allTags: Octokit.ReposListTagsResponse,
-  packageName: string,
-  registryVersion: string | null,
-  isMonoRepo: boolean,
-): VersionTag | null {
-  const tags = allTags
-    .map((tag) => {
-      if (!isMonoRepo && valid(tag.name)) {
-        return {
-          ...tag,
-          version: tag.name,
-        };
-      }
-      const split = tag.name.split('@');
-      const version = split.pop()!;
-      const name = split.join('@');
-      if (name === packageName && valid(version)) {
-        return {...tag, version};
-      }
-      return null;
-    })
-    .filter(<T>(v: T): v is Exclude<T, null> => v !== null);
-  if (registryVersion) {
-    return tags.find((t) => t.version === registryVersion) || null;
-  } else if (tags.some((t) => !prerelease(t.version))) {
-    return tags
-      .filter((t) => !prerelease(t.version))
-      .reduce((a, b) => {
-        if (gt(a.version, b.version)) {
-          return a;
-        } else {
-          return b;
-        }
-      });
-  } else {
-    return null;
-  }
-}
+import {PackageInfo, Platform, PackageInfos} from './Platforms';
+import isObject from './utils/isObject';
+import addVersions from './utils/addVersions';
 
 export async function listPackages(
   github: Pick<Octokit, 'repos'>,
@@ -79,8 +22,11 @@ export async function listPackages(
       owner: pr.owner,
       repo: pr.repo,
     })
-  ).data;
-  const packages = new Map<string, Array<Omit<PackageInfo, 'versionTag'>>>();
+  ).data.map((t) => ({name: t.name, commitSha: t.commit.sha}));
+  const packages = new Map<
+    string,
+    Array<Omit<PackageInfo, 'versionTag' | 'registryVersion'>>
+  >();
   let ref: string | undefined = pr.headSha;
   let root: Octokit.Response<Octokit.ReposGetContentsResponse>;
   try {
@@ -125,13 +71,10 @@ export async function listPackages(
         }
         if (isObject(result) && typeof result.name === 'string') {
           packages.set(result.name, packages.get(result.name) || []);
-          const registryVersion =
-            result.private === true ? null : await getNpmVersion(result.name);
           packages.get(result.name)!.push({
             platform: Platform.npm,
             packageName: result.name,
             notToBePublished: result.private === true,
-            registryVersion,
           });
         }
       }
@@ -145,25 +88,7 @@ export async function listPackages(
     await walk(root.data);
   }
 
-  const result: PackageInfos = {};
-  for (const [key, pkgInfo] of mapMap(packages, (pkgInfos) =>
-    pkgInfos.map(
-      (pkg): PackageInfo => {
-        return {
-          ...pkg,
-          versionTag: getVersionTag(
-            allTags,
-            pkg.packageName,
-            pkg.registryVersion,
-            packages.size === 1,
-          ),
-        };
-      },
-    ),
-  )) {
-    result[key] = pkgInfo;
-  }
-  return result;
+  return await addVersions(packages, allTags);
 }
 
 export async function readComment(

@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@types/pacote": "^9.5.0",
+    "globby": "^11.0.0",
     "libnpmconfig": "^1.2.1",
     "pacote": "^10.3.0",
     "semver": "^7.1.1"
