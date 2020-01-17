@@ -1,6 +1,7 @@
 import {URL} from 'url';
 import Octokit from '@octokit/rest';
 import {valid, gt, prerelease} from 'semver';
+import {graphql} from '@octokit/graphql';
 import {
   COMMENT_GUID,
   PullRequst,
@@ -12,6 +13,21 @@ import {readState} from './CommentState';
 import PullChangeLog from './PullChangeLog';
 import {PackageInfo, Platform, VersionTag, PackageInfos} from './Platforms';
 import {getNpmVersion} from './Npm';
+
+export interface Headers {
+  [key: string]: string;
+}
+export interface Variables {
+  [key: string]: any;
+}
+export declare type Graphql = (
+  query: string,
+  variables?: Variables,
+  headers?: Headers,
+) => ReturnType<typeof graphql>;
+export interface GitHubAPI extends Pick<Octokit, 'repos'> {
+  graphql: Graphql;
+}
 
 function isObject(
   value: unknown,
@@ -70,8 +86,98 @@ function getVersionTag(
   }
 }
 
+interface PullRequstData {
+
+}
+function getPullRequstData(github: GitHubAPI, pr: Pick<PullRequst, 'owner' | 'repo' | 'number') {
+  // TODO: can we directly in single request ask for:
+  //   - All the tags in the GitHub repository
+  //   - All the file names in the head reference of a PR, even if the PR comes from a forked repo that our app has not been installed on
+  // Then can we request all the files we want out of that head reference for the PR, even when it's in a repository our app does not normally have access to?
+}
+
+// TODO: optimise query by doing everything in a maximum of 2 requests via GraphQL
+// query {
+//   rateLimit {
+//     limit
+//     cost
+//     remaining
+//     resetAt
+//   }
+//   viewer {
+//     login
+//   }
+//   repository(owner: "pugjs", name: "pug") {
+//     editorconfig: object(oid:"78c6ddee23e5601eccbdcebb19e66b766c4175c0") {
+//       __typename
+//       ...on Blob {
+//         text
+//       }
+//     }
+//     ref(qualifiedName:"master") {
+//       target {
+//         __typename,
+//         ... on Commit {
+//           message
+//           committedDate
+//           tree {
+//             entries {
+//               name
+//               object {
+//                 __typename
+//                 oid
+//                 ...on Tree {
+//                   entries {
+//                     name
+//                     object {
+//                       __typename
+//                       oid
+//                       ...on Tree {
+//                         entries {
+//                           name
+//                           object {
+//                             __typename
+//                             oid
+//                             ...on Tree {
+//                               entries {
+//                                 name
+//                                 object {
+//                                   __typename
+//                                   oid
+//                                   ...on Tree {
+//                                     entries {
+//                                       name
+//                                       object {
+//                                         __typename
+//                                         oid
+//                                         ...on Tree {
+//                                           entries {
+//                                             name
+//                                           }
+//                                         }
+//                                       }
+//                                     }
+//                                   }
+//                                 }
+//                               }
+//                             }
+//                           }
+//                         }
+//                       }
+//                     }
+//                   }
+//                 }
+//               }
+//             }
+
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
 export async function listPackages(
-  github: Pick<Octokit, 'repos'>,
+  github: GitHubAPI,
   pr: Pick<PullRequst, 'owner' | 'repo' | 'headSha'>,
 ): Promise<PackageInfos> {
   const allTags = (
