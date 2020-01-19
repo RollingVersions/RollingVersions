@@ -102,7 +102,7 @@ export async function readComment(
     issue_number: pr.number,
     owner: pr.owner,
     repo: pr.repo,
-    per_page: 100,
+    per_page: 20,
   });
   const existingComment = comments.data.find((comment) =>
     comment.body.includes(COMMENT_GUID),

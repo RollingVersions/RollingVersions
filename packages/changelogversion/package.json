@@ -12,7 +12,9 @@
     "postbuild": "rimraf lib/**/__tests__"
   },
   "dependencies": {
-    "changelogversion-utils": "0.0.0"
+    "@octokit/graphql": "^4.3.1",
+    "changelogversion-utils": "0.0.0",
+    "dataloader": "^2.0.0"
   },
   "devDependencies": {
     "@forbeslindesay/tsconfig": "^2.0.0",

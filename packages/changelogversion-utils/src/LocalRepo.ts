@@ -1,11 +1,15 @@
 import {statSync, readFileSync} from 'fs';
 import globby from 'globby';
+import {graphql} from '@octokit/graphql';
 import {PackageInfos, PackageInfo, Platform} from './Platforms';
 import isObject from './utils/isObject';
 import VersionTag from './VersionTag';
 import addVersions from './utils/addVersions';
 import {spawnBuffered} from './spawn';
 import isTruthy from './utils/isTruthy';
+import PullChangeLog from './PullChangeLog';
+import {COMMENT_GUID} from './Rendering';
+import {readState} from './CommentState';
 
 async function listTags(
   dirname: string,
@@ -85,4 +89,77 @@ export async function listPackages(dirname: string): Promise<PackageInfos> {
   ]);
 
   return await addVersions(packages, allTags);
+}
+
+export async function getCommits(dirname: string, lastTag?: string) {
+  const data = await spawnBuffered(
+    'git',
+    ['log', '--pretty=format:"%H"', lastTag ? `HEAD...${lastTag}` : `HEAD`],
+    {
+      cwd: dirname,
+    },
+  );
+  return data
+    .toString('utf8')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter((s) => s !== '');
+}
+
+export async function getChangeLogs(
+  query: typeof graphql,
+  owner: string,
+  name: string,
+  commitShas: readonly string[],
+) {
+  const queryString = `
+    query commits($owner: String!, $name: String!){ 
+      repository(owner: $owner, name: $name) {
+        ${commitShas
+          .filter((sha) => /^[0-9a-f]+$/.test(sha))
+          .map(
+            (sha) => `
+              ${sha}: object(expression: "${sha}") {
+                __typename
+                ...on Commit {
+                  associatedPullRequests(first: 10) {
+                    nodes {
+                      comments(first: 20) {
+                        nodes {
+                          bodyText
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `,
+          )
+          .join('\n')}
+        
+      }
+    }
+  `
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const result = await query(queryString, {owner, name});
+  return commitShas.map((sha) => {
+    const res = /^[0-9a-f]+$/.test(sha) && result && result[sha];
+    if (!res) return new Error(`Could not find the commit ${sha}`);
+    const changeLogs: PullChangeLog[] = [];
+    (res.associatedPullRequests.nodes as {
+      comments: {nodes: {bodyText: string}[]};
+    }[]).forEach((pr) =>
+      pr.comments.nodes.forEach((c) => {
+        if (c.bodyText.includes(COMMENT_GUID)) {
+          const state = readState(c.bodyText);
+          if (state) {
+            changeLogs.push(state);
+          }
+        }
+      }),
+    );
+    return changeLogs;
+  });
 }

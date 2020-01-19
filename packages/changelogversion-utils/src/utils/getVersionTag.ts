@@ -9,17 +9,17 @@ export default function getVersionTag(
 ): VersionTag | null {
   const tags = allTags
     .map((tag) => {
-      if (!isMonoRepo && valid(tag.name)) {
+      if (!isMonoRepo && valid(tag.name.replace(/^v/, ''))) {
         return {
           ...tag,
-          version: tag.name,
+          version: tag.name.replace(/^v/, ''),
         };
       }
       const split = tag.name.split('@');
-      const version = split.pop()!;
+      const version = split.pop();
       const name = split.join('@');
-      if (name === packageName && valid(version)) {
-        return {...tag, version};
+      if (name === packageName && version && valid(version.replace(/^v/, ''))) {
+        return {...tag, version: version.replace(/^v/, '')};
       }
       return null;
     })
