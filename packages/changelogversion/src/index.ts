@@ -1,5 +1,6 @@
 import DataLoader from 'dataloader';
 import {graphql} from '@octokit/graphql';
+// import Octokit from '@octokit/rest';
 import chalk from 'chalk';
 import {
   listPackages,
@@ -11,7 +12,7 @@ import {
   getNewVersion,
 } from 'changelogversion-utils/lib/Versioning';
 import {ChangeLogEntry} from 'changelogversion-utils/lib/PullChangeLog';
-import {PackageInfo} from 'changelogversion-utils/lib/Platforms';
+import {PackageInfo, Platform} from 'changelogversion-utils/lib/Platforms';
 import isTruthy from 'changelogversion-utils/lib/utils/isTruthy';
 import {changesToMarkdown} from 'changelogversion-utils/lib/Rendering';
 
@@ -185,4 +186,83 @@ export function printPackagesStatus(packages: PackageStatus[]) {
     }
     console.warn(``);
   }
+}
+
+export async function canPublishGitHub({
+  owner,
+  name,
+  accessToken,
+}: Config): Promise<boolean> {
+  const result = await graphql.defaults({
+    headers: {
+      authorization: `token ${accessToken}`,
+    },
+  })(
+    `query permissions($owner:String!, $name:String!) { 
+    repository(owner:$owner,name:$name) {
+      viewerPermission
+    }
+  }`,
+    {owner, name},
+  );
+  const permission =
+    result && result.repository && result.repository.viewerPermission;
+  return (
+    permission === 'ADMIN' ||
+    permission === 'MAINTAIN' ||
+    permission === 'WRITE'
+  );
+}
+export async function publishGitHub(
+  _config: Config,
+  _packageName: string,
+  _newVersion: string,
+  _opts: {isMonoRepo: boolean; hasVPrefix: boolean},
+) {
+  // TODO: create GitHub release
+  // const github = new Octokit({
+  //   auth: accessToken,
+  // });
+  // github.repos.createRelease({
+  //   /**
+  //    * Text describing the contents of the tag.
+  //    */
+  //   body?: string;
+  //   /**
+  //    * `true` to create a draft (unpublished) release, `false` to create a published one.
+  //    */
+  //   draft?: boolean;
+  //   /**
+  //    * The name of the release.
+  //    */
+  //   name?: string;
+  //   owner: string;
+  //   /**
+  //    * `true` to identify the release as a prerelease. `false` to identify the release as a full release.
+  //    */
+  //   prerelease?: boolean;
+  //   repo: string;
+  //   /**
+  //    * The name of the tag.
+  //    */
+  //   tag_name: string;
+  //   /**
+  //    * Specifies the commitish value that determines where the Git tag is created from. Can be any branch or commit SHA. Unused if the Git tag already exists. Default: the repository's default branch (usually `master`).
+  //    */
+  //   target_commitish?: string;
+  // });
+}
+export async function publish(
+  config: Config,
+  pkg: PackageInfo,
+  newVersion: string,
+) {
+  switch (pkg.platform) {
+    case Platform.npm:
+      await publishNpm(config, pkg.path, newVersion);
+      break;
+  }
+}
+async function publishNpm(_config: Config, _path: string, _newVersion: string) {
+  // TODO
 }

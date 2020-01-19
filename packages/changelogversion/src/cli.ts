@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
-import {getPackagesStatus, printPackagesStatus, Status} from '.';
+import {
+  getPackagesStatus,
+  printPackagesStatus,
+  Status,
+  publishGitHub,
+  canPublishGitHub,
+} from '.';
 
 const CI_ENV = require('env-ci')();
 
@@ -58,17 +64,23 @@ if (slug.length !== 2) {
 }
 const [owner, name] = slug;
 
-getPackagesStatus({
+const config = {
   dirname: DIRNAME,
   owner,
   name,
   accessToken: GITHUB_TOKEN,
-})
+};
+getPackagesStatus(config)
   .then(async (packages) => {
     printPackagesStatus(packages);
-    console.warn('publishing packages...');
     for (const pkg of packages) {
       if (pkg.status === Status.NewVersionToBePublished) {
+        if (!(await canPublishGitHub(config))) {
+          console.error(
+            'This viewer does not have permisison to publish tags/releases to GitHub',
+          );
+          process.exit(1);
+        }
         const newVersion = pkg.newVersion;
         // TODO: check permission to create GitHub release
         for (const pkgInfo of pkg.pkgInfos) {
@@ -95,7 +107,21 @@ getPackagesStatus({
           console.warn(
             `publishing ${pkg.packageName} as GitHub Release @ ${newVersion}`,
           );
-          // TODO: create GitHub release
+          await publishGitHub(config, pkg.packageName, newVersion, {
+            isMonoRepo:
+              packages.length === 1 &&
+              pkg.pkgInfos.some((p) => p.versionTag) &&
+              pkg.pkgInfos.every(
+                (p) => !p.versionTag || !p.versionTag.name.includes?.('@'),
+              ),
+            hasVPrefix:
+              pkg.pkgInfos.some((p) => p.versionTag) &&
+              pkg.pkgInfos.every(
+                (p) =>
+                  !p.versionTag ||
+                  p.versionTag.name.replace(/^.*\@/, '').startsWith('v'),
+              ),
+          });
         }
       }
     }
