@@ -47,7 +47,6 @@ export default function PullChangeLog() {
               (state?.packages || []).find((c) => c.packageName === name) || {
                 packageName: name,
                 changes: [],
-                publishInitialVersionAs: undefined,
               }
             }
             onChangeLogChange={(pkgState) => {

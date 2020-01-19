@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@octokit/graphql": "^4.3.1",
+    "chalk": "^3.0.0",
     "changelogversion-utils": "0.0.0",
     "dataloader": "^2.0.0"
   },

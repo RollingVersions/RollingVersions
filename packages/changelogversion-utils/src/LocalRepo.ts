@@ -1,3 +1,4 @@
+import {relative} from 'path';
 import {statSync, readFileSync} from 'fs';
 import globby from 'globby';
 import {graphql} from '@octokit/graphql';
@@ -72,6 +73,14 @@ async function listRawPackages(dirname: string) {
         packages.set(result.name, packages.get(result.name) || []);
         packages.get(result.name)!.push({
           platform: Platform.npm,
+          path: relative(dirname, entryPath).replace(/\\/g, '/'),
+          publishConfigAccess:
+            result.name[0] === '@'
+              ? isObject(result.publishConfig) &&
+                result.publishConfig.access === 'public'
+                ? 'public'
+                : 'restricted'
+              : 'public',
           packageName: result.name,
           notToBePublished: result.private === true,
         });
@@ -103,6 +112,7 @@ export async function getCommits(dirname: string, lastTag?: string) {
     .toString('utf8')
     .split('\n')
     .map((s) => s.trim())
+    .map((s) => s.replace(/^\"([^"]+)\"$/, '$1'))
     .filter((s) => s !== '');
 }
 
@@ -113,20 +123,21 @@ export async function getChangeLogs(
   commitShas: readonly string[],
 ) {
   const queryString = `
-    query commits($owner: String!, $name: String!){ 
+    query commits($owner: String!, $name: String!) { 
       repository(owner: $owner, name: $name) {
         ${commitShas
           .filter((sha) => /^[0-9a-f]+$/.test(sha))
           .map(
             (sha) => `
-              ${sha}: object(expression: "${sha}") {
+              c${sha}: object(expression: "${sha}") {
                 __typename
                 ...on Commit {
                   associatedPullRequests(first: 10) {
                     nodes {
+                      number
                       comments(first: 20) {
                         nodes {
-                          bodyText
+                          body
                         }
                       }
                     }
@@ -140,22 +151,29 @@ export async function getChangeLogs(
       }
     }
   `
-    .replace(/\s+/g, ' ')
+    .replace(/ +/g, ' ')
     .trim();
 
-  const result = await query(queryString, {owner, name});
+  const result = commitShas.some((sha) => /^[0-9a-f]+$/.test(sha))
+    ? await query(queryString, {owner, name})
+    : null;
+
   return commitShas.map((sha) => {
-    const res = /^[0-9a-f]+$/.test(sha) && result && result[sha];
-    if (!res) return new Error(`Could not find the commit ${sha}`);
-    const changeLogs: PullChangeLog[] = [];
+    if (!/^[0-9a-f]+$/.test(sha)) {
+      return new Error(`The commit sha ${sha} does not match /^[0-9a-f]+$/`);
+    }
+    const res = result?.repository?.[`c${sha}`];
+    if (!res) return [];
+    const changeLogs: (PullChangeLog & {pr: number})[] = [];
     (res.associatedPullRequests.nodes as {
-      comments: {nodes: {bodyText: string}[]};
+      number: number;
+      comments: {nodes: {body: string}[]};
     }[]).forEach((pr) =>
       pr.comments.nodes.forEach((c) => {
-        if (c.bodyText.includes(COMMENT_GUID)) {
-          const state = readState(c.bodyText);
+        if (c.body.includes(COMMENT_GUID)) {
+          const state = readState(c.body);
           if (state) {
-            changeLogs.push(state);
+            changeLogs.push({...state, pr: pr.number});
           }
         }
       }),

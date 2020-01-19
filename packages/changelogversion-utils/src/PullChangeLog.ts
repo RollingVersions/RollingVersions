@@ -29,7 +29,6 @@ export interface ChangeLogEntry {
 }
 export interface PackagePullChangeLog {
   readonly packageName: string;
-  readonly publishInitialVersionAs?: 'public' | 'private';
   readonly changes: ChangeLogEntry[];
 }
 export default interface PullChangeLog {

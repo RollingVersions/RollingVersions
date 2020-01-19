@@ -72,7 +72,15 @@ export async function listPackages(
         if (isObject(result) && typeof result.name === 'string') {
           packages.set(result.name, packages.get(result.name) || []);
           packages.get(result.name)!.push({
+            path: entry.data.path.replace(/^\//, ''),
             platform: Platform.npm,
+            publishConfigAccess:
+              result.name[0] === '@'
+                ? isObject(result.publishConfig) &&
+                  result.publishConfig.access === 'public'
+                  ? 'public'
+                  : 'restricted'
+                : 'public',
             packageName: result.name,
             notToBePublished: result.private === true,
           });
