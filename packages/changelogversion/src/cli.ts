@@ -66,9 +66,7 @@ getPackagesStatus({
 })
   .then(async (packages) => {
     printPackagesStatus(packages);
-    if (!DRY_RUN) {
-      console.warn('publishing packages...');
-    }
+    console.warn('publishing packages...');
     for (const pkg of packages) {
       if (pkg.status === Status.NewVersionToBePublished) {
         const newVersion = pkg.newVersion;
@@ -78,10 +76,27 @@ getPackagesStatus({
           // TODO: check we have permission to publish to relevant platform
         }
         for (const pkgInfo of pkg.pkgInfos) {
-          console.warn('publishing', newVersion, pkgInfo);
-          // TODO: publish to relevant platform
+          if (DRY_RUN) {
+            console.warn(
+              `publishing ${pkgInfo.packageName} to ${pkgInfo.platform} @ ${newVersion} (dry run)`,
+            );
+          } else {
+            console.warn(
+              `publishing ${pkgInfo.packageName} to ${pkgInfo.platform} @ ${newVersion}`,
+            );
+            // TODO: publish to relevant platform
+          }
         }
-        // TODO: create GitHub release
+        if (DRY_RUN) {
+          console.warn(
+            `publishing ${pkg.packageName} as GitHub Release @ ${newVersion} (dry run)`,
+          );
+        } else {
+          console.warn(
+            `publishing ${pkg.packageName} as GitHub Release @ ${newVersion}`,
+          );
+          // TODO: create GitHub release
+        }
       }
     }
   })
