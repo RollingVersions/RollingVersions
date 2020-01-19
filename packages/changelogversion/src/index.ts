@@ -91,12 +91,15 @@ async function run({dirname, owner, name, accessToken}: Config) {
             currentTag ? currentTag.commitSha : '',
           );
           const changeLogs = await changeLogsLoader.loadMany(commits);
+          const handledPRs = new Set<number>();
           const changeLogEntries: (ChangeLogEntry & {pr: number})[] = [];
           for (const cl of changeLogs) {
             if (cl instanceof Error) {
               throw cl;
             }
             for (const pullChangeLog of cl) {
+              if (handledPRs.has(pullChangeLog.pr)) continue;
+              handledPRs.add(pullChangeLog.pr);
               for (const pkg of pullChangeLog.packages) {
                 if (pkg.packageName === packageName) {
                   changeLogEntries.push(
@@ -114,7 +117,7 @@ async function run({dirname, owner, name, accessToken}: Config) {
               packageName,
             };
           }
-          // TODO: pretty print output and publish packages
+
           return {
             status: Status.NewVersionToBePublished,
             currentVersion,
