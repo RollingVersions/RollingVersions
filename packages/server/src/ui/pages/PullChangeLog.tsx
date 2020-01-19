@@ -70,12 +70,15 @@ export default function PullChangeLog() {
               ? `bg-gray-700`
               : `bg-blue-500 hover:bg-blue-700`
           } text-white font-bold py-2 px-4 fixed right-0 bottom-0 mx-12 my-4 rounded-full`}
-          onClick={() => {
+          onClick={async () => {
             if (!state || !headSha || pr.updating) return;
-            void pr.update({
+            await pr.update({
               ...state,
               submittedAtCommitSha: headSha,
             });
+            location.assign(
+              `https://github.com/${params.owner}/${params.repo}/pull/${params.pull_number}`,
+            );
           }}
         >
           Save Changelog For {shortSha}
