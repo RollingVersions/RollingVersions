@@ -15,22 +15,22 @@ import {PackageInfo} from 'changelogversion-utils/lib/Platforms';
 import isTruthy from 'changelogversion-utils/lib/utils/isTruthy';
 import {changesToMarkdown} from 'changelogversion-utils/lib/Rendering';
 
-enum Status {
+export enum Status {
   MissingTag,
   NoUpdateRequired,
   NewVersionToBePublished,
 }
-interface MissingTag {
+export interface MissingTag {
   status: Status.MissingTag;
   packageName: string;
   currentVersion: string;
 }
-interface NoUpdateRequired {
+export interface NoUpdateRequired {
   status: Status.NoUpdateRequired;
   packageName: string;
   currentVersion: string | null;
 }
-interface NewVersionToBePublished {
+export interface NewVersionToBePublished {
   status: Status.NewVersionToBePublished;
   packageName: string;
   currentVersion: string | null;
@@ -39,16 +39,24 @@ interface NewVersionToBePublished {
   pkgInfos: readonly PackageInfo[];
 }
 
-type PackageStatus = MissingTag | NoUpdateRequired | NewVersionToBePublished;
+export type PackageStatus =
+  | MissingTag
+  | NoUpdateRequired
+  | NewVersionToBePublished;
 
-interface Config {
+export interface Config {
   dirname: string;
   owner: string;
   name: string;
   accessToken: string;
 }
 
-async function run({dirname, owner, name, accessToken}: Config) {
+export async function getPackagesStatus({
+  dirname,
+  owner,
+  name,
+  accessToken,
+}: Config) {
   const commitsLoader = new DataLoader(async (since: readonly string[]) => {
     return await Promise.all(
       since.map((t) => getCommits(dirname, t || undefined)),
@@ -130,7 +138,10 @@ async function run({dirname, owner, name, accessToken}: Config) {
       ),
     )
   ).filter(isTruthy);
+  return packages;
+}
 
+export function printPackagesStatus(packages: PackageStatus[]) {
   if (packages.some((p) => p.status === Status.MissingTag)) {
     console.error(`Missing tag for:`);
     console.error(``);
@@ -175,14 +186,3 @@ async function run({dirname, owner, name, accessToken}: Config) {
     console.warn(``);
   }
 }
-
-run({
-  // TODO: create actual CLI that parses args and env and passes in appropriate values for these
-  dirname: process.cwd(),
-  owner: 'ForbesLindesay',
-  name: 'changelogversion',
-  accessToken: process.argv[2],
-}).catch((ex) => {
-  console.error(ex.stack);
-  process.exit(1);
-});
