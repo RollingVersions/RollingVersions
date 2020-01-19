@@ -55,7 +55,9 @@ test('renderCommentWithoutState', () => {
         currentVersions: {
           'changelogversion\u002dutils': [
             {
+              path: 'changelogversion-utils/package.json',
               platform: Platform.npm,
+              publishConfigAccess: 'public',
               packageName: 'changelogversion\u002dutils',
               notToBePublished: true,
               registryVersion: null,
@@ -64,7 +66,9 @@ test('renderCommentWithoutState', () => {
           ],
           changelogversion: [
             {
+              path: 'changelogversion/package.json',
               platform: Platform.npm,
+              publishConfigAccess: 'public',
               packageName: 'changelogversion',
               notToBePublished: true,
               registryVersion: null,
@@ -73,7 +77,9 @@ test('renderCommentWithoutState', () => {
           ],
           'changelogversion\u002dserver': [
             {
+              path: 'changelogversion-server/package.json',
               platform: Platform.npm,
+              publishConfigAccess: 'public',
               packageName: 'changelogversion\u002dserver',
               notToBePublished: true,
               registryVersion: null,
@@ -97,7 +103,9 @@ test('renderCommentWithoutState', () => {
           packages: {
             'changelogversion\u002dutils': [
               {
+                path: 'changelogversion-utils/package.json',
                 platform: Platform.npm,
+                publishConfigAccess: 'public',
                 packageName: 'changelogversion\u002dutils',
                 notToBePublished: true,
                 registryVersion: null,
@@ -106,7 +114,9 @@ test('renderCommentWithoutState', () => {
             ],
             changelogversion: [
               {
+                path: 'changelogversion/package.json',
                 platform: Platform.npm,
+                publishConfigAccess: 'public',
                 packageName: 'changelogversion',
                 notToBePublished: true,
                 registryVersion: null,
@@ -115,7 +125,9 @@ test('renderCommentWithoutState', () => {
             ],
             'changelogversion\u002dserver': [
               {
+                path: 'changelogversion-server/package.json',
                 platform: Platform.npm,
+                publishConfigAccess: 'public',
                 packageName: 'changelogversion\u002dserver',
                 notToBePublished: true,
                 registryVersion: null,

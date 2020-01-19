@@ -88,6 +88,9 @@ commands:
       - run:
           name: Test
           command: yarn test
+      - run:
+          name: Dry run
+          command: node packages/changelogversion/lib/cli --dry-run
 
   push:
     steps:

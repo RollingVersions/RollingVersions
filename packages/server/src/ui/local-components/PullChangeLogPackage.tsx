@@ -1,7 +1,7 @@
 import React from 'react';
 import {PackageInfo} from 'changelogversion-utils/lib/Platforms';
 import {PackagePullChangeLog} from 'changelogversion-utils/lib/PullChangeLog';
-import RegistryStatus, {publishingSettingsChosen} from './RegistryStatus';
+import RegistryStatus from './RegistryStatus';
 import PullChangeLogEntrySection from './PullChangeLogEntrySection';
 require('./PullChangeLogEntry.css');
 
@@ -22,19 +22,6 @@ export default function PullChangeLogPackage({
       {changeLog.packageName}
     </h2>
   );
-  if (!publishingSettingsChosen({packageInfo, changeLog})) {
-    return (
-      <>
-        {title}
-        <RegistryStatus
-          disabled={disabled}
-          packageInfo={packageInfo}
-          changeLog={changeLog}
-          onChangeLogChange={onChangeLogChange}
-        />
-      </>
-    );
-  }
 
   // TODO: add the ability to add changes here
   return (

@@ -1,14 +1,17 @@
-import Octokit from '@octokit/rest';
+import VersionTag from './VersionTag';
 
-export type VersionTag = Octokit.ReposListTagsResponseItem & {version: string};
 export enum Platform {
   npm = 'npm',
 }
+
 export interface PackageInfo {
+  path: string;
   packageName: string;
   platform: Platform;
+  publishConfigAccess: 'restricted' | 'public';
   notToBePublished: boolean;
   registryVersion: string | null;
   versionTag: VersionTag | null;
 }
+
 export type PackageInfos = {[name: string]: PackageInfo[] | undefined};

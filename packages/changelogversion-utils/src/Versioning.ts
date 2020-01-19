@@ -31,14 +31,18 @@ export function getCurrentVerion(currentVersions: PackageInfo[]) {
   return maxVersion;
 }
 export function getNewVersion(
-  currentVersions: PackageInfo[],
+  currentVersionsOrCurrentVersion: PackageInfo[] | string | null,
   changes: readonly Pick<ChangeLogEntry, 'type'>[],
 ) {
   const change = getVersionBump(changes);
 
   if (!change) return null;
 
-  const maxVersion = getCurrentVerion(currentVersions);
+  const maxVersion =
+    typeof currentVersionsOrCurrentVersion === 'string' ||
+    currentVersionsOrCurrentVersion === null
+      ? currentVersionsOrCurrentVersion
+      : getCurrentVerion(currentVersionsOrCurrentVersion);
 
   if (!maxVersion || lt(maxVersion, '1.0.0')) return '1.0.0';
 

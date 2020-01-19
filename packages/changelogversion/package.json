@@ -1,5 +1,8 @@
 {
   "name": "changelogversion",
+  "bin": {
+    "changelogversion": "./lib/cli.js"
+  },
   "private": true,
   "version": "0.0.0",
   "description": "Add changelogs to PRs and use them to determine the version of npm packages",
@@ -12,7 +15,11 @@
     "postbuild": "rimraf lib/**/__tests__"
   },
   "dependencies": {
-    "changelogversion-utils": "0.0.0"
+    "@octokit/graphql": "^4.3.1",
+    "chalk": "^3.0.0",
+    "changelogversion-utils": "0.0.0",
+    "dataloader": "^2.0.0",
+    "env-ci": "^5.0.1"
   },
   "devDependencies": {
     "@forbeslindesay/tsconfig": "^2.0.0",
