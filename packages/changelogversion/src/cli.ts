@@ -50,6 +50,9 @@ const GITHUB_TOKEN: string =
 const DEPLOY_BRANCH: string | null =
   stringArg('-b') || stringArg('--deploy-branch') || null;
 
+const SUPRESS_ERRORS = boolArg('--supress-errors');
+const ERROR_EXIT = SUPRESS_ERRORS ? 0 : 1;
+
 if (HELP) {
   console.warn(`Usage: changelogversion <options>`);
   console.warn(``);
@@ -57,6 +60,7 @@ if (HELP) {
 
  -h --help                     View these options
  -d --dry-run                  Run without actually publishing packages
+    --supress-errors           Always exit with "0" status code even
  -r --repo          owner/slug The repo being published, can be detected
                                automatically on most CI systems.
  -g --github-token  token      A GitHub access token with at least "repo"
@@ -65,12 +69,12 @@ if (HELP) {
  -d --deploy-branch branch     The branch to deploy from. This will default
                                to your default branch on GitHub.`);
   console.warn(``);
-  process.exit(1);
+  process.exit(ERROR_EXIT);
 }
 const slug = REPO_SLUG.split('/');
 if (slug.length !== 2) {
   console.error('Expected repo slug to be of the form <owner>/<name>');
-  process.exit(1);
+  process.exit(ERROR_EXIT);
 }
 const [owner, name] = slug;
 
@@ -84,20 +88,23 @@ const config: Config = {
 getPackagesStatus(config)
   .then(async (packages) => {
     printPackagesStatus(packages);
+    if (packages.some((p) => p.status === Status.MissingTag)) {
+      process.exit(ERROR_EXIT);
+    }
     // TODO: sort by dependencies
     if (packages.some((pkg) => pkg.status === Status.NewVersionToBePublished)) {
       // prepublish checks
       const gitHubPrepublishInfo = await prepublishGitHub(config);
       if (!gitHubPrepublishInfo.ok) {
         console.error(gitHubPrepublishInfo.reason);
-        process.exit(1);
+        process.exit(ERROR_EXIT);
       }
       for (const pkg of packages) {
         if (pkg.status === Status.NewVersionToBePublished) {
           const tagName = getGitTag(packages, pkg);
           if (gitHubPrepublishInfo.tags.includes(tagName)) {
             console.error(`A github release already exists for ${tagName}`);
-            process.exit(1);
+            process.exit(ERROR_EXIT);
           }
           for (const pkgInfo of pkg.pkgInfos) {
             const prepublishResult = await prepublish(
@@ -107,7 +114,7 @@ getPackagesStatus(config)
             );
             if (!prepublishResult.ok) {
               console.error(prepublishResult.reason);
-              process.exit(1);
+              process.exit(ERROR_EXIT);
             }
           }
         }
@@ -150,5 +157,5 @@ getPackagesStatus(config)
   })
   .catch((ex) => {
     console.error(ex.stack);
-    process.exit(1);
+    process.exit(ERROR_EXIT);
   });

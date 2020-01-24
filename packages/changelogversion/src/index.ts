@@ -198,7 +198,7 @@ export function printPackagesStatus(packages: PackageStatus[]) {
       console.error(`  - ${p.packageName}@${p.currentVersion}`);
     }
     console.error(``);
-    process.exit(1);
+    return;
   }
 
   if (packages.some((p) => p.status === Status.NoUpdateRequired)) {
