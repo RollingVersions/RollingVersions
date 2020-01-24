@@ -1,6 +1,16 @@
 #!/usr/bin/env node
 
-import {getPackagesStatus, printPackagesStatus, Status} from '.';
+import {
+  getPackagesStatus,
+  printPackagesStatus,
+  Status,
+  publishGitHub,
+  prepublishGitHub,
+  Config,
+  getGitTag,
+  prepublish,
+  publish,
+} from '.';
 
 const CI_ENV = require('env-ci')();
 
@@ -37,44 +47,83 @@ const GITHUB_TOKEN: string =
     'You must specify a GitHub token, either in the "GITHUB_TOKEN" env var or by passing "--github-token <some_token>" on the CLI.',
   );
 
+const DEPLOY_BRANCH: string | null =
+  stringArg('-b') || stringArg('--deploy-branch') || null;
+
+const SUPRESS_ERRORS = boolArg('--supress-errors');
+const ERROR_EXIT = SUPRESS_ERRORS ? 0 : 1;
+
 if (HELP) {
   console.warn(`Usage: changelogversion <options>`);
   console.warn(``);
   console.warn(`options:
- -h --help                    View these options
- -d --dry-run                 Run without actually publishing packages
- -r --repo         owner/slug The repo being published, can be detected
-                              automatically on most CI systems.
- -g --github-token token      A GitHub access token with at least "repo"
-                              scope. Used to read changelogs and write
-                              git tags/releases.`);
+
+ -h --help                     View these options
+ -d --dry-run                  Run without actually publishing packages
+    --supress-errors           Always exit with "0" status code even
+ -r --repo          owner/slug The repo being published, can be detected
+                               automatically on most CI systems.
+ -g --github-token  token      A GitHub access token with at least "repo"
+                               scope. Used to read changelogs and write
+                               git tags/releases.
+ -d --deploy-branch branch     The branch to deploy from. This will default
+                               to your default branch on GitHub.`);
   console.warn(``);
-  process.exit(1);
+  process.exit(ERROR_EXIT);
 }
 const slug = REPO_SLUG.split('/');
 if (slug.length !== 2) {
   console.error('Expected repo slug to be of the form <owner>/<name>');
-  process.exit(1);
+  process.exit(ERROR_EXIT);
 }
 const [owner, name] = slug;
 
-getPackagesStatus({
+const config: Config = {
   dirname: DIRNAME,
   owner,
   name,
   accessToken: GITHUB_TOKEN,
-})
+  deployBranch: DEPLOY_BRANCH,
+};
+getPackagesStatus(config)
   .then(async (packages) => {
     printPackagesStatus(packages);
-    console.warn('publishing packages...');
+    if (packages.some((p) => p.status === Status.MissingTag)) {
+      process.exit(ERROR_EXIT);
+    }
+    // TODO: sort by dependencies
+    if (packages.some((pkg) => pkg.status === Status.NewVersionToBePublished)) {
+      // prepublish checks
+      const gitHubPrepublishInfo = await prepublishGitHub(config);
+      if (!gitHubPrepublishInfo.ok) {
+        console.error(gitHubPrepublishInfo.reason);
+        process.exit(ERROR_EXIT);
+      }
+      for (const pkg of packages) {
+        if (pkg.status === Status.NewVersionToBePublished) {
+          const tagName = getGitTag(packages, pkg);
+          if (gitHubPrepublishInfo.tags.includes(tagName)) {
+            console.error(`A github release already exists for ${tagName}`);
+            process.exit(ERROR_EXIT);
+          }
+          for (const pkgInfo of pkg.pkgInfos) {
+            const prepublishResult = await prepublish(
+              config,
+              pkgInfo,
+              pkg.newVersion,
+            );
+            if (!prepublishResult.ok) {
+              console.error(prepublishResult.reason);
+              process.exit(ERROR_EXIT);
+            }
+          }
+        }
+      }
+    }
     for (const pkg of packages) {
       if (pkg.status === Status.NewVersionToBePublished) {
         const newVersion = pkg.newVersion;
-        // TODO: check permission to create GitHub release
-        for (const pkgInfo of pkg.pkgInfos) {
-          console.warn('checking', newVersion, pkgInfo);
-          // TODO: check we have permission to publish to relevant platform
-        }
+
         for (const pkgInfo of pkg.pkgInfos) {
           if (DRY_RUN) {
             console.warn(
@@ -84,9 +133,10 @@ getPackagesStatus({
             console.warn(
               `publishing ${pkgInfo.packageName} to ${pkgInfo.platform} @ ${newVersion}`,
             );
-            // TODO: publish to relevant platform
+            await publish(config, pkgInfo, newVersion);
           }
         }
+
         if (DRY_RUN) {
           console.warn(
             `publishing ${pkg.packageName} as GitHub Release @ ${newVersion} (dry run)`,
@@ -95,12 +145,17 @@ getPackagesStatus({
           console.warn(
             `publishing ${pkg.packageName} as GitHub Release @ ${newVersion}`,
           );
-          // TODO: create GitHub release
+          await publishGitHub(
+            config,
+            pkg.packageName,
+            newVersion,
+            getGitTag(packages, pkg),
+          );
         }
       }
     }
   })
   .catch((ex) => {
     console.error(ex.stack);
-    process.exit(1);
+    process.exit(ERROR_EXIT);
   });

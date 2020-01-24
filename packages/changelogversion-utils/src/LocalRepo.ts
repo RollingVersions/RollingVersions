@@ -181,3 +181,10 @@ export async function getChangeLogs(
     return changeLogs;
   });
 }
+
+export async function getHeadSha(dirname: string) {
+  const data = await spawnBuffered('git', ['rev-parse', 'HEAD'], {
+    cwd: dirname,
+  });
+  return data.toString('utf8').trim();
+}

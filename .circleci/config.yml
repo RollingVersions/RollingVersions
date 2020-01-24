@@ -90,7 +90,7 @@ commands:
           command: yarn test
       - run:
           name: Dry run
-          command: node packages/changelogversion/lib/cli --dry-run
+          command: node packages/changelogversion/lib/cli --dry-run --supress-errors
 
   push:
     steps:
