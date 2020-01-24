@@ -5,7 +5,11 @@ import {
   printPackagesStatus,
   Status,
   publishGitHub,
-  canPublishGitHub,
+  prepublishGitHub,
+  Config,
+  getGitTag,
+  prepublish,
+  publish,
 } from '.';
 
 const CI_ENV = require('env-ci')();
@@ -43,17 +47,23 @@ const GITHUB_TOKEN: string =
     'You must specify a GitHub token, either in the "GITHUB_TOKEN" env var or by passing "--github-token <some_token>" on the CLI.',
   );
 
+const DEPLOY_BRANCH: string | null =
+  stringArg('-b') || stringArg('--deploy-branch') || null;
+
 if (HELP) {
   console.warn(`Usage: changelogversion <options>`);
   console.warn(``);
   console.warn(`options:
- -h --help                    View these options
- -d --dry-run                 Run without actually publishing packages
- -r --repo         owner/slug The repo being published, can be detected
-                              automatically on most CI systems.
- -g --github-token token      A GitHub access token with at least "repo"
-                              scope. Used to read changelogs and write
-                              git tags/releases.`);
+
+ -h --help                     View these options
+ -d --dry-run                  Run without actually publishing packages
+ -r --repo          owner/slug The repo being published, can be detected
+                               automatically on most CI systems.
+ -g --github-token  token      A GitHub access token with at least "repo"
+                               scope. Used to read changelogs and write
+                               git tags/releases.
+ -d --deploy-branch branch     The branch to deploy from. This will default
+                               to your default branch on GitHub.`);
   console.warn(``);
   process.exit(1);
 }
@@ -64,29 +74,49 @@ if (slug.length !== 2) {
 }
 const [owner, name] = slug;
 
-const config = {
+const config: Config = {
   dirname: DIRNAME,
   owner,
   name,
   accessToken: GITHUB_TOKEN,
+  deployBranch: DEPLOY_BRANCH,
 };
 getPackagesStatus(config)
   .then(async (packages) => {
     printPackagesStatus(packages);
+    // TODO: sort by dependencies
+    if (packages.some((pkg) => pkg.status === Status.NewVersionToBePublished)) {
+      // prepublish checks
+      const gitHubPrepublishInfo = await prepublishGitHub(config);
+      if (!gitHubPrepublishInfo.ok) {
+        console.error(gitHubPrepublishInfo.reason);
+        process.exit(1);
+      }
+      for (const pkg of packages) {
+        if (pkg.status === Status.NewVersionToBePublished) {
+          const tagName = getGitTag(packages, pkg);
+          if (gitHubPrepublishInfo.tags.includes(tagName)) {
+            console.error(`A github release already exists for ${tagName}`);
+            process.exit(1);
+          }
+          for (const pkgInfo of pkg.pkgInfos) {
+            const prepublishResult = await prepublish(
+              config,
+              pkgInfo,
+              pkg.newVersion,
+            );
+            if (!prepublishResult.ok) {
+              console.error(prepublishResult.reason);
+              process.exit(1);
+            }
+          }
+        }
+      }
+    }
     for (const pkg of packages) {
       if (pkg.status === Status.NewVersionToBePublished) {
-        if (!(await canPublishGitHub(config))) {
-          console.error(
-            'This viewer does not have permisison to publish tags/releases to GitHub',
-          );
-          process.exit(1);
-        }
         const newVersion = pkg.newVersion;
-        // TODO: check permission to create GitHub release
-        for (const pkgInfo of pkg.pkgInfos) {
-          console.warn('checking', newVersion, pkgInfo);
-          // TODO: check we have permission to publish to relevant platform
-        }
+
         for (const pkgInfo of pkg.pkgInfos) {
           if (DRY_RUN) {
             console.warn(
@@ -96,9 +126,10 @@ getPackagesStatus(config)
             console.warn(
               `publishing ${pkgInfo.packageName} to ${pkgInfo.platform} @ ${newVersion}`,
             );
-            // TODO: publish to relevant platform
+            await publish(config, pkgInfo, newVersion);
           }
         }
+
         if (DRY_RUN) {
           console.warn(
             `publishing ${pkg.packageName} as GitHub Release @ ${newVersion} (dry run)`,
@@ -107,21 +138,12 @@ getPackagesStatus(config)
           console.warn(
             `publishing ${pkg.packageName} as GitHub Release @ ${newVersion}`,
           );
-          await publishGitHub(config, pkg.packageName, newVersion, {
-            isMonoRepo:
-              packages.length === 1 &&
-              pkg.pkgInfos.some((p) => p.versionTag) &&
-              pkg.pkgInfos.every(
-                (p) => !p.versionTag || !p.versionTag.name.includes?.('@'),
-              ),
-            hasVPrefix:
-              pkg.pkgInfos.some((p) => p.versionTag) &&
-              pkg.pkgInfos.every(
-                (p) =>
-                  !p.versionTag ||
-                  p.versionTag.name.replace(/^.*\@/, '').startsWith('v'),
-              ),
-          });
+          await publishGitHub(
+            config,
+            pkg.packageName,
+            newVersion,
+            getGitTag(packages, pkg),
+          );
         }
       }
     }

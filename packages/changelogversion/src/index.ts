@@ -1,20 +1,34 @@
+import {resolve, dirname} from 'path';
+import {readFileSync, writeFileSync} from 'fs';
 import DataLoader from 'dataloader';
 import {graphql} from '@octokit/graphql';
-// import Octokit from '@octokit/rest';
+import Octokit from '@octokit/rest';
 import chalk from 'chalk';
+import {getAllTags} from 'changelogversion-utils/lib/GitHub';
 import {
   listPackages,
   getCommits,
   getChangeLogs,
+  getHeadSha,
 } from 'changelogversion-utils/lib/LocalRepo';
 import {
   getCurrentVerion,
   getNewVersion,
 } from 'changelogversion-utils/lib/Versioning';
+import {
+  getProfile,
+  getPackument,
+  getOrgRoster,
+} from 'changelogversion-utils/lib/Npm';
 import {ChangeLogEntry} from 'changelogversion-utils/lib/PullChangeLog';
 import {PackageInfo, Platform} from 'changelogversion-utils/lib/Platforms';
 import isTruthy from 'changelogversion-utils/lib/utils/isTruthy';
 import {changesToMarkdown} from 'changelogversion-utils/lib/Rendering';
+import {spawnBuffered} from 'changelogversion-utils/lib/spawn';
+
+const stringifyPackage = require('stringify-package');
+const detectIndent = require('detect-indent');
+const detectNewline = require('detect-newline').graceful;
 
 export enum Status {
   MissingTag,
@@ -25,11 +39,13 @@ export interface MissingTag {
   status: Status.MissingTag;
   packageName: string;
   currentVersion: string;
+  pkgInfos: readonly PackageInfo[];
 }
 export interface NoUpdateRequired {
   status: Status.NoUpdateRequired;
   packageName: string;
   currentVersion: string | null;
+  pkgInfos: readonly PackageInfo[];
 }
 export interface NewVersionToBePublished {
   status: Status.NewVersionToBePublished;
@@ -50,6 +66,36 @@ export interface Config {
   owner: string;
   name: string;
   accessToken: string;
+  deployBranch: string | null;
+}
+
+function isSinglePackageWithDirectVersion(packages: readonly PackageStatus[]) {
+  return (
+    packages.length === 1 &&
+    packages[0].pkgInfos.some((p) => p.versionTag) &&
+    packages[0].pkgInfos.every(
+      (p) => !p.versionTag || !p.versionTag.name.includes?.('@'),
+    )
+  );
+}
+function gitTagsHavePrefix(pkg: PackageStatus) {
+  return (
+    pkg.pkgInfos.some((p) => p.versionTag) &&
+    pkg.pkgInfos.every(
+      (p) =>
+        !p.versionTag || p.versionTag.name.replace(/^.*\@/, '').startsWith('v'),
+    )
+  );
+}
+export function getGitTag(
+  packages: readonly PackageStatus[],
+  pkg: NewVersionToBePublished,
+) {
+  const start = isSinglePackageWithDirectVersion(packages)
+    ? ``
+    : `${pkg.packageName}@`;
+  const end = gitTagsHavePrefix(pkg) ? `v${pkg.newVersion}` : pkg.newVersion;
+  return `${start}${end}`;
 }
 
 export async function getPackagesStatus({
@@ -94,6 +140,7 @@ export async function getPackagesStatus({
               status: Status.MissingTag,
               packageName,
               currentVersion,
+              pkgInfos,
             };
           }
           const commits = await commitsLoader.load(
@@ -124,6 +171,7 @@ export async function getPackagesStatus({
               status: Status.NoUpdateRequired,
               currentVersion,
               packageName,
+              pkgInfos,
             };
           }
 
@@ -188,36 +236,82 @@ export function printPackagesStatus(packages: PackageStatus[]) {
   }
 }
 
-export async function canPublishGitHub({
+export async function prepublishGitHub({
   owner,
   name,
   accessToken,
-}: Config): Promise<boolean> {
-  const result = await graphql.defaults({
+  dirname,
+  deployBranch,
+}: Config): Promise<{ok: true; tags: string[]} | {ok: false; reason: string}> {
+  const result = (await graphql.defaults({
     headers: {
       authorization: `token ${accessToken}`,
     },
   })(
-    `query permissions($owner:String!, $name:String!) { 
-    repository(owner:$owner,name:$name) {
-      viewerPermission
-    }
-  }`,
-    {owner, name},
-  );
+    `query permissions($owner:String!, $name:String!${
+      deployBranch ? `, $deployBranch:String!` : ``
+    }) { 
+      repository(owner:$owner,name:$name) {
+        viewerPermission
+        ${
+          deployBranch
+            ? `branch: ref(qualifiedName: "refs/heads/master")`
+            : `branch: defaultBranchRef`
+        } {
+          name
+          target {
+            __typename
+            oid
+          }
+        }
+      }
+      
+    }`,
+    deployBranch ? {owner, name, deployBranch} : {owner, name},
+  )) as {
+    repository: {
+      viewerPermission: string;
+      branch: {name: string; target: {__typename: string; oid: string}};
+    };
+  } | null;
   const permission =
     result && result.repository && result.repository.viewerPermission;
-  return (
-    permission === 'ADMIN' ||
-    permission === 'MAINTAIN' ||
-    permission === 'WRITE'
+  if (!permission || !['ADMIN', 'MAINTAIN', 'WRITE'].includes(permission)) {
+    return {
+      ok: false,
+      reason: `This viewer does not have permisison to publish tags/releases to GitHub`,
+    };
+  }
+  if (result?.repository.branch.target.__typename !== 'Commit') {
+    return {
+      ok: false,
+      reason: `Could not find a commit for ${result?.repository.branch.name}.`,
+    };
+  }
+  const headSha = await getHeadSha(dirname);
+  if (headSha !== result?.repository.branch.target.oid) {
+    return {
+      ok: false,
+      reason: `This build is not running against the latest commit in ${result?.repository.branch.name}. To avoid awkward race conditions we'll skip publishing here and leave publishing to the other commit.`,
+    };
+  }
+
+  const allTags = await getAllTags(
+    new Octokit({
+      headers: {
+        authorization: `token ${accessToken}`,
+      },
+    }),
+    {owner, repo: name},
   );
+  return {ok: true, tags: allTags.map((t) => t.name)};
 }
+
 export async function publishGitHub(
   _config: Config,
   _packageName: string,
   _newVersion: string,
-  _opts: {isMonoRepo: boolean; hasVPrefix: boolean},
+  _tag: string,
 ) {
   // TODO: create GitHub release
   // const github = new Octokit({
@@ -252,6 +346,19 @@ export async function publishGitHub(
   //   target_commitish?: string;
   // });
 }
+
+export type PrePublishResult = {ok: true} | {ok: false; reason: string};
+
+export async function prepublish(
+  config: Config,
+  pkg: PackageInfo,
+  newVersion: string,
+): Promise<PrePublishResult> {
+  switch (pkg.platform) {
+    case Platform.npm:
+      return await prepublishNpm(config, pkg, newVersion);
+  }
+}
 export async function publish(
   config: Config,
   pkg: PackageInfo,
@@ -259,10 +366,101 @@ export async function publish(
 ) {
   switch (pkg.platform) {
     case Platform.npm:
-      await publishNpm(config, pkg.path, newVersion);
+      await publishNpm(config, pkg, newVersion);
       break;
   }
 }
-async function publishNpm(_config: Config, _path: string, _newVersion: string) {
-  // TODO
+
+async function withNpmVersion<T>(
+  config: Config,
+  pkg: PackageInfo,
+  newVersion: string,
+  fn: (dir: string) => Promise<T>,
+) {
+  const filename = resolve(config.dirname, pkg.path);
+  const original = readFileSync(filename, 'utf8');
+  const pkgData = JSON.parse(original);
+  pkgData.version = newVersion;
+  // TODO: we also need to set the versions correctly for:
+  // dependencies, peerDependencies & devDependencies
+  const str = stringifyPackage(
+    pkgData,
+    detectIndent(original).indent,
+    detectNewline(original),
+  );
+  try {
+    writeFileSync(filename, str);
+    return await fn(dirname(filename));
+  } finally {
+    writeFileSync(filename, original);
+  }
+}
+async function prepublishNpm(
+  config: Config,
+  pkg: PackageInfo,
+  newVersion: string,
+): Promise<PrePublishResult> {
+  const [profile, packument] = await Promise.all([
+    getProfile(),
+    getPackument(pkg.packageName, true),
+  ]);
+
+  if (!profile) {
+    return {ok: false, reason: 'Could not authenticate to npm'};
+  }
+
+  if (profile.tfaOnPublish) {
+    return {
+      ok: false,
+      reason:
+        'This user requires 2fa on publish to npm, which is not supported',
+    };
+  }
+
+  if (!packument) {
+    if (
+      pkg.packageName[0] !== '@' ||
+      '@' + profile.name === pkg.packageName.split('/')[0]
+    ) {
+      return {ok: true};
+    } else {
+      const orgName = pkg.packageName.split('/')[0].substr(1);
+      const orgRoster = await getOrgRoster(orgName);
+      if (!orgRoster[profile.name]) {
+        return {
+          ok: false,
+          reason: `@${profile.name} does not appear to have permission to publish new packages to @${orgName} on npm`,
+        };
+      }
+    }
+  } else {
+    if (!packument.maintainers.some((m) => m.name === profile.name)) {
+      return {
+        ok: false,
+        reason: `The user @${profile.name} is not listed as a maintainer of ${pkg.packageName} on npm`,
+      };
+    }
+
+    if (newVersion in packument.versions) {
+      return {
+        ok: false,
+        reason: `${pkg.packageName} already has a version ${newVersion} on npm`,
+      };
+    }
+  }
+
+  await withNpmVersion(config, pkg, newVersion, async (cwd) => {
+    await spawnBuffered('npm', ['publish', '--dry-run'], {cwd});
+  });
+
+  return {ok: true};
+}
+async function publishNpm(
+  config: Config,
+  pkg: PackageInfo,
+  newVersion: string,
+) {
+  await withNpmVersion(config, pkg, newVersion, async (cwd) => {
+    await spawnBuffered('npm', ['publish'], {cwd});
+  });
 }

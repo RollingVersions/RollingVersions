@@ -12,17 +12,34 @@ import PullChangeLog from './PullChangeLog';
 import {PackageInfo, Platform, PackageInfos} from './Platforms';
 import isObject from './utils/isObject';
 import addVersions from './utils/addVersions';
+import VersionTag from './VersionTag';
 
-export async function listPackages(
+export async function getAllTags(
+  github: Pick<Octokit, 'repos'>,
+  pr: Pick<PullRequst, 'owner' | 'repo'>,
+) {
+  const results: Pick<VersionTag, 'commitSha' | 'name'>[] = [];
+  let page = 1;
+  let nextPage = true;
+  while (nextPage) {
+    const data = (
+      await github.repos.listTags({
+        owner: pr.owner,
+        repo: pr.repo,
+        per_page: 100,
+        page,
+      })
+    ).data.map((t) => ({name: t.name, commitSha: t.commit.sha}));
+    results.push(...data);
+    nextPage = data.length === 100;
+    page++;
+  }
+  return results;
+}
+async function listRawPackages(
   github: Pick<Octokit, 'repos'>,
   pr: Pick<PullRequst, 'owner' | 'repo' | 'headSha'>,
-): Promise<PackageInfos> {
-  const allTags = (
-    await github.repos.listTags({
-      owner: pr.owner,
-      repo: pr.repo,
-    })
-  ).data.map((t) => ({name: t.name, commitSha: t.commit.sha}));
+) {
   const packages = new Map<
     string,
     Array<Omit<PackageInfo, 'versionTag' | 'registryVersion'>>
@@ -95,6 +112,17 @@ export async function listPackages(
   } else {
     await walk(root.data);
   }
+
+  return packages;
+}
+export async function listPackages(
+  github: Pick<Octokit, 'repos'>,
+  pr: Pick<PullRequst, 'owner' | 'repo' | 'headSha'>,
+): Promise<PackageInfos> {
+  const [packages, allTags] = await Promise.all([
+    listRawPackages(github, pr),
+    getAllTags(github, pr),
+  ]);
 
   return await addVersions(packages, allTags);
 }

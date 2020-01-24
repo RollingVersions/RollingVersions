@@ -23,7 +23,7 @@ export default function PullChangeLogPackage({
     </h2>
   );
 
-  // TODO: add the ability to add changes here
+  // TODO: show warning if no changes are added and the commit has modified files in the directory
   return (
     <>
       {title}
