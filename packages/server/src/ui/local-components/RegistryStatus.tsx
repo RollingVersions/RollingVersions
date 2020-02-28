@@ -19,50 +19,52 @@ export default function RegistryStatus({packageInfo}: RegistryStatusProps) {
       </p>
     );
   }
-  if (
-    packageInfo.some((p) => p.versionTag) ||
-    packageInfo.some((p) => p.registryVersion)
-  ) {
-    if (packageInfo.some((p) => p.registryVersion)) {
-      return (
-        <p>
-          This package is published <strong>publicly</strong> on the {platform}{' '}
-          registry.
-        </p>
-      );
-    } else {
-      return (
-        <p>
-          This package is published <strong>privately</strong> on the {platform}{' '}
-          registry.
-        </p>
-      );
-    }
-  }
-  if (!packageInfo.some((p) => p.publishConfigAccess !== 'restricted')) {
-    return (
-      <>
-        <p>
-          This package wil be published <strong>publicly</strong> on the{' '}
-          {platform} registry.
-        </p>
-      </>
-    );
-  } else {
-    return (
-      <>
-        <p>
-          This package wil be published <strong>privately</strong> on the{' '}
-          {platform} registry.
-        </p>
-        <p>
-          If you prefer to publish it publicly, you can add the following to
-          your package.json:
-          <pre>
-            <code>{'"publishConfig": {"access": "public"}'}</code>
-          </pre>
-        </p>
-      </>
-    );
-  }
+  return (
+    <>
+      {packageInfo
+        .filter((p) => !p.notToBePublished)
+        .map((p, i) => {
+          if (p.versionTag || p.registryVersion) {
+            if (p.registryVersion) {
+              return (
+                <p key={i}>
+                  This package is published <strong>publicly</strong> on the{' '}
+                  {platform} registry.
+                </p>
+              );
+            } else {
+              return (
+                <p key={i}>
+                  This package is published <strong>privately</strong> on the{' '}
+                  {platform} registry.
+                </p>
+              );
+            }
+          }
+          if (p.publishConfigAccess === 'restricted') {
+            return (
+              <React.Fragment key={i}>
+                <p>
+                  This package wil be published <strong>privately</strong> on
+                  the {platform} registry.
+                </p>
+                <p>
+                  If you prefer to publish it publicly, you can add the
+                  following to your package.json:
+                  <pre>
+                    <code>{'"publishConfig": {"access": "public"}'}</code>
+                  </pre>
+                </p>
+              </React.Fragment>
+            );
+          }
+          return (
+            <p key={i}>
+              This package wil be published <strong>publicly</strong> on the{' '}
+              {platform} registry.
+            </p>
+          );
+        })}
+    </>
+  );
 }
