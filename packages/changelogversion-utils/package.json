@@ -1,6 +1,5 @@
 {
   "name": "changelogversion-utils",
-  "private": true,
   "version": "0.0.0",
   "description": "Add changelogs to PRs and use them to determine the version of npm packages",
   "author": "Forbes Lindesay <forbes@lindesay.co.uk> (https://www.forbeslindesay.co.uk)",
