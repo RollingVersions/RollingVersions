@@ -64,6 +64,9 @@ jobs:
       - setup
       - deploy:
           environment: production
+      - run:
+          name: Publish Packages
+          command: node packages/changelogversion/lib/cli
 
 commands:
   setup:
