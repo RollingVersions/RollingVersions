@@ -52,26 +52,27 @@ jobs:
       - image: circleci/node:12
     steps:
       - setup
-      - build
-      - push
-      - deploy:
-          environment: staging
       - npm_auth
+      - build
       - run:
           name: Dry run
           command: node packages/changelogversion/lib/cli --dry-run
+      - push
+      - deploy:
+          environment: staging
 
   deploy-production:
     docker:
       - image: circleci/node:12
     steps:
       - setup
-      - deploy:
-          environment: production
       - npm_auth
+      - build
       - run:
           name: Publish Packages
           command: node packages/changelogversion/lib/cli
+      - deploy:
+          environment: production
 
 commands:
   setup:
@@ -90,7 +91,7 @@ commands:
     steps:
       - run:
           name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/repo/.npmrc
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
 
   build:
     steps:
