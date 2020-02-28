@@ -56,6 +56,9 @@ jobs:
       - push
       - deploy:
           environment: staging
+      - run:
+          name: Dry run
+          command: node packages/changelogversion/lib/cli --dry-run
 
   deploy-production:
     docker:
@@ -64,6 +67,9 @@ jobs:
       - setup
       - deploy:
           environment: production
+      - run:
+          name: Publish Packages
+          command: node packages/changelogversion/lib/cli
 
 commands:
   setup:
