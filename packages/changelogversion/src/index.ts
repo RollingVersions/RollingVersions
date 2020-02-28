@@ -254,6 +254,7 @@ function sortAndValidate(
       }
     });
 
+    result.push(status);
     pushed.add(status.packageName);
     pushing.delete(status.packageName);
   }

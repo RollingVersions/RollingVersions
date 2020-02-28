@@ -12,6 +12,7 @@ import {
   publish,
   isSuccessPackageStatus,
 } from '.';
+import chalk = require('chalk');
 
 const CI_ENV = require('env-ci')();
 
@@ -132,11 +133,15 @@ getPackagesStatus(config)
         for (const pkgInfo of pkg.pkgInfos) {
           if (DRY_RUN) {
             console.warn(
-              `publishing ${pkgInfo.packageName} to ${pkgInfo.platform} @ ${newVersion} (dry run)`,
+              `publishing ${chalk.yellow(pkgInfo.packageName)} to ${chalk.blue(
+                pkgInfo.platform,
+              )} @ ${chalk.yellow(newVersion)} ${chalk.red(`(dry run)`)}`,
             );
           } else {
             console.warn(
-              `publishing ${pkgInfo.packageName} to ${pkgInfo.platform} @ ${newVersion}`,
+              `publishing ${chalk.yellow(pkgInfo.packageName)} to ${chalk.blue(
+                pkgInfo.platform,
+              )} @ ${chalk.yellow(newVersion)}`,
             );
             await publish(config, pkgInfo, newVersion, packageVersions);
           }
@@ -144,11 +149,15 @@ getPackagesStatus(config)
 
         if (DRY_RUN) {
           console.warn(
-            `publishing ${pkg.packageName} as GitHub Release @ ${newVersion} (dry run)`,
+            `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
+              'GitHub Release',
+            )} @ ${chalk.yellow(newVersion)} ${chalk.red(`(dry run)`)}`,
           );
         } else {
           console.warn(
-            `publishing ${pkg.packageName} as GitHub Release @ ${newVersion}`,
+            `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
+              'GitHub Release',
+            )} @ ${chalk.yellow(newVersion)}`,
           );
           await publishGitHub(
             config,
