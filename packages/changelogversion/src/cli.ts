@@ -132,6 +132,7 @@ getPackagesStatus(config)
         const newVersion = pkg.newVersion;
 
         for (const pkgInfo of pkg.pkgInfos) {
+          if (pkgInfo.notToBePublished) continue;
           if (DRY_RUN) {
             console.warn(
               `publishing ${chalk.yellow(pkgInfo.packageName)} to ${chalk.blue(
