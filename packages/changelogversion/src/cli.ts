@@ -112,6 +112,7 @@ getPackagesStatus(config)
             process.exit(ERROR_EXIT);
           }
           for (const pkgInfo of pkg.pkgInfos) {
+            if (pkgInfo.notToBePublished) continue;
             const prepublishResult = await prepublish(
               config,
               pkgInfo,

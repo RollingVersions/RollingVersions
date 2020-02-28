@@ -56,6 +56,7 @@ jobs:
       - push
       - deploy:
           environment: staging
+      - npm_auth
       - run:
           name: Dry run
           command: node packages/changelogversion/lib/cli --dry-run
@@ -67,6 +68,7 @@ jobs:
       - setup
       - deploy:
           environment: production
+      - npm_auth
       - run:
           name: Publish Packages
           command: node packages/changelogversion/lib/cli
@@ -82,6 +84,13 @@ commands:
       - run:
           name: Install Dependencies
           command: yarn install --frozen-lockfile
+
+  npm_auth:
+    description: 'Authenticate with the npm registry'
+    steps:
+      - run:
+        name: Authenticate with registry
+        command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/repo/.npmrc
 
   build:
     steps:
