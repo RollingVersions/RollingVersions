@@ -32,6 +32,7 @@ const detectNewline = require('detect-newline').graceful;
 
 export enum Status {
   MissingTag,
+  CicularDependencies,
   NoUpdateRequired,
   NewVersionToBePublished,
 }
@@ -41,10 +42,15 @@ export interface MissingTag {
   currentVersion: string;
   pkgInfos: readonly PackageInfo[];
 }
+export interface CicularDependencies {
+  status: Status.CicularDependencies;
+  packageNames: string[];
+}
 export interface NoUpdateRequired {
   status: Status.NoUpdateRequired;
   packageName: string;
   currentVersion: string | null;
+  newVersion: string | null;
   pkgInfos: readonly PackageInfo[];
 }
 export interface NewVersionToBePublished {
@@ -58,9 +64,19 @@ export interface NewVersionToBePublished {
 
 export type PackageStatus =
   | MissingTag
+  | CicularDependencies
   | NoUpdateRequired
   | NewVersionToBePublished;
+export type SuccessPackageStatus = NoUpdateRequired | NewVersionToBePublished;
 
+export function isSuccessPackageStatus(
+  s: PackageStatus,
+): s is SuccessPackageStatus {
+  return (
+    s.status === Status.NoUpdateRequired ||
+    s.status === Status.NewVersionToBePublished
+  );
+}
 export interface Config {
   dirname: string;
   owner: string;
@@ -69,7 +85,9 @@ export interface Config {
   deployBranch: string | null;
 }
 
-function isSinglePackageWithDirectVersion(packages: readonly PackageStatus[]) {
+function isSinglePackageWithDirectVersion(
+  packages: readonly SuccessPackageStatus[],
+) {
   return (
     packages.length === 1 &&
     packages[0].pkgInfos.some((p) => p.versionTag) &&
@@ -78,7 +96,7 @@ function isSinglePackageWithDirectVersion(packages: readonly PackageStatus[]) {
     )
   );
 }
-function gitTagsHavePrefix(pkg: PackageStatus) {
+function gitTagsHavePrefix(pkg: SuccessPackageStatus) {
   return (
     pkg.pkgInfos.some((p) => p.versionTag) &&
     pkg.pkgInfos.every(
@@ -88,7 +106,7 @@ function gitTagsHavePrefix(pkg: PackageStatus) {
   );
 }
 export function getGitTag(
-  packages: readonly PackageStatus[],
+  packages: readonly SuccessPackageStatus[],
   pkg: NewVersionToBePublished,
 ) {
   const start = isSinglePackageWithDirectVersion(packages)
@@ -170,6 +188,7 @@ export async function getPackagesStatus({
             return {
               status: Status.NoUpdateRequired,
               currentVersion,
+              newVersion: currentVersion,
               packageName,
               pkgInfos,
             };
@@ -187,14 +206,88 @@ export async function getPackagesStatus({
       ),
     )
   ).filter(isTruthy);
+
+  if (packages.every(isSuccessPackageStatus)) {
+    return sortAndValidate({dirname}, packages as SuccessPackageStatus[]);
+  }
   return packages;
 }
 
+function sortAndValidate(
+  config: Pick<Config, 'dirname'>,
+  statuses: SuccessPackageStatus[],
+): PackageStatus[] {
+  const expectedError: {packageStatus?: PackageStatus} = {};
+  const result: PackageStatus[] = [];
+  const pushing = new Set<string>();
+  const pushed = new Set<string>();
+  const packages = new Map(statuses.map((s) => [s.packageName, s]));
+  function push(status: SuccessPackageStatus, stack: string[]) {
+    if (pushed.has(status.packageName)) return;
+    if (pushing.has(status.packageName)) {
+      expectedError.packageStatus = {
+        status: Status.CicularDependencies,
+        packageNames: stack,
+      };
+      throw expectedError;
+    }
+    pushing.add(status.packageName);
+
+    status.pkgInfos.forEach((pkg) => {
+      const filename = resolve(config.dirname, pkg.path);
+      const original = readFileSync(filename, 'utf8');
+      const pkgData = JSON.parse(original);
+      for (const key of [
+        'dependencies',
+        'optionalDependencies',
+        'devDependencies',
+        'peerDependencies',
+      ]) {
+        if (pkgData[key]) {
+          for (const name of Object.keys(pkgData[key])) {
+            const dep = packages.get(name);
+            if (dep) {
+              push(dep, [...stack, name]);
+            }
+          }
+        }
+      }
+    });
+
+    pushed.add(status.packageName);
+    pushing.delete(status.packageName);
+  }
+  try {
+    for (const s of statuses) {
+      push(s, [s.packageName]);
+    }
+  } catch (ex) {
+    if (ex === expectedError && expectedError.packageStatus) {
+      return [expectedError.packageStatus];
+    }
+    throw ex;
+  }
+  return result;
+}
+
 export function printPackagesStatus(packages: PackageStatus[]) {
+  if (packages.some((p) => p.status === Status.CicularDependencies)) {
+    console.error(`Detected circular dependency:`);
+    console.error(``);
+    for (const p of packages.filter(
+      (p): p is CicularDependencies => p.status === Status.CicularDependencies,
+    )) {
+      console.error(p.packageNames.join(' -> '));
+    }
+    console.error(``);
+    return;
+  }
   if (packages.some((p) => p.status === Status.MissingTag)) {
     console.error(`Missing tag for:`);
     console.error(``);
-    for (const p of packages.filter((p) => p.status === Status.MissingTag)) {
+    for (const p of packages.filter(
+      (p): p is MissingTag => p.status === Status.MissingTag,
+    )) {
       console.error(`  - ${p.packageName}@${p.currentVersion}`);
     }
     console.error(``);
@@ -205,7 +298,7 @@ export function printPackagesStatus(packages: PackageStatus[]) {
     console.warn(chalk.blue(`# Packages without updates`));
     console.warn(``);
     for (const p of packages.filter(
-      (p) => p.status === Status.NoUpdateRequired,
+      (p): p is NoUpdateRequired => p.status === Status.NoUpdateRequired,
     )) {
       console.warn(
         p.currentVersion
@@ -219,8 +312,10 @@ export function printPackagesStatus(packages: PackageStatus[]) {
   if (packages.some((p) => p.status === Status.NewVersionToBePublished)) {
     console.warn(chalk.blue(`# Packages to publish`));
     console.warn(``);
-    for (const p of packages) {
-      if (p.status !== Status.NewVersionToBePublished) continue;
+    for (const p of packages.filter(
+      (p): p is NewVersionToBePublished =>
+        p.status === Status.NewVersionToBePublished,
+    )) {
       console.warn(
         chalk.yellow(
           `## ${p.packageName} (${p.currentVersion || 'unreleased'} → ${
@@ -353,20 +448,22 @@ export async function prepublish(
   config: Config,
   pkg: PackageInfo,
   newVersion: string,
+  packageVersions: Map<string, string | null>,
 ): Promise<PrePublishResult> {
   switch (pkg.platform) {
     case Platform.npm:
-      return await prepublishNpm(config, pkg, newVersion);
+      return await prepublishNpm(config, pkg, newVersion, packageVersions);
   }
 }
 export async function publish(
   config: Config,
   pkg: PackageInfo,
   newVersion: string,
+  packageVersions: Map<string, string | null>,
 ) {
   switch (pkg.platform) {
     case Platform.npm:
-      await publishNpm(config, pkg, newVersion);
+      await publishNpm(config, pkg, newVersion, packageVersions);
       break;
   }
 }
@@ -375,14 +472,29 @@ async function withNpmVersion<T>(
   config: Config,
   pkg: PackageInfo,
   newVersion: string,
+  packageVersions: Map<string, string | null>,
   fn: (dir: string) => Promise<T>,
 ) {
   const filename = resolve(config.dirname, pkg.path);
   const original = readFileSync(filename, 'utf8');
   const pkgData = JSON.parse(original);
   pkgData.version = newVersion;
-  // TODO: we also need to set the versions correctly for:
-  // dependencies, peerDependencies & devDependencies
+  function setVersions(obj: any) {
+    if (obj) {
+      for (const key of Object.keys(obj)) {
+        const version = packageVersions.get(key);
+        if (version) {
+          obj[key] = `${
+            obj[key][0] === '^' ? '^' : obj[key][0] === '~' ? '~' : ''
+          }${version}`;
+        }
+      }
+    }
+  }
+  // N.B. we are not doing anything with peer dependencies here
+  setVersions(pkgData.dependencies);
+  setVersions(pkgData.optionalDependencies);
+  setVersions(pkgData.devDependencies);
   const str = stringifyPackage(
     pkgData,
     detectIndent(original).indent,
@@ -399,6 +511,7 @@ async function prepublishNpm(
   config: Config,
   pkg: PackageInfo,
   newVersion: string,
+  packageVersions: Map<string, string | null>,
 ): Promise<PrePublishResult> {
   const [profile, packument] = await Promise.all([
     getProfile(),
@@ -418,13 +531,8 @@ async function prepublishNpm(
   }
 
   if (!packument) {
-    if (
-      pkg.packageName[0] !== '@' ||
-      '@' + profile.name === pkg.packageName.split('/')[0]
-    ) {
-      return {ok: true};
-    } else {
-      const orgName = pkg.packageName.split('/')[0].substr(1);
+    const orgName = pkg.packageName.split('/')[0].substr(1);
+    if (pkg.packageName[0] === '@' && profile.name !== orgName) {
       const orgRoster = await getOrgRoster(orgName);
       if (!orgRoster[profile.name]) {
         return {
@@ -449,9 +557,15 @@ async function prepublishNpm(
     }
   }
 
-  await withNpmVersion(config, pkg, newVersion, async (cwd) => {
-    await spawnBuffered('npm', ['publish', '--dry-run'], {cwd});
-  });
+  await withNpmVersion(
+    config,
+    pkg,
+    newVersion,
+    packageVersions,
+    async (cwd) => {
+      await spawnBuffered('npm', ['publish', '--dry-run'], {cwd});
+    },
+  );
 
   return {ok: true};
 }
@@ -459,8 +573,15 @@ async function publishNpm(
   config: Config,
   pkg: PackageInfo,
   newVersion: string,
+  packageVersions: Map<string, string | null>,
 ) {
-  await withNpmVersion(config, pkg, newVersion, async (cwd) => {
-    await spawnBuffered('npm', ['publish'], {cwd});
-  });
+  await withNpmVersion(
+    config,
+    pkg,
+    newVersion,
+    packageVersions,
+    async (cwd) => {
+      await spawnBuffered('npm', ['publish'], {cwd});
+    },
+  );
 }

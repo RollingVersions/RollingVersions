@@ -10,6 +10,7 @@ import {
   getGitTag,
   prepublish,
   publish,
+  isSuccessPackageStatus,
 } from '.';
 
 const CI_ENV = require('env-ci')();
@@ -86,12 +87,15 @@ const config: Config = {
   deployBranch: DEPLOY_BRANCH,
 };
 getPackagesStatus(config)
-  .then(async (packages) => {
-    printPackagesStatus(packages);
-    if (packages.some((p) => p.status === Status.MissingTag)) {
+  .then(async (packagesThatMayHaveErrors) => {
+    printPackagesStatus(packagesThatMayHaveErrors);
+    const packages = packagesThatMayHaveErrors.filter(isSuccessPackageStatus);
+    if (packagesThatMayHaveErrors.length !== packages.length) {
       process.exit(ERROR_EXIT);
     }
-    // TODO: sort by dependencies
+    const packageVersions = new Map(
+      packages.map((p) => [p.packageName, p.newVersion]),
+    );
     if (packages.some((pkg) => pkg.status === Status.NewVersionToBePublished)) {
       // prepublish checks
       const gitHubPrepublishInfo = await prepublishGitHub(config);
@@ -111,6 +115,7 @@ getPackagesStatus(config)
               config,
               pkgInfo,
               pkg.newVersion,
+              packageVersions,
             );
             if (!prepublishResult.ok) {
               console.error(prepublishResult.reason);
@@ -133,7 +138,7 @@ getPackagesStatus(config)
             console.warn(
               `publishing ${pkgInfo.packageName} to ${pkgInfo.platform} @ ${newVersion}`,
             );
-            await publish(config, pkgInfo, newVersion);
+            await publish(config, pkgInfo, newVersion, packageVersions);
           }
         }
 
