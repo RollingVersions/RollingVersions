@@ -6,15 +6,15 @@ ENV NODE_ENV=production
 
 COPY package.json /app/package.json
 COPY yarn.lock /app/yarn.lock
-ADD packages/changelogversion/package.json /app/packages/changelogversion/package.json
-ADD packages/changelogversion-utils/package.json /app/packages/changelogversion-utils/package.json
+ADD packages/cli/package.json /app/packages/cli/package.json
+ADD packages/utils/package.json /app/packages/utils/package.json
 ADD packages/server/package.json /app/packages/server/package.json
 
 RUN yarn install --production \
   && yarn cache clean
 
-ADD packages/changelogversion/lib /app/packages/changelogversion/lib
-ADD packages/changelogversion-utils/lib /app/packages/changelogversion-utils/lib
+ADD packages/cli/lib /app/packages/cli/lib
+ADD packages/utils/lib /app/packages/utils/lib
 ADD packages/server/lib /app/packages/server/lib
 ADD packages/server/dist /app/packages/server/dist
 ADD packages/server/index.js /app/packages/server/index.js
