@@ -56,7 +56,7 @@ jobs:
       - build
       - run:
           name: Dry run
-          command: node packages/changelogversion/lib/cli --dry-run
+          command: node packages/cli/lib/cli --dry-run
       - push
       - deploy:
           environment: staging
@@ -70,7 +70,7 @@ jobs:
       - build
       - run:
           name: Publish Packages
-          command: node packages/changelogversion/lib/cli
+          command: node packages/cli/lib/cli
       - deploy:
           environment: production
 
@@ -106,7 +106,7 @@ commands:
           command: yarn test
       - run:
           name: Dry run
-          command: node packages/changelogversion/lib/cli --dry-run --supress-errors
+          command: node packages/cli/lib/cli --dry-run --supress-errors
 
   push:
     steps:
