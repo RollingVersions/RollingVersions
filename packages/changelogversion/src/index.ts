@@ -404,43 +404,25 @@ export async function prepublishGitHub({
 }
 
 export async function publishGitHub(
-  _config: Config,
-  _packageName: string,
-  _newVersion: string,
-  _tag: string,
+  {owner, name: repo, accessToken, dirname}: Config,
+  pkg: NewVersionToBePublished,
+  tagName: string,
 ) {
-  // TODO: create GitHub release
-  // const github = new Octokit({
-  //   auth: accessToken,
-  // });
-  // github.repos.createRelease({
-  //   /**
-  //    * Text describing the contents of the tag.
-  //    */
-  //   body?: string;
-  //   /**
-  //    * `true` to create a draft (unpublished) release, `false` to create a published one.
-  //    */
-  //   draft?: boolean;
-  //   /**
-  //    * The name of the release.
-  //    */
-  //   name?: string;
-  //   owner: string;
-  //   /**
-  //    * `true` to identify the release as a prerelease. `false` to identify the release as a full release.
-  //    */
-  //   prerelease?: boolean;
-  //   repo: string;
-  //   /**
-  //    * The name of the tag.
-  //    */
-  //   tag_name: string;
-  //   /**
-  //    * Specifies the commitish value that determines where the Git tag is created from. Can be any branch or commit SHA. Unused if the Git tag already exists. Default: the repository's default branch (usually `master`).
-  //    */
-  //   target_commitish?: string;
-  // });
+  const github = new Octokit({
+    auth: accessToken,
+  });
+  const headSha = await getHeadSha(dirname);
+  await github.repos.createRelease({
+    draft: false,
+    prerelease: false,
+    owner,
+    repo,
+
+    body: changesToMarkdown(pkg.changeLogEntries, 2),
+    name: tagName,
+    tag_name: tagName,
+    target_commitish: headSha,
+  });
 }
 
 export type PrePublishResult = {ok: true} | {ok: false; reason: string};
