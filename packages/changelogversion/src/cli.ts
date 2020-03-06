@@ -161,12 +161,7 @@ getPackagesStatus(config)
               'GitHub Release',
             )} @ ${chalk.yellow(newVersion)}`,
           );
-          await publishGitHub(
-            config,
-            pkg.packageName,
-            newVersion,
-            getGitTag(packages, pkg),
-          );
+          await publishGitHub(config, pkg, getGitTag(packages, pkg));
         }
       }
     }
