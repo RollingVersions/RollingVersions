@@ -1,5 +1,5 @@
 {
-  "name": "changelogversion-server",
+  "name": "@changelogversion/server",
   "private": true,
   "version": "0.0.0",
   "description": "Add changelogs to PRs and use them to determine the version of npm packages",
@@ -21,7 +21,7 @@
     "@authentication/cookie": "^0.1.2",
     "@authentication/github": "^0.2.0",
     "body-parser": "^1.19.0",
-    "changelogversion-utils": "0.0.0",
+    "@changelogversion/utils": "0.0.0",
     "probot": "^9.0.1"
   },
   "devDependencies": {

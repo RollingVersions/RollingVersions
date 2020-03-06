@@ -4,27 +4,27 @@ import DataLoader from 'dataloader';
 import {graphql} from '@octokit/graphql';
 import Octokit from '@octokit/rest';
 import chalk from 'chalk';
-import {getAllTags} from 'changelogversion-utils/lib/GitHub';
+import {getAllTags} from '@changelogversion/utils/lib/GitHub';
 import {
   listPackages,
   getCommits,
   getChangeLogs,
   getHeadSha,
-} from 'changelogversion-utils/lib/LocalRepo';
+} from '@changelogversion/utils/lib/LocalRepo';
 import {
   getCurrentVerion,
   getNewVersion,
-} from 'changelogversion-utils/lib/Versioning';
+} from '@changelogversion/utils/lib/Versioning';
 import {
   getProfile,
   getPackument,
   getOrgRoster,
-} from 'changelogversion-utils/lib/Npm';
-import {ChangeLogEntry} from 'changelogversion-utils/lib/PullChangeLog';
-import {PackageInfo, Platform} from 'changelogversion-utils/lib/Platforms';
-import isTruthy from 'changelogversion-utils/lib/utils/isTruthy';
-import {changesToMarkdown} from 'changelogversion-utils/lib/Rendering';
-import {spawnBuffered} from 'changelogversion-utils/lib/spawn';
+} from '@changelogversion/utils/lib/Npm';
+import {ChangeLogEntry} from '@changelogversion/utils/lib/PullChangeLog';
+import {PackageInfo, Platform} from '@changelogversion/utils/lib/Platforms';
+import isTruthy from '@changelogversion/utils/lib/utils/isTruthy';
+import {changesToMarkdown} from '@changelogversion/utils/lib/Rendering';
+import {spawnBuffered} from '@changelogversion/utils/lib/spawn';
 
 const stringifyPackage = require('stringify-package');
 const detectIndent = require('detect-indent');

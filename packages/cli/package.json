@@ -1,5 +1,8 @@
 {
-  "name": "changelogversion",
+  "name": "@changelogversion/cli",
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "changelogversion": "./lib/cli.js"
   },
@@ -17,7 +20,7 @@
     "@octokit/graphql": "^4.3.1",
     "@octokit/rest": "^16.38.1",
     "chalk": "^3.0.0",
-    "changelogversion-utils": "0.0.0",
+    "@changelogversion/utils": "0.0.0",
     "dataloader": "^2.0.0",
     "detect-indent": "^6.0.0",
     "detect-newline": "^3.1.0",

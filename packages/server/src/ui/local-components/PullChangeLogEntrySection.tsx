@@ -3,7 +3,7 @@ import {
   PackagePullChangeLog,
   ChangeType,
   SectionTitle,
-} from 'changelogversion-utils/lib/PullChangeLog';
+} from '@changelogversion/utils/lib/PullChangeLog';
 import PullChangeLogChange from './PullChangeLogChange';
 
 interface PullChangeLogEntrySectionProps {

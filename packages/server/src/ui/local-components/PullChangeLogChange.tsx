@@ -3,7 +3,7 @@ import {
   PackagePullChangeLog,
   Placeholder,
   ChangeLogEntry,
-} from 'changelogversion-utils/lib/PullChangeLog';
+} from '@changelogversion/utils/lib/PullChangeLog';
 import GitHubMarkdown from '../generic-components/GitHubMarkdownAsync';
 
 const inc = (v: number) => v + 1;

@@ -7,7 +7,7 @@ import {
   writeComment,
   updateStatus,
   listPackages,
-} from 'changelogversion-utils/lib/GitHub';
+} from '@changelogversion/utils/lib/GitHub';
 // tslint:disable-next-line:no-implicit-dependencies
 import {Request, Response} from 'express';
 import {json} from 'body-parser';
@@ -21,7 +21,7 @@ import getPermissionLevel, {Permission} from './getPermissionLevel';
 import getClient from './getClient';
 import staticServer from './static';
 import {PullRequest} from './types';
-import PullChangeLog from 'changelogversion-utils/lib/PullChangeLog';
+import PullChangeLog from '@changelogversion/utils/lib/PullChangeLog';
 
 function attempt<T, S>(fn: () => T, fallback: (ex: any) => S) {
   try {

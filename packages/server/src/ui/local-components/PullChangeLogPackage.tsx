@@ -1,6 +1,6 @@
 import React from 'react';
-import {PackageInfo} from 'changelogversion-utils/lib/Platforms';
-import {PackagePullChangeLog} from 'changelogversion-utils/lib/PullChangeLog';
+import {PackageInfo} from '@changelogversion/utils/lib/Platforms';
+import {PackagePullChangeLog} from '@changelogversion/utils/lib/PullChangeLog';
 import RegistryStatus from './RegistryStatus';
 import PullChangeLogEntrySection from './PullChangeLogEntrySection';
 require('./PullChangeLogEntry.css');
