@@ -1,5 +1,8 @@
 {
   "name": "@changelogversion/cli",
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "changelogversion": "./lib/cli.js"
   },
