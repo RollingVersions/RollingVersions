@@ -1,5 +1,8 @@
 {
-  "name": "changelogversion-utils",
+  "name": "@changelogversion/cli",
+  "bin": {
+    "changelogversion": "./lib/cli.js"
+  },
   "version": "0.0.0",
   "description": "Add changelogs to PRs and use them to determine the version of npm packages",
   "author": "Forbes Lindesay <forbes@lindesay.co.uk> (https://www.forbeslindesay.co.uk)",
@@ -10,22 +13,21 @@
     "build": "tsc",
     "postbuild": "rimraf lib/**/__tests__"
   },
+  "dependencies": {
+    "@octokit/graphql": "^4.3.1",
+    "@octokit/rest": "^16.38.1",
+    "chalk": "^3.0.0",
+    "changelogversion-utils": "0.0.0",
+    "dataloader": "^2.0.0",
+    "detect-indent": "^6.0.0",
+    "detect-newline": "^3.1.0",
+    "env-ci": "^5.0.1",
+    "stringify-package": "^1.0.1"
+  },
   "devDependencies": {
     "@forbeslindesay/tsconfig": "^2.0.0",
     "@types/jest": "^24.0.21",
-    "@types/semver": "^6.2.0",
     "rimraf": "^3.0.0",
     "typescript": "^3.7.4"
-  },
-  "dependencies": {
-    "@octokit/graphql": "^4.3.1",
-    "@octokit/rest": "^16.36.0",
-    "@types/pacote": "^9.5.0",
-    "globby": "^11.0.0",
-    "libnpmconfig": "^1.2.1",
-    "libnpmorg": "^1.0.1",
-    "npm-profile": "^4.0.2",
-    "pacote": "^10.3.0",
-    "semver": "^7.1.1"
   }
 }
