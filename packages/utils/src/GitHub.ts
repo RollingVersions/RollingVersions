@@ -62,7 +62,11 @@ async function listRawPackages(
     ref = undefined;
   }
   async function walk(item: Octokit.ReposGetContentsResponseItem) {
-    if (item.type === 'file' && !item.path.endsWith('/package.json')) {
+    if (
+      item.type === 'file' &&
+      item.path !== 'package.json' &&
+      !item.path.endsWith('/package.json')
+    ) {
       return;
     }
     const entry = await github.repos.getContents({
