@@ -61,6 +61,7 @@ async function listRawPackages(
     });
     ref = undefined;
   }
+
   async function walk(item: Octokit.ReposGetContentsResponseItem) {
     if (
       item.type === 'file' &&
@@ -80,7 +81,7 @@ async function listRawPackages(
         await walk(item);
       }
     } else {
-      if (item.path.endsWith('/package.json')) {
+      if (item.path === 'package.json' || item.path.endsWith('/package.json')) {
         const content = entry.data.content
           ? Buffer.from(entry.data.content, 'base64').toString('utf8')
           : '';
