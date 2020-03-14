@@ -61,6 +61,7 @@ async function listRawPackages(
     });
     ref = undefined;
   }
+
   async function walk(item: Octokit.ReposGetContentsResponseItem) {
     if (
       item.type === 'file' &&
