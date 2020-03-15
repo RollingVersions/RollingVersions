@@ -5,7 +5,7 @@ export default function getVersionTag(
   allTags: readonly Pick<VersionTag, 'commitSha' | 'name'>[],
   packageName: string,
   registryVersion: string | null,
-  isMonoRepo: boolean,
+  {isMonoRepo}: {isMonoRepo: boolean},
 ): VersionTag | null {
   const tags = allTags
     .map((tag) => {

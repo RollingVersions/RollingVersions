@@ -33,7 +33,7 @@ export default async function addVersions(
                 allTags,
                 pkg.packageName,
                 registryVersion,
-                packages.size === 1,
+                {isMonoRepo: packages.size !== 1},
               ),
             };
           },
