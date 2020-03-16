@@ -1,0 +1,151 @@
+query GetTags($owner: String!, $name: String!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    refs(first: 100, after: $after, refPrefix: "refs/tags/") {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        name
+        target {
+          oid
+        }
+      }
+    }
+  }
+}
+
+query GetPullRequestFileNames($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      headRef {
+        target {
+          __typename
+          ... on Commit {
+            tree {
+              ...FullContents
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+query GetFile($owner: String!, $name: String!, $oid: GitObjectID!) {
+  repository(owner: $owner, name: $name) {
+    object(oid: $oid) {
+      __typename
+      ... on Blob {
+        text
+      }
+    }
+  }
+}
+
+query GetPullRequestComments(
+  $owner: String!
+  $name: String!
+  $number: Int!
+  $after: String
+) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      comments(first: 5, after: $after) {
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+        nodes {
+          databaseId
+          body
+          # author {
+          #   url
+          # }
+        }
+      }
+    }
+  }
+}
+
+fragment FullContents on Tree {
+  entries {
+    name
+    object {
+      __typename
+      oid
+      ... on Tree {
+        entries {
+          name
+          object {
+            __typename
+            oid
+            ... on Tree {
+              entries {
+                name
+                object {
+                  __typename
+                  oid
+                  ... on Tree {
+                    entries {
+                      name
+                      object {
+                        __typename
+                        oid
+                        ... on Tree {
+                          entries {
+                            name
+                            object {
+                              __typename
+                              oid
+                              ... on Tree {
+                                entries {
+                                  name
+                                  object {
+                                    __typename
+                                    oid
+                                    ... on Tree {
+                                      entries {
+                                        name
+                                        object {
+                                          __typename
+                                          oid
+                                          ... on Tree {
+                                            entries {
+                                              name
+                                              object {
+                                                __typename
+                                                oid
+                                                ... on Tree {
+                                                  entries {
+                                                    name
+                                                    object {
+                                                      __typename
+                                                      oid
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

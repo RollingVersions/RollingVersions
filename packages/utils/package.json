@@ -10,17 +10,20 @@
   "homepage": "https://github.com/ForbesLindesay/changelogversion",
   "bugs": "https://github.com/ForbesLindesay/changelogversion/issues",
   "scripts": {
+    "prebuild": "github-graph src/github-graph.graphql",
     "build": "tsc",
     "postbuild": "rimraf lib/**/__tests__"
   },
   "devDependencies": {
     "@forbeslindesay/tsconfig": "^2.0.0",
+    "@github-graph/cli": "^1.0.1",
     "@types/jest": "^24.0.21",
     "@types/semver": "^6.2.0",
     "rimraf": "^3.0.0",
     "typescript": "^3.7.4"
   },
   "dependencies": {
+    "@github-graph/api": "^1.0.0",
     "@octokit/graphql": "^4.3.1",
     "@octokit/rest": "^16.36.0",
     "@types/pacote": "^9.5.0",
