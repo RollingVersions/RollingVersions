@@ -1,5 +1,5 @@
 import React from 'react';
-import {PullRequest} from '../../types';
+import {PullRequestResponse} from '../../types';
 
 export default function usePullRequest({
   owner,
@@ -14,7 +14,7 @@ export default function usePullRequest({
   const ref = React.useRef(path);
   ref.current = path;
   const [pullRequest, setPullRequest] = React.useState<
-    PullRequest | undefined
+    PullRequestResponse | undefined
   >();
   const [error, setError] = React.useState<Error | undefined>();
   const [updatesInFlight, setUpdatesInFlight] = React.useState(0);
@@ -45,7 +45,9 @@ export default function usePullRequest({
     pullRequest,
     error,
     updating: updatesInFlight > 0,
-    update: async (state: PullRequest['changeLogState']): Promise<void> => {
+    update: async (
+      state: PullRequestResponse['changeLogState'],
+    ): Promise<void> => {
       setUpdatesInFlight((v) => v + 1);
       try {
         try {

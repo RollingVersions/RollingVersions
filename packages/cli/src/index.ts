@@ -1,14 +1,19 @@
 import {resolve, dirname} from 'path';
 import {readFileSync, writeFileSync} from 'fs';
 import DataLoader from 'dataloader';
-import {graphql} from '@octokit/graphql';
-import Octokit from '@octokit/rest';
+// import {graphql} from '@octokit/graphql';
+// import Octokit from '@octokit/rest';
 import chalk from 'chalk';
-import {getAllTags} from '@changelogversion/utils/lib/GitHub';
+import {
+  GitHubClient,
+  getAllTags,
+  getChangeLogFetcher,
+  getRepositoryViewerPermissions,
+  getBranch,
+} from '@changelogversion/utils/lib/GitHub';
 import {
   listPackages,
   getCommits,
-  getChangeLogs,
   getHeadSha,
 } from '@changelogversion/utils/lib/LocalRepo';
 import {
@@ -116,31 +121,16 @@ export function getGitTag(
   return `${start}${end}`;
 }
 
-export async function getPackagesStatus({
-  dirname,
-  owner,
-  name,
-  accessToken,
-}: Config) {
+export async function getPackagesStatus(
+  {dirname, owner, name}: Config,
+  client: GitHubClient,
+) {
+  const getChangeLogsFromCommits = getChangeLogFetcher(client, {owner, name});
   const commitsLoader = new DataLoader(async (since: readonly string[]) => {
     return await Promise.all(
       since.map((t) => getCommits(dirname, t || undefined)),
     );
   });
-  const changeLogsLoader = new DataLoader(
-    async (commits: readonly string[]) => {
-      return await getChangeLogs(
-        graphql.defaults({
-          headers: {
-            authorization: `token ${accessToken}`,
-          },
-        }),
-        owner,
-        name,
-        commits,
-      );
-    },
-  );
 
   const packages = (
     await Promise.all(
@@ -164,22 +154,14 @@ export async function getPackagesStatus({
           const commits = await commitsLoader.load(
             currentTag ? currentTag.commitSha : '',
           );
-          const changeLogs = await changeLogsLoader.loadMany(commits);
-          const handledPRs = new Set<number>();
+          const changeLogs = await getChangeLogsFromCommits(commits);
           const changeLogEntries: (ChangeLogEntry & {pr: number})[] = [];
-          for (const cl of changeLogs) {
-            if (cl instanceof Error) {
-              throw cl;
-            }
-            for (const pullChangeLog of cl) {
-              if (handledPRs.has(pullChangeLog.pr)) continue;
-              handledPRs.add(pullChangeLog.pr);
-              for (const pkg of pullChangeLog.packages) {
-                if (pkg.packageName === packageName) {
-                  changeLogEntries.push(
-                    ...pkg.changes.map((c) => ({...c, pr: pullChangeLog.pr})),
-                  );
-                }
+          for (const pullChangeLog of changeLogs) {
+            for (const pkg of pullChangeLog.packages) {
+              if (pkg.packageName === packageName) {
+                changeLogEntries.push(
+                  ...pkg.changes.map((c) => ({...c, pr: pullChangeLog.pr})),
+                );
               }
             }
           }
@@ -332,87 +314,57 @@ export function printPackagesStatus(packages: PackageStatus[]) {
   }
 }
 
-export async function prepublishGitHub({
-  owner,
-  name,
-  accessToken,
-  dirname,
-  deployBranch,
-}: Config): Promise<{ok: true; tags: string[]} | {ok: false; reason: string}> {
-  const result = (await graphql.defaults({
-    headers: {
-      authorization: `token ${accessToken}`,
-    },
-  })(
-    `query permissions($owner:String!, $name:String!${
-      deployBranch ? `, $deployBranch:String!` : ``
-    }) { 
-      repository(owner:$owner,name:$name) {
-        viewerPermission
-        ${
-          deployBranch
-            ? `branch: ref(qualifiedName: "refs/heads/master")`
-            : `branch: defaultBranchRef`
-        } {
-          name
-          target {
-            __typename
-            oid
-          }
-        }
-      }
-      
-    }`,
-    deployBranch ? {owner, name, deployBranch} : {owner, name},
-  )) as {
-    repository: {
-      viewerPermission: string;
-      branch: {name: string; target: {__typename: string; oid: string}};
-    };
-  } | null;
-  const permission =
-    result && result.repository && result.repository.viewerPermission;
+export async function prepublishGitHub(
+  {owner, name, dirname, deployBranch}: Config,
+  client: GitHubClient,
+): Promise<{ok: true; tags: string[]} | {ok: false; reason: string}> {
+  const [permission, branch, allTags] = await Promise.all([
+    getRepositoryViewerPermissions(client, {
+      owner,
+      name,
+    }),
+    getBranch(client, {owner, name}, deployBranch),
+    getAllTags(client, {owner, name}),
+  ]);
   if (!permission || !['ADMIN', 'MAINTAIN', 'WRITE'].includes(permission)) {
     return {
       ok: false,
       reason: `This viewer does not have permisison to publish tags/releases to GitHub`,
     };
   }
-  if (result?.repository.branch.target.__typename !== 'Commit') {
+  if (!branch) {
     return {
       ok: false,
-      reason: `Could not find a commit for ${result?.repository.branch.name}.`,
+      reason: deployBranch
+        ? `Could not find the branch "${deployBranch}" in the repository "${owner}/${name}".`
+        : `Could not find the default branch in the repository "${owner}/${name}".`,
+    };
+  }
+  if (!branch.headSha) {
+    return {
+      ok: false,
+      reason: `Could not find a commit for the "${branch.name}" in the repository "${owner}/${name}".`,
     };
   }
   const headSha = await getHeadSha(dirname);
-  if (headSha !== result?.repository.branch.target.oid) {
+  if (headSha !== branch.headSha) {
     return {
       ok: false,
-      reason: `This build is not running against the latest commit in ${result?.repository.branch.name}. To avoid awkward race conditions we'll skip publishing here and leave publishing to the other commit.`,
+      reason: `This build is not running against the latest commit in ${branch.name}. To avoid awkward race conditions we'll skip publishing here and leave publishing to the other commit.`,
     };
   }
 
-  const allTags = await getAllTags(
-    new Octokit({
-      headers: {
-        authorization: `token ${accessToken}`,
-      },
-    }),
-    {owner, repo: name},
-  );
-  return {ok: true, tags: allTags.map((t) => t.name)};
+  return {ok: true, tags: (allTags || []).map((t) => t.name)};
 }
 
 export async function publishGitHub(
-  {owner, name: repo, accessToken, dirname}: Config,
+  {owner, name: repo, dirname}: Config,
+  client: GitHubClient,
   pkg: NewVersionToBePublished,
   tagName: string,
 ) {
-  const github = new Octokit({
-    auth: accessToken,
-  });
   const headSha = await getHeadSha(dirname);
-  await github.repos.createRelease({
+  await client.rest.repos.createRelease({
     draft: false,
     prerelease: false,
     owner,

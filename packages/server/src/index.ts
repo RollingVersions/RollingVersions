@@ -1,4 +1,4 @@
-import {Application, Context, Octokit} from 'probot';
+import {Application, Context} from 'probot';
 import {URL} from 'url';
 // tslint:disable-next-line:no-implicit-dependencies
 import Webhooks from '@octokit/webhooks';
@@ -7,7 +7,13 @@ import {
   writeComment,
   updateStatus,
   listPackages,
+  getPullRequestHeadSha,
+  GitHubClient,
 } from '@changelogversion/utils/lib/GitHub';
+import {
+  renderComment,
+  renderInitialComment,
+} from '@changelogversion/utils/lib/Rendering';
 // tslint:disable-next-line:no-implicit-dependencies
 import {Request, Response} from 'express';
 import {json} from 'body-parser';
@@ -18,10 +24,11 @@ import {
   authCallbackPath,
 } from './auth';
 import getPermissionLevel, {Permission} from './getPermissionLevel';
-import getClient from './getClient';
+import {getClientForContext, getClientForRepo} from './getClient';
 import staticServer from './static';
-import {PullRequest} from './types';
+import {PullRequestResponse} from './types';
 import PullChangeLog from '@changelogversion/utils/lib/PullChangeLog';
+import {PullRequest} from '@changelogversion/utils/lib/types';
 
 function attempt<T, S>(fn: () => T, fallback: (ex: any) => S) {
   try {
@@ -119,33 +126,31 @@ export default function(app: Application) {
           next();
           return;
         }
-        const github = await getClient(app, params);
-        // TODO: render UI for editing changelog
-        const headSha = (
-          await github.pulls.get({
-            owner: params.owner,
-            repo: params.repo,
-            pull_number: params.pull_number,
-          })
-        ).data.head.sha;
-        const {packageInfoCache, ...changeLogState} = (
-          await readComment(github, {
-            number: params.pull_number,
-            owner: params.owner,
-            repo: params.repo,
-          })
-        ).state;
-        const pullRequest: PullRequest = {
+        const repo = {owner: params.owner, name: params.repo};
+        const github = await getClientForRepo(app, repo);
+        const pr = {number: params.pull_number, repo};
+        const [
           headSha,
+          {
+            state: {packageInfoCache, ...changeLogState},
+          },
+        ] = await Promise.all([
+          getPullRequestHeadSha(github, pr),
+          readComment(github, {
+            number: params.pull_number,
+            repo: {owner: params.owner, name: params.repo},
+          }),
+        ] as const);
+        const pullRequest: PullRequestResponse = {
+          headSha: headSha!,
           permission,
           changeLogState,
           currentVersions:
             packageInfoCache && packageInfoCache.headSha === headSha
               ? packageInfoCache.packages
               : await listPackages(github, {
-                  owner: params.owner,
-                  repo: params.repo,
-                  headSha,
+                  repo: {owner: params.owner, name: params.repo},
+                  number: params.pull_number,
                 }),
         };
         res.json(pullRequest);
@@ -178,10 +183,15 @@ export default function(app: Application) {
           return;
         }
 
-        const github = await getClient(app, params);
+        const repo = {owner: params.owner, name: params.repo};
+        const github = await getClientForRepo(app, repo);
 
-        const body: PullRequest['changeLogState'] = req.body;
-        await updatePRWithState(github, params, body);
+        const body: PullRequestResponse['changeLogState'] = req.body;
+        await updatePRWithState(
+          github,
+          {repo, number: params.pull_number},
+          body,
+        );
         res.status(200).send('ok');
       } catch (ex) {
         next(ex);
@@ -196,12 +206,12 @@ export default function(app: Application) {
   app.on('installation', async (context) => {
     for (const r of context.payload.repositories) {
       const repo = (
-        await context.github.repos.get({
+        await getClientForContext(context).rest.repos.get({
           owner: context.payload.installation.account.login,
           repo: r.name,
         })
       ).data;
-      await onUpdateRepoDebounced(context.github, repo);
+      await onUpdateRepoDebounced(getClientForContext(context), repo);
     }
   });
 
@@ -209,14 +219,20 @@ export default function(app: Application) {
   app.on('pull_request.edited', onUpdatePullRequest);
   app.on('pull_request.synchronize', onUpdatePullRequest);
   app.on('release', async (context) => {
-    await onUpdateRepoDebounced(context.github, context.payload.repository);
+    await onUpdateRepoDebounced(
+      getClientForContext(context),
+      context.payload.repository,
+    );
   });
   app.on('push', async (context) => {
     if (
       'refs/heads/' + context.payload.repository.default_branch ===
       context.payload.ref
     ) {
-      await onUpdateRepoDebounced(context.github, context.payload.repository);
+      await onUpdateRepoDebounced(
+        getClientForContext(context),
+        context.payload.repository,
+      );
     }
   });
 
@@ -226,8 +242,13 @@ export default function(app: Application) {
     | {pending: false; done: Promise<void>}
   >();
   async function onUpdateRepoDebounced(
-    github: Octokit,
-    repo: Webhooks.PayloadRepository | Octokit.ReposGetResponse,
+    github: GitHubClient,
+    repo: {
+      full_name: string;
+      owner: {login: string};
+      name: string;
+      default_branch: string;
+    },
   ) {
     for (
       let timeout = timeouts.get(repo.full_name);
@@ -262,21 +283,22 @@ export default function(app: Application) {
     });
   }
   async function onUpdateRepo(
-    github: Octokit,
-    repo: Webhooks.PayloadRepository | Octokit.ReposGetResponse,
+    github: GitHubClient,
+    repo: {owner: {login: string}; name: string; default_branch: string},
   ) {
     // TODO: pagination
-    const pulls = await github.pulls.list({
-      owner: repo.owner.login,
-      repo: repo.name,
-      state: 'open',
-      base: repo.default_branch,
-      per_page: 100,
-    });
-    for (const pull of pulls) {
-      await updatePR(github, {
+    const pulls = (
+      await github.rest.pulls.list({
         owner: repo.owner.login,
         repo: repo.name,
+        state: 'open',
+        base: repo.default_branch,
+        per_page: 100,
+      })
+    ).data;
+    for (const pull of pulls) {
+      await updatePR(github, {
+        repo: {owner: repo.owner.login, name: repo.name},
         number: pull.number,
         headSha: pull.head.sha,
       });
@@ -286,24 +308,56 @@ export default function(app: Application) {
   async function onUpdatePullRequest(
     context: Context<Webhooks.WebhookPayloadPullRequest>,
   ) {
-    await updatePR(context.github, {
-      owner: context.payload.repository.owner.login,
-      repo: context.payload.repository.name,
+    await updatePR(getClientForContext(context), {
+      repo: {
+        owner: context.payload.repository.owner.login,
+        name: context.payload.repository.name,
+      },
       number: context.payload.pull_request.number,
       headSha: context.payload.pull_request.head.sha,
     });
   }
 
-  async function updatePR(
-    github: Octokit,
-    pullRequest: {
-      owner: string;
-      repo: string;
-      number: number;
-      headSha: string;
-    },
+  async function preparePR(
+    github: GitHubClient,
+    pullRequest: Pick<PullRequest, 'repo' | 'number'> &
+      Partial<Pick<PullRequest, 'headSha'>>,
   ) {
-    const {existingComment, state: oldState} = await readComment(
+    const queryResults = await Promise.all([
+      pullRequest.headSha
+        ? pullRequest.headSha
+        : getPullRequestHeadSha(github, pullRequest),
+      readComment(github, pullRequest),
+    ] as const);
+    let [, {existingComment}] = queryResults;
+    const [headSha, {state}] = queryResults;
+
+    if (!headSha) {
+      throw new Error(
+        `Could not find head sha for ${pullRequest.repo.owner}/${pullRequest.repo.name}/${pullRequest.number}`,
+      );
+    }
+
+    if (!existingComment) {
+      // If there is no status, we write an initial status as quickly as possible
+      // without waiting until we've extracted all the package versions.
+      // This improves percieved responsiveness and reduces the chance of use accidentally writing
+      // two comments instead of one.
+      existingComment = await writeComment(
+        github,
+        pullRequest,
+        renderInitialComment(pullRequest, APP_URL),
+        undefined,
+      );
+      await updateStatus(github, {...pullRequest, headSha}, undefined, APP_URL);
+    }
+    return {existingComment, headSha, state};
+  }
+  async function updatePR(
+    github: GitHubClient,
+    pullRequest: Pick<PullRequest, 'repo' | 'number' | 'headSha'>,
+  ) {
+    const {existingComment, state: oldState} = await preparePR(
       github,
       pullRequest,
     );
@@ -324,46 +378,45 @@ export default function(app: Application) {
 
     const pr = {...pullRequest, currentVersions};
 
-    await writeComment(github, existingComment, pr, state, APP_URL);
+    await writeComment(
+      github,
+      pr,
+      renderComment(pr, state, APP_URL),
+      existingComment,
+    );
 
     await updateStatus(github, pr, state, APP_URL);
   }
 
   async function updatePRWithState(
-    github: Octokit,
-    pullRequest: {
-      owner: string;
-      repo: string;
-      pull_number: number;
-    },
-    state: PullRequest['changeLogState'],
+    github: GitHubClient,
+    pullRequest: Pick<PullRequest, 'repo' | 'number'>,
+    state: PullRequestResponse['changeLogState'],
   ) {
-    const headSha = (await github.pulls.get(pullRequest)).data.head.sha;
-    const {existingComment, state: oldState} = await readComment(github, {
-      owner: pullRequest.owner,
-      repo: pullRequest.repo,
-      number: pullRequest.pull_number,
-    });
+    const {existingComment, headSha, state: oldState} = await preparePR(
+      github,
+      pullRequest,
+    );
+
     const currentVersions =
       oldState.packageInfoCache && oldState.packageInfoCache.headSha === headSha
         ? oldState.packageInfoCache.packages
-        : await listPackages(github, {
-            owner: pullRequest.owner,
-            repo: pullRequest.repo,
-            headSha,
-          });
+        : await listPackages(github, pullRequest);
 
     const pr = {
-      owner: pullRequest.owner,
-      repo: pullRequest.repo,
-      number: pullRequest.pull_number,
+      ...pullRequest,
       headSha,
       currentVersions,
     };
 
     const st = {...state, packageInfoCache: oldState.packageInfoCache};
 
-    await writeComment(github, existingComment, pr, st, APP_URL);
+    await writeComment(
+      github,
+      pr,
+      renderComment(pr, st, APP_URL),
+      existingComment,
+    );
 
     await updateStatus(github, pr, st, APP_URL);
   }

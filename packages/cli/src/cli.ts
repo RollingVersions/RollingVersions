@@ -13,6 +13,7 @@ import {
   isSuccessPackageStatus,
 } from '.';
 import chalk = require('chalk');
+import {GitHubClient, auth} from '@changelogversion/utils/lib/GitHub';
 
 const CI_ENV = require('env-ci')();
 
@@ -87,7 +88,10 @@ const config: Config = {
   accessToken: GITHUB_TOKEN,
   deployBranch: DEPLOY_BRANCH,
 };
-getPackagesStatus(config)
+
+const client = new GitHubClient({auth: auth.createTokenAuth(GITHUB_TOKEN)});
+
+getPackagesStatus(config, client)
   .then(async (packagesThatMayHaveErrors) => {
     printPackagesStatus(packagesThatMayHaveErrors);
     const packages = packagesThatMayHaveErrors.filter(isSuccessPackageStatus);
@@ -99,7 +103,7 @@ getPackagesStatus(config)
     );
     if (packages.some((pkg) => pkg.status === Status.NewVersionToBePublished)) {
       // prepublish checks
-      const gitHubPrepublishInfo = await prepublishGitHub(config);
+      const gitHubPrepublishInfo = await prepublishGitHub(config, client);
       if (!gitHubPrepublishInfo.ok) {
         console.error(gitHubPrepublishInfo.reason);
         process.exit(ERROR_EXIT);
@@ -161,7 +165,7 @@ getPackagesStatus(config)
               'GitHub Release',
             )} @ ${chalk.yellow(newVersion)}`,
           );
-          await publishGitHub(config, pkg, getGitTag(packages, pkg));
+          await publishGitHub(config, client, pkg, getGitTag(packages, pkg));
         }
       }
     }

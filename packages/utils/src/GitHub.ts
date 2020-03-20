@@ -1,9 +1,7 @@
 import {URL} from 'url';
-import Octokit from '@octokit/rest';
+import DataLoader from 'dataloader';
 import {
   COMMENT_GUID,
-  PullRequst,
-  renderComment,
   getUrlForChangeLog,
   getShortDescription,
 } from './Rendering';
@@ -14,143 +12,205 @@ import isObject from './utils/isObject';
 import addVersions from './utils/addVersions';
 import VersionTag from './VersionTag';
 
-export async function getAllTags(
-  github: Pick<Octokit, 'repos'>,
-  pr: Pick<PullRequst, 'owner' | 'repo'>,
+import GitHubClient, {auth} from '@github-graph/api';
+import * as gh from './github-graph';
+import paginate from './utils/paginate';
+import {Repository, PullRequest} from './types';
+
+export {GitHubClient, auth};
+
+export async function getPullRequestHeadSha(
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
 ) {
-  const results: Pick<VersionTag, 'commitSha' | 'name'>[] = [];
-  let page = 1;
-  let nextPage = true;
-  while (nextPage) {
-    const data = (
-      await github.repos.listTags({
-        owner: pr.owner,
-        repo: pr.repo,
-        per_page: 100,
-        page,
+  return (
+    await gh.getPullRequestHeadSha(client, {
+      owner: pr.repo.owner,
+      name: pr.repo.name,
+      number: pr.number,
+    })
+  ).repository?.pullRequest?.headRef?.target.oid;
+}
+export async function getRepositoryViewerPermissions(
+  client: GitHubClient,
+  repo: Repository,
+) {
+  return (
+    (await gh.getRepositoryViewerPermissions(client, repo)).repository
+      ?.viewerPermission || null
+  );
+}
+
+export async function getBranch(
+  client: GitHubClient,
+  repo: Repository,
+  deployBranch?: string | null,
+) {
+  const data = await (deployBranch
+    ? gh.getBranch(client, {
+        ...repo,
+        qualifiedName: `refs/heads/${deployBranch}`,
       })
-    ).data.map((t) => ({name: t.name, commitSha: t.commit.sha}));
-    results.push(...data);
-    nextPage = data.length === 100;
-    page++;
+    : gh.getDefaultBranch(client, repo));
+
+  if (data.repository?.branch) {
+    return {
+      name: data.repository.branch.name,
+      headSha:
+        data.repository.branch.target.__typename === 'Commit'
+          ? `${data.repository.branch.target.oid}`
+          : null,
+    };
+  }
+
+  return null;
+}
+
+export async function getAllTags(client: GitHubClient, repo: Repository) {
+  const results: Pick<VersionTag, 'commitSha' | 'name'>[] = [];
+  for await (const tag of paginate(
+    (after) => gh.getTags(client, {...repo, after}),
+    (page) => page?.repository?.refs?.nodes || [],
+    (page) =>
+      (page?.repository?.refs?.pageInfo?.hasNextPage &&
+        page?.repository?.refs?.pageInfo?.endCursor) ||
+      undefined,
+  )) {
+    if (tag) {
+      results.push({commitSha: tag.target.oid, name: tag.name});
+    }
   }
   return results;
 }
+
+interface Entry {
+  name: string;
+  object:
+    | null
+    | {__typename: 'Tree'; oid: string; entries?: Entry[] | null}
+    | {__typename: 'Blob'; oid: string}
+    | {__typename: 'Tag'}
+    | {__typename: 'Commit'};
+}
+
 async function listRawPackages(
-  github: Pick<Octokit, 'repos'>,
-  pr: Pick<PullRequst, 'owner' | 'repo' | 'headSha'>,
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
 ) {
+  const commit = (
+    await gh.getPullRequestFileNames(client, {
+      ...pr.repo,
+      number: pr.number,
+    })
+  ).repository?.pullRequest?.headRef?.target;
+  if (!commit || commit.__typename !== 'Commit') {
+    throw new Error(
+      `Expected a Commit but got ${commit?.__typename || 'undefined'}`,
+    );
+  }
+
   const packages = new Map<
     string,
     Array<Omit<PackageInfo, 'versionTag' | 'registryVersion'>>
   >();
-  let ref: string | undefined = pr.headSha;
-  let root: Octokit.Response<Octokit.ReposGetContentsResponse>;
-  try {
-    root = await github.repos.getContents({
-      owner: pr.owner,
-      repo: pr.repo,
-      ref,
-      path: '',
-    });
-  } catch (ex) {
-    root = await github.repos.getContents({
-      owner: pr.owner,
-      repo: pr.repo,
-      path: '',
-    });
-    ref = undefined;
-  }
-
-  async function walk(item: Octokit.ReposGetContentsResponseItem) {
-    if (
-      item.type === 'file' &&
-      item.path !== 'package.json' &&
-      !item.path.endsWith('/package.json')
-    ) {
-      return;
-    }
-    const entry = await github.repos.getContents({
-      owner: pr.owner,
-      repo: pr.repo,
-      ref,
-      path: item.path,
-    });
-    if (Array.isArray(entry.data)) {
-      for (const item of entry.data) {
-        await walk(item);
-      }
-    } else {
-      if (item.path === 'package.json' || item.path.endsWith('/package.json')) {
-        const content = entry.data.content
-          ? Buffer.from(entry.data.content, 'base64').toString('utf8')
-          : '';
-        let result: unknown;
-        try {
-          result = JSON.parse(content);
-        } catch (ex) {
-          // ignore
+  const queue: Promise<unknown>[] = [];
+  function processEntry(entry: Entry, path: string[]) {
+    switch (entry.object?.__typename) {
+      case 'Blob':
+        if (entry.name === 'package.json') {
+          queue.push(
+            gh
+              .getFile(client, {
+                ...pr.repo,
+                oid: entry.object.oid,
+              })
+              .then((file) => {
+                if (file.repository?.object?.__typename === 'Blob') {
+                  const content = file.repository.object.text;
+                  let result: unknown;
+                  try {
+                    result = content && JSON.parse(content);
+                  } catch (ex) {
+                    // ignore
+                  }
+                  if (isObject(result) && typeof result.name === 'string') {
+                    packages.set(result.name, packages.get(result.name) || []);
+                    packages.get(result.name)!.push({
+                      path: [...path, entry.name].join('/'),
+                      platform: Platform.npm,
+                      publishConfigAccess:
+                        result.name[0] === '@'
+                          ? isObject(result.publishConfig) &&
+                            result.publishConfig.access === 'public'
+                            ? 'public'
+                            : 'restricted'
+                          : 'public',
+                      packageName: result.name,
+                      notToBePublished: result.private === true,
+                    });
+                  }
+                }
+              }),
+          );
         }
-        if (isObject(result) && typeof result.name === 'string') {
-          packages.set(result.name, packages.get(result.name) || []);
-          packages.get(result.name)!.push({
-            path: entry.data.path.replace(/^\//, ''),
-            platform: Platform.npm,
-            publishConfigAccess:
-              result.name[0] === '@'
-                ? isObject(result.publishConfig) &&
-                  result.publishConfig.access === 'public'
-                  ? 'public'
-                  : 'restricted'
-                : 'public',
-            packageName: result.name,
-            notToBePublished: result.private === true,
-          });
-        }
-      }
+        break;
+      case 'Tree':
+        entry.object.entries?.forEach((e) =>
+          processEntry(e, [...path, entry.name]),
+        );
+        break;
     }
   }
-  if (Array.isArray(root.data)) {
-    for (const item of root.data) {
-      await walk(item);
-    }
-  } else {
-    await walk(root.data);
-  }
-
+  commit.tree.entries?.forEach((entry) => processEntry(entry, []));
+  await Promise.all(queue);
   return packages;
 }
+
 export async function listPackages(
-  github: Pick<Octokit, 'repos'>,
-  pr: Pick<PullRequst, 'owner' | 'repo' | 'headSha'>,
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
 ): Promise<PackageInfos> {
   const [packages, allTags] = await Promise.all([
-    listRawPackages(github, pr),
-    getAllTags(github, pr),
+    listRawPackages(client, pr),
+    getAllTags(client, pr.repo),
   ]);
 
   return await addVersions(packages, allTags);
 }
 
 export async function readComment(
-  github: Pick<Octokit, 'issues'>,
-  pr: Pick<PullRequst, 'owner' | 'repo' | 'number'>,
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
 ): Promise<{
   existingComment: number | undefined;
   state: PullChangeLog;
 }> {
-  const comments = await github.issues.listComments({
-    issue_number: pr.number,
-    owner: pr.owner,
-    repo: pr.repo,
-    per_page: 20,
-  });
-  const existingComment = comments.data.find((comment) =>
-    comment.body.includes(COMMENT_GUID),
-  );
+  for await (const comment of paginate(
+    (after) =>
+      gh.getPullRequestComments(client, {
+        ...pr.repo,
+        number: pr.number,
+        after,
+      }),
+    (page) => page?.repository?.pullRequest?.comments?.nodes || [],
+    (page): string | undefined =>
+      (page?.repository?.pullRequest?.comments?.pageInfo?.hasNextPage &&
+        page?.repository?.pullRequest?.comments?.pageInfo?.endCursor) ||
+      undefined,
+  )) {
+    if (comment?.databaseId && comment?.body.includes(COMMENT_GUID)) {
+      return {
+        existingComment: comment.databaseId,
+        state: readState(comment.body) || {
+          submittedAtCommitSha: null,
+          packages: [],
+        },
+      };
+    }
+  }
   return {
-    existingComment: existingComment?.id,
-    state: readState(existingComment?.body) || {
+    existingComment: undefined,
+    state: {
       submittedAtCommitSha: null,
       packages: [],
     },
@@ -158,40 +218,42 @@ export async function readComment(
 }
 
 export async function writeComment(
-  github: Pick<Octokit, 'issues'>,
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
+  body: string,
   existingComment: number | undefined,
-  pr: PullRequst,
-  changeLog: PullChangeLog | undefined,
-  changeLogVersionURL: URL,
 ) {
-  const body = renderComment(pr, changeLog, changeLogVersionURL);
   if (existingComment) {
-    await github.issues.updateComment({
-      owner: pr.owner,
-      repo: pr.repo,
-      body,
-      comment_id: existingComment,
-    });
+    return (
+      await client.rest.issues.updateComment({
+        owner: pr.repo.owner,
+        repo: pr.repo.name,
+        body,
+        comment_id: existingComment,
+      })
+    ).data.id;
   } else {
-    await github.issues.createComment({
-      issue_number: pr.number,
-      owner: pr.owner,
-      repo: pr.repo,
-      body,
-    });
+    return (
+      await client.rest.issues.createComment({
+        owner: pr.repo.owner,
+        repo: pr.repo.name,
+        issue_number: pr.number,
+        body,
+      })
+    ).data.id;
   }
 }
 
 export async function updateStatus(
-  github: Pick<Octokit, 'repos'>,
-  pr: PullRequst,
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number' | 'headSha'>,
   changeLog: PullChangeLog | undefined,
   changeLogVersionURL: URL,
 ) {
   const url = getUrlForChangeLog(pr, changeLogVersionURL);
-  await github.repos.createStatus({
-    owner: pr.owner,
-    repo: pr.repo,
+  await client.rest.repos.createStatus({
+    owner: pr.repo.owner,
+    repo: pr.repo.name,
     sha: pr.headSha,
     state:
       changeLog && pr.headSha === changeLog.submittedAtCommitSha
@@ -201,4 +263,63 @@ export async function updateStatus(
     description: getShortDescription(pr, changeLog),
     context: 'Changelog',
   });
+}
+
+export function getChangeLogFetcher(client: GitHubClient, repo: Repository) {
+  const pullRequestsFromCommit = new DataLoader<string, number[]>(
+    async (commitShas) => {
+      return await Promise.all(
+        commitShas.map(async (sha) => {
+          const pulls = await gh.getPullRequestsForCommit(client, {
+            ...repo,
+            sha,
+          });
+          return (
+            (pulls.repository?.object?.__typename === 'Commit' &&
+              pulls.repository.object.associatedPullRequests?.nodes
+                ?.map((pr) => pr?.number)
+                .filter((num): num is number => typeof num === 'number')) ||
+            []
+          );
+        }),
+      );
+    },
+  );
+  const commentFromPullRequest = new DataLoader<
+    number,
+    PullChangeLog & {pr: number}
+  >(async (pullNumbers) => {
+    return await Promise.all(
+      pullNumbers.map(
+        async (n) =>
+          await readComment(client, {
+            repo,
+            number: n,
+          }).then((v) => ({...v.state, pr: n})),
+      ),
+    );
+  });
+  return async function getChangeLog(commitShas: readonly string[]) {
+    const pullRequests = [
+      ...new Set(
+        (await pullRequestsFromCommit.loadMany(commitShas))
+          .map((v) => {
+            if (v instanceof Error) {
+              throw v;
+            }
+            return v;
+          })
+          .reduce((a, b) => {
+            a.push(...b);
+            return a;
+          }, []),
+      ),
+    ];
+    return (await commentFromPullRequest.loadMany(pullRequests)).map((s) => {
+      if (s instanceof Error) {
+        throw s;
+      }
+      return s;
+    });
+  };
 }
