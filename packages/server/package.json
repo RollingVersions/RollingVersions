@@ -15,20 +15,25 @@
     "dev": "concurrently -n server,ui \"yarn dev:server\" \"sleep 2 && yarn dev:ui\"",
     "dev:ui": "TS_NODE_PROJECT='tsconfig.webpack.json' webpack-dev-server -d --open",
     "dev:server": "yarn build:server && concurrently -n build,run \"yarn build:server --watch --preserveWatchOutput\" \"nodemon\"",
-    "start": "probot run ./index.js"
+    "start": "node ./index.js"
   },
   "dependencies": {
     "@authentication/cookie": "^0.1.2",
     "@authentication/github": "^0.2.0",
-    "body-parser": "^1.19.0",
+    "@authentication/lock-by-id": "^0.0.2",
     "@changelogversion/utils": "0.0.0",
-    "probot": "^9.0.1"
+    "@octokit/webhooks": "^7.1.0",
+    "body-parser": "^1.19.0",
+    "eventsource": "^1.0.7",
+    "express": "^4.17.1",
+    "probot": "^9.10.2",
+    "throat": "^5.0.0"
   },
   "devDependencies": {
     "@forbeslindesay/tsconfig": "^2.0.0",
     "@types/body-parser": "^1.17.1",
     "@types/compression-webpack-plugin": "^2.0.1",
-    "@types/express": "^4.17.2",
+    "@types/express": "^4.17.3",
     "@types/html-webpack-plugin": "^3.2.1",
     "@types/jest": "^24.0.21",
     "@types/react": "^16.9.17",
@@ -43,6 +48,7 @@
     "concurrently": "^5.0.0",
     "css-loader": "^3.4.0",
     "cssnano": "^4.1.10",
+    "dotenv": "^8.2.0",
     "dotenv-extended": "^2.7.0",
     "file-loader": "^5.0.2",
     "glob-all": "^3.1.0",

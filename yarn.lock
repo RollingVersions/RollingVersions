@@ -75,6 +75,11 @@
   resolved "https://registry.yarnpkg.com/@authentication/keygrip/-/keygrip-0.0.2.tgz#25e2bba5374175a1b0237ab18dce6106727cc632"
   integrity sha512-OKqn2+impPkX1GVxKbODgYjo671d+JvqLLyUpeLuBzDenmEx5lEY9CdqQmBeJpcjqd67tGc9Tgfvue4V9OgwFg==
 
+"@authentication/lock-by-id@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@authentication/lock-by-id/-/lock-by-id-0.0.2.tgz#4be3d26e4bb21a80811a77871925d262a073dd9c"
+  integrity sha512-GB+8xP4PcWVTlSzB5hCb13IplkxrG9T/TEqkMXxTUesK0aj8Nl7ZxBl1iqI2MWokt26T/JbuSFk/KvYR2+cAXw==
+
 "@authentication/oauth2@^0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@authentication/oauth2/-/oauth2-0.1.1.tgz#ddc964eb8995c92d991b9690beb0537e1e5bcbb2"
@@ -776,6 +781,13 @@
   dependencies:
     debug "^4.0.0"
 
+"@octokit/webhooks@^7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@octokit/webhooks/-/webhooks-7.1.0.tgz#c25326ce55c93b6d73c1589f424313f7ce6bf261"
+  integrity sha512-kHyYkJkqY/wiP/hp0IT9FhkY5PhnV01co16V2YMRP/Zgnk3Vsy3U5iLAaP6U/0eRIlz5T4LSvkrcfNlfSb3cVQ==
+  dependencies:
+    debug "^4.0.0"
+
 "@samverschueren/stream-to-observable@^0.3.0":
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@samverschueren/stream-to-observable/-/stream-to-observable-0.3.0.tgz#ecdf48d532c58ea477acfcab80348424f8d0662f"
@@ -900,7 +912,7 @@
     "@types/node" "*"
     "@types/range-parser" "*"
 
-"@types/express@*", "@types/express@^4.0.39", "@types/express@^4.17.2":
+"@types/express@*", "@types/express@^4.0.39", "@types/express@^4.17.3":
   version "4.17.3"
   resolved "https://registry.yarnpkg.com/@types/express/-/express-4.17.3.tgz#38e4458ce2067873b09a73908df488870c303bd9"
   integrity sha512-I8cGRJj3pyOLs/HndoP+25vOqhqWkAZsWMEmq1qXy/b/M3ppufecUwaK2/TVDVxcV61/iSdhykUjQQ2DLSrTdg==
@@ -8878,7 +8890,7 @@ private@^0.1.8:
   resolved "https://registry.yarnpkg.com/private/-/private-0.1.8.tgz#2381edb3689f7a53d653190060fcf822d2f368ff"
   integrity sha512-VvivMrbvd2nKkiG38qjULzlc+4Vx4wm/whI9pQD35YrARNnhxeiRktSOhSukRLFNlzg6Br/cJPet5J/u19r/mg==
 
-probot@^9.0.1:
+probot@^9.10.2:
   version "9.10.2"
   resolved "https://registry.yarnpkg.com/probot/-/probot-9.10.2.tgz#a8c27c39862caf6de1fc34427d2d2193c2116e4b"
   integrity sha512-7oir5mEK7W2uYSDlKunBfXkjoB3AuftIIw6eTxuDkeAYQlzKOV12kHYTk1SJZQJJqjzf7zgT5SW/1o+6Qo2NwQ==
@@ -10656,6 +10668,11 @@ throat@^4.0.0, throat@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/throat/-/throat-4.1.0.tgz#89037cbc92c56ab18926e6ba4cbb200e15672a6a"
   integrity sha1-iQN8vJLFarGJJua6TLsgDhVnKmo=
+
+throat@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/throat/-/throat-5.0.0.tgz#c5199235803aad18754a667d659b5e72ce16764b"
+  integrity sha512-fcwX4mndzpLQKBS1DVYhGAcYaYt7vsHNIvQV+WXMvnow5cgjPphq5CaayLaGsjRdSCKZFNGt7/GYAuXaNOiYCA==
 
 through2@^2.0.0:
   version "2.0.5"

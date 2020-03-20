@@ -1,24 +1,22 @@
 import {Octokit} from 'probot';
 import Permission from './Permission';
+import {PullRequest} from '@changelogversion/utils/lib/types';
 
 export {Permission};
-export default async function getPermissionLevel({
-  owner,
-  repo,
-  pull_number,
-  userAuth,
-}: {
-  owner: string;
-  repo: string;
-  pull_number: number;
-  userAuth: string;
-}): Promise<Permission> {
+export default async function getPermissionLevel(
+  pr: Pick<PullRequest, 'repo' | 'number'>,
+  userAuth: string,
+): Promise<Permission> {
   const octokit = new Octokit({auth: userAuth});
 
   const authenticated = await octokit.users.getAuthenticated();
   let pull;
   try {
-    pull = await octokit.pulls.get({owner, repo, pull_number});
+    pull = await octokit.pulls.get({
+      owner: pr.repo.owner,
+      repo: pr.repo.name,
+      pull_number: pr.number,
+    });
   } catch (ex) {
     return Permission.None;
   }
@@ -29,8 +27,8 @@ export default async function getPermissionLevel({
     return Permission.Edit;
   }
   const permission = await octokit.repos.getCollaboratorPermissionLevel({
-    owner,
-    repo,
+    owner: pr.repo.owner,
+    repo: pr.repo.name,
     username: authenticated.data.login,
   });
   if (

@@ -2,7 +2,7 @@ import React from 'react';
 import {useParams} from 'react-router-dom';
 import usePullRequest from '../hooks/usePullRequest';
 import PullChangeLogPackage from '../local-components/PullChangeLogPackage';
-import Permission from '../../Permission';
+import Permission from '../../server/permissions/Permission';
 
 interface Params {
   owner: string;
