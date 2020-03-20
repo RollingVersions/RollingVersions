@@ -17,8 +17,6 @@
     "postbuild": "rimraf lib/**/__tests__"
   },
   "dependencies": {
-    "@octokit/graphql": "^4.3.1",
-    "@octokit/rest": "^16.38.1",
     "chalk": "^3.0.0",
     "@changelogversion/utils": "0.0.0",
     "dataloader": "^2.0.0",

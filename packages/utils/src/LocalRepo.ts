@@ -1,7 +1,6 @@
 import {relative} from 'path';
 import {statSync, readFileSync} from 'fs';
 import globby from 'globby';
-// import {graphql} from '@octokit/graphql';
 import {PackageInfos, PackageInfo, Platform} from './Platforms';
 import isObject from './utils/isObject';
 import VersionTag from './VersionTag';

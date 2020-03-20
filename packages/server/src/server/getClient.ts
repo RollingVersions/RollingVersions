@@ -42,3 +42,9 @@ export async function getClientForRepo({owner, name}: Repository) {
   const installationID = installation.data.id;
   return getClient(installationID);
 }
+
+export function getClientForToken(token: string) {
+  return new GitHubClient({
+    auth: auth.createTokenAuth(token),
+  });
+}

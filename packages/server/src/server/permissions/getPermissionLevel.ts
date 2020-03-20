@@ -1,18 +1,20 @@
-import {Octokit} from 'probot';
-import Permission from './Permission';
 import {PullRequest} from '@changelogversion/utils/lib/types';
+import Permission from './Permission';
+import {getClientForToken} from '../getClient';
+
+// TODO: this should use GraphQL rather than the REST API
 
 export {Permission};
 export default async function getPermissionLevel(
   pr: Pick<PullRequest, 'repo' | 'number'>,
   userAuth: string,
 ): Promise<Permission> {
-  const octokit = new Octokit({auth: userAuth});
+  const client = getClientForToken(userAuth);
 
-  const authenticated = await octokit.users.getAuthenticated();
+  const authenticated = await client.rest.users.getAuthenticated();
   let pull;
   try {
-    pull = await octokit.pulls.get({
+    pull = await client.rest.pulls.get({
       owner: pr.repo.owner,
       repo: pr.repo.name,
       pull_number: pr.number,
@@ -26,7 +28,7 @@ export default async function getPermissionLevel(
   if (pull.data.user.login === authenticated.data.login) {
     return Permission.Edit;
   }
-  const permission = await octokit.repos.getCollaboratorPermissionLevel({
+  const permission = await client.rest.repos.getCollaboratorPermissionLevel({
     owner: pr.repo.owner,
     repo: pr.repo.name,
     username: authenticated.data.login,

@@ -25,9 +25,7 @@
     "@octokit/webhooks": "^7.1.0",
     "body-parser": "^1.19.0",
     "eventsource": "^1.0.7",
-    "express": "^4.17.1",
-    "probot": "^9.10.2",
-    "throat": "^5.0.0"
+    "express": "^4.17.1"
   },
   "devDependencies": {
     "@forbeslindesay/tsconfig": "^2.0.0",
