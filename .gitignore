@@ -9,3 +9,4 @@ coverage
 lib/
 dist/
 yarn-error.log
+packages/utils/src/github-graph.ts
