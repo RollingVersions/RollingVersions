@@ -48,8 +48,7 @@ test('renderCommentWithoutState', () => {
   expect(
     renderCommentWithoutState(
       {
-        owner: 'Foo',
-        repo: 'bar',
+        repo: {owner: 'Foo', name: 'bar'},
         number: 10,
         headSha: 'd38990d3d54749a1408e7ca29e139e3c9743aa2e',
         currentVersions: {

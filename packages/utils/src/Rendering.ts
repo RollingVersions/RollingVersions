@@ -6,7 +6,8 @@ import PullChangeLog, {
 } from './PullChangeLog';
 import {writeState} from './CommentState';
 import {getNewVersion, getCurrentVerion} from './Versioning';
-import {PackageInfo, PackageInfos} from './Platforms';
+import {PackageInfo} from './Platforms';
+import {PullRequest} from './types';
 
 export const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
 const COMMENT_PREFIX = `<!-- This comment is maintained by Changelog Version. Do not edit it manually! -->\n<!-- ${COMMENT_GUID} -->\n\n`;
@@ -32,14 +33,6 @@ export function changesToMarkdown(
     .join('\n\n');
 }
 
-export interface PullRequst {
-  headSha: string;
-  owner: string;
-  repo: string;
-  number: number;
-  currentVersions: PackageInfos;
-}
-
 export function getVersionShift(
   currentVersion: PackageInfo[],
   changes: readonly Pick<ChangeLogEntry, 'type'>[],
@@ -63,18 +56,18 @@ export function getVersionShift(
     'no new release'})`;
 }
 export function getUrlForChangeLog(
-  pullRequest: PullRequst,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
   changeLogVersionURL: URL,
 ) {
   const url = new URL(
-    `/${pullRequest.owner}/${pullRequest.repo}/pulls/${pullRequest.number}`,
+    `/${pr.repo.owner}/${pr.repo.name}/pulls/${pr.number}`,
     changeLogVersionURL,
   );
   return url;
 }
 
 export function getShortDescription(
-  pullRequest: Pick<PullRequst, 'headSha'>,
+  pullRequest: Pick<PullRequest, 'headSha'>,
   changeLog: PullChangeLog | undefined,
 ) {
   if (changeLog && changeLog.submittedAtCommitSha === pullRequest.headSha) {
@@ -93,14 +86,23 @@ export function getShortDescription(
     ? 'please update the changelog'
     : 'please add a changelog';
 }
+
+export function renderInitialCommentWithoutState(
+  pullRequest: Pick<PullRequest, 'repo' | 'number'>,
+  changeLogVersionURL: URL,
+) {
+  const url = getUrlForChangeLog(pullRequest, changeLogVersionURL);
+  return `There is no change log for this pull request yet.\n\n[Create a changelog](${url.href})`;
+}
+
 export function renderCommentWithoutState(
-  pullRequest: PullRequst,
+  pullRequest: PullRequest,
   changeLog: PullChangeLog | undefined,
   changeLogVersionURL: URL,
 ) {
   const url = getUrlForChangeLog(pullRequest, changeLogVersionURL);
   if (!changeLog || !changeLog.submittedAtCommitSha) {
-    return `There is no change log for this pull request yet.\n\n[Create a changelog](${url.href})`;
+    return renderInitialCommentWithoutState(pullRequest, changeLogVersionURL);
   }
   const outdated =
     pullRequest.headSha === changeLog.submittedAtCommitSha
@@ -150,8 +152,17 @@ export function renderCommentWithoutState(
   }\n\n[Edit changelogs](${url.href})${outdated}`;
 }
 
+export function renderInitialComment(
+  pullRequest: Pick<PullRequest, 'repo' | 'number'>,
+  changeLogVersionURL: URL,
+) {
+  return `${COMMENT_PREFIX}${renderInitialCommentWithoutState(
+    pullRequest,
+    changeLogVersionURL,
+  )}`;
+}
 export function renderComment(
-  pullRequest: PullRequst,
+  pullRequest: PullRequest,
   changeLog: PullChangeLog | undefined,
   changeLogVersionURL: URL,
 ) {

@@ -1,12 +1,19 @@
 import {Application} from 'probot';
+import {Repository} from '@changelogversion/utils/lib/types';
+import {GitHubClient} from '@changelogversion/utils/lib/GitHub';
 
-export default async function getClient(
+export function getClientForContext(context: {
+  github: {request: (v: any) => Promise<any>};
+}) {
+  return new GitHubClient({request: context.github.request});
+}
+export async function getClientForRepo(
   app: Application,
-  {owner, repo}: {owner: string; repo: string},
+  {owner, name}: Repository,
 ) {
   const installation = await (await app.auth()).apps.getRepoInstallation({
     owner,
-    repo,
+    repo: name,
   });
   if (installation.status !== 200) {
     throw new Error(
@@ -15,5 +22,5 @@ export default async function getClient(
   }
   const installationID = installation.data.id;
   const github = await app.auth(installationID);
-  return github;
+  return new GitHubClient({request: github.request as any});
 }

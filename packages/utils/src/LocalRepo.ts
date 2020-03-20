@@ -1,16 +1,13 @@
 import {relative} from 'path';
 import {statSync, readFileSync} from 'fs';
 import globby from 'globby';
-import {graphql} from '@octokit/graphql';
+// import {graphql} from '@octokit/graphql';
 import {PackageInfos, PackageInfo, Platform} from './Platforms';
 import isObject from './utils/isObject';
 import VersionTag from './VersionTag';
 import addVersions from './utils/addVersions';
 import {spawnBuffered} from './spawn';
 import isTruthy from './utils/isTruthy';
-import PullChangeLog from './PullChangeLog';
-import {COMMENT_GUID} from './Rendering';
-import {readState} from './CommentState';
 
 async function listTags(
   dirname: string,
@@ -114,72 +111,6 @@ export async function getCommits(dirname: string, lastTag?: string) {
     .map((s) => s.trim())
     .map((s) => s.replace(/^\"([^"]+)\"$/, '$1'))
     .filter((s) => s !== '');
-}
-
-export async function getChangeLogs(
-  query: typeof graphql,
-  owner: string,
-  name: string,
-  commitShas: readonly string[],
-) {
-  const queryString = `
-    query commits($owner: String!, $name: String!) { 
-      repository(owner: $owner, name: $name) {
-        ${commitShas
-          .filter((sha) => /^[0-9a-f]+$/.test(sha))
-          .map(
-            (sha) => `
-              c${sha}: object(expression: "${sha}") {
-                __typename
-                ...on Commit {
-                  associatedPullRequests(first: 10) {
-                    nodes {
-                      number
-                      comments(first: 20) {
-                        nodes {
-                          body
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            `,
-          )
-          .join('\n')}
-        
-      }
-    }
-  `
-    .replace(/ +/g, ' ')
-    .trim();
-
-  const result = commitShas.some((sha) => /^[0-9a-f]+$/.test(sha))
-    ? await query(queryString, {owner, name})
-    : null;
-
-  return commitShas.map((sha) => {
-    if (!/^[0-9a-f]+$/.test(sha)) {
-      return new Error(`The commit sha ${sha} does not match /^[0-9a-f]+$/`);
-    }
-    const res = result?.repository?.[`c${sha}`];
-    if (!res) return [];
-    const changeLogs: (PullChangeLog & {pr: number})[] = [];
-    (res.associatedPullRequests.nodes as {
-      number: number;
-      comments: {nodes: {body: string}[]};
-    }[]).forEach((pr) =>
-      pr.comments.nodes.forEach((c) => {
-        if (c.body.includes(COMMENT_GUID)) {
-          const state = readState(c.body);
-          if (state) {
-            changeLogs.push({...state, pr: pr.number});
-          }
-        }
-      }),
-    );
-    return changeLogs;
-  });
 }
 
 export async function getHeadSha(dirname: string) {

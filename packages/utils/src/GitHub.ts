@@ -1,9 +1,7 @@
 import {URL} from 'url';
-import Octokit from '@octokit/rest';
+import DataLoader from 'dataloader';
 import {
   COMMENT_GUID,
-  PullRequst,
-  renderComment,
   getUrlForChangeLog,
   getShortDescription,
 } from './Rendering';
@@ -14,31 +12,64 @@ import isObject from './utils/isObject';
 import addVersions from './utils/addVersions';
 import VersionTag from './VersionTag';
 
-import Client from '@github-graph/api';
+import GitHubClient, {auth} from '@github-graph/api';
 import * as gh from './github-graph';
+import paginate from './utils/paginate';
+import {Repository, PullRequest} from './types';
 
-async function* paginate<TPage, TEntry>(
-  getPage: (token?: string) => Promise<TPage>,
-  getEntries: (page: TPage) => TEntry[],
-  getNextPageToken: (page: TPage) => string | undefined,
+export {GitHubClient, auth};
+
+export async function getPullRequestHeadSha(
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
 ) {
-  let page;
-  let nextPageToken;
-  while (nextPageToken) {
-    page = await getPage(nextPageToken);
-    nextPageToken = getNextPageToken(page);
-    for (const entry of getEntries(page)) {
-      yield entry;
-    }
-  }
+  return (
+    await gh.getPullRequestHeadSha(client, {
+      owner: pr.repo.owner,
+      name: pr.repo.name,
+      number: pr.number,
+    })
+  ).repository?.pullRequest?.headRef?.target.oid;
 }
-export async function getAllTags(
-  client: Client,
-  pr: Pick<PullRequst, 'owner' | 'repo'>,
+export async function getRepositoryViewerPermissions(
+  client: GitHubClient,
+  repo: Repository,
 ) {
+  return (
+    (await gh.getRepositoryViewerPermissions(client, repo)).repository
+      ?.viewerPermission || null
+  );
+}
+
+export async function getBranch(
+  client: GitHubClient,
+  repo: Repository,
+  deployBranch?: string | null,
+) {
+  const data = await (deployBranch
+    ? gh.getBranch(client, {
+        ...repo,
+        qualifiedName: `refs/heads/${deployBranch}`,
+      })
+    : gh.getDefaultBranch(client, repo));
+
+  if (data.repository?.branch) {
+    return {
+      name: data.repository.branch.name,
+      headSha:
+        data.repository.branch.target.__typename === 'Commit'
+          ? `${data.repository.branch.target.oid}`
+          : null,
+    };
+  }
+
+  return null;
+}
+
+export async function getAllTags(client: GitHubClient, repo: Repository) {
   const results: Pick<VersionTag, 'commitSha' | 'name'>[] = [];
   for await (const tag of paginate(
-    (after) => gh.getTags(client, {owner: pr.owner, name: pr.repo, after}),
+    (after) => gh.getTags(client, {...repo, after}),
     (page) => page?.repository?.refs?.nodes || [],
     (page) =>
       (page?.repository?.refs?.pageInfo?.hasNextPage &&
@@ -61,14 +92,14 @@ interface Entry {
     | {__typename: 'Tag'}
     | {__typename: 'Commit'};
 }
+
 async function listRawPackages(
-  client: Client,
-  pr: Pick<PullRequst, 'owner' | 'repo' | 'number'>,
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
 ) {
   const commit = (
     await gh.getPullRequestFileNames(client, {
-      owner: pr.owner,
-      name: pr.repo,
+      ...pr.repo,
       number: pr.number,
     })
   ).repository?.pullRequest?.headRef?.target;
@@ -90,8 +121,7 @@ async function listRawPackages(
           queue.push(
             gh
               .getFile(client, {
-                owner: pr.owner,
-                name: pr.repo,
+                ...pr.repo,
                 oid: entry.object.oid,
               })
               .then((file) => {
@@ -135,21 +165,22 @@ async function listRawPackages(
   await Promise.all(queue);
   return packages;
 }
+
 export async function listPackages(
-  client: Client,
-  pr: Pick<PullRequst, 'owner' | 'repo' | 'number'>,
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
 ): Promise<PackageInfos> {
   const [packages, allTags] = await Promise.all([
     listRawPackages(client, pr),
-    getAllTags(client, pr),
+    getAllTags(client, pr.repo),
   ]);
 
   return await addVersions(packages, allTags);
 }
 
 export async function readComment(
-  client: Client,
-  pr: Pick<PullRequst, 'owner' | 'repo' | 'number'>,
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
 ): Promise<{
   existingComment: number | undefined;
   state: PullChangeLog;
@@ -157,8 +188,7 @@ export async function readComment(
   for await (const comment of paginate(
     (after) =>
       gh.getPullRequestComments(client, {
-        owner: pr.owner,
-        name: pr.repo,
+        ...pr.repo,
         number: pr.number,
         after,
       }),
@@ -188,40 +218,42 @@ export async function readComment(
 }
 
 export async function writeComment(
-  github: Pick<Octokit, 'issues'>,
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
+  body: string,
   existingComment: number | undefined,
-  pr: PullRequst,
-  changeLog: PullChangeLog | undefined,
-  changeLogVersionURL: URL,
 ) {
-  const body = renderComment(pr, changeLog, changeLogVersionURL);
   if (existingComment) {
-    await github.issues.updateComment({
-      owner: pr.owner,
-      repo: pr.repo,
-      body,
-      comment_id: existingComment,
-    });
+    return (
+      await client.rest.issues.updateComment({
+        owner: pr.repo.owner,
+        repo: pr.repo.name,
+        body,
+        comment_id: existingComment,
+      })
+    ).data.id;
   } else {
-    await github.issues.createComment({
-      issue_number: pr.number,
-      owner: pr.owner,
-      repo: pr.repo,
-      body,
-    });
+    return (
+      await client.rest.issues.createComment({
+        owner: pr.repo.owner,
+        repo: pr.repo.name,
+        issue_number: pr.number,
+        body,
+      })
+    ).data.id;
   }
 }
 
 export async function updateStatus(
-  github: Pick<Octokit, 'repos'>,
-  pr: PullRequst,
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number' | 'headSha'>,
   changeLog: PullChangeLog | undefined,
   changeLogVersionURL: URL,
 ) {
   const url = getUrlForChangeLog(pr, changeLogVersionURL);
-  await github.repos.createStatus({
-    owner: pr.owner,
-    repo: pr.repo,
+  await client.rest.repos.createStatus({
+    owner: pr.repo.owner,
+    repo: pr.repo.name,
     sha: pr.headSha,
     state:
       changeLog && pr.headSha === changeLog.submittedAtCommitSha
@@ -231,4 +263,63 @@ export async function updateStatus(
     description: getShortDescription(pr, changeLog),
     context: 'Changelog',
   });
+}
+
+export function getChangeLogFetcher(client: GitHubClient, repo: Repository) {
+  const pullRequestsFromCommit = new DataLoader<string, number[]>(
+    async (commitShas) => {
+      return await Promise.all(
+        commitShas.map(async (sha) => {
+          const pulls = await gh.getPullRequestsForCommit(client, {
+            ...repo,
+            sha,
+          });
+          return (
+            (pulls.repository?.object?.__typename === 'Commit' &&
+              pulls.repository.object.associatedPullRequests?.nodes
+                ?.map((pr) => pr?.number)
+                .filter((num): num is number => typeof num === 'number')) ||
+            []
+          );
+        }),
+      );
+    },
+  );
+  const commentFromPullRequest = new DataLoader<
+    number,
+    PullChangeLog & {pr: number}
+  >(async (pullNumbers) => {
+    return await Promise.all(
+      pullNumbers.map(
+        async (n) =>
+          await readComment(client, {
+            repo,
+            number: n,
+          }).then((v) => ({...v.state, pr: n})),
+      ),
+    );
+  });
+  return async function getChangeLog(commitShas: readonly string[]) {
+    const pullRequests = [
+      ...new Set(
+        (await pullRequestsFromCommit.loadMany(commitShas))
+          .map((v) => {
+            if (v instanceof Error) {
+              throw v;
+            }
+            return v;
+          })
+          .reduce((a, b) => {
+            a.push(...b);
+            return a;
+          }, []),
+      ),
+    ];
+    return (await commentFromPullRequest.loadMany(pullRequests)).map((s) => {
+      if (s instanceof Error) {
+        throw s;
+      }
+      return s;
+    });
+  };
 }
