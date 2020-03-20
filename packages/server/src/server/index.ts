@@ -1,4 +1,5 @@
 import express from 'express';
+import {json} from 'body-parser';
 import webhooks from './webhooks';
 import authMiddleware from './middleware/auth';
 import staticMiddleware from './middleware/static';
@@ -27,6 +28,7 @@ if (WEBHOOK_PROXY_URL) {
 app.use((req, res, next) => webhooks.middleware(req, res, next));
 
 app.use(authMiddleware);
+app.use(json());
 app.use(appMiddleware);
 app.use(staticMiddleware);
 

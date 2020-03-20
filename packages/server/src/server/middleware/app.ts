@@ -14,6 +14,7 @@ import {PullRequestResponse} from '../../types';
 import updatePullRequestWithState from '../actions/updatePullRequestWithState';
 import validateParams, {parseParams} from './utils/validateParams';
 import checkPermissions from './utils/checkPermissions';
+import validateBody, {getBody} from './utils/validateBody';
 
 const appMiddleware = Router();
 
@@ -60,12 +61,13 @@ appMiddleware.post(
   requiresAuth({api: true}),
   validateParams(),
   checkPermissions([Permission.Edit]),
+  validateBody(),
   async (req, res, next) => {
     try {
       const pullRequest = parseParams(req);
       const github = await getClientForRepo(pullRequest.repo);
 
-      const body: PullRequestResponse['changeLogState'] = req.body;
+      const body = getBody(req);
       await updatePullRequestWithState(github, pullRequest, body);
       res.status(200).send('ok');
     } catch (ex) {

@@ -47,7 +47,7 @@ export default function usePullRequest({
     updating: updatesInFlight > 0,
     update: async (
       state: PullRequestResponse['changeLogState'],
-    ): Promise<void> => {
+    ): Promise<boolean> => {
       setUpdatesInFlight((v) => v + 1);
       try {
         try {
@@ -60,10 +60,12 @@ export default function usePullRequest({
           if (!res.ok) {
             throw new Error(`${res.statusText}: ${await res.text()}`);
           }
+          return true;
         } catch (ex) {
           if (ref.current === path) {
             setError(ex);
           }
+          return false;
         }
       } finally {
         setUpdatesInFlight((v) => v - 1);
