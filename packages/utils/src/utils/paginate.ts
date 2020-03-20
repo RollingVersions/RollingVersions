@@ -5,11 +5,11 @@ export default async function* paginate<TPage, TEntry>(
 ) {
   let page;
   let nextPageToken;
-  while (nextPageToken) {
+  do {
     page = await getPage(nextPageToken);
     nextPageToken = getNextPageToken(page);
     for (const entry of getEntries(page)) {
       yield entry;
     }
-  }
+  } while (nextPageToken);
 }
