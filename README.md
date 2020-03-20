@@ -11,3 +11,4 @@ Changelog Version is not free for comercial use. If you want to run your own ver
 ## Personal Open Source Use
 
 Changelog Version is free for non-commercial open source use. Just [install the GitHub app](https://github.com/apps/changelog-version) and add the CLI to your CI process.
+sdkjfsd
