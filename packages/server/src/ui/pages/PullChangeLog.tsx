@@ -2,7 +2,7 @@ import React from 'react';
 import {useParams} from 'react-router-dom';
 import usePullRequest from '../hooks/usePullRequest';
 import PullChangeLogPackage from '../local-components/PullChangeLogPackage';
-import Permission from '../../Permission';
+import Permission from '../../server/permissions/Permission';
 
 interface Params {
   owner: string;
@@ -72,13 +72,16 @@ export default function PullChangeLog() {
           } text-white font-bold py-2 px-4 fixed right-0 bottom-0 mx-12 my-4 rounded-full`}
           onClick={async () => {
             if (!state || !headSha || pr.updating) return;
-            await pr.update({
-              ...state,
-              submittedAtCommitSha: headSha,
-            });
-            location.assign(
-              `https://github.com/${params.owner}/${params.repo}/pull/${params.pull_number}`,
-            );
+            if (
+              await pr.update({
+                ...state,
+                submittedAtCommitSha: headSha,
+              })
+            ) {
+              location.assign(
+                `https://github.com/${params.owner}/${params.repo}/pull/${params.pull_number}`,
+              );
+            }
           }}
         >
           Save Changelog For {shortSha}
