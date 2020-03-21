@@ -23,11 +23,13 @@
     "@authentication/lock-by-id": "^0.0.2",
     "@changelogversion/utils": "0.0.0",
     "@octokit/webhooks": "^7.1.0",
+    "@types/morgan": "^1.9.0",
     "body-parser": "^1.19.0",
     "eventsource": "^1.0.7",
     "express": "^4.17.1",
     "fp-ts": "^2.5.3",
-    "io-ts": "^2.1.2"
+    "io-ts": "^2.1.2",
+    "morgan": "^1.10.0"
   },
   "devDependencies": {
     "@forbeslindesay/tsconfig": "^2.0.0",
