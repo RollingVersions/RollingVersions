@@ -2,7 +2,10 @@ import {URL} from 'url';
 
 export const APP_ID = parseInt(getEnvironmentVariable('APP_ID', /^\d+$/), 10);
 export const APP_URL = getAppUrl();
-export const PRIVATE_KEY = getEnvironmentVariable('PRIVATE_KEY');
+export const PRIVATE_KEY = getEnvironmentVariable('PRIVATE_KEY').replace(
+  /\\n/gm,
+  '\n',
+);
 export const WEBHOOK_SECRET = getEnvironmentVariable('WEBHOOK_SECRET');
 
 function getEnvironmentVariable(name: string, regex?: RegExp) {
