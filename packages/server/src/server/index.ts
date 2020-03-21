@@ -1,5 +1,6 @@
 import express from 'express';
 import {json} from 'body-parser';
+import morgan from 'morgan';
 import webhooks from './webhooks';
 import authMiddleware from './middleware/auth';
 import staticMiddleware from './middleware/static';
@@ -24,6 +25,15 @@ if (WEBHOOK_PROXY_URL) {
       .catch((err) => console.error(err.stack || err));
   };
 }
+
+app.use(morgan('tiny'));
+webhooks.on('error', (error) => {
+  console.error(
+    `Error occured in "${
+      (error as {event?: {name: string}}).event?.name
+    } handler: ${error.stack}"`,
+  );
+});
 
 app.use((req, res, next) => webhooks.middleware(req, res, next));
 
