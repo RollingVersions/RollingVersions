@@ -1,6 +1,6 @@
 import PullChangeLog from './PullChangeLog';
 
-const stateRegex = /<!-- """ChangeLogVersion State Start""" (.*) """ChangeLogVersion State End""" -->/;
+const stateRegex = /<!-- """RollingVersions State Start""" (.*) """RollingVersions State End""" -->/;
 export function readState(body?: string): PullChangeLog | undefined {
   if (!body) return undefined;
 
@@ -18,9 +18,9 @@ export function writeState(body: string, state: PullChangeLog | undefined) {
   if (!state) return src;
   return (
     src +
-    `\n\n<!-- """ChangeLogVersion State Start""" ${JSON.stringify(state)
+    `\n\n<!-- """RollingVersions State Start""" ${JSON.stringify(state)
       .replace(/\-/g, '\\u002d')
       .replace(/\>/g, '\\u003e')
-      .replace(/\</g, '\\u0060')} """ChangeLogVersion State End""" -->`
+      .replace(/\</g, '\\u0060')} """RollingVersions State End""" -->`
   );
 }

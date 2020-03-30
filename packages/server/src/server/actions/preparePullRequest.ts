@@ -4,9 +4,9 @@ import {
   readComment,
   writeComment,
   updateStatus,
-} from '@changelogversion/utils/lib/GitHub';
-import {PullRequest} from '@changelogversion/utils/lib/types';
-import {renderInitialComment} from '@changelogversion/utils/lib/Rendering';
+} from '@rollingversions/utils/lib/GitHub';
+import {PullRequest} from '@rollingversions/utils/lib/types';
+import {renderInitialComment} from '@rollingversions/utils/lib/Rendering';
 import {APP_URL} from '../environment';
 
 export default async function preparePullRequest(

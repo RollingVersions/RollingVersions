@@ -3,10 +3,10 @@ import {
   writeComment,
   updateStatus,
   listPackages,
-} from '@changelogversion/utils/lib/GitHub';
-import {PullRequest} from '@changelogversion/utils/lib/types';
-import {renderComment} from '@changelogversion/utils/lib/Rendering';
-import PullChangeLog from '@changelogversion/utils/lib/PullChangeLog';
+} from '@rollingversions/utils/lib/GitHub';
+import {PullRequest} from '@rollingversions/utils/lib/types';
+import {renderComment} from '@rollingversions/utils/lib/Rendering';
+import PullChangeLog from '@rollingversions/utils/lib/PullChangeLog';
 import {APP_URL} from '../environment';
 import preparePullRequest from './preparePullRequest';
 

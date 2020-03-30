@@ -1,24 +1,24 @@
 {
-  "name": "@changelogversion/cli",
+  "name": "rollingversions",
   "publishConfig": {
     "access": "public"
   },
   "bin": {
-    "changelogversion": "./lib/cli.js"
+    "rollingversions": "./lib/cli.js"
   },
   "version": "0.0.0",
   "description": "Add changelogs to PRs and use them to determine the version of npm packages",
   "author": "Forbes Lindesay <forbes@lindesay.co.uk> (https://www.forbeslindesay.co.uk)",
-  "repository": "https://github.com/ForbesLindesay/changelogversion.git",
-  "homepage": "https://github.com/ForbesLindesay/changelogversion",
-  "bugs": "https://github.com/ForbesLindesay/changelogversion/issues",
+  "repository": "https://github.com/RollingVersions/RollingVersions.git",
+  "homepage": "https://github.com/RollingVersions/RollingVersions",
+  "bugs": "https://github.com/RollingVersions/RollingVersions/issues",
   "scripts": {
     "build": "tsc",
     "postbuild": "rimraf lib/**/__tests__"
   },
   "dependencies": {
     "chalk": "^3.0.0",
-    "@changelogversion/utils": "0.0.0",
+    "@rollingversions/utils": "0.0.0",
     "dataloader": "^2.0.0",
     "detect-indent": "^6.0.0",
     "detect-newline": "^3.1.0",

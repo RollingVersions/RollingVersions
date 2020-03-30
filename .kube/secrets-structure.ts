@@ -16,13 +16,13 @@ interface Secrets {
 export default function secrets(data: {staging: Secrets; production: Secrets}) {
   return [
     createSecret({
-      name: 'changelogversion-staging',
-      namespace: 'changelogversion',
+      name: 'rollingversions-staging',
+      namespace: 'rollingversions',
       data: data.staging as any,
     }),
     createSecret({
-      name: 'changelogversion-production',
-      namespace: 'changelogversion',
+      name: 'rollingversions-production',
+      namespace: 'rollingversions',
       data: data.production as any,
     }),
   ];

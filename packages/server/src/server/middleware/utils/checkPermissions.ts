@@ -16,7 +16,7 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
         res
           .status(404)
           .send(
-            'Either this PR does not exist, you do not have acess to it, or Changelog Version is not installed on this repository.',
+            'Either this PR does not exist, you do not have acess to it, or Rolling Versions is not installed on this repository.',
           );
       } else {
         next();

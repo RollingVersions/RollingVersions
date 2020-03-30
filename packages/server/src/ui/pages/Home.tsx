@@ -1,5 +1,5 @@
 import React from 'react';
 
 export default function Home() {
-  return <div>Welcome to ChangeLog Version</div>;
+  return <div>Welcome to Rolling Versions</div>;
 }

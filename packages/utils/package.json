@@ -1,14 +1,14 @@
 {
-  "name": "@changelogversion/utils",
+  "name": "@rollingversions/utils",
   "publishConfig": {
     "access": "public"
   },
   "version": "0.0.0",
   "description": "Add changelogs to PRs and use them to determine the version of npm packages",
   "author": "Forbes Lindesay <forbes@lindesay.co.uk> (https://www.forbeslindesay.co.uk)",
-  "repository": "https://github.com/ForbesLindesay/changelogversion.git",
-  "homepage": "https://github.com/ForbesLindesay/changelogversion",
-  "bugs": "https://github.com/ForbesLindesay/changelogversion/issues",
+  "repository": "https://github.com/RollingVersions/RollingVersions.git",
+  "homepage": "https://github.com/RollingVersions/RollingVersions",
+  "bugs": "https://github.com/RollingVersions/RollingVersions/issues",
   "scripts": {
     "prebuild": "github-graph src/github-graph.graphql",
     "build": "tsc",

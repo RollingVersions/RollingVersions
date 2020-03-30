@@ -13,7 +13,7 @@ import {
   isSuccessPackageStatus,
 } from '.';
 import chalk = require('chalk');
-import {GitHubClient, auth} from '@changelogversion/utils/lib/GitHub';
+import {GitHubClient, auth} from '@rollingversions/utils/lib/GitHub';
 
 const CI_ENV = require('env-ci')();
 
@@ -57,7 +57,7 @@ const SUPRESS_ERRORS = boolArg('--supress-errors');
 const ERROR_EXIT = SUPRESS_ERRORS ? 0 : 1;
 
 if (HELP) {
-  console.warn(`Usage: changelogversion <options>`);
+  console.warn(`Usage: rollingversions <options>`);
   console.warn(``);
   console.warn(`options:
 

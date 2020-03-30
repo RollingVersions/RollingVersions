@@ -1,5 +1,5 @@
-import {PackageInfos} from '@changelogversion/utils/lib/Platforms';
-import PullChangeLog from '@changelogversion/utils/lib/PullChangeLog';
+import {PackageInfos} from '@rollingversions/utils/lib/Platforms';
+import PullChangeLog from '@rollingversions/utils/lib/PullChangeLog';
 import Permission from './server/permissions/Permission';
 
 export interface PullRequestResponse {

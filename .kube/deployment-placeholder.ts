@@ -2,8 +2,8 @@ import createDeployment from './createDeployment';
 
 export default [
   ...createDeployment({
-    namespace: 'changelogversion',
-    name: 'changelogversion-staging',
+    namespace: 'rollingversions',
+    name: 'rollingversions-staging',
     containerPort: 5678,
     replicaCount: 1,
     image: `hashicorp/http-echo`,
@@ -14,8 +14,8 @@ export default [
     },
   }),
   ...createDeployment({
-    namespace: 'changelogversion',
-    name: 'changelogversion-production',
+    namespace: 'rollingversions',
+    name: 'rollingversions-production',
     containerPort: 5678,
     replicaCount: 1,
     image: `hashicorp/http-echo`,

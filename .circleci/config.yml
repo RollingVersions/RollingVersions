@@ -141,6 +141,6 @@ commands:
           name: Wait for rollout to complete
           command: |
             npx jskube rollout status \
-                    deployment/changelogversion-<< parameters.environment >> \
-                    --namespace changelogversion \
+                    deployment/rollingversions-<< parameters.environment >> \
+                    --namespace rollingversions \
                     --kubeconfig=/dev/null

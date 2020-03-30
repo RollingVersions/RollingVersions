@@ -248,9 +248,9 @@ export async function updateStatus(
   client: GitHubClient,
   pr: Pick<PullRequest, 'repo' | 'number' | 'headSha'>,
   changeLog: PullChangeLog | undefined,
-  changeLogVersionURL: URL,
+  rollingVersionsUrl: URL,
 ) {
-  const url = getUrlForChangeLog(pr, changeLogVersionURL);
+  const url = getUrlForChangeLog(pr, rollingVersionsUrl);
   await client.rest.repos.createStatus({
     owner: pr.repo.owner,
     repo: pr.repo.name,

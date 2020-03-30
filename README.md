@@ -1,4 +1,4 @@
-# Changelog Version
+# Rolling Versions
 
 Add changelogs to PRs and use them to determine the version of npm packages
 
@@ -6,8 +6,8 @@ It has no state of its own. The changelog for each PR is stored along with the c
 
 ## Commercial Use
 
-Changelog Version is not free for comercial use. If you want to run your own version for commercial use, you can [buy a license](https://licensezero.com/offers/fd126855-9cba-457c-b444-db54f7a4f852). A hosted option is coming soon.
+Rolling Versions is not free for comercial use. If you want to run your own version for commercial use, you can [buy a license](https://licensezero.com/offers/fd126855-9cba-457c-b444-db54f7a4f852). A hosted option is coming soon.
 
 ## Personal Open Source Use
 
-Changelog Version is free for non-commercial open source use. Just [install the GitHub app](https://github.com/apps/changelog-version) and add the CLI to your CI process.
+Rolling Versions is free for non-commercial open source use. Just [install the GitHub app](https://github.com/apps/rollingversions) and add the CLI to your CI process.
