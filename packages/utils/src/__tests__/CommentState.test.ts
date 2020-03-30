@@ -5,14 +5,14 @@ test('writeState', () => {
     .toMatchInlineSnapshot(`
     "Comment
 
-    <!-- \\"\\"\\"ChangeLogVersion State Start\\"\\"\\" {\\"submittedAtCommitSha\\":\\"\\\\u002d\\\\u002d\\\\u003e\\",\\"packages\\":[]} \\"\\"\\"ChangeLogVersion State End\\"\\"\\" -->"
+    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" {\\"submittedAtCommitSha\\":\\"\\\\u002d\\\\u002d\\\\u003e\\",\\"packages\\":[]} \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
   `);
   expect(
     writeState('Comment', {submittedAtCommitSha: 'SHASHASHA', packages: []}),
   ).toMatchInlineSnapshot(`
     "Comment
 
-    <!-- \\"\\"\\"ChangeLogVersion State Start\\"\\"\\" {\\"submittedAtCommitSha\\":\\"SHASHASHA\\",\\"packages\\":[]} \\"\\"\\"ChangeLogVersion State End\\"\\"\\" -->"
+    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" {\\"submittedAtCommitSha\\":\\"SHASHASHA\\",\\"packages\\":[]} \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
   `);
 });
 

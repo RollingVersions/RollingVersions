@@ -10,26 +10,26 @@ import {
   getChangeLogFetcher,
   getRepositoryViewerPermissions,
   getBranch,
-} from '@changelogversion/utils/lib/GitHub';
+} from '@rollingversions/utils/lib/GitHub';
 import {
   listPackages,
   getCommits,
   getHeadSha,
-} from '@changelogversion/utils/lib/LocalRepo';
+} from '@rollingversions/utils/lib/LocalRepo';
 import {
   getCurrentVerion,
   getNewVersion,
-} from '@changelogversion/utils/lib/Versioning';
+} from '@rollingversions/utils/lib/Versioning';
 import {
   getProfile,
   getPackument,
   getOrgRoster,
-} from '@changelogversion/utils/lib/Npm';
-import {ChangeLogEntry} from '@changelogversion/utils/lib/PullChangeLog';
-import {PackageInfo, Platform} from '@changelogversion/utils/lib/Platforms';
-import isTruthy from '@changelogversion/utils/lib/utils/isTruthy';
-import {changesToMarkdown} from '@changelogversion/utils/lib/Rendering';
-import {spawnBuffered} from '@changelogversion/utils/lib/spawn';
+} from '@rollingversions/utils/lib/Npm';
+import {ChangeLogEntry} from '@rollingversions/utils/lib/PullChangeLog';
+import {PackageInfo, Platform} from '@rollingversions/utils/lib/Platforms';
+import isTruthy from '@rollingversions/utils/lib/utils/isTruthy';
+import {changesToMarkdown} from '@rollingversions/utils/lib/Rendering';
+import {spawnBuffered} from '@rollingversions/utils/lib/spawn';
 
 const stringifyPackage = require('stringify-package');
 const detectIndent = require('detect-indent');

@@ -1,5 +1,5 @@
-import {Repository} from '@changelogversion/utils/lib/types';
-import {GitHubClient} from '@changelogversion/utils/lib/GitHub';
+import {Repository} from '@rollingversions/utils/lib/types';
+import {GitHubClient} from '@rollingversions/utils/lib/GitHub';
 import LockById from '@authentication/lock-by-id';
 import updatePullRequest from './updatePullRequest';
 

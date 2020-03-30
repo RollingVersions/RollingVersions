@@ -9,7 +9,7 @@ import {
   getPullRequestHeadSha,
   readComment,
   listPackages,
-} from '@changelogversion/utils/lib/GitHub';
+} from '@rollingversions/utils/lib/GitHub';
 import {PullRequestResponse} from '../../types';
 import updatePullRequestWithState from '../actions/updatePullRequestWithState';
 import validateParams, {parseParams} from './utils/validateParams';

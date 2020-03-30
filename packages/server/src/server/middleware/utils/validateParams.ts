@@ -1,5 +1,5 @@
 import {Response, Request} from 'express';
-import {PullRequest} from '@changelogversion/utils/lib/types';
+import {PullRequest} from '@rollingversions/utils/lib/types';
 
 const validRequests = new WeakSet<Request>();
 export default function validateParams() {

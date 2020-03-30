@@ -40,6 +40,7 @@ app.use((req, res, next) => webhooks.middleware(req, res, next));
 app.use(authMiddleware);
 app.use(json());
 app.use(appMiddleware);
+// https://github.com/Mottie/github-reserved-names/blob/master/oddballs.json has the names that are available to use
 app.use(staticMiddleware);
 
 export default app.listen(process.env.PORT || 3000);

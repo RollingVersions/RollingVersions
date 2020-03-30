@@ -1,13 +1,13 @@
 {
-  "name": "@changelogversion/monorepo",
+  "name": "@rollingversions/monorepo",
   "private": true,
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "build": "yarn wsrun -e --stages build",
-    "dev": "yarn build && concurrently -n build,run \"yarn wsrun -e --exclude @changelogversion/server build --watch --preserveWatchOutput\" \"yarn workspace @changelogversion/server dev\"",
-    "start": "yarn workspace @changelogversion/server start",
+    "dev": "yarn build && concurrently -n build,run \"yarn wsrun -e --exclude @rollingversions/server build --watch --preserveWatchOutput\" \"yarn workspace @rollingversions/server dev\"",
+    "start": "yarn workspace @rollingversions/server start",
     "lint": "tslint './packages/*/src/**/*.{ts,tsx}' -t verbose -p .",
     "prettier:write": "prettier --ignore-path .gitignore --write './**/*.{md,json,yaml,js,jsx,ts,tsx,graphql}'",
     "prettier:check": "prettier --ignore-path .gitignore --list-different './**/*.{md,json,yaml,js,jsx,ts,tsx,graphql}'",

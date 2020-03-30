@@ -1,4 +1,4 @@
-import {PullRequest} from '@changelogversion/utils/lib/types';
+import {PullRequest} from '@rollingversions/utils/lib/types';
 import Permission from './Permission';
 import {getClientForToken} from '../getClient';
 

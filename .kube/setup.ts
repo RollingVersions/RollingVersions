@@ -3,40 +3,40 @@ import createServiceAccount from './createServiceAccount';
 import createConfigMap from './createConfigMap';
 
 export default [
-  ...createServiceAccount({namespace: 'changelogversion'}),
+  ...createServiceAccount({namespace: 'rollingversions'}),
   ...createIngress({
-    name: 'changelogversion-staging',
-    namespace: 'changelogversion',
-    serviceName: 'changelogversion-staging',
-    hosts: ['staging.changelogversion.com'],
+    name: 'rollingversions-staging',
+    namespace: 'rollingversions',
+    serviceName: 'rollingversions-staging',
+    hosts: ['staging.rollingversions.com'],
     enableTLS: true,
     stagingTLS: false,
   }),
   ...createIngress({
-    name: 'changelogversion-production',
-    namespace: 'changelogversion',
-    serviceName: 'changelogversion-production',
-    hosts: ['changelogversion.com'],
+    name: 'rollingversions-production',
+    namespace: 'rollingversions',
+    serviceName: 'rollingversions-production',
+    hosts: ['rollingversions.com'],
     enableTLS: true,
     stagingTLS: false,
   }),
 
   createConfigMap({
-    name: 'changelogversion-staging',
-    namespace: 'changelogversion',
+    name: 'rollingversions-staging',
+    namespace: 'rollingversions',
     data: {
       APP_ID: '50319',
-      APP_URL: 'https://staging.changelogversion.com',
-      BASE_URL: 'https://staging.changelogversion.com',
+      APP_URL: 'https://staging.rollingversions.com',
+      BASE_URL: 'https://staging.rollingversions.com',
     },
   }),
   createConfigMap({
-    name: 'changelogversion-production',
-    namespace: 'changelogversion',
+    name: 'rollingversions-production',
+    namespace: 'rollingversions',
     data: {
       APP_ID: '50318',
-      APP_URL: 'https://changelogversion.com',
-      BASE_URL: 'https://changelogversion.com',
+      APP_URL: 'https://rollingversions.com',
+      BASE_URL: 'https://rollingversions.com',
     },
   }),
 ];

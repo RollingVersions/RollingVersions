@@ -1,7 +1,7 @@
-import {GitHubClient, auth} from '@changelogversion/utils/lib/GitHub';
+import {GitHubClient, auth} from '@rollingversions/utils/lib/GitHub';
 import {APP_ID, PRIVATE_KEY} from './environment';
 import isObject from '../utils/isObject';
-import {Repository} from '@changelogversion/utils/lib/types';
+import {Repository} from '@rollingversions/utils/lib/types';
 
 export function getClientForEvent(event: {
   readonly id: string;
@@ -36,7 +36,7 @@ export async function getClientForRepo({owner, name}: Repository) {
   });
   if (installation.status !== 200) {
     throw new Error(
-      `Changelog Version does not seem to be installed for ${owner}`,
+      `Rolling Versions does not seem to be installed for ${owner}`,
     );
   }
   const installationID = installation.data.id;
