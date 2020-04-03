@@ -24,17 +24,14 @@ workflows:
     jobs:
       - deploy-staging:
           <<: *only_master
-          context: common-env
 
       - production-approval:
           type: approval
-          context: common-env
           requires:
             - deploy-staging
 
       - deploy-production:
           <<: *only_master
-          context: common-env
           requires:
             - production-approval
 
