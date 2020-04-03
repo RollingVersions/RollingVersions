@@ -110,13 +110,13 @@ commands:
       - setup_remote_docker
       - run:
           name: Build Docker
-          command: docker build -t $DOCKERHUB_USERNAME/$CIRCLE_PROJECT_REPONAME:$CIRCLE_SHA1 .
+          command: docker build -t $DOCKERHUB_USERNAME/rollingversions:$CIRCLE_SHA1 .
       - run:
           name: Authenticate
           command: echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
       - run:
           name: Push Docker
-          command: docker push $DOCKERHUB_USERNAME/$CIRCLE_PROJECT_REPONAME:$CIRCLE_SHA1
+          command: docker push $DOCKERHUB_USERNAME/rollingversions:$CIRCLE_SHA1
 
   deploy:
     parameters:
