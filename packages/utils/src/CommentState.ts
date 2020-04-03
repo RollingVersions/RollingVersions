@@ -1,6 +1,6 @@
 import PullChangeLog from './PullChangeLog';
 
-const stateRegex = /<!-- """RollingVersions State Start""" (.*) """RollingVersions State End""" -->/;
+const stateRegex = /<!-- """[a-zA-Z ]+ State Start""" (.*) """[a-zA-Z ]+ State End""" -->/;
 export function readState(body?: string): PullChangeLog | undefined {
   if (!body) return undefined;
 
