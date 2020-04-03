@@ -139,15 +139,13 @@ test('renderCommentWithoutState', () => {
       new URL('https://example.com'),
     ),
   ).toMatchInlineSnapshot(`
-    "## Change Logs
-
-    ### changelogversion (unreleased → 1.0.0)
+    "### changelogversion (unreleased → 1.0.0)
 
     #### New Features
 
     - Something awesome was added
 
-    ## Packages With No Changes
+    ### Packages With No Changes
 
     The following packages have no user facing changes, so won't be released:
 

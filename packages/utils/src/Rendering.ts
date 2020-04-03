@@ -113,17 +113,17 @@ export function renderCommentWithoutState(
   if (packages.length === 1) {
     const pkg = changeLog.packages.find((p) => p.packageName === packages[0]);
     if (!pkg || pkg.changes.length === 0) {
-      return `This PR will not result in a new version of ${packages[0]} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
+      return `This PR will **not** result in a new version of ${packages[0]} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
     }
-    return `## Change Log for ${pkg.packageName} ${getVersionShift(
+    return `### Change Log for ${pkg.packageName} ${getVersionShift(
       pullRequest.currentVersions[pkg.packageName] || [],
       pkg.changes,
-    )}\n\n${changesToMarkdown(pkg.changes, 3)}\n\n[Edit changelog](${
+    )}\n\n${changesToMarkdown(pkg.changes, 4)}\n\n[Edit changelog](${
       url.href
     })${outdated}`;
   }
   if (!changeLog.packages.some((pkg) => pkg.changes.length)) {
-    return `This PR will not result in a new version of the following packages as there are no user facing changes:\n\n${packages
+    return `This PR will **not** result in a new version of the following packages as there are no user facing changes:\n\n${packages
       .map((pkg) => `- ${pkg}`)
       .join('\n')}\n\n[Add changes to trigger a release](${
       url.href
@@ -134,7 +134,7 @@ export function renderCommentWithoutState(
     const pkg = changeLog.packages.find((p) => p.packageName === packageName);
     return !pkg || !pkg.changes.length;
   });
-  return `## Change Logs\n\n${changeLog.packages
+  return `${changeLog.packages
     .filter((pkg) => pkg.changes.length)
     .map(
       (pkg) =>
@@ -145,7 +145,7 @@ export function renderCommentWithoutState(
     )
     .join('\n\n')}${
     packagesWithoutChanges.length
-      ? `\n\n## Packages With No Changes\n\nThe following packages have no user facing changes, so won't be released:\n\n${packagesWithoutChanges
+      ? `\n\n### Packages With No Changes\n\nThe following packages have no user facing changes, so won't be released:\n\n${packagesWithoutChanges
           .map((pkg) => `- ${pkg}`)
           .join('\n')}`
       : ``
