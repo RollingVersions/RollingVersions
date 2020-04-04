@@ -45,7 +45,7 @@ appMiddleware.get(
         permission,
         changeLogState,
         currentVersions:
-          packageInfoCache && packageInfoCache.headSha === headSha
+          packageInfoCache && (!headSha || packageInfoCache.headSha === headSha)
             ? packageInfoCache.packages
             : await listPackages(github, pullRequest),
       };
