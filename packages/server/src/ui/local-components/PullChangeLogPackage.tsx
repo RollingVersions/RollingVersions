@@ -3,7 +3,6 @@ import {PackageInfo} from '@rollingversions/utils/lib/Platforms';
 import {PackagePullChangeLog} from '@rollingversions/utils/lib/PullChangeLog';
 import RegistryStatus from './RegistryStatus';
 import PullChangeLogEntrySection from './PullChangeLogEntrySection';
-require('./PullChangeLogEntry.css');
 
 interface PullChangeLogPackageProps {
   packageInfo: PackageInfo[];
@@ -42,6 +41,7 @@ export default function PullChangeLogPackage({
             onChangeLogChange={onChangeLogChange}
           />
         </div>
+        <div className="w-8" />
         <div className="flex-grow" style={{flexBasis: 0}}>
           <PullChangeLogEntrySection
             type="feat"
@@ -57,6 +57,7 @@ export default function PullChangeLogPackage({
             onChangeLogChange={onChangeLogChange}
           />
         </div>
+        <div className="w-8" />
         <div className="flex-grow" style={{flexBasis: 0}}>
           <PullChangeLogEntrySection
             type="fix"

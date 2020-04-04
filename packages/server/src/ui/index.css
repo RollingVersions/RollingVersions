@@ -5,7 +5,9 @@
 @tailwind utilities;
 
 .markdown {
-  @apply leading-relaxed text-lg;
+  @apply leading-relaxed;
+
+  overflow-wrap: break-word;
 }
 /* Headers */
 .markdown h1,
