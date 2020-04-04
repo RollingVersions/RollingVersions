@@ -30,26 +30,6 @@ module.exports = {
           }
         });
       }
-      // {
-      //   test: /\.css$/,
-      //   use: [
-      //     DEV ? 'style-loader' : MiniCssExtractPlugin.loader,
-      //     {loader: 'css-loader', options: {importLoaders: 1}},
-      //     {
-      //       loader: 'postcss-loader',
-      //       options: {
-      //         ident: 'postcss',
-      //         plugins: [
-      //           require('tailwindcss'),
-      //           require('autoprefixer'),
-      //           require('cssnano')({
-      //             preset: 'default',
-      //           }),
-      //         ],
-      //       },
-      //     },
-      //   ],
-      // },
     });
     config.resolve.extensions.push('.ts', '.tsx');
     return config;
