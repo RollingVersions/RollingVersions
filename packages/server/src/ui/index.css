@@ -1,9 +1,11 @@
+/* purgecss start ignore */
 @tailwind base;
-
 @tailwind components;
+/* purgecss end ignore */
 
 @tailwind utilities;
 
+/* purgecss start ignore */
 .markdown {
   @apply leading-relaxed;
 
@@ -65,3 +67,5 @@
 .markdown table {
   @apply mb-6;
 }
+
+/* purgecss end ignore */

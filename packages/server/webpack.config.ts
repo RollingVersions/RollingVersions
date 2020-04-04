@@ -7,13 +7,16 @@ import CompressionWebpackPlugin from 'compression-webpack-plugin';
 import {CleanWebpackPlugin} from 'clean-webpack-plugin';
 import * as dotenv from 'dotenv-extended';
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const PurgecssPlugin = require('purgecss-webpack-plugin');
-const glob = require('glob-all');
 
 dotenv.load();
 
 const {NODE_ENV = 'development'} = process.env;
 const DEV = process.env.NODE_ENV !== 'production';
+
+const purgecss = require('@fullhuman/postcss-purgecss')({
+  content: ['./src/**/*.ejs', './src/**/*.ts', './src/**/*.tsx'],
+  defaultExtractor: (content: string) => content.match(/[\w-/:]+(?<!:)/g) || [],
+});
 
 function removeHashInDev(str: string) {
   return DEV ? str.replace(/\.\[chunkhash\:\d+\]/g, '') : str;
@@ -79,6 +82,7 @@ const config: webpack.Configuration = {
                     require('cssnano')({
                       preset: 'default',
                     }),
+                    ...(DEV ? [] : [purgecss]),
                   ],
                 },
               },
@@ -141,13 +145,6 @@ const config: webpack.Configuration = {
   plugins: [
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
-    }),
-
-    new PurgecssPlugin({
-      paths: [
-        `${__dirname}/src/ui/index.ejs`,
-        ...glob.sync(`${__dirname}/src/**/*.{tsx,ts}`),
-      ],
     }),
 
     new MiniCssExtractPlugin({
