@@ -41,6 +41,7 @@ export default function PullChangeLogPackage({
             onChangeLogChange={onChangeLogChange}
           />
         </div>
+        <div className="w-8" />
         <div className="flex-grow" style={{flexBasis: 0}}>
           <PullChangeLogEntrySection
             type="feat"
@@ -56,6 +57,7 @@ export default function PullChangeLogPackage({
             onChangeLogChange={onChangeLogChange}
           />
         </div>
+        <div className="w-8" />
         <div className="flex-grow" style={{flexBasis: 0}}>
           <PullChangeLogEntrySection
             type="fix"

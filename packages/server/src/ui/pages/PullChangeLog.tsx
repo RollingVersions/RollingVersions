@@ -63,30 +63,32 @@ export default function PullChangeLog() {
           />
         ))}
       {pr.pullRequest.permission === Permission.Edit && headSha && (
-        <button
-          type="button"
-          disabled={!state || pr.updating}
-          className={`${
-            !state || pr.updating
-              ? `bg-gray-700`
-              : `bg-blue-500 hover:bg-blue-700`
-          } text-white font-bold py-2 px-4 fixed right-0 bottom-0 mx-12 my-4 rounded-full`}
-          onClick={async () => {
-            if (!state || pr.updating) return;
-            if (
-              await pr.update({
-                ...state,
-                submittedAtCommitSha: headSha,
-              })
-            ) {
-              location.assign(
-                `https://github.com/${params.owner}/${params.repo}/pull/${params.pull_number}`,
-              );
-            }
-          }}
-        >
-          Save Changelog For {headSha.substr(0, 7)}
-        </button>
+        <div className="fixed left-0 right-0 bottom-0 w-full bg-white flex justify-end shadow-2xl">
+          <button
+            type="button"
+            disabled={!state || pr.updating}
+            className={`${
+              !state || pr.updating
+                ? `bg-gray-700`
+                : `bg-blue-500 hover:bg-blue-700`
+            } text-white font-bold py-4 px-8 mx-12 my-4 rounded-full`}
+            onClick={async () => {
+              if (!state || pr.updating) return;
+              if (
+                await pr.update({
+                  ...state,
+                  submittedAtCommitSha: headSha,
+                })
+              ) {
+                location.assign(
+                  `https://github.com/${params.owner}/${params.repo}/pull/${params.pull_number}`,
+                );
+              }
+            }}
+          >
+            Save Changelog For {headSha.substr(0, 7)}
+          </button>
+        </div>
       )}
     </div>
   );
