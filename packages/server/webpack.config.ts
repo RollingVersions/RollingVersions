@@ -78,11 +78,11 @@ const config: webpack.Configuration = {
                   ident: 'postcss',
                   plugins: [
                     require('tailwindcss'),
+                    ...(DEV ? [] : [purgecss]),
                     require('autoprefixer'),
                     require('cssnano')({
                       preset: 'default',
                     }),
-                    ...(DEV ? [] : [purgecss]),
                   ],
                 },
               },
