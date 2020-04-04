@@ -3,7 +3,7 @@ import PullChangeLog from '@rollingversions/utils/lib/PullChangeLog';
 import Permission from './server/permissions/Permission';
 
 export interface PullRequestResponse {
-  headSha: string;
+  headSha: string | undefined;
   permission: Permission;
   changeLogState: Omit<PullChangeLog, 'packageInfoCache'>;
   currentVersions: PackageInfos;

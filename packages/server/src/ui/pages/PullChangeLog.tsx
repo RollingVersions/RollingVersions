@@ -25,7 +25,6 @@ export default function PullChangeLog() {
   }
 
   const headSha = pr.pullRequest.headSha;
-  const shortSha = headSha.substr(0, 7);
   return (
     <div className="mb-16 mt-4 mx-8">
       <h1>ChangeLog</h1>
@@ -40,7 +39,9 @@ export default function PullChangeLog() {
           <PullChangeLogPackage
             key={name}
             disabled={
-              pr.updating || pr.pullRequest?.permission !== Permission.Edit
+              pr.updating ||
+              pr.pullRequest?.permission !== Permission.Edit ||
+              !headSha
             }
             packageInfo={packageInfo}
             changeLog={
@@ -61,17 +62,17 @@ export default function PullChangeLog() {
             }}
           />
         ))}
-      {pr.pullRequest.permission === Permission.Edit && (
+      {pr.pullRequest.permission === Permission.Edit && headSha && (
         <button
           type="button"
-          disabled={!state || !headSha || pr.updating}
+          disabled={!state || pr.updating}
           className={`${
-            !state || !headSha || pr.updating
+            !state || pr.updating
               ? `bg-gray-700`
               : `bg-blue-500 hover:bg-blue-700`
           } text-white font-bold py-2 px-4 fixed right-0 bottom-0 mx-12 my-4 rounded-full`}
           onClick={async () => {
-            if (!state || !headSha || pr.updating) return;
+            if (!state || pr.updating) return;
             if (
               await pr.update({
                 ...state,
@@ -84,7 +85,7 @@ export default function PullChangeLog() {
             }
           }}
         >
-          Save Changelog For {shortSha}
+          Save Changelog For {headSha.substr(0, 7)}
         </button>
       )}
     </div>
