@@ -41,7 +41,7 @@ appMiddleware.get(
         readComment(github, pullRequest),
       ] as const);
       const pullRequestResponse: PullRequestResponse = {
-        headSha: headSha!,
+        headSha: headSha || packageInfoCache?.headSha,
         permission,
         changeLogState,
         currentVersions:
