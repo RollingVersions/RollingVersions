@@ -3,7 +3,6 @@ import {PackageInfo} from '@rollingversions/utils/lib/Platforms';
 import {PackagePullChangeLog} from '@rollingversions/utils/lib/PullChangeLog';
 import RegistryStatus from './RegistryStatus';
 import PullChangeLogEntrySection from './PullChangeLogEntrySection';
-require('./PullChangeLogEntry.css');
 
 interface PullChangeLogPackageProps {
   packageInfo: PackageInfo[];

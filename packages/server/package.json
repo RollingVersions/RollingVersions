@@ -15,24 +15,29 @@
     "dev": "concurrently -n server,ui \"yarn dev:server\" \"sleep 2 && yarn dev:ui\"",
     "dev:ui": "TS_NODE_PROJECT='tsconfig.webpack.json' webpack-dev-server -d --open",
     "dev:server": "yarn build:server && concurrently -n build,run \"yarn build:server --watch --preserveWatchOutput\" \"nodemon\"",
-    "start": "node ./index.js"
+    "start": "node ./index.js",
+    "storybook": "start-storybook"
   },
   "dependencies": {
     "@authentication/cookie": "^0.1.2",
     "@authentication/github": "^0.2.0",
     "@authentication/lock-by-id": "^0.0.2",
-    "@rollingversions/utils": "0.0.0",
     "@octokit/webhooks": "^7.1.0",
+    "@rollingversions/utils": "0.0.0",
     "@types/morgan": "^1.9.0",
     "body-parser": "^1.19.0",
     "eventsource": "^1.0.7",
     "express": "^4.17.1",
     "fp-ts": "^2.5.3",
     "io-ts": "^2.1.2",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "react-textarea-autosize": "^7.1.2"
   },
   "devDependencies": {
     "@forbeslindesay/tsconfig": "^2.0.0",
+    "@storybook/addon-actions": "^5.3.18",
+    "@storybook/addon-info": "^5.3.18",
+    "@storybook/react": "^5.3.18",
     "@types/body-parser": "^1.17.1",
     "@types/compression-webpack-plugin": "^2.0.1",
     "@types/express": "^4.17.3",
@@ -61,6 +66,7 @@
     "postcss-loader": "^3.0.0",
     "purgecss-webpack-plugin": "^1.6.0",
     "react": "^16.12.0",
+    "react-docgen-typescript-loader": "^3.7.2",
     "react-dom": "^16.12.0",
     "react-markdown": "^4.2.2",
     "react-router-dom": "^5.1.2",

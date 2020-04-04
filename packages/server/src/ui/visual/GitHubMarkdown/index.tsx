@@ -6,11 +6,31 @@ import SyntaxHighlighterStyle from 'react-syntax-highlighter/dist/esm/styles/pri
 const SyntaxHighligherSupportedLanguages: string[] = require('react-syntax-highlighter/dist/esm/languages/prism/supported-languages')
   .default;
 
-export default function GitHubMarkdown({source}: {source: string}) {
+export interface GitHubMarkdownProps {
+  children: string;
+  inline?: boolean;
+}
+export default function GitHubMarkdown({
+  children,
+  inline,
+}: GitHubMarkdownProps) {
+  if (inline) {
+    return (
+      <Markdown
+        className="markdown"
+        source={children}
+        renderers={{
+          paragraph: (props) => {
+            return props.children;
+          },
+        }}
+      />
+    );
+  }
   return (
     <Markdown
       className="markdown"
-      source={source}
+      source={children}
       renderers={{
         code: (props: {language: string | null; value: string}) => {
           const aliases = {

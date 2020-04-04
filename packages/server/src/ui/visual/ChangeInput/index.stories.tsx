@@ -1,0 +1,54 @@
+import * as React from 'react';
+import {action} from '@storybook/addon-actions';
+import ChangeInput, {ChangeInputList} from '.';
+
+export default {title: 'ChangeInput'};
+
+export const Changes = () => {
+  const [change, setChange] = React.useState({
+    title: 'I **fixed** a thing',
+    body:
+      'If you were doing\n\n```ts\ndb.stream(sql`SELECT * FROM table;`);\n```\n\nYou now need to do:\n\n```ts\ndb.queryStream(sql`SELECT * FROM table;`);\n```',
+  });
+  const [change2, setChange2] = React.useState({
+    title: 'I **fixed** a thing',
+    body: '',
+  });
+  const [change3, setChange3] = React.useState({
+    title: '',
+    body: 'I only have a body, which is an error',
+  });
+  return (
+    <div className="w-full min-h-full bg-gray-300 p-2">
+      <ChangeInputList>
+        <ChangeInput
+          ref={(input) => {
+            input?.focus();
+          }}
+          title={change.title}
+          body={change.body}
+          disabled={false}
+          onChange={setChange}
+          onFocus={action('focus 1')}
+          onBlur={action('blur 1')}
+        />
+        <ChangeInput
+          title={change2.title}
+          body={change2.body}
+          disabled={false}
+          onChange={setChange2}
+          onFocus={action('focus 2')}
+          onBlur={action('blur 2')}
+        />
+        <ChangeInput
+          title={change3.title}
+          body={change3.body}
+          disabled={false}
+          onChange={setChange3}
+          onFocus={action('focus 3')}
+          onBlur={action('blur 3')}
+        />
+      </ChangeInputList>
+    </div>
+  );
+};
