@@ -3,9 +3,9 @@ import {action} from '@storybook/addon-actions';
 import ChangeInput, {ChangeInputList} from '../ChangeInput';
 import Changes from './';
 
-export default {title: 'Changes'};
+export default {title: 'modules/Changes'};
 
-export const ChangesExample = () => {
+export const Default = () => {
   return (
     <div className="w-full min-h-full bg-gray-300 p-2">
       <Changes title="Breaking Changes">

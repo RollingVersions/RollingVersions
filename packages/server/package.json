@@ -34,10 +34,14 @@
     "react-textarea-autosize": "^7.1.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.9.0",
     "@forbeslindesay/tsconfig": "^2.0.0",
     "@fullhuman/postcss-purgecss": "^2.1.0",
+    "@storybook/addon-a11y": "^5.3.18",
     "@storybook/addon-actions": "^5.3.18",
+    "@storybook/addon-console": "^1.2.1",
     "@storybook/addon-info": "^5.3.18",
+    "@storybook/addon-viewport": "^5.3.18",
     "@storybook/react": "^5.3.18",
     "@types/body-parser": "^1.17.1",
     "@types/compression-webpack-plugin": "^2.0.1",

@@ -1,12 +1,15 @@
 import React from 'react';
 import {PackageInfo} from '@rollingversions/utils/lib/Platforms';
-import {PackagePullChangeLog} from '@rollingversions/utils/lib/PullChangeLog';
 
 interface RegistryStatusProps {
-  packageInfo: PackageInfo[];
-  changeLog: PackagePullChangeLog;
-  disabled: boolean;
-  onChangeLogChange: (log: PackagePullChangeLog) => void;
+  packageInfo: Pick<
+    PackageInfo,
+    | 'platform'
+    | 'notToBePublished'
+    | 'versionTag'
+    | 'registryVersion'
+    | 'publishConfigAccess'
+  >[];
 }
 
 export default function RegistryStatus({packageInfo}: RegistryStatusProps) {

@@ -1,16 +1,13 @@
 import React from 'react';
 
-interface PullChangeLogEntrySectionProps {
+export interface ChangesProps {
   title: string;
   children: React.ReactNode;
 }
-export default function PullChangeLogEntrySection({
-  title,
-  children,
-}: PullChangeLogEntrySectionProps) {
+export default function Changes({title, children}: ChangesProps) {
   return (
     <>
-      <h3 className="font-sans text-xl text-blue-600 font-light mb-2 mt-6">
+      <h3 className="font-sans text-xl text-blue-800 font-light mb-2 mt-6">
         {title}
       </h3>
       <div className="pt-2">{children}</div>
