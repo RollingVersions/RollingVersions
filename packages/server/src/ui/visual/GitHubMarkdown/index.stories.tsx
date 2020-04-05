@@ -1,7 +1,7 @@
 import * as React from 'react';
 import GitHubMarkdown from './';
 
-export default {title: 'GitHubMarkdown'};
+export default {title: 'modules/GitHubMarkdown'};
 
 const markdownString = `<script>alert('You\'ve been hacked')</script>
 
@@ -208,8 +208,11 @@ This paragraph has some \`code\` in it.
 ![Alt Text](https://get.svg.workers.dev/?s=64&f=gray "Image Title")
 
     ![Alt Text](https://get.svg.workers.dev/?s=64&f=gray "Image Title")`;
-export const markdown = () => <GitHubMarkdown>{markdownString}</GitHubMarkdown>;
 
-export const inline = () => (
-  <GitHubMarkdown inline>{markdownString}</GitHubMarkdown>
+export const Default = () => <GitHubMarkdown>{markdownString}</GitHubMarkdown>;
+
+export const InlineMarkdown = () => (
+  <GitHubMarkdown inline>
+    {'This is rendered without a **paragraph** tag!'}
+  </GitHubMarkdown>
 );

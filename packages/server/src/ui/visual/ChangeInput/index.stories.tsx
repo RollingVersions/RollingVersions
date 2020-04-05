@@ -2,9 +2,8 @@ import * as React from 'react';
 import {action} from '@storybook/addon-actions';
 import ChangeInput, {ChangeInputList} from '.';
 
-export default {title: 'ChangeInput'};
-
-export const Changes = () => {
+export default {title: 'modules/ChangeInput', component: ChangeInput};
+const Story = ({disabled}: {disabled: boolean}) => {
   const [change, setChange] = React.useState({
     title: 'I **fixed** a thing',
     body:
@@ -27,7 +26,7 @@ export const Changes = () => {
           }}
           title={change.title}
           body={change.body}
-          disabled={false}
+          disabled={disabled}
           onChange={setChange}
           onFocus={action('focus 1')}
           onBlur={action('blur 1')}
@@ -35,7 +34,7 @@ export const Changes = () => {
         <ChangeInput
           title={change2.title}
           body={change2.body}
-          disabled={false}
+          disabled={disabled}
           onChange={setChange2}
           onFocus={action('focus 2')}
           onBlur={action('blur 2')}
@@ -43,7 +42,7 @@ export const Changes = () => {
         <ChangeInput
           title={change3.title}
           body={change3.body}
-          disabled={false}
+          disabled={disabled}
           onChange={setChange3}
           onFocus={action('focus 3')}
           onBlur={action('blur 3')}
@@ -52,3 +51,6 @@ export const Changes = () => {
     </div>
   );
 };
+
+export const Default = () => <Story disabled={false} />;
+export const Disabled = () => <Story disabled={true} />;

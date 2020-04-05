@@ -34,7 +34,7 @@ export default function PullChangeLogEntrySection({
       <ChangeInputList>
         {[
           ...changeLog.changes.filter((c) => c.type === type),
-          {type, title: '', body: ''},
+          ...(disabled ? [] : [{type, title: '', body: ''}]),
         ].map((entry, i) => (
           <ChangeInput
             key={i}
