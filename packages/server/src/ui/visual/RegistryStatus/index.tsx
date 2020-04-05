@@ -1,7 +1,7 @@
 import React from 'react';
 import {PackageInfo} from '@rollingversions/utils/lib/Platforms';
 
-interface RegistryStatusProps {
+export interface RegistryStatusProps {
   packageInfo: Pick<
     PackageInfo,
     | 'platform'
