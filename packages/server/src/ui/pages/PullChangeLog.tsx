@@ -1,14 +1,7 @@
 import React from 'react';
 import {useParams} from 'react-router-dom';
 import usePullRequest from '../hooks/usePullRequest';
-import PackageChangeSet from '../visual/PackageChangeSet';
 import Permission from '../../server/permissions/Permission';
-import SaveChangeLogFooter from '../visual/SaveChangeLogFooter';
-import {
-  PackagePullChangeLog,
-  ChangeLogEntry,
-} from '@rollingversions/utils/lib/PullChangeLog';
-import getLocalId from '../utils/getLocalId';
 import PullRequestPage from '../visual/PullRequestPage';
 
 interface Params {
@@ -16,16 +9,7 @@ interface Params {
   repo: string;
   pull_number: string;
 }
-function getState(packages: PackagePullChangeLog[]) {
-  const results: Record<string, (ChangeLogEntry & {localId: number})[]> = {};
-  packages.forEach((pkg) => {
-    results[pkg.packageName] = pkg.changes.map((c) => ({
-      ...c,
-      localId: getLocalId(),
-    }));
-  });
-  return results;
-}
+
 export default function PullChangeLog() {
   const params = useParams<Params>();
   const pr = usePullRequest(params);
