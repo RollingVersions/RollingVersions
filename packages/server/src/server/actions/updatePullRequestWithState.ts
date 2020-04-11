@@ -1,45 +1,67 @@
+import {APP_URL} from '../environment';
 import {
   GitHubClient,
   writeComment,
   updateStatus,
-  listPackages,
-} from '@rollingversions/utils/lib/GitHub';
-import {PullRequest} from '@rollingversions/utils/lib/types';
-import {renderComment} from '@rollingversions/utils/lib/Rendering';
-import PullChangeLog from '@rollingversions/utils/lib/PullChangeLog';
-import {APP_URL} from '../environment';
-import preparePullRequest from './preparePullRequest';
+} from 'rollingversions/lib/services/github';
+import {PullRequest, ChangeSet} from 'rollingversions/lib/types';
+import {
+  renderComment,
+  getShortDescription,
+  getUrlForChangeLog,
+} from 'rollingversions/lib/utils/Rendering';
+import getPullRequestState from '../getPullRequestState';
 
 export default async function updatePullRequestWithState(
   github: GitHubClient,
   pullRequest: Pick<PullRequest, 'repo' | 'number'> &
     Partial<Pick<PullRequest, 'headSha'>>,
-  state: Omit<PullChangeLog, 'packageInfoCache'>,
+  headSha: string,
+  updates: {packageName: string; changes: ChangeSet}[],
 ) {
-  const {existingComment, headSha, state: oldState} = await preparePullRequest(
-    github,
-    pullRequest,
-  );
+  const {state, commentID} = await getPullRequestState(github, pullRequest);
 
-  const currentVersions =
-    oldState.packageInfoCache && oldState.packageInfoCache.headSha === headSha
-      ? oldState.packageInfoCache.packages
-      : await listPackages(github, pullRequest);
+  if (!state || !commentID) {
+    throw new Error(
+      `Could not load state for the pull request: ${pullRequest.repo.owner}/${pullRequest.repo.name}#${pullRequest.number}`,
+    );
+  }
 
-  const pr = {
-    ...pullRequest,
-    headSha,
-    currentVersions,
+  const newPackages = new Map([...state.packages]);
+  for (const {packageName, changes} of updates) {
+    newPackages.set(packageName, {
+      changes,
+      info: state.packages.get(packageName)?.info || [],
+    });
+  }
+
+  const newState = {
+    ...state,
+    submittedAtCommitSha: headSha,
+    packages: newPackages,
   };
 
-  const st = {...state, packageInfoCache: oldState.packageInfoCache};
-
+  //   readonly packages: Map<string, {
+  //     changes: ChangeSet;
+  //     info: PackageInfo[];
+  // }>;
   await writeComment(
     github,
-    pr,
-    renderComment(pr, st, APP_URL),
-    existingComment,
+    pullRequest,
+    renderComment(pullRequest, newState, APP_URL),
+    commentID,
   );
 
-  await updateStatus(github, pr, st, APP_URL);
+  await updateStatus(
+    github,
+    {...pullRequest, headSha: state.packageInfoFetchedAt},
+    {
+      state:
+        state.packageInfoFetchedAt === newState.submittedAtCommitSha
+          ? 'success'
+          : 'pending',
+      url: getUrlForChangeLog(pullRequest, APP_URL),
+      description: getShortDescription(newState),
+    },
+  );
 }

@@ -11,3 +11,11 @@ Rolling Versions is not free for comercial use. If you want to run your own vers
 ## Personal Open Source Use
 
 Rolling Versions is free for non-commercial open source use. Just [install the GitHub app](https://github.com/apps/rollingversions) and add the CLI to your CI process.
+
+## Terminology
+
+- Publish Target - a destination we can publish to (e.g. GitHub Releases, NPM, Docker, Crates.io)
+- Change Entry - a markdown title and body describing something that changed
+- Change Type - breaking (major), feat (minor), refactor (minor), fix (patch), perf (patch)
+- Change Set - a set of Change Entries categorised by their Change Type
+- Package Info - the current state of a package, including where it gets published to and the latest version that's been published

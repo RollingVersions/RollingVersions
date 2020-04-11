@@ -1,0 +1,193 @@
+query GetTags($owner: String!, $name: String!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    refs(first: 100, after: $after, refPrefix: "refs/tags/") {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        name
+        target {
+          # __typename: Commit
+          oid
+        }
+      }
+    }
+  }
+}
+
+query GetPullRequestHeadSha($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      headRef {
+        target {
+          # __typename: Commit
+          oid
+        }
+      }
+    }
+  }
+}
+
+query GetPullRequestStatus($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      closed
+      merged
+    }
+  }
+}
+
+query GetPullRequestFileNames($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      headRef {
+        target {
+          __typename
+          ... on Commit {
+            tree {
+              ...FullContents
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+query GetFile($owner: String!, $name: String!, $oid: GitObjectID!) {
+  repository(owner: $owner, name: $name) {
+    object(oid: $oid) {
+      __typename
+      ... on Blob {
+        text
+      }
+    }
+  }
+}
+
+query GetPullRequestComments(
+  $owner: String!
+  $name: String!
+  $number: Int!
+  $first: Int!
+  $after: String
+) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      comments(first: $first, after: $after) {
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+        nodes {
+          databaseId
+          body
+          # author {
+          #   url
+          # }
+        }
+      }
+    }
+  }
+}
+
+query GetPullRequestsForCommit($owner: String!, $name: String!, $sha: String!) {
+  repository(owner: $owner, name: $name) {
+    object(expression: $sha) {
+      __typename
+      ... on Commit {
+        associatedPullRequests(first: 10) {
+          nodes {
+            number
+          }
+        }
+      }
+    }
+  }
+}
+
+query GetRepositoryViewerPermissions($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    viewerPermission
+  }
+}
+query GetDefaultBranch($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    branch: defaultBranchRef {
+      name
+      target {
+        __typename # Commit
+        oid
+      }
+    }
+  }
+}
+# qualified name should be something like: refs/heads/master
+query GetBranch($owner: String!, $name: String!, $qualifiedName: String!) {
+  repository(owner: $owner, name: $name) {
+    branch: ref(qualifiedName: $qualifiedName) {
+      name
+      target {
+        __typename # Commit
+        oid
+      }
+    }
+  }
+}
+
+# supports up to 6 levels deep
+fragment FullContents on Tree {
+  entries {
+    name
+    object {
+      __typename
+      oid
+      ... on Tree {
+        entries {
+          name
+          object {
+            __typename
+            oid
+            ... on Tree {
+              entries {
+                name
+                object {
+                  __typename
+                  oid
+                  ... on Tree {
+                    entries {
+                      name
+                      object {
+                        __typename
+                        oid
+                        ... on Tree {
+                          entries {
+                            name
+                            object {
+                              __typename
+                              oid
+                              ... on Tree {
+                                entries {
+                                  name
+                                  object {
+                                    __typename
+                                    oid
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

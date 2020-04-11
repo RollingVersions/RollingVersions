@@ -1,6 +1,6 @@
 import * as React from 'react';
 import RegistryStatus from './';
-import {Platform} from '@rollingversions/utils/lib/Platforms';
+import {PublishTarget} from 'rollingversions/lib/types';
 
 export default {title: 'modules/RegistryStatus'};
 
@@ -11,7 +11,7 @@ export const Default = () => {
       <RegistryStatus
         packageInfo={[
           {
-            platform: Platform.npm,
+            publishTarget: PublishTarget.npm,
             notToBePublished: true,
             versionTag: null,
             registryVersion: null,
@@ -22,7 +22,7 @@ export const Default = () => {
       <RegistryStatus
         packageInfo={[
           {
-            platform: Platform.npm,
+            publishTarget: PublishTarget.npm,
             notToBePublished: false,
             versionTag: null,
             registryVersion: null,
@@ -33,7 +33,7 @@ export const Default = () => {
       <RegistryStatus
         packageInfo={[
           {
-            platform: Platform.npm,
+            publishTarget: PublishTarget.npm,
             notToBePublished: false,
             versionTag: null,
             registryVersion: null,
@@ -44,7 +44,7 @@ export const Default = () => {
       <RegistryStatus
         packageInfo={[
           {
-            platform: Platform.npm,
+            publishTarget: PublishTarget.npm,
             notToBePublished: false,
             versionTag: {
               commitSha: 'skdjfdskj',
@@ -59,7 +59,7 @@ export const Default = () => {
       <RegistryStatus
         packageInfo={[
           {
-            platform: Platform.npm,
+            publishTarget: PublishTarget.npm,
             notToBePublished: false,
             versionTag: {
               commitSha: 'skdjfdskj',

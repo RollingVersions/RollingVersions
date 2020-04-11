@@ -1,21 +1,22 @@
-import {
-  Config,
-  areAllSuccessPackageStatuses,
-  Status,
-  isSuccessPackageStatus,
-  MissingTag,
+import {PublishConfig} from '../types';
+import {GitHubClient, auth} from '../services/github';
+import {getAllTags, getAllFiles} from '../services/git';
+import getPackageStatuses, {
   NoUpdateRequired,
-  NewVersionToBePublished,
   SuccessPackageStatus,
-} from '../types';
-import {listPackages} from '@rollingversions/utils/lib/LocalRepo';
-import {getPackageStatuses} from '../utils/getPackageStatuses';
-import {GitHubClient, auth} from '@rollingversions/utils/lib/GitHub';
+  MissingTag,
+  NewVersionToBePublished,
+  Status,
+  isPackageStatus,
+} from '../utils/getPackageStatuses';
 import sortPackages from '../utils/sortPackages';
-import {prepublishGitHub, publishGitHub} from '../targets/github';
-import getGitTag from '../utils/getGitTag';
-import {prepublish, publish as publishTarget} from '../targets';
-import notFn from '../utils/notFn';
+import {checkGitHubReleaseStatus} from '../PublishTargets/github';
+import getNewTagName from '../utils/getNewTagName';
+import {prepublish, publish as publishTarget} from '../PublishTargets';
+import notFn from '../ts-utils/notFn';
+import arrayEvery from '../ts-utils/arrayEvery';
+import orFn from '../ts-utils/orFn';
+import listPackages from '../utils/listPackages';
 
 export enum PublishResultKind {
   NoUpdatesRequired,
@@ -61,12 +62,15 @@ export type Result =
   | GitHubAuthCheckFail
   | PrepublishFailures;
 
-export default async function publish(config: Config): Promise<Result> {
+export default async function publish(config: PublishConfig): Promise<Result> {
   const client = new GitHubClient({
     auth: auth.createTokenAuth(config.accessToken),
   });
 
-  const packageInfos = await listPackages(config.dirname);
+  const packageInfos = await listPackages(
+    getAllTags(config.dirname),
+    getAllFiles(config.dirname),
+  );
 
   const unsortedPackageStatuses = await getPackageStatuses(
     config,
@@ -74,7 +78,11 @@ export default async function publish(config: Config): Promise<Result> {
     packageInfos,
   );
 
-  if (!areAllSuccessPackageStatuses(unsortedPackageStatuses)) {
+  const isSuccessPackageStatus = orFn(
+    isPackageStatus(Status.NewVersionToBePublished),
+    isPackageStatus(Status.NoUpdateRequired),
+  );
+  if (!arrayEvery(unsortedPackageStatuses, isSuccessPackageStatus)) {
     return {
       kind: PublishResultKind.MissingTags,
       packages: unsortedPackageStatuses.filter(notFn(isSuccessPackageStatus)),
@@ -111,7 +119,7 @@ export default async function publish(config: Config): Promise<Result> {
   // TODO: print change logs here
 
   // prepublish checks
-  const gitHubPrepublishInfo = await prepublishGitHub(config, client);
+  const gitHubPrepublishInfo = await checkGitHubReleaseStatus(config, client);
   if (!gitHubPrepublishInfo.ok) {
     return {
       kind: PublishResultKind.GitHubAuthCheckFail,
@@ -127,7 +135,7 @@ export default async function publish(config: Config): Promise<Result> {
   for (const pkg of packageStatuses) {
     if (pkg.status === Status.NewVersionToBePublished) {
       const reasons = [];
-      const tagName = getGitTag(packageStatuses, pkg);
+      const tagName = getNewTagName(packageStatuses, pkg);
       if (gitHubPrepublishInfo.tags.includes(tagName)) {
         reasons.push(`A github release already exists for ${tagName}`);
       }
@@ -155,9 +163,11 @@ export default async function publish(config: Config): Promise<Result> {
 
   for (const pkg of packageStatuses) {
     if (pkg.status === Status.NewVersionToBePublished) {
-      await publishTarget(config, pkg, packageVersions);
-
-      await publishGitHub(config, client, pkg, getGitTag(packageStatuses, pkg));
+      await publishTarget(config, pkg, {
+        packageVersions,
+        packageStatuses,
+        client,
+      });
     }
   }
   return {

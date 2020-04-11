@@ -1,9 +1,24 @@
 import * as React from 'react';
 import PullRequestPage from './';
-import {Platform} from '@rollingversions/utils/lib/Platforms';
+import {PublishTarget, PackageInfo} from 'rollingversions/lib/types';
 import {action} from '@storybook/addon-actions';
+import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 
 export default {title: 'pages/PullRequestPage'};
+
+function packageInfo(
+  info: Pick<PackageInfo, 'packageName'> & Partial<PackageInfo>,
+): PackageInfo {
+  return {
+    path: 'fake-path',
+    publishTarget: PublishTarget.npm,
+    publishConfigAccess: 'public',
+    notToBePublished: false,
+    registryVersion: null,
+    versionTag: null,
+    ...info,
+  };
+}
 
 export const Default = () => {
   return (
@@ -12,30 +27,24 @@ export const Default = () => {
         headSha="sdjfkasjfkdsjvoixjvof"
         readOnly={false}
         saving={false}
-        currentVersions={{
-          '@databases/pg': [
-            {
-              platform: Platform.npm,
-              notToBePublished: false,
-              versionTag: null,
-              registryVersion: null,
-              publishConfigAccess: 'public' as 'public' | 'restricted',
-            },
-          ],
-          '@databases/mysql': [
-            {
-              platform: Platform.npm,
-              notToBePublished: false,
-              versionTag: null,
-              registryVersion: null,
-              publishConfigAccess: 'public' as 'public' | 'restricted',
-            },
-          ],
-        }}
-        packages={[
-          {packageName: '@databases/pg', changes: []},
-          {packageName: '@databases/mysql', changes: []},
-        ]}
+        packages={
+          new Map([
+            [
+              '@databases/pg',
+              {
+                changes: getEmptyChangeSet(),
+                info: [packageInfo({packageName: '@databases/pg'})],
+              },
+            ],
+            [
+              '@databases/mysql',
+              {
+                changes: getEmptyChangeSet(),
+                info: [packageInfo({packageName: '@databases/mysql'})],
+              },
+            ],
+          ])
+        }
         onSave={action('save')}
       />
     </div>

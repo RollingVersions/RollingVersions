@@ -2,7 +2,7 @@ import {readFileSync} from 'fs';
 import {Router, static as expressStatic} from 'express';
 import {requiresAuth} from './auth';
 import validateParams from './utils/validateParams';
-import checkPermissions, {Permission} from './utils/checkPermissions';
+import checkPermissions from './utils/checkPermissions';
 
 const staticMiddleware = Router();
 
@@ -29,7 +29,7 @@ staticMiddleware.get(
   `/:owner/:repo/pulls/:pull_number`,
   requiresAuth(),
   validateParams(),
-  checkPermissions([Permission.View, Permission.Edit]),
+  checkPermissions(['view', 'edit']),
 );
 
 staticMiddleware.get('/*', async (req, res, next) => {

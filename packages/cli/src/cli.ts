@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 
-import chalk = require('chalk');
+import chalk from 'chalk';
 import printHelp from './commands/help';
 import publish, {PublishResultKind} from './commands/publish';
-import {Status, NoUpdateRequired, NewVersionToBePublished} from './types';
-import {changesToMarkdown} from '@rollingversions/utils/lib/Rendering';
+import {changesToMarkdown} from './utils/Rendering';
+import {
+  Status,
+  NoUpdateRequired,
+  NewVersionToBePublished,
+} from './utils/getPackageStatuses';
 
 const CI_ENV = require('env-ci')();
 
@@ -146,7 +150,7 @@ switch (COMMAND) {
                 ),
               );
               console.warn(``);
-              console.warn(changesToMarkdown(p.changeLogEntries, 3));
+              console.warn(changesToMarkdown(p.changeSet, 3));
               console.warn(``);
             }
             console.warn(``);
@@ -164,7 +168,7 @@ switch (COMMAND) {
         onPublishTargetRelease({pkg, pkgInfo, dryRun}) {
           console.warn(
             `publishing ${chalk.yellow(pkgInfo.packageName)} to ${chalk.blue(
-              pkgInfo.platform,
+              pkgInfo.publishTarget,
             )} @ ${chalk.yellow(pkg.newVersion)}${
               dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
             }`,

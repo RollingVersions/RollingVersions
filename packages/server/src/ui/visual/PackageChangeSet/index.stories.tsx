@@ -1,23 +1,21 @@
 import * as React from 'react';
 import PackageChangeSet from './';
-import {Platform} from '@rollingversions/utils/lib/Platforms';
-import {ChangeLogEntry} from '@rollingversions/utils/lib/PullChangeLog';
+import {PublishTarget} from 'rollingversions/lib/types';
+import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 
 export default {title: 'modules/PackageChangeSet'};
 
 export const Default = () => {
-  const [changes, setChanges] = React.useState<
-    (ChangeLogEntry & {
-      localId: number;
-    })[]
-  >([]);
+  const [changes, setChanges] = React.useState(
+    getEmptyChangeSet<{localId: number}>(),
+  );
   return (
     <div className="w-full min-h-full bg-gray-300 p-2">
       <PackageChangeSet
         packageName="@databases/pg"
         packageInfo={[
           {
-            platform: Platform.npm,
+            publishTarget: PublishTarget.npm,
             notToBePublished: false,
             versionTag: null,
             registryVersion: null,
@@ -26,7 +24,7 @@ export const Default = () => {
         ]}
         changes={changes}
         disabled={false}
-        onChange={setChanges}
+        onChange={(_packageName, update) => setChanges(update)}
       />
     </div>
   );

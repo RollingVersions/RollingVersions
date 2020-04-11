@@ -1,5 +1,6 @@
-import {Config, SuccessPackageStatus, PackageDependencies} from '../types';
-import {getDependencies} from '../targets';
+import {PublishConfig, PackageDependencies} from '../types';
+import {getDependencies} from '../PublishTargets';
+import {SuccessPackageStatus} from './getPackageStatuses';
 
 export interface CircularPackages {
   readonly circular: true;
@@ -13,7 +14,7 @@ export interface SortedPackages {
 export type SortResult = CircularPackages | SortedPackages;
 
 export default function sortPackages(
-  config: Pick<Config, 'dirname'>,
+  config: Pick<PublishConfig, 'dirname'>,
   statuses: SuccessPackageStatus[],
 ): SortResult {
   const input = new Map(
@@ -42,7 +43,6 @@ export default function sortPackages(
       return {
         circular: true,
         packageNames: stack.slice(stackIndex),
-        getErrorMessage,
       };
     }
 

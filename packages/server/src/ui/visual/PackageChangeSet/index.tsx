@@ -1,5 +1,5 @@
 import React from 'react';
-import {ChangeLogEntry} from '@rollingversions/utils/lib/PullChangeLog';
+import {ChangeLogEntry, ChangeSet} from 'rollingversions/lib/types';
 import RegistryStatus, {RegistryStatusProps} from '../RegistryStatus';
 import ChangeSetEditorLayout from '../ChangeSetEditorLayout';
 import Changes from '../Changes';
@@ -7,17 +7,42 @@ import Changes from '../Changes';
 export interface PackageChangeSetProps {
   packageName: string;
   packageInfo: RegistryStatusProps['packageInfo'];
-  changes: (ChangeLogEntry & {localId: number})[];
+  changes: ChangeSet<{localId: number}>;
   disabled: boolean;
-  onChange: (changes: (ChangeLogEntry & {localId: number})[]) => void;
+  onChange: (
+    packageName: string,
+    update: (
+      oldChanges: ChangeSet<{localId: number}>,
+    ) => ChangeSet<{localId: number}>,
+  ) => void;
 }
-export default function PackageChangeSet({
+
+function useOnChange(
+  packageName: string,
+  type: keyof ChangeSet,
+  onChange: PackageChangeSetProps['onChange'],
+) {
+  return React.useCallback(
+    (changes: (ChangeLogEntry & {localId: number})[]) => {
+      onChange(packageName, (oldChanges) => ({...oldChanges, [type]: changes}));
+    },
+    [packageName, type, onChange],
+  );
+}
+function PackageChangeSet({
   packageInfo,
   packageName,
   changes,
   disabled,
   onChange,
 }: PackageChangeSetProps) {
+  const handleChange = {
+    breaking: useOnChange(packageName, 'breaking', onChange),
+    feat: useOnChange(packageName, 'feat', onChange),
+    refactor: useOnChange(packageName, 'refactor', onChange),
+    fix: useOnChange(packageName, 'fix', onChange),
+    perf: useOnChange(packageName, 'perf', onChange),
+  };
   // TODO: show warning if no changes are added and the commit has modified files in the directory
   return (
     <>
@@ -28,50 +53,46 @@ export default function PackageChangeSet({
       <ChangeSetEditorLayout
         breaking={
           <Changes
-            type="breaking"
             title="Breaking Changes"
             disabled={disabled}
-            changes={changes}
-            onChange={onChange}
+            changes={changes.breaking}
+            onChange={handleChange.breaking}
           />
         }
         feat={
           <Changes
-            type="feat"
             title="New Features"
             disabled={disabled}
-            changes={changes}
-            onChange={onChange}
+            changes={changes.feat}
+            onChange={handleChange.feat}
           />
         }
         refactor={
           <Changes
-            type="refactor"
             title="Refactors"
             disabled={disabled}
-            changes={changes}
-            onChange={onChange}
+            changes={changes.refactor}
+            onChange={handleChange.refactor}
           />
         }
         fix={
           <Changes
-            type="fix"
             title="Bug Fixes"
             disabled={disabled}
-            changes={changes}
-            onChange={onChange}
+            changes={changes.fix}
+            onChange={handleChange.fix}
           />
         }
         perf={
           <Changes
-            type="perf"
             title="Performance Improvements"
             disabled={disabled}
-            changes={changes}
-            onChange={onChange}
+            changes={changes.perf}
+            onChange={handleChange.perf}
           />
         }
       />
     </>
   );
 }
+export default React.memo(PackageChangeSet);

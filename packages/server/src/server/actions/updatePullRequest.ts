@@ -2,43 +2,45 @@ import {
   GitHubClient,
   writeComment,
   updateStatus,
-  listPackages,
-} from '@rollingversions/utils/lib/GitHub';
-import {PullRequest} from '@rollingversions/utils/lib/types';
-import {renderComment} from '@rollingversions/utils/lib/Rendering';
-import PullChangeLog from '@rollingversions/utils/lib/PullChangeLog';
+} from 'rollingversions/lib/services/github';
+import {PullRequest} from 'rollingversions/lib/types';
 import {APP_URL} from '../environment';
-import preparePullRequest from './preparePullRequest';
+import getPullRequestState from '../getPullRequestState';
+import {
+  renderComment,
+  getUrlForChangeLog,
+  getShortDescription,
+} from 'rollingversions/lib/utils/Rendering';
 
 export default async function updatePullRequest(
   github: GitHubClient,
   pullRequest: Pick<PullRequest, 'repo' | 'number'> &
     Partial<Pick<PullRequest, 'headSha'>>,
 ) {
-  const {existingComment, state: oldState, headSha} = await preparePullRequest(
+  const {state, commentID, closed, updateRequired} = await getPullRequestState(
     github,
     pullRequest,
   );
 
-  const currentVersions =
-    oldState.packageInfoCache &&
-    oldState.packageInfoCache.headSha === pullRequest.headSha
-      ? oldState.packageInfoCache.packages
-      : await listPackages(github, pullRequest);
-
-  const state: PullChangeLog = {
-    ...oldState,
-    packageInfoCache: {headSha, packages: currentVersions},
-  };
-
-  const pr = {...pullRequest, currentVersions, headSha};
+  if (closed || !updateRequired || !state) return;
 
   await writeComment(
     github,
-    pr,
-    renderComment(pr, state, APP_URL),
-    existingComment,
+    pullRequest,
+    renderComment(pullRequest, state, APP_URL),
+    commentID || undefined,
   );
 
-  await updateStatus(github, pr, state, APP_URL);
+  await updateStatus(
+    github,
+    {...pullRequest, headSha: state.packageInfoFetchedAt},
+    {
+      state:
+        state.packageInfoFetchedAt === state.submittedAtCommitSha
+          ? 'success'
+          : 'pending',
+      url: getUrlForChangeLog(pullRequest, APP_URL),
+      description: getShortDescription(state),
+    },
+  );
 }

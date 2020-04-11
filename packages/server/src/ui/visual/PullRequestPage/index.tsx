@@ -1,65 +1,82 @@
 import React from 'react';
 import PackageChangeSet, {PackageChangeSetProps} from '../PackageChangeSet';
 import SaveChangeLogFooter from '../SaveChangeLogFooter';
-import {
-  PackagePullChangeLog,
-  ChangeLogEntry,
-} from '@rollingversions/utils/lib/PullChangeLog';
 import getLocalId from '../../utils/getLocalId';
+import {
+  PullRequestState,
+  ChangeSet,
+  ChangeLogEntry,
+} from 'rollingversions/lib/types';
 
-function getState(packages: PackagePullChangeLog[]) {
-  const results: Record<
-    string,
-    undefined | (ChangeLogEntry & {localId: number})[]
-  > = {};
-  packages.forEach((pkg) => {
-    results[pkg.packageName] = pkg.changes.map((c) => ({
-      ...c,
-      localId: getLocalId(),
-    }));
-  });
-  return results;
+function mapChangeSet<T, S>(
+  changes: ChangeSet<T>,
+  fn: (c: ChangeLogEntry & T) => S,
+) {
+  return {
+    breaking: changes.breaking.map(fn),
+    feat: changes.feat.map(fn),
+    refactor: changes.refactor.map(fn),
+    fix: changes.fix.map(fn),
+    perf: changes.perf.map(fn),
+  };
 }
-const entryValueIsNotUndefined = <S, T>(
-  v: [S, T],
-): v is [S, Exclude<T, undefined>] => v[1] !== undefined;
+
+function getState(packages: PullRequestState['packages']) {
+  return [...packages]
+    .map(([packageName, {changes, info}]) => ({
+      packageName,
+      changes: mapChangeSet(changes, (c) => ({
+        ...c,
+        localId: getLocalId(),
+      })),
+      info,
+    }))
+    .sort(({packageName: a}, {packageName: b}) => (a < b ? -1 : 1));
+}
 
 export interface PullRequestPageProps {
   headSha: string | undefined;
   readOnly: boolean;
   saving: boolean;
-  currentVersions: Record<
-    string,
-    PackageChangeSetProps['packageInfo'] | undefined
-  >;
-  packages: PackagePullChangeLog[];
-  onSave: (changes: PackagePullChangeLog[]) => void;
+  packages: PullRequestState['packages'];
+  onSave: (changes: {packageName: string; changes: ChangeSet}[]) => void;
 }
 export default function PullRequestPage({
   headSha,
   readOnly,
   saving,
-  currentVersions,
   packages,
+  onSave,
 }: PullRequestPageProps) {
-  const [state, setState] = React.useState(() => getState(packages));
+  const [initialState] = React.useState(() => getState(packages));
+  const [state, setState] = React.useState(initialState);
+
+  const onChange: PackageChangeSetProps['onChange'] = React.useCallback(
+    (packageName, update) => {
+      setState((s) =>
+        s.map((pkg) =>
+          pkg.packageName === packageName
+            ? {...pkg, changes: update(pkg.changes)}
+            : pkg,
+        ),
+      );
+    },
+    [setState],
+  );
+
   return (
     <div className="pb-16 pt-4 px-8">
       <h1>ChangeLog</h1>
-      {Object.entries(currentVersions)
-        .slice()
-        .sort(([a], [b]) => (a < b ? -1 : 1))
-        .filter(entryValueIsNotUndefined)
-        .map(([packageName, packageInfo]) => (
+      {state
+        .filter(({info}) => info.length !== 0)
+        .map(({packageName, changes, info}) => (
           <PackageChangeSet
             key={packageName}
             disabled={readOnly || saving}
             packageName={packageName}
-            packageInfo={packageInfo}
-            changes={state[packageName] || []}
-            onChange={(changes) => {
-              setState((s) => ({...s, [packageName]: changes}));
-            }}
+            packageInfo={info}
+            changes={changes}
+            onChange={onChange}
           />
         ))}
       {!readOnly && headSha && (
@@ -68,14 +85,22 @@ export default function PullRequestPage({
           headSha={headSha}
           onClick={() => {
             if (saving) return;
-            Object.entries(state)
-              .filter(entryValueIsNotUndefined)
-              .map(
-                ([packageName, changes]): PackagePullChangeLog => ({
+            const oldState = new Map(
+              initialState.map(
+                ({packageName, changes}) => [packageName, changes] as const,
+              ),
+            );
+            onSave(
+              state
+                .filter(
+                  ({packageName, changes}) =>
+                    oldState.get(packageName) !== changes,
+                )
+                .map(({packageName, changes}) => ({
                   packageName,
-                  changes: changes.map(({localId, ...rest}) => rest),
-                }),
-              );
+                  changes: mapChangeSet(changes, ({localId, ...c}) => c),
+                })),
+            );
           }}
         />
       )}

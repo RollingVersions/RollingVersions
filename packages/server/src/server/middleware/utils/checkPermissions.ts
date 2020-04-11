@@ -6,12 +6,18 @@ import getPermissionLevel, {
 import {parseParams} from './validateParams';
 
 export {Permission};
+
+const permissions = new WeakMap<Request, Permission>();
+export function getPermission(req: Request) {
+  return permissions.get(req) || 'none';
+}
 export default function checkPermissions(allowedPermissions: Permission[]) {
   return async (req: Request, res: Response, next: (err?: any) => void) => {
     try {
       const userAuth = getGitHubAccessToken(req, res);
       const pullRequest = parseParams(req);
       const permission = await getPermissionLevel(pullRequest, userAuth);
+      permissions.set(req, permission);
       if (!allowedPermissions.includes(permission)) {
         res
           .status(404)

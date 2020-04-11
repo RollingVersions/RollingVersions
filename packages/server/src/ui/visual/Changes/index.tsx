@@ -1,25 +1,15 @@
 import React from 'react';
-import {
-  ChangeLogEntry,
-  ChangeType,
-} from '@rollingversions/utils/lib/PullChangeLog';
+import {ChangeLogEntry} from 'rollingversions/lib/types';
 import ChangeInput, {ChangeInputList} from '../ChangeInput';
 import getLocalId from '../../utils/getLocalId';
 
 export interface ChangesProps {
-  type: ChangeType;
   title: string;
   changes: (ChangeLogEntry & {localId: number})[];
   disabled: boolean;
   onChange: (changes: (ChangeLogEntry & {localId: number})[]) => void;
 }
-export default function Changes({
-  type,
-  title,
-  changes,
-  disabled,
-  onChange,
-}: ChangesProps) {
+function Changes({title, changes, disabled, onChange}: ChangesProps) {
   const [newID, setNewID] = React.useState(() => getLocalId());
   return (
     <>
@@ -29,8 +19,8 @@ export default function Changes({
       <div className="pt-2">
         <ChangeInputList>
           {[
-            ...changes.filter((c) => c.type === type),
-            ...(disabled ? [] : [{localId: newID, type, title: '', body: ''}]),
+            ...changes,
+            ...(disabled ? [] : [{localId: newID, title: '', body: ''}]),
           ].map((entry) => (
             <ChangeInput
               key={entry.localId}
@@ -61,3 +51,5 @@ export default function Changes({
     </>
   );
 }
+
+export default React.memo(Changes);

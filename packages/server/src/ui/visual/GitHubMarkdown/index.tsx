@@ -10,10 +10,7 @@ export interface GitHubMarkdownProps {
   children: string;
   inline?: boolean;
 }
-export default function GitHubMarkdown({
-  children,
-  inline,
-}: GitHubMarkdownProps) {
+function GitHubMarkdown({children, inline}: GitHubMarkdownProps) {
   if (inline) {
     return (
       <Markdown
@@ -59,3 +56,5 @@ export default function GitHubMarkdown({
     />
   );
 }
+
+export default React.memo(GitHubMarkdown);
