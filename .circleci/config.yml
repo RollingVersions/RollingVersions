@@ -53,7 +53,7 @@ jobs:
       - build
       - run:
           name: Dry run
-          command: node packages/cli/lib/cli --dry-run
+          command: yarn global add rollingversions && rollingversions --dry-run
       - push
       - deploy:
           environment: staging
@@ -67,7 +67,7 @@ jobs:
       - build
       - run:
           name: Publish Packages
-          command: node packages/cli/lib/cli
+          command: yarn global add rollingversions && rollingversions
       - deploy:
           environment: production
 
@@ -101,9 +101,6 @@ commands:
       - run:
           name: Test
           command: yarn test
-      - run:
-          name: Dry run
-          command: node packages/cli/lib/cli --dry-run --supress-errors
 
   push:
     steps:
