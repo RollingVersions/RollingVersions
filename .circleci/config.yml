@@ -53,7 +53,7 @@ jobs:
       - build
       - run:
           name: Dry run
-          command: npm i -g rollingversions && rollingversions --dry-run
+          command: sudo npm i -g rollingversions && rollingversions --dry-run
       - push
       - deploy:
           environment: staging
@@ -67,7 +67,7 @@ jobs:
       - build
       - run:
           name: Publish Packages
-          command: npm i -g rollingversions && rollingversions
+          command: sudo npm i -g rollingversions && rollingversions
       - deploy:
           environment: production
 
