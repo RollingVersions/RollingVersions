@@ -53,7 +53,7 @@ jobs:
       - build
       - run:
           name: Dry run
-          command: yarn global add rollingversions && rollingversions --dry-run
+          command: npm i -g rollingversions && rollingversions --dry-run
       - push
       - deploy:
           environment: staging
@@ -67,7 +67,7 @@ jobs:
       - build
       - run:
           name: Publish Packages
-          command: yarn global add rollingversions && rollingversions
+          command: npm i -g rollingversions && rollingversions
       - deploy:
           environment: production
 
