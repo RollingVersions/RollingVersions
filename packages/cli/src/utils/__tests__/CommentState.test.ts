@@ -1,4 +1,5 @@
 import {writeState, readState} from '../CommentState';
+import getEmptyChangeSet from '../getEmptyChangeSet';
 
 test('writeState', () => {
   expect(
@@ -10,7 +11,7 @@ test('writeState', () => {
   ).toMatchInlineSnapshot(`
     "Comment
 
-    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" {\\"submittedAtCommitSha\\":\\"\\\\u002d\\\\u002d\\\\u003e\\",\\"packages\\":[]} \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
+    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" [1,\\"\\\\u002d\\\\u002d\\\\u003e\\",\\"SHASHASHA\\",[]] \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
   `);
   expect(
     writeState('Comment', {
@@ -21,7 +22,7 @@ test('writeState', () => {
   ).toMatchInlineSnapshot(`
     "Comment
 
-    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" {\\"submittedAtCommitSha\\":\\"SHASHASHA\\",\\"packages\\":[]} \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
+    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" [1,\\"SHASHASHA\\",\\"SHASHASHA\\",[]] \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
   `);
 });
 
@@ -36,7 +37,8 @@ test('readState', () => {
     ),
   ).toMatchInlineSnapshot(`
     Object {
-      "packages": Array [],
+      "packageInfoFetchedAt": "SHASHASHA",
+      "packages": Map {},
       "submittedAtCommitSha": "-->",
     }
   `);
@@ -45,13 +47,27 @@ test('readState', () => {
       writeState('Comment', {
         submittedAtCommitSha: 'SHASHASHA',
         packageInfoFetchedAt: 'SHASHASHA',
-        packages: new Map(),
+        packages: new Map([
+          ['fake package', {changes: getEmptyChangeSet(), info: []}],
+        ]),
       }).replace(/\n/g, '\r\n'),
     ),
   ).toMatchInlineSnapshot(`
     Object {
-      "packages": Array [],
-      "submittedAtCommitSha": "-->",
+      "packageInfoFetchedAt": "SHASHASHA",
+      "packages": Map {
+        "fake package" => Object {
+          "changes": Object {
+            "breaking": Array [],
+            "feat": Array [],
+            "fix": Array [],
+            "perf": Array [],
+            "refactor": Array [],
+          },
+          "info": Array [],
+        },
+      },
+      "submittedAtCommitSha": "SHASHASHA",
     }
   `);
 });

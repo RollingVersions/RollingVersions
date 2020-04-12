@@ -144,7 +144,7 @@ export function compressedObjectCodec<
           result[key] = v[i];
         }
       });
-      return result;
+      return t.success(result);
     },
     (v) => keys.map((k) => (k === versionSymbol ? version : v[k])) as any,
   );

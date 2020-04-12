@@ -10,16 +10,16 @@ export function readState(body?: string): PullRequestState | undefined {
 
   const match = stateRegex.exec(body);
 
-  if (match) {
-    const data = codec.decode(JSON.parse(match[1]));
-    if (!data.valid) {
-      // TODO: return the ValidationResult instead of throwing an error
-      throw new Error(data.reason);
-    }
-    return data.value;
+  if (!match) return undefined;
+
+  const data = codec.decode(JSON.parse(match[1]));
+
+  if (!data.valid) {
+    // TODO: return the ValidationResult instead of throwing an error
+    throw new Error(data.reason);
   }
 
-  return undefined;
+  return data.value;
 }
 
 export function writeState(body: string, state: PullRequestState | undefined) {

@@ -153,7 +153,7 @@ export function renderCommentWithoutState(
     .join('\n\n')}${
     packagesWithoutChanges.length
       ? `\n\n### Packages With No Changes\n\nThe following packages have no user facing changes, so won't be released:\n\n${packagesWithoutChanges
-          .map((pkg) => `- ${pkg}`)
+          .map(([packageName]) => `- ${packageName}`)
           .join('\n')}`
       : ``
   }\n\n[Edit changelogs](${url.href})${outdated}`;
