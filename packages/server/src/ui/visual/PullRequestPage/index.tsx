@@ -41,6 +41,7 @@ export default function PullRequestPage({
   saving,
   currentVersions,
   packages,
+  onSave,
 }: PullRequestPageProps) {
   const [state, setState] = React.useState(() => getState(packages));
   return (
@@ -68,14 +69,16 @@ export default function PullRequestPage({
           headSha={headSha}
           onClick={() => {
             if (saving) return;
-            Object.entries(state)
-              .filter(entryValueIsNotUndefined)
-              .map(
-                ([packageName, changes]): PackagePullChangeLog => ({
-                  packageName,
-                  changes: changes.map(({localId, ...rest}) => rest),
-                }),
-              );
+            onSave(
+              Object.entries(state)
+                .filter(entryValueIsNotUndefined)
+                .map(
+                  ([packageName, changes]): PackagePullChangeLog => ({
+                    packageName,
+                    changes: changes.map(({localId, ...rest}) => rest),
+                  }),
+                ),
+            );
           }}
         />
       )}
