@@ -1,33 +1,21 @@
 import * as real from '../github';
-import {byRepo} from './fixtures';
+import {byRepo, byPullRequest} from './fixtures';
 import {RepositoryPermission} from '../github/github-graph';
 
 export const getPullRequestHeadSha: typeof real.getPullRequestHeadSha = async (
   _client,
   pr,
 ) => {
-  const pullRequests = byRepo(pr.repo).pullRequests;
-  if (!(pr.number in pullRequests)) {
-    throw new Error(
-      `The mock does not inclue a PR ${pr.number} in ${pr.repo.name}`,
-    );
-  }
-  return pullRequests[pr.number].headSha || undefined;
+  return byPullRequest(pr).headSha || undefined;
 };
 
 export const getPullRequestStatus: typeof real.getPullRequestStatus = async (
   _client,
   pr,
 ) => {
-  const pullRequests = byRepo(pr.repo).pullRequests;
-  if (!(pr.number in pullRequests)) {
-    throw new Error(
-      `The mock does not inclue a PR ${pr.number} in ${pr.repo.name}`,
-    );
-  }
   return {
-    closed: pullRequests[pr.number].closed,
-    merged: pullRequests[pr.number].merged,
+    closed: byPullRequest(pr).closed,
+    merged: byPullRequest(pr).merged,
   };
 };
 
@@ -44,7 +32,9 @@ export const getBranch: typeof real.getBranch = async (_client, repo) => {
 };
 
 export const getAllTags: typeof real.getAllTags = async (_client, repo) => {
-  return byRepo(repo).tags;
+  return byRepo(repo)
+    .commits.map((c) => c.tags.map((name) => ({name, commitSha: c.sha})))
+    .reduce((a, b) => [...a, ...b], []);
 };
 
 export const getAllFiles: typeof real.getAllFiles = async function*(
@@ -64,13 +54,7 @@ export const readComments: typeof real.readComments = async function*(
   _client,
   pr,
 ) {
-  const pullRequests = byRepo(pr.repo).pullRequests;
-  if (!(pr.number in pullRequests)) {
-    throw new Error(
-      `The mock does not inclue a PR ${pr.number} in ${pr.repo.name}`,
-    );
-  }
-  for (const comment of pullRequests[pr.number].comments) {
+  for (const comment of byPullRequest(pr).comments) {
     yield comment;
   }
 };
@@ -81,13 +65,7 @@ export const writeComment: typeof real.writeComment = async (
   body,
   existingID,
 ) => {
-  const pullRequests = byRepo(pr.repo).pullRequests;
-  if (!(pr.number in pullRequests)) {
-    throw new Error(
-      `The mock does not inclue a PR ${pr.number} in ${pr.repo.name}`,
-    );
-  }
-  const comments = pullRequests[pr.number].comments;
+  const comments = byPullRequest(pr).comments;
   if (existingID) {
     for (const comment of comments) {
       if (comment.commentID === existingID) {
@@ -113,13 +91,7 @@ export const deleteComment: typeof real.deleteComment = async (
   pr,
   commentID,
 ) => {
-  const pullRequests = byRepo(pr.repo).pullRequests;
-  if (!(pr.number in pullRequests)) {
-    throw new Error(
-      `The mock does not inclue a PR ${pr.number} in ${pr.repo.name}`,
-    );
-  }
-  pullRequests[pr.number].comments = pullRequests[pr.number].comments.filter(
+  byPullRequest(pr).comments = byPullRequest(pr).comments.filter(
     (c) => c.commentID !== commentID,
   );
 };
@@ -135,7 +107,7 @@ export const updateStatus: typeof real.updateStatus = async (
       `The mock does not inclue a PR ${pr.number} in ${pr.repo.name}`,
     );
   }
-  pullRequests[pr.number].status = {
+  byPullRequest(pr).status = {
     state: status.state,
     url: status.url.href,
     description: status.description,

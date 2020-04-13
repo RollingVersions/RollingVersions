@@ -2,7 +2,9 @@ import * as real from '../git';
 import {byDirectory} from './fixtures';
 
 export const getAllTags: typeof real.getAllTags = async (dirname) => {
-  return byDirectory(dirname).tags;
+  return byDirectory(dirname)
+    .commits.map((c) => c.tags.map((name) => ({name, commitSha: c.sha})))
+    .reduce((a, b) => [...a, ...b], []);
 };
 
 export const getAllFiles: typeof real.getAllFiles = async function* getAllFiles(

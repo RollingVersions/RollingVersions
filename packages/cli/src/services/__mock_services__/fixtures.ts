@@ -1,82 +1,26 @@
-interface RepoFixture {
-  tags: {name: string; commitSha: string}[];
+export interface PullRequestFixture {
+  headSha: string | null;
+  closed: boolean;
+  merged: boolean;
+  status?: {
+    state: 'success' | 'pending' | 'error' | 'failure';
+    url: string;
+    description: string;
+  };
+  comments: {commentID: number; body: string}[];
+}
+export interface CommitFixture {
+  tags: string[];
+  sha: string;
+  pullRequests: number[];
+}
+export interface RepoFixture {
   files: {path: string; contents: string}[];
-  commits: {sha: string; pullRequests: number[]}[];
-  pullRequests: Record<
-    number,
-    {
-      headSha: string | null;
-      closed: boolean;
-      merged: boolean;
-      status?: {
-        state: 'success' | 'pending' | 'error' | 'failure';
-        url: string;
-        description: string;
-      };
-      comments: {commentID: number; body: string}[];
-    }
-  >;
+  commits: CommitFixture[];
+  pullRequests: Map<number, PullRequestFixture>;
 }
-function repoFixture(repo: RepoFixture) {
-  return repo;
-}
-const GitHubRepositories = {
-  single: repoFixture({
-    tags: [
-      {
-        name: 'single-package@1.0.0',
-        commitSha: 'COMMIT_SHA_SINGLE_PACKAGE_1.0.0',
-      },
-    ],
-    files: [
-      {
-        path: 'package.json',
-        contents: '{"name": "single-package"}',
-      },
-    ],
-    commits: [
-      {sha: 'COMMIT_SHA_SINGLE_PACKAGE_NEW_COMMIT', pullRequests: [1]},
-      {sha: 'COMMIT_SHA_SINGLE_PACKAGE_1.0.0', pullRequests: []},
-    ],
-    pullRequests: {
-      1: {headSha: null, closed: true, merged: true, comments: []},
-    },
-  }),
-  monorepo: repoFixture({
-    tags: [
-      {name: 'package-a@1.0.0', commitSha: 'COMMIT_SHA_PACKAGE_A_1.0.0'},
-      {name: 'package-b@1.0.0', commitSha: 'COMMIT_SHA_PACKAGE_B_1.0.0'},
-    ],
-    files: [
-      {
-        path: 'package.json',
-        contents: '{"name": "monorepo", "private": true}',
-      },
-      {
-        path: 'packages/a/package.json',
-        contents: '{"name": "package-a"}',
-      },
-      {
-        path: 'packages/b/package.json',
-        contents: '{"name": "package-b"}',
-      },
-    ],
-    commits: [
-      {sha: 'COMMIT_SHA_NEW_COMMIT_A', pullRequests: [2]},
-      {sha: 'COMMIT_SHA_PACKAGE_A_1.0.0', pullRequests: []},
-      {sha: 'COMMIT_SHA_NEW_COMMIT_B', pullRequests: [1]},
-      {sha: 'COMMIT_SHA_PACKAGE_B_1.0.0', pullRequests: []},
-    ],
-    pullRequests: {
-      1: {headSha: null, closed: true, merged: true, comments: []},
-      2: {headSha: null, closed: true, merged: true, comments: []},
-    },
-  }),
-};
 
-function isKeyOf<T>(value: string, obj: T): value is string & keyof T {
-  return value in obj;
-}
+export const repositories = new Map<string, RepoFixture>();
 
 export function byDirectory(dirname: string) {
   expect(dirname).toMatch(/^\/repositories\/(.*)$/);
@@ -86,9 +30,26 @@ export function byDirectory(dirname: string) {
 }
 
 export function byRepo({name}: {name: string}) {
-  if (isKeyOf(name, GitHubRepositories)) {
-    return GitHubRepositories[name];
-  } else {
+  const r = repositories.get(name);
+  if (!r) {
     throw new Error(`The mock does not support the repository ${name}`);
   }
+  return r;
+}
+
+export function byPullRequest({
+  number: n,
+  repo,
+}: {
+  number: number;
+  repo: {name: string};
+}) {
+  const r = byRepo(repo);
+  const p = r.pullRequests.get(n);
+  if (!p) {
+    throw new Error(
+      `The mock does not have a pull request ${n} in ${repo.name}`,
+    );
+  }
+  return p;
 }
