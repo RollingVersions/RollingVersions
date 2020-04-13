@@ -39,6 +39,7 @@ export interface PullRequestPageProps {
   readOnly: boolean;
   saving: boolean;
   packages: PullRequestState['packages'];
+  unreleasedPackages: string[];
   onSave: (changes: {packageName: string; changes: ChangeSet}[]) => void;
 }
 export default function PullRequestPage({
@@ -46,6 +47,7 @@ export default function PullRequestPage({
   readOnly,
   saving,
   packages,
+  unreleasedPackages,
   onSave,
 }: PullRequestPageProps) {
   const [initialState] = React.useState(() => getState(packages));
@@ -72,7 +74,9 @@ export default function PullRequestPage({
         .map(({packageName, changes, info}) => (
           <PackageChangeSet
             key={packageName}
-            disabled={readOnly || saving}
+            disabled={
+              readOnly || !unreleasedPackages.includes(packageName) || saving
+            }
             packageName={packageName}
             packageInfo={info}
             changes={changes}

@@ -22,14 +22,6 @@ export default async function getPermissionLevel(
   } catch (ex) {
     return 'none';
   }
-  if (pull.data.merged) {
-    // TODO: allow the repo owner to edit changelogs for packages
-    //       that have not been released
-    return 'view';
-  }
-  if (pull.data.user.login === authenticated.data.login) {
-    return 'edit';
-  }
   const permission = await client.rest.repos.getCollaboratorPermissionLevel({
     owner: pr.repo.owner,
     repo: pr.repo.name,
@@ -41,5 +33,14 @@ export default async function getPermissionLevel(
   ) {
     return 'edit';
   }
+
+  if (pull.data.merged) {
+    return 'view';
+  }
+
+  if (pull.data.user.login === authenticated.data.login) {
+    return 'edit';
+  }
+
   return 'view';
 }

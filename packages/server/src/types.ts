@@ -15,19 +15,28 @@ export interface PullRequestResponse {
   closed: boolean;
   merged: boolean;
   changeLogState: null | PullRequestState;
+  unreleasedPackages: string[];
 }
 
 export const PullRequestResponseCodec = new ValidationCodec(
   compressedObjectCodec(
-    1,
+    2,
     'PullRequestResponse',
     {
       permission: PermissionCodec,
       closed: t.boolean,
       merged: t.boolean,
       changeLogState: t.union([t.null, PullRequestStateCodec]),
+      unreleasedPackages: t.array(t.string),
     },
-    [versionSymbol, 'permission', 'closed', 'merged', 'changeLogState'],
+    [
+      versionSymbol,
+      'permission',
+      'closed',
+      'merged',
+      'changeLogState',
+      'unreleasedPackages',
+    ],
   ),
 );
 

@@ -112,6 +112,41 @@ query GetRepositoryViewerPermissions($owner: String!, $name: String!) {
     viewerPermission
   }
 }
+
+query GetAllCommits(
+  $owner: String!
+  $name: String!
+  $first: Int!
+  $after: String
+) {
+  repository(owner: $owner, name: $name) {
+    defaultBranchRef {
+      name
+      target {
+        __typename # Commit
+        oid
+        ... on Commit {
+          id
+          history(first: $first, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              oid
+              associatedPullRequests(first: 10) {
+                nodes {
+                  number
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 query GetDefaultBranch($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     branch: defaultBranchRef {

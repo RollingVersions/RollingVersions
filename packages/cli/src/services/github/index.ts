@@ -266,3 +266,31 @@ export async function getPullRequestsForCommit(
     []
   );
 }
+
+export async function* getAllCommits(
+  client: GitHubClient,
+  repo: Repository,
+  {pageSize = 20}: {pageSize?: number} = {},
+) {
+  for await (const commit of paginate(
+    (after) =>
+      gh.getAllCommits(client, {
+        ...repo,
+        after,
+        first: pageSize,
+      }),
+    (page) =>
+      (page?.repository?.defaultBranchRef?.target?.__typename === 'Commit' &&
+        page.repository.defaultBranchRef.target.history.nodes) ||
+      [],
+    (page): string | undefined =>
+      (page?.repository?.defaultBranchRef?.target?.__typename === 'Commit' &&
+        page.repository.defaultBranchRef.target.history.pageInfo.hasNextPage &&
+        page.repository.defaultBranchRef.target.history.pageInfo.endCursor) ||
+      undefined,
+  )) {
+    if (commit) {
+      yield commit;
+    }
+  }
+}
