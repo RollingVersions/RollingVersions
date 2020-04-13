@@ -152,13 +152,13 @@ export async function* getAllFiles(
         break;
       case 'Tree':
         for (const e of entry.object.entries || []) {
-          yield* processEntry(e, [...path, entry.name]);
+          yield* processEntry(e, [...path, e.name]);
         }
         break;
     }
   }
   for (const e of commit.tree.entries || []) {
-    yield* processEntry(e, []);
+    yield* processEntry(e, [e.name]);
   }
 }
 
