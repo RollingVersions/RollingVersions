@@ -6,6 +6,7 @@ import {Repository, PullRequest} from '../../types';
 
 import paginate from './paginate';
 import * as gh from './github-graph';
+import isTruthy from '../../ts-utils/isTruthy';
 
 export {GitHubClient, auth};
 
@@ -249,58 +250,20 @@ export async function updateStatus(
   });
 }
 
-export function getChangeLogFetcher<TChangeLog>(
+export async function getPullRequestsForCommit(
   client: GitHubClient,
   repo: Repository,
-  getChangLog: (pr: Omit<PullRequest, 'headSha'>) => Promise<TChangeLog>,
+  sha: string,
 ) {
-  const pullRequestsFromCommit = new DataLoader<string, number[]>(
-    async (commitShas) => {
-      return await Promise.all(
-        commitShas.map(async (sha) => {
-          const pulls = await gh.getPullRequestsForCommit(client, {
-            ...repo,
-            sha,
-          });
-          return (
-            (pulls.repository?.object?.__typename === 'Commit' &&
-              pulls.repository.object.associatedPullRequests?.nodes
-                ?.map((pr) => pr?.number)
-                .filter((num): num is number => typeof num === 'number')) ||
-            []
-          );
-        }),
-      );
-    },
+  const pulls = await gh.getPullRequestsForCommit(client, {
+    ...repo,
+    sha,
+  });
+  return (
+    (pulls.repository?.object?.__typename === 'Commit' &&
+      pulls.repository.object.associatedPullRequests?.nodes
+        ?.map((pr) => pr?.number)
+        .filter(isTruthy)) ||
+    []
   );
-  const commentFromPullRequest = new DataLoader<number, TChangeLog>(
-    async (pullNumbers) => {
-      return await Promise.all(
-        pullNumbers.map(async (n) => await getChangLog({repo, number: n})),
-      );
-    },
-  );
-  return async function getChangeLog(commitShas: readonly string[]) {
-    const pullRequests = [
-      ...new Set(
-        (await pullRequestsFromCommit.loadMany(commitShas))
-          .map((v) => {
-            if (v instanceof Error) {
-              throw v;
-            }
-            return v;
-          })
-          .reduce((a, b) => {
-            a.push(...b);
-            return a;
-          }, []),
-      ),
-    ];
-    return (await commentFromPullRequest.loadMany(pullRequests)).map((s) => {
-      if (s instanceof Error) {
-        throw s;
-      }
-      return s;
-    });
-  };
 }

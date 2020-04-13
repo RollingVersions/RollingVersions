@@ -30,6 +30,9 @@
     "wsrun": "^5.0.0"
   },
   "jest": {
+    "setupFilesAfterEnv": [
+      "<rootDir>/packages/cli/src/services/__mock_services__/index.ts"
+    ],
     "moduleFileExtensions": [
       "ts",
       "tsx",

@@ -11,7 +11,12 @@ import {PublishConfig} from '../types';
 import {NewVersionToBePublished} from '../utils/getPackageStatuses';
 
 export async function checkGitHubReleaseStatus(
-  {owner, name, dirname, deployBranch}: PublishConfig,
+  {
+    owner,
+    name,
+    dirname,
+    deployBranch,
+  }: Pick<PublishConfig, 'owner' | 'name' | 'dirname' | 'deployBranch'>,
   client: GitHubClient,
 ): Promise<{ok: true; tags: string[]} | {ok: false; reason: string}> {
   const [permission, branch, allTags] = await Promise.all([

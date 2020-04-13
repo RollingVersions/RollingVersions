@@ -1,12 +1,18 @@
 import DataLoader from 'dataloader';
 import {
   GitHubClient,
-  getChangeLogFetcher,
   readComments,
+  getPullRequestsForCommit,
 } from '../services/github';
 import {getCommits} from '../services/git';
 import {getCurrentVerion, getNewVersion} from '../utils/Versioning';
-import {PackageInfo, PublishConfig, ChangeSet} from '../types';
+import {
+  PackageInfo,
+  PublishConfig,
+  ChangeSet,
+  Repository,
+  PullRequest,
+} from '../types';
 import {ChangeTypes} from '../types/PullRequestState';
 import {readState} from './CommentState';
 import isTruthy from '../ts-utils/isTruthy';
@@ -140,4 +146,50 @@ export default async function getPackageStatuses(
   );
 
   return packages;
+}
+
+export function getChangeLogFetcher<TChangeLog>(
+  client: GitHubClient,
+  repo: Repository,
+  getChangLog: (pr: Omit<PullRequest, 'headSha'>) => Promise<TChangeLog>,
+) {
+  const pullRequestsFromCommit = new DataLoader<string, number[]>(
+    async (commitShas) => {
+      return await Promise.all(
+        commitShas.map(async (sha) => {
+          return getPullRequestsForCommit(client, repo, sha);
+        }),
+      );
+    },
+  );
+  const commentFromPullRequest = new DataLoader<number, TChangeLog>(
+    async (pullNumbers) => {
+      return await Promise.all(
+        pullNumbers.map(async (n) => await getChangLog({repo, number: n})),
+      );
+    },
+  );
+  return async function getChangeLog(commitShas: readonly string[]) {
+    const pullRequests = [
+      ...new Set(
+        (await pullRequestsFromCommit.loadMany(commitShas))
+          .map((v) => {
+            if (v instanceof Error) {
+              throw v;
+            }
+            return v;
+          })
+          .reduce((a, b) => {
+            a.push(...b);
+            return a;
+          }, []),
+      ),
+    ];
+    return (await commentFromPullRequest.loadMany(pullRequests)).map((s) => {
+      if (s instanceof Error) {
+        throw s;
+      }
+      return s;
+    });
+  };
 }

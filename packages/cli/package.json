@@ -15,7 +15,7 @@
   "scripts": {
     "prebuild": "github-graph src/services/github/github-graph.graphql",
     "build": "tsc",
-    "postbuild": "rimraf lib/**/__tests__"
+    "postbuild": "rimraf lib/**/{__tests__,__mock_services__}"
   },
   "dependencies": {
     "@github-graph/api": "^1.2.0",
