@@ -1,5 +1,4 @@
 import {URL} from 'url';
-import DataLoader from 'dataloader';
 import GitHubClient, {auth} from '@github-graph/api';
 
 import {Repository, PullRequest} from '../../types';
