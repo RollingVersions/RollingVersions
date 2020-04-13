@@ -64,6 +64,9 @@ jobs:
       - run:
           name: Dry run
           command: sudo npm i -g rollingversions && rollingversions --dry-run --deploy-branch $CIRCLE_BRANCH
+      - run:
+          name: Publish Canary
+          command: node publish-canary
       - push
       - deploy:
           environment: staging
