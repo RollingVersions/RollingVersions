@@ -1,176 +1,238 @@
 #!/usr/bin/env node
 
+import chalk from 'chalk';
+import printHelp from './commands/help';
+import publish, {PublishResultKind} from './commands/publish';
+import {changesToMarkdown} from './utils/Rendering';
 import {
-  getPackagesStatus,
-  printPackagesStatus,
   Status,
-  publishGitHub,
-  prepublishGitHub,
-  Config,
-  getGitTag,
-  prepublish,
-  publish,
-  isSuccessPackageStatus,
-} from '.';
-import chalk = require('chalk');
-import {GitHubClient, auth} from '@rollingversions/utils/lib/GitHub';
+  NoUpdateRequired,
+  NewVersionToBePublished,
+} from './utils/getPackageStatuses';
 
 const CI_ENV = require('env-ci')();
 
-function boolArg(key: string) {
-  return process.argv.includes(key);
-}
-function stringArg(key: string) {
-  const i = process.argv.indexOf(key);
-  return i === -1 ? undefined : process.argv[i + 1];
-}
-function error(msg: string): never {
-  console.error(msg);
-  return process.exit(1);
-}
-
 const DIRNAME = process.cwd();
-const DRY_RUN = boolArg('-d') || boolArg('--dry-run');
-const HELP = boolArg('-h') || boolArg('--help');
 
-const REPO_SLUG: string =
-  CI_ENV.slug ||
-  stringArg('-r') ||
-  stringArg('--repo') ||
-  error(
-    'You must specify a GitHub repo by passing "--repo <owner>/<name>" on the CLI. This can normally be automatically determined on CI systems.',
-  );
+const COMMAND = process.argv[2];
 
-const GITHUB_TOKEN: string =
-  stringArg('-g') ||
-  stringArg('--github-token') ||
-  process.env.GITHUB_TOKEN ||
-  process.env.GH_TOKEN ||
-  error(
-    'You must specify a GitHub token, either in the "GITHUB_TOKEN" env var or by passing "--github-token <some_token>" on the CLI.',
-  );
-
-const DEPLOY_BRANCH: string | null =
-  stringArg('-b') || stringArg('--deploy-branch') || null;
-
-const SUPRESS_ERRORS = boolArg('--supress-errors');
-const ERROR_EXIT = SUPRESS_ERRORS ? 0 : 1;
-
-if (HELP) {
-  console.warn(`Usage: rollingversions <options>`);
-  console.warn(``);
-  console.warn(`options:
-
- -h --help                     View these options
- -d --dry-run                  Run without actually publishing packages
-    --supress-errors           Always exit with "0" status code even
- -r --repo          owner/slug The repo being published, can be detected
-                               automatically on most CI systems.
- -g --github-token  token      A GitHub access token with at least "repo"
-                               scope. Used to read changelogs and write
-                               git tags/releases.
- -d --deploy-branch branch     The branch to deploy from. This will default
-                               to your default branch on GitHub.`);
-  console.warn(``);
-  process.exit(ERROR_EXIT);
+if (process.argv.includes('-h') || process.argv.includes('--help')) {
+  printHelp();
+  process.exit(0);
 }
-const slug = REPO_SLUG.split('/');
-if (slug.length !== 2) {
-  console.error('Expected repo slug to be of the form <owner>/<name>');
-  process.exit(ERROR_EXIT);
-}
-const [owner, name] = slug;
 
-const config: Config = {
-  dirname: DIRNAME,
-  owner,
-  name,
-  accessToken: GITHUB_TOKEN,
-  deployBranch: DEPLOY_BRANCH,
-};
+switch (COMMAND) {
+  case 'publish': {
+    let dryRun = false;
+    let supressErrors = false;
+    let repoSlug: string | undefined;
+    let githubToken: string | undefined;
+    let deployBranch: string | undefined;
 
-const client = new GitHubClient({auth: auth.createTokenAuth(GITHUB_TOKEN)});
-
-getPackagesStatus(config, client)
-  .then(async (packagesThatMayHaveErrors) => {
-    printPackagesStatus(packagesThatMayHaveErrors);
-    const packages = packagesThatMayHaveErrors.filter(isSuccessPackageStatus);
-    if (packagesThatMayHaveErrors.length !== packages.length) {
-      process.exit(ERROR_EXIT);
-    }
-    const packageVersions = new Map(
-      packages.map((p) => [p.packageName, p.newVersion]),
-    );
-    if (packages.some((pkg) => pkg.status === Status.NewVersionToBePublished)) {
-      // prepublish checks
-      const gitHubPrepublishInfo = await prepublishGitHub(config, client);
-      if (!gitHubPrepublishInfo.ok) {
-        console.error(gitHubPrepublishInfo.reason);
-        process.exit(ERROR_EXIT);
-      }
-      for (const pkg of packages) {
-        if (pkg.status === Status.NewVersionToBePublished) {
-          const tagName = getGitTag(packages, pkg);
-          if (gitHubPrepublishInfo.tags.includes(tagName)) {
-            console.error(`A github release already exists for ${tagName}`);
-            process.exit(ERROR_EXIT);
+    for (let i = 3; i < process.argv.length; i++) {
+      switch (process.argv[i]) {
+        case '-d':
+        case '--dry-run':
+          if (dryRun) {
+            console.error('You cannot specify --dry-run multiple times');
+            process.exit(1);
           }
-          for (const pkgInfo of pkg.pkgInfos) {
-            if (pkgInfo.notToBePublished) continue;
-            const prepublishResult = await prepublish(
-              config,
-              pkgInfo,
-              pkg.newVersion,
-              packageVersions,
+          dryRun = true;
+          break;
+        case '--supress-errors':
+          if (supressErrors) {
+            console.error('You cannot specify --supress-errors multiple times');
+            process.exit(1);
+          }
+          supressErrors = true;
+          break;
+        case '-r':
+        case '--repo':
+          if (repoSlug) {
+            console.error('You cannot specify --repo multiple times');
+            process.exit(1);
+          }
+          repoSlug = process.argv[++i];
+          break;
+        case '-g':
+        case '--github-token':
+          if (githubToken) {
+            console.error('You cannot specify --github-token multiple times');
+            process.exit(1);
+          }
+          githubToken = process.argv[++i];
+          break;
+        case '-b':
+        case '--deploy-branch':
+          if (deployBranch) {
+            console.error('You cannot specify --deploy-branch multiple times');
+            process.exit(1);
+          }
+          deployBranch = process.argv[++i];
+          break;
+      }
+    }
+
+    if (!repoSlug) repoSlug = CI_ENV.slug;
+    if (!githubToken) {
+      githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    }
+
+    if (!githubToken) {
+      console.error(
+        'You must specify a GitHub token, either in the "GITHUB_TOKEN" env var or by passing "--github-token <some_token>" on the CLI.',
+      );
+      process.exit(supressErrors ? 0 : 1);
+    }
+
+    if (!repoSlug) {
+      console.error(
+        'You must specify a GitHub repo by passing "--repo <owner>/<name>" on the CLI. This can normally be automatically determined on CI systems.',
+      );
+      process.exit(supressErrors ? 0 : 1);
+    }
+
+    const slug = repoSlug.split('/');
+    if (slug.length !== 2) {
+      console.error('Expected repo slug to be of the form <owner>/<name>');
+      process.exit(supressErrors ? 0 : 1);
+    }
+    const [owner, name] = slug;
+
+    publish({
+      dirname: DIRNAME,
+      owner,
+      name,
+      accessToken: githubToken,
+      deployBranch: deployBranch || null,
+      dryRun,
+      logger: {
+        onValidatedPackages({packages}) {
+          const hasUpdates = packages.some(
+            (p) => p.status === Status.NewVersionToBePublished,
+          );
+          const hasPkgsWithoutUpdates = packages.some(
+            (p) => p.status === Status.NoUpdateRequired,
+          );
+
+          if (hasPkgsWithoutUpdates) {
+            console.warn(
+              hasUpdates
+                ? chalk.blue(`# Packages without updates`)
+                : chalk.blue(`None of the packages require updates:`),
             );
-            if (!prepublishResult.ok) {
-              console.error(prepublishResult.reason);
-              process.exit(ERROR_EXIT);
+            console.warn(``);
+            for (const p of packages.filter(
+              (p): p is NoUpdateRequired =>
+                p.status === Status.NoUpdateRequired,
+            )) {
+              console.warn(
+                p.currentVersion
+                  ? `  - ${p.packageName}@${p.currentVersion}`
+                  : `  - ${p.packageName}`,
+              );
             }
+            console.warn(``);
           }
-        }
-      }
-    }
-    for (const pkg of packages) {
-      if (pkg.status === Status.NewVersionToBePublished) {
-        const newVersion = pkg.newVersion;
 
-        for (const pkgInfo of pkg.pkgInfos) {
-          if (pkgInfo.notToBePublished) continue;
-          if (DRY_RUN) {
-            console.warn(
-              `publishing ${chalk.yellow(pkgInfo.packageName)} to ${chalk.blue(
-                pkgInfo.platform,
-              )} @ ${chalk.yellow(newVersion)} ${chalk.red(`(dry run)`)}`,
-            );
-          } else {
-            console.warn(
-              `publishing ${chalk.yellow(pkgInfo.packageName)} to ${chalk.blue(
-                pkgInfo.platform,
-              )} @ ${chalk.yellow(newVersion)}`,
-            );
-            await publish(config, pkgInfo, newVersion, packageVersions);
+          if (hasUpdates) {
+            console.warn(chalk.blue(`# Packages to publish`));
+            console.warn(``);
+            for (const p of packages.filter(
+              (p): p is NewVersionToBePublished =>
+                p.status === Status.NewVersionToBePublished,
+            )) {
+              console.warn(
+                chalk.yellow(
+                  `## ${p.packageName} (${p.currentVersion || 'unreleased'} → ${
+                    p.newVersion
+                  })`,
+                ),
+              );
+              console.warn(``);
+              console.warn(changesToMarkdown(p.changeSet, 3));
+              console.warn(``);
+            }
+            console.warn(``);
           }
-        }
-
-        if (DRY_RUN) {
+        },
+        onPublishGitHubRelease({pkg, dryRun}) {
           console.warn(
             `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
               'GitHub Release',
-            )} @ ${chalk.yellow(newVersion)} ${chalk.red(`(dry run)`)}`,
+            )} @ ${chalk.yellow(pkg.newVersion)}${
+              dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
+            }`,
           );
-        } else {
+        },
+        onPublishTargetRelease({pkg, pkgInfo, dryRun}) {
           console.warn(
-            `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
-              'GitHub Release',
-            )} @ ${chalk.yellow(newVersion)}`,
+            `publishing ${chalk.yellow(pkgInfo.packageName)} to ${chalk.blue(
+              pkgInfo.publishTarget,
+            )} @ ${chalk.yellow(pkg.newVersion)}${
+              dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
+            }`,
           );
-          await publishGitHub(config, client, pkg, getGitTag(packages, pkg));
+        },
+      },
+    })
+      .then((result) => {
+        switch (result.kind) {
+          case PublishResultKind.CircularPackageDependencies:
+            console.error(`Detected circular dependency:`);
+            console.error(``);
+            console.error(`  ${result.packageNames.join(' -> ')}`);
+            console.error(``);
+            console.error(
+              `There is no safe order to publish packages in when there is a circular dependency, therefore none of your packages were published.`,
+            );
+            return process.exit(supressErrors ? 0 : 1);
+          case PublishResultKind.MissingTags:
+            console.error(`Missing tag for:`);
+            console.error(``);
+            for (const p of result.packages) {
+              console.error(`  - ${p.packageName}@${p.currentVersion}`);
+            }
+            console.error(``);
+            return process.exit(supressErrors ? 0 : 1);
+          case PublishResultKind.GitHubAuthCheckFail:
+            console.error(`GitHub pre-release steps failed:`);
+            console.error(``);
+            console.error(`  ${result.reason}`);
+            console.error(``);
+            return process.exit(supressErrors ? 0 : 1);
+          case PublishResultKind.PrepublishFailures:
+            for (const {pkg, reasons} of result.failures) {
+              console.error(
+                `Pre-release steps failed for ${pkg.packageName}@${pkg.newVersion}:`,
+              );
+              console.error(``);
+              if (reasons.length === 1) {
+                console.error(`  ${reasons[0]}`);
+              } else {
+                for (const reason of reasons) {
+                  console.error(`  - ${reason}`);
+                }
+              }
+              console.error(``);
+            }
+            return process.exit(supressErrors ? 0 : 1);
+          case PublishResultKind.NoUpdatesRequired:
+            return process.exit(0);
+          case PublishResultKind.UpdatesPublished:
+            console.warn(chalk.green(`Updates published`));
+            return process.exit(0);
         }
-      }
-    }
-  })
-  .catch((ex) => {
-    console.error(ex.stack);
-    process.exit(ERROR_EXIT);
-  });
+      })
+      .catch((ex: any) => {
+        console.error(ex.stack);
+        process.exit(1);
+      });
+    break;
+  }
+  default: {
+    printHelp();
+    process.exit(COMMAND === 'help' ? 0 : 1);
+    break;
+  }
+}

@@ -1,4 +1,4 @@
-import {PullRequest} from '@rollingversions/utils/lib/types';
+import {PullRequest} from 'rollingversions/lib/types';
 import Permission from './Permission';
 import {getClientForToken} from '../getClient';
 
@@ -20,13 +20,15 @@ export default async function getPermissionLevel(
       pull_number: pr.number,
     });
   } catch (ex) {
-    return Permission.None;
+    return 'none';
   }
   if (pull.data.merged) {
-    return Permission.View;
+    // TODO: allow the repo owner to edit changelogs for packages
+    //       that have not been released
+    return 'view';
   }
   if (pull.data.user.login === authenticated.data.login) {
-    return Permission.Edit;
+    return 'edit';
   }
   const permission = await client.rest.repos.getCollaboratorPermissionLevel({
     owner: pr.repo.owner,
@@ -37,7 +39,7 @@ export default async function getPermissionLevel(
     permission.data.permission === 'admin' ||
     permission.data.permission === 'write'
   ) {
-    return Permission.Edit;
+    return 'edit';
   }
-  return Permission.View;
+  return 'view';
 }

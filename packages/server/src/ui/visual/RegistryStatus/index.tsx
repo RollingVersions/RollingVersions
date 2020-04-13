@@ -1,10 +1,10 @@
 import React from 'react';
-import {PackageInfo} from '@rollingversions/utils/lib/Platforms';
+import {PackageInfo} from 'rollingversions/lib/types';
 
 export interface RegistryStatusProps {
   packageInfo: Pick<
     PackageInfo,
-    | 'platform'
+    | 'publishTarget'
     | 'notToBePublished'
     | 'versionTag'
     | 'registryVersion'
@@ -13,7 +13,7 @@ export interface RegistryStatusProps {
 }
 
 export default function RegistryStatus({packageInfo}: RegistryStatusProps) {
-  const platform = packageInfo.map((p) => p.platform).join(', ');
+  const publishTarget = packageInfo.map((p) => p.publishTarget).join(', ');
   if (packageInfo.every((p) => p.notToBePublished)) {
     return (
       <p>
@@ -32,14 +32,14 @@ export default function RegistryStatus({packageInfo}: RegistryStatusProps) {
               return (
                 <p key={i}>
                   This package is published <strong>publicly</strong> on the{' '}
-                  {platform} registry.
+                  {publishTarget} registry.
                 </p>
               );
             } else {
               return (
                 <p key={i}>
                   This package is published <strong>privately</strong> on the{' '}
-                  {platform} registry.
+                  {publishTarget} registry.
                 </p>
               );
             }
@@ -49,7 +49,7 @@ export default function RegistryStatus({packageInfo}: RegistryStatusProps) {
               <React.Fragment key={i}>
                 <p>
                   This package wil be published <strong>privately</strong> on
-                  the {platform} registry.
+                  the {publishTarget} registry.
                 </p>
                 <p>
                   If you prefer to publish it publicly, you can add the
@@ -64,7 +64,7 @@ export default function RegistryStatus({packageInfo}: RegistryStatusProps) {
           return (
             <p key={i}>
               This package wil be published <strong>publicly</strong> on the{' '}
-              {platform} registry.
+              {publishTarget} registry.
             </p>
           );
         })}

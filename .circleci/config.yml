@@ -20,6 +20,16 @@ workflows:
       - unit-tests:
           <<: *not_master
 
+      - staging-approval:
+          type: approval
+          requires:
+            - unit-tests
+
+      - deploy-staging:
+          <<: *not_master
+          requires:
+            - staging-approval
+
   release:
     jobs:
       - deploy-staging:
@@ -53,7 +63,10 @@ jobs:
       - build
       - run:
           name: Dry run
-          command: sudo npm i -g rollingversions && rollingversions --dry-run
+          command: sudo npm i -g rollingversions && rollingversions --dry-run --deploy-branch $CIRCLE_BRANCH
+      - run:
+          name: Publish Canary
+          command: node publish-canary
       - push
       - deploy:
           environment: staging

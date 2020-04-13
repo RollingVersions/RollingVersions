@@ -1,5 +1,5 @@
-import {GitHubClient} from '@rollingversions/utils/lib/GitHub';
-import {Repository} from '@rollingversions/utils/lib/types';
+import {GitHubClient} from 'rollingversions/lib/services/github';
+import {Repository} from 'rollingversions/lib/types';
 import updateRepo from './updateRepo';
 
 const timeouts = new Map<string, NodeJS.Timeout>();

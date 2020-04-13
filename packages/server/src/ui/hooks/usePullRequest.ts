@@ -1,5 +1,10 @@
 import React from 'react';
-import {PullRequestResponse} from '../../types';
+import {
+  PullRequestResponse,
+  PullRequestResponseCodec,
+  UpdatePullRequestBody,
+  UpdatePullRequestBodyCodec,
+} from '../../types';
 
 export default function usePullRequest({
   owner,
@@ -16,7 +21,7 @@ export default function usePullRequest({
   const [pullRequest, setPullRequest] = React.useState<
     PullRequestResponse | undefined
   >();
-  const [error, setError] = React.useState<Error | undefined>();
+  const [error, setError] = React.useState<string | undefined>();
   const [updatesInFlight, setUpdatesInFlight] = React.useState(0);
 
   React.useEffect(() => {
@@ -28,13 +33,15 @@ export default function usePullRequest({
         }
         return res.json();
       })
+      .then((data) => PullRequestResponseCodec.decode(data))
       .then((data) => {
         if (cancelled) return;
-        setPullRequest(data);
+        if (data.valid) setPullRequest(data.value);
+        else setError(data.reason);
       })
       .catch((ex) => {
         if (cancelled) return;
-        setError(ex);
+        setError(ex.message);
       });
     return () => {
       cancelled = true;
@@ -45,16 +52,13 @@ export default function usePullRequest({
     pullRequest,
     error,
     updating: updatesInFlight > 0,
-    update: async (
-      state: PullRequestResponse['changeLogState'],
-    ): Promise<boolean> => {
+    update: async (body: UpdatePullRequestBody): Promise<boolean> => {
       setUpdatesInFlight((v) => v + 1);
       try {
         try {
-          setPullRequest((pr) => pr && {...pr, changeLogState: state});
           const res = await fetch(path, {
             method: 'POST',
-            body: JSON.stringify(state),
+            body: JSON.stringify(UpdatePullRequestBodyCodec.encode(body)),
             headers: {'Content-Type': 'application/json'},
           });
           if (!res.ok) {

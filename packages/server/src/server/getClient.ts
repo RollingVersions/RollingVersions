@@ -1,7 +1,7 @@
-import {GitHubClient, auth} from '@rollingversions/utils/lib/GitHub';
+import {GitHubClient, auth} from 'rollingversions/lib/services/github';
+import {Repository} from 'rollingversions/lib/types';
 import {APP_ID, PRIVATE_KEY} from './environment';
 import isObject from '../utils/isObject';
-import {Repository} from '@rollingversions/utils/lib/types';
 
 export function getClientForEvent(event: {
   readonly id: string;
