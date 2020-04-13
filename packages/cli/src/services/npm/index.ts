@@ -18,11 +18,17 @@ export async function getOrgRoster(
   const roster = await org.ls(name, config);
   return roster;
 }
-export async function getProfile(): Promise<{
-  name: string;
-  email: string;
-  tfaOnPublish: boolean;
-} | null> {
+export async function getProfile(): Promise<
+  | {
+      authenticated: true;
+      profile: {
+        name: string;
+        email: string;
+        tfaOnPublish: boolean;
+      };
+    }
+  | {authenticated: false; message: string}
+> {
   try {
     const config = {
       ...readConfig().toJSON(),
@@ -30,12 +36,15 @@ export async function getProfile(): Promise<{
     };
     const p = await profile.get(config);
     return {
-      name: p.name,
-      email: p.email,
-      tfaOnPublish: p.tfa && p.tfa.mode !== 'auth-only',
+      authenticated: true,
+      profile: {
+        name: p.name,
+        email: p.email,
+        tfaOnPublish: p.tfa && p.tfa.mode !== 'auth-only',
+      },
     };
   } catch (ex) {
-    return null;
+    return {authenticated: false, message: ex.message};
   }
 }
 

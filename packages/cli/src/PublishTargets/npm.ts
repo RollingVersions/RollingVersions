@@ -135,14 +135,19 @@ export async function prepublish(
   newVersion: string,
   packageVersions: Map<string, string | null>,
 ): Promise<PrePublishResult> {
-  const [profile, packument] = await Promise.all([
+  const [auth, packument] = await Promise.all([
     getProfile(),
     getPackument(pkg.packageName, true),
-  ]);
+  ] as const);
 
-  if (!profile) {
-    return {ok: false, reason: 'Could not authenticate to npm'};
+  if (!auth.authenticated) {
+    return {
+      ok: false,
+      reason: 'Could not authenticate to npm: ' + auth.message,
+    };
   }
+
+  const profile = auth.profile;
 
   if (profile.tfaOnPublish) {
     return {

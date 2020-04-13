@@ -8,7 +8,9 @@ export const getOrgRoster: typeof real.getOrgRoster = async (_orgName) => {
 };
 
 export const getProfile: typeof real.getProfile = async () => {
-  return npmProfile;
+  return npmProfile
+    ? {authenticated: true, profile: npmProfile}
+    : {authenticated: false, message: 'You are not authenticated'};
 };
 
 export const getPackument: typeof real.getPackument = async (
