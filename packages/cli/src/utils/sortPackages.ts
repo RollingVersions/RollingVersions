@@ -71,7 +71,7 @@ export default async function sortPackages(
       }
     }
 
-    return result;
+    return {circular: false, packages: [...result.packages, pkg]};
   }
 
   let result: SortedPackages = {
