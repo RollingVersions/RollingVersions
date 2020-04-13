@@ -62,8 +62,11 @@ jobs:
       - npm_auth
       - build
       - run:
-          name: Dry run
-          command: sudo npm i -g rollingversions && rollingversions --dry-run --deploy-branch $CIRCLE_BRANCH
+          name: Dry run (local)
+          command: node packages/cli/lib/cli publish --dry-run --deploy-branch $CIRCLE_BRANCH
+      # - run:
+      #     name: Dry run (production)
+      #     command: sudo npm i -g rollingversions && rollingversions publish --dry-run --deploy-branch $CIRCLE_BRANCH
       - run:
           name: Publish Canary
           command: node publish-canary
@@ -80,7 +83,9 @@ jobs:
       - build
       - run:
           name: Publish Packages
-          command: sudo npm i -g rollingversions && rollingversions
+          # TODO: remove this after publishing again
+          command: node packages/cli/lib/cli publish
+          # command: sudo npm i -g rollingversions && rollingversions publish
       - deploy:
           environment: production
 

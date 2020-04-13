@@ -74,8 +74,13 @@ export default async function getPackageStatuses(
     async (pr) => {
       for await (const comment of readComments(client, pr)) {
         if (comment.body.includes(COMMENT_GUID)) {
-          const st = readState(comment.body);
-          return st ? {...st, pr: pr.number} : undefined;
+          try {
+            const st = readState(comment.body);
+            return st ? {...st, pr: pr.number} : undefined;
+          } catch (ex) {
+            console.warn(`Unable to read state for pull request: ${pr.number}`);
+            return undefined;
+          }
         }
       }
       return undefined;
