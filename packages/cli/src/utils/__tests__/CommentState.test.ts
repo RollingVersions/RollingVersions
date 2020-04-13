@@ -11,7 +11,7 @@ test('writeState', () => {
   ).toMatchInlineSnapshot(`
     "Comment
 
-    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" [1,\\"\\\\u002d\\\\u002d\\\\u003e\\",\\"SHASHASHA\\",[]] \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
+    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" [1,\\"--\\\\u003e\\",\\"SHASHASHA\\",[]] \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
   `);
   expect(
     writeState('Comment', {

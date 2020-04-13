@@ -30,7 +30,6 @@ export function writeState(body: string, state: PullRequestState | undefined) {
     `\n\n<!-- """RollingVersions State Start""" ${JSON.stringify(
       codec.encode(state),
     )
-      .replace(/\-/g, '\\u002d')
       .replace(/\>/g, '\\u003e')
       .replace(/\</g, '\\u0060')} """RollingVersions State End""" -->`
   );
