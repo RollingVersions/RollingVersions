@@ -1,10 +1,9 @@
-import {resolve, dirname} from 'path';
-import {readFileSync, writeFileSync} from 'fs';
 import {
   getProfile,
   getPackument,
   getOrgRoster,
   getNpmVersion,
+  publish as npmPublish,
 } from '../services/npm';
 import {
   PackageInfo,
@@ -13,8 +12,8 @@ import {
   PrePublishResult,
   PackageDependencies,
 } from '../types';
-import {spawnBuffered} from '../utils/spawn';
 import isObject from '../ts-utils/isObject';
+import {readRepoFile, writeRepoFile} from '../services/git';
 
 const stringifyPackage = require('stringify-package');
 const detectIndent = require('detect-indent');
@@ -25,10 +24,9 @@ async function withNpmVersion<T>(
   pkg: PackageInfo,
   newVersion: string,
   packageVersions: Map<string, string | null>,
-  fn: (dir: string) => Promise<T>,
+  fn: () => Promise<T>,
 ) {
-  const filename = resolve(config.dirname, pkg.path);
-  const original = readFileSync(filename, 'utf8');
+  const original = await readRepoFile(config.dirname, pkg.path, 'utf8');
   const pkgData = JSON.parse(original);
   pkgData.version = newVersion;
   function setVersions(obj: any) {
@@ -53,10 +51,10 @@ async function withNpmVersion<T>(
     detectNewline(original),
   );
   try {
-    writeFileSync(filename, str);
-    return await fn(dirname(filename));
+    await writeRepoFile(config.dirname, pkg.path, str);
+    return await fn();
   } finally {
-    writeFileSync(filename, original);
+    await writeRepoFile(config.dirname, pkg.path, original);
   }
 }
 
@@ -64,7 +62,7 @@ async function withNpmVersion<T>(
  * returns true for package.json files
  */
 export function pathMayContainPackage(filename: string): boolean {
-  return /\/package\.json$/.test(filename);
+  return filename === 'package.json' || filename.endsWith('/package.json');
 }
 
 /**
@@ -102,12 +100,11 @@ export async function getPackageInfo(
   }
 }
 
-export function getDependencies(
+export async function getDependencies(
   config: Pick<PublishConfig, 'dirname'>,
   pkg: PackageInfo,
-): PackageDependencies {
-  const filename = resolve(config.dirname, pkg.path);
-  const original = readFileSync(filename, 'utf8');
+): Promise<PackageDependencies> {
+  const original = await readRepoFile(config.dirname, pkg.path, 'utf8');
   const pkgData: unknown = JSON.parse(original);
 
   const required = [
@@ -174,7 +171,7 @@ export async function prepublish(
       };
     }
 
-    if (newVersion in packument.versions) {
+    if (packument.versions.has(newVersion)) {
       return {
         ok: false,
         reason: `${pkg.packageName} already has a version ${newVersion} on npm`,
@@ -182,15 +179,9 @@ export async function prepublish(
     }
   }
 
-  await withNpmVersion(
-    config,
-    pkg,
-    newVersion,
-    packageVersions,
-    async (cwd) => {
-      await spawnBuffered('npm', ['publish', '--dry-run'], {cwd});
-    },
-  );
+  await withNpmVersion(config, pkg, newVersion, packageVersions, async () => {
+    await npmPublish(config.dirname, pkg.path, true);
+  });
 
   return {ok: true};
 }
@@ -201,17 +192,7 @@ export async function publish(
   newVersion: string,
   packageVersions: Map<string, string | null>,
 ) {
-  await withNpmVersion(
-    config,
-    pkg,
-    newVersion,
-    packageVersions,
-    async (cwd) => {
-      await spawnBuffered(
-        'npm',
-        ['publish', ...(config.dryRun ? ['--dry-run'] : [])],
-        {cwd},
-      );
-    },
-  );
+  await withNpmVersion(config, pkg, newVersion, packageVersions, async () => {
+    await npmPublish(config.dirname, pkg.path, config.dryRun);
+  });
 }

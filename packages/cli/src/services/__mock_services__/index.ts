@@ -3,10 +3,14 @@ import {
   repositories,
   PullRequestFixture,
   CommitFixture,
+  setNpmProfile,
+  npmPackages,
+  npmProfile,
 } from './fixtures';
 
 jest.mock('../github', () => require('./github'));
 jest.mock('../git', () => require('./git'));
+jest.mock('../npm', () => require('./npm'));
 
 const names = [
   'apple',
@@ -86,3 +90,19 @@ export function createRepository(
     },
   };
 }
+
+export function createNpmPackage(
+  name: string,
+  pkg: {
+    versions: string[];
+    maintainers?: {name: string; email?: string}[];
+  },
+) {
+  npmPackages.set(name, {
+    versions: new Set(pkg.versions),
+    maintainers:
+      pkg.maintainers ||
+      (npmProfile ? [{name: npmProfile.name, email: npmProfile.email}] : []),
+  });
+}
+export {setNpmProfile};

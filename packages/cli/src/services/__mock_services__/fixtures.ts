@@ -53,3 +53,28 @@ export function byPullRequest({
   }
   return p;
 }
+
+interface NpmPackageFixture {
+  versions: Set<string>;
+  maintainers: {name: string; email?: string}[];
+}
+export const npmPackages = new Map<string, NpmPackageFixture>();
+
+export let npmProfile: {
+  name: string;
+  email: string;
+  tfaOnPublish: boolean;
+} | null = {
+  name: 'forbeslindesay',
+  email: 'forbes@lindesay.co.uk',
+  tfaOnPublish: false,
+};
+export function setNpmProfile(
+  prof: {
+    name: string;
+    email: string;
+    tfaOnPublish: boolean;
+  } | null,
+) {
+  npmProfile = prof;
+}

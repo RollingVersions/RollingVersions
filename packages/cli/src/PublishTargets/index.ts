@@ -38,12 +38,14 @@ export async function getPackageInfo(
   ).filter(isTruthy);
 }
 
-export function getDependencies(
+export async function getDependencies(
   config: Pick<PublishConfig, 'dirname'>,
   pkg: SuccessPackageStatus,
 ) {
-  const deps = pkg.pkgInfos.map((pi) =>
-    targets[pi.publishTarget].getDependencies(config, pi),
+  const deps = await Promise.all(
+    pkg.pkgInfos.map((pi) =>
+      targets[pi.publishTarget].getDependencies(config, pi),
+    ),
   );
 
   if (deps.length === 1) return deps[0];

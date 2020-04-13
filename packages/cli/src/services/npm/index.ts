@@ -1,8 +1,11 @@
-import {packument, Packument} from 'pacote';
+import {resolve, dirname} from 'path';
+import {packument} from 'pacote';
 import {gt, prerelease} from 'semver';
+import {spawnBuffered} from '../../utils/spawn';
 const readConfig = require('libnpmconfig').read;
 const profile = require('npm-profile');
 const org = require('libnpmorg');
+
 // Could use libnpmpublish to publish, but probably best to just use CLI
 
 export async function getOrgRoster(
@@ -39,27 +42,43 @@ export async function getProfile(): Promise<{
 export async function getPackument(
   packageName: string,
   fullMetadata: true,
-): Promise<
-  | (Packument & {
-      maintainers: {name: string; email: string}[];
-    })
-  | null
->;
+): Promise<{
+  versions: Set<string>;
+  maintainers: {name: string; email?: string}[];
+} | null>;
 export async function getPackument(
   packageName: string,
   fullMetadata?: boolean,
-): Promise<Packument | null>;
+): Promise<{
+  versions: Set<string>;
+  maintainers?: {name: string; email?: string}[];
+} | null>;
 export async function getPackument(
   packageName: string,
   fullMetadata: boolean = false,
-): Promise<Packument | null> {
+): Promise<{
+  versions: Set<string>;
+  maintainers?: {name: string; email?: string}[];
+} | null> {
   const config = {
     ...readConfig().toJSON(),
     cache: null,
     fullMetadata,
   };
   try {
-    return await packument(packageName, config);
+    const pk = await packument(packageName, config);
+    if (!pk) return null;
+
+    if (fullMetadata) {
+      return {
+        maintainers: pk.maintainers || [],
+        versions: new Set(Object.keys(pk.versions)),
+      };
+    } else {
+      return {
+        versions: new Set(Object.keys(pk.versions)),
+      };
+    }
   } catch (ex) {
     if (ex.statusCode === 404) {
       return null;
@@ -90,4 +109,14 @@ export async function getNpmVersion(packageName: string) {
     }
     throw ex;
   }
+}
+
+export async function publish(
+  repoDirname: string,
+  path: string,
+  dryRun: boolean = false,
+) {
+  await spawnBuffered('npm', ['publish', ...(dryRun ? ['--dry-run'] : [])], {
+    cwd: dirname(resolve(repoDirname, path)),
+  });
 }

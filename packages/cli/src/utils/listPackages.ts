@@ -68,7 +68,7 @@ export default async function listPackages(
                 allTags,
                 packageName,
                 pi.registryVersion,
-                {isMonoRepo: packagesByName.size === 1},
+                {isMonoRepo: packagesByName.size > 1},
               ),
             }),
           ),

@@ -1,5 +1,5 @@
-import {relative} from 'path';
-import {statSync, readFile} from 'fs';
+import {relative, resolve} from 'path';
+import {statSync, readFile, writeFile} from 'fs';
 import globby from 'globby';
 
 import isTruthy from '../../ts-utils/isTruthy';
@@ -88,4 +88,48 @@ export async function getHeadSha(dirname: string) {
     cwd: dirname,
   });
   return data.toString('utf8').trim();
+}
+
+export async function readRepoFile(
+  dirname: string,
+  filename: string,
+): Promise<Buffer>;
+export async function readRepoFile(
+  dirname: string,
+  filename: string,
+  encoding: 'utf8',
+): Promise<string>;
+export async function readRepoFile(
+  dirname: string,
+  filename: string,
+  encoding?: 'utf8',
+) {
+  if (encoding) {
+    return new Promise<string>((fulfill, reject) => {
+      readFile(resolve(dirname, filename), encoding, (err, res) => {
+        if (err) reject(err);
+        else fulfill(res);
+      });
+    });
+  } else {
+    return new Promise<Buffer>((fulfill, reject) => {
+      readFile(resolve(dirname, filename), (err, res) => {
+        if (err) reject(err);
+        else fulfill(res);
+      });
+    });
+  }
+}
+
+export async function writeRepoFile(
+  dirname: string,
+  filename: string,
+  data: Buffer | string,
+) {
+  return new Promise<void>((fulfill, reject) => {
+    writeFile(resolve(dirname, filename), data, (err) => {
+      if (err) reject(err);
+      else fulfill();
+    });
+  });
 }
