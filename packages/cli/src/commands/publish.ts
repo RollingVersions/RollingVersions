@@ -89,7 +89,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
     };
   }
 
-  const sortResult = sortPackages(config, unsortedPackageStatuses);
+  const sortResult = await sortPackages(config, unsortedPackageStatuses);
 
   if (sortResult.circular) {
     return {

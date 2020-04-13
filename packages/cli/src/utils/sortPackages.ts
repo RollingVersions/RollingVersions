@@ -13,17 +13,19 @@ export interface SortedPackages {
 
 export type SortResult = CircularPackages | SortedPackages;
 
-export default function sortPackages(
+export default async function sortPackages(
   config: Pick<PublishConfig, 'dirname'>,
   statuses: SuccessPackageStatus[],
-): SortResult {
+): Promise<SortResult> {
   const input = new Map(
-    statuses.map(
-      (pkg) =>
-        [
-          pkg.packageName,
-          {pkg, dependencies: getDependencies(config, pkg)},
-        ] as const,
+    await Promise.all(
+      statuses.map(
+        async (pkg) =>
+          [
+            pkg.packageName,
+            {pkg, dependencies: await getDependencies(config, pkg)},
+          ] as const,
+      ),
     ),
   );
   function putPackage(
