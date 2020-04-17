@@ -14,6 +14,13 @@ staticMiddleware.use(
     index: false,
   }),
 );
+staticMiddleware.use(
+  expressStatic(`${__dirname}/../../../favicon`, {
+    maxAge: 365 * 24 * 60 * 60 * 1000,
+    immutable: true,
+    index: false,
+  }),
+);
 
 const getHtml = () => {
   const src = readFileSync(`${__dirname}/../../../dist/index.html`, 'utf8');

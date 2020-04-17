@@ -1,0 +1,72 @@
+{
+  "masterPicture": "TODO: Path to your master picture",
+  "iconsPath": "/",
+  "design": {
+    "ios": {
+      "masterPicture": {
+        "type": "inline",
+        "content": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNDYiIGhlaWdodD0iMzQ2IiB2aWV3Qm94PSIwIDAgMzQ2IDM0NiI+CiAgPGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgIDxyZWN0IHdpZHRoPSIzNDYiIGhlaWdodD0iMzQ2IiBmaWxsPSIjRkY4MDAwIiByeD0iMjAiLz4KICAgIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQwIDYzKSI+CiAgICAgIDxyZWN0IHdpZHRoPSIyMTguMjQiIGhlaWdodD0iMjE4LjI0IiBzdHJva2U9IiNGRkYiIHN0cm9rZS13aWR0aD0iMi45MjIiLz4KICAgICAgPHBvbHlnb24gc3Ryb2tlPSIjRkZGIiBzdHJva2Utd2lkdGg9IjIuOTIyIiBwb2ludHM9IjQ2Ljc3NCAyMy45MzYgMjI5Ljk0NiAyMy45MDIgMjI5LjkxMyAyMDYuODAzIDQ2Ljc0IDIwNi44MzciIHRyYW5zZm9ybT0icm90YXRlKC04Mi45OTggMTM4LjM0MyAxMTUuMzcpIi8+CiAgICAgIDxwb2x5Z29uIHN0cm9rZT0iI0ZGRiIgc3Ryb2tlLXdpZHRoPSIyLjkyMiIgcG9pbnRzPSI5MC42NzUgNDguMjYgMjQxLjk0OCA0OC4xOTkgMjQxLjg4NiAxOTkuMjc2IDkwLjYxMyAxOTkuMzM3IiB0cmFuc2Zvcm09InJvdGF0ZSgtNzMuOTI1IDE2Ni4yOCAxMjMuNzY4KSIvPgogICAgICA8cG9seWdvbiBmaWxsPSIjRkZGIiBmaWxsLXJ1bGU9Im5vbnplcm8iIHBvaW50cz0iMTM4LjIzNyA4MS4wMzcgMjU1LjY5MyA4MC45NiAyNTUuNjE2IDE5OC4zMjMgMTM4LjE2IDE5OC40IiB0cmFuc2Zvcm09InJvdGF0ZSgtNjAuNTYxIDE5Ni45MjYgMTM5LjY4KSIvPgogICAgPC9nPgogIDwvZz4KPC9zdmc+Cg=="
+      },
+      "pictureAspect": "noChange",
+      "assets": {
+        "ios6AndPriorIcons": false,
+        "ios7AndLaterIcons": false,
+        "precomposedIcons": false,
+        "declareOnlyDefaultIcon": true
+      },
+      "appName": "Rolling Versions"
+    },
+    "desktopBrowser": {
+      "design": "background",
+      "backgroundColor": "#ffffff",
+      "backgroundRadius": 0.3,
+      "imageScale": 1
+    },
+    "windows": {
+      "pictureAspect": "whiteSilhouette",
+      "backgroundColor": "#ff8000",
+      "onConflict": "override",
+      "assets": {
+        "windows80Ie10Tile": false,
+        "windows10Ie11EdgeTiles": {
+          "small": false,
+          "medium": true,
+          "big": false,
+          "rectangle": false
+        }
+      },
+      "appName": "Rolling Versions"
+    },
+    "androidChrome": {
+      "masterPicture": {
+        "type": "inline",
+        "content": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNDYiIGhlaWdodD0iMzQ2IiB2aWV3Qm94PSIwIDAgMzQ2IDM0NiI+CiAgPGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgIDxyZWN0IHdpZHRoPSIzNDYiIGhlaWdodD0iMzQ2IiBmaWxsPSIjRkY4MDAwIiByeD0iMjAiLz4KICAgIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQwIDYzKSI+CiAgICAgIDxyZWN0IHdpZHRoPSIyMTguMjQiIGhlaWdodD0iMjE4LjI0IiBzdHJva2U9IiNGRkYiIHN0cm9rZS13aWR0aD0iMi45MjIiLz4KICAgICAgPHBvbHlnb24gc3Ryb2tlPSIjRkZGIiBzdHJva2Utd2lkdGg9IjIuOTIyIiBwb2ludHM9IjQ2Ljc3NCAyMy45MzYgMjI5Ljk0NiAyMy45MDIgMjI5LjkxMyAyMDYuODAzIDQ2Ljc0IDIwNi44MzciIHRyYW5zZm9ybT0icm90YXRlKC04Mi45OTggMTM4LjM0MyAxMTUuMzcpIi8+CiAgICAgIDxwb2x5Z29uIHN0cm9rZT0iI0ZGRiIgc3Ryb2tlLXdpZHRoPSIyLjkyMiIgcG9pbnRzPSI5MC42NzUgNDguMjYgMjQxLjk0OCA0OC4xOTkgMjQxLjg4NiAxOTkuMjc2IDkwLjYxMyAxOTkuMzM3IiB0cmFuc2Zvcm09InJvdGF0ZSgtNzMuOTI1IDE2Ni4yOCAxMjMuNzY4KSIvPgogICAgICA8cG9seWdvbiBmaWxsPSIjRkZGIiBmaWxsLXJ1bGU9Im5vbnplcm8iIHBvaW50cz0iMTM4LjIzNyA4MS4wMzcgMjU1LjY5MyA4MC45NiAyNTUuNjE2IDE5OC4zMjMgMTM4LjE2IDE5OC40IiB0cmFuc2Zvcm09InJvdGF0ZSgtNjAuNTYxIDE5Ni45MjYgMTM5LjY4KSIvPgogICAgPC9nPgogIDwvZz4KPC9zdmc+Cg=="
+      },
+      "pictureAspect": "noChange",
+      "themeColor": "#ff8000",
+      "manifest": {
+        "name": "Rolling Versions",
+        "display": "browser",
+        "orientation": "notSet",
+        "onConflict": "override",
+        "declared": true
+      },
+      "assets": {
+        "legacyIcon": false,
+        "lowResolutionIcons": false
+      }
+    },
+    "safariPinnedTab": {
+      "pictureAspect": "silhouette",
+      "themeColor": "#ff8000"
+    }
+  },
+  "settings": {
+    "compression": 5,
+    "scalingAlgorithm": "Mitchell",
+    "errorOnImageTooSmall": false,
+    "readmeFile": true,
+    "htmlCodeFile": true,
+    "usePathAsIs": false
+  }
+}

@@ -15,6 +15,7 @@ RUN yarn install --production \
 ADD packages/cli/lib /app/packages/cli/lib
 ADD packages/server/lib /app/packages/server/lib
 ADD packages/server/dist /app/packages/server/dist
+ADD packages/server/favicon /app/packages/server/favicon
 ADD packages/server/index.js /app/packages/server/index.js
 
 RUN yarn install --production
