@@ -98,22 +98,24 @@ export async function publish(
   },
 ) {
   for (const pkgInfo of pkg.pkgInfos) {
-    config.logger.onPublishTargetRelease?.({
-      pkg,
-      pkgInfo,
-      dryRun: config.dryRun,
-    });
-    await targets[pkgInfo.publishTarget].publish(
-      config,
-      pkgInfo,
-      pkg.newVersion,
-      packageVersions,
-    );
-    config.logger.onPublishedTargetRelease?.({
-      pkg,
-      pkgInfo,
-      dryRun: config.dryRun,
-    });
+    if (!pkgInfo.notToBePublished) {
+      config.logger.onPublishTargetRelease?.({
+        pkg,
+        pkgInfo,
+        dryRun: config.dryRun,
+      });
+      await targets[pkgInfo.publishTarget].publish(
+        config,
+        pkgInfo,
+        pkg.newVersion,
+        packageVersions,
+      );
+      config.logger.onPublishedTargetRelease?.({
+        pkg,
+        pkgInfo,
+        dryRun: config.dryRun,
+      });
+    }
   }
 
   await github.createGitHubRelease(
