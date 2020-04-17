@@ -1,6 +1,7 @@
 {
   "name": "@rollingversions/monorepo",
   "private": true,
+  "@rollingversions/ignore": true,
   "workspaces": [
     "packages/*"
   ],
