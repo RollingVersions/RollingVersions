@@ -100,14 +100,22 @@ interface Entry {
 
 export async function* getAllFiles(
   client: GitHubClient,
-  pr: Pick<PullRequest, 'repo' | 'number'>,
+  pullRequestOrRepo:
+    | (Repository & {repo?: undefined})
+    | Pick<PullRequest, 'repo' | 'number'>,
 ) {
-  const commit = (
-    await gh.getPullRequestFileNames(client, {
-      ...pr.repo,
-      number: pr.number,
-    })
-  ).repository?.pullRequest?.headRef?.target;
+  const repo = pullRequestOrRepo.repo || pullRequestOrRepo;
+  const commit = (pullRequestOrRepo.repo
+    ? (
+        await gh.getPullRequestFileNames(client, {
+          ...pullRequestOrRepo.repo,
+          number: pullRequestOrRepo.number,
+        })
+      ).repository?.pullRequest?.headRef
+    : (await gh.getRepoFileNames(client, pullRequestOrRepo)).repository
+        ?.defaultBranchRef
+  )?.target;
+
   if (!commit || commit.__typename !== 'Commit') {
     throw new Error(
       `Expected a Commit but got ${commit?.__typename || 'undefined'}`,
@@ -132,7 +140,7 @@ export async function* getAllFiles(
           path: path.join('/'),
           getContents: async () => {
             const file = await gh.getFile(client, {
-              ...pr.repo,
+              ...repo,
               oid,
             });
             if (!file.repository) {
@@ -265,4 +273,32 @@ export async function getPullRequestsForCommit(
         .filter(isTruthy)) ||
     []
   );
+}
+
+export async function* getAllCommits(
+  client: GitHubClient,
+  repo: Repository,
+  {pageSize = 20}: {pageSize?: number} = {},
+) {
+  for await (const commit of paginate(
+    (after) =>
+      gh.getAllCommits(client, {
+        ...repo,
+        after,
+        first: pageSize,
+      }),
+    (page) =>
+      (page?.repository?.defaultBranchRef?.target?.__typename === 'Commit' &&
+        page.repository.defaultBranchRef.target.history.nodes) ||
+      [],
+    (page): string | undefined =>
+      (page?.repository?.defaultBranchRef?.target?.__typename === 'Commit' &&
+        page.repository.defaultBranchRef.target.history.pageInfo.hasNextPage &&
+        page.repository.defaultBranchRef.target.history.pageInfo.endCursor) ||
+      undefined,
+  )) {
+    if (commit) {
+      yield commit;
+    }
+  }
 }

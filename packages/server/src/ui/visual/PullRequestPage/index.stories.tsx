@@ -45,6 +45,7 @@ export const Default = () => {
             ],
           ])
         }
+        unreleasedPackages={['@databases/pg', '@databases/mysql']}
         onSave={action('save')}
       />
     </div>

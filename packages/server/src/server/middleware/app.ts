@@ -1,5 +1,6 @@
 // tslint:disable-next-line: no-implicit-dependencies
 import {Router} from 'express';
+import getUnreleasedPackages from 'rollingversions/lib/utils/getUnreleasedPackages';
 import {requiresAuth} from './auth';
 import {getClientForRepo} from '../getClient';
 import {PullRequestResponseCodec} from '../../types';
@@ -29,6 +30,18 @@ appMiddleware.get(
           changeLogState: pr.state,
           closed: pr.closed,
           merged: pr.merged,
+          unreleasedPackages: pr.state
+            ? [
+                ...(await getUnreleasedPackages(
+                  client,
+                  {
+                    ...pullRequest,
+                    closed: pr.closed || pr.merged,
+                  },
+                  pr.state.packages,
+                )),
+              ]
+            : [],
         }),
       );
     } catch (ex) {
@@ -47,6 +60,8 @@ appMiddleware.post(
     try {
       const pullRequest = parseParams(req);
       const github = await getClientForRepo(pullRequest.repo);
+
+      // TODO: prevent updating released packages
 
       const body = getBody(req);
       await updatePullRequestWithState(

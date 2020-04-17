@@ -41,7 +41,7 @@ export const getAllFiles: typeof real.getAllFiles = async function*(
   _client,
   pr,
 ) {
-  const files = byRepo(pr.repo).files;
+  const files = byRepo(pr.repo || pr).files;
   for (const file of files) {
     yield {
       path: file.path,
@@ -124,4 +124,19 @@ export const getPullRequestsForCommit: typeof real.getPullRequestsForCommit = as
     throw new Error(`The mock has no commit ${sha} in ${repo.name}`);
   }
   return commit.pullRequests;
+};
+
+export const getAllCommits: typeof real.getAllCommits = async function*(
+  _client,
+  repo,
+) {
+  const commits = byRepo(repo).commits;
+  for (const commit of commits.slice().reverse()) {
+    yield {
+      oid: commit.sha,
+      associatedPullRequests: {
+        nodes: commit.pullRequests.map((n) => ({number: n})),
+      },
+    };
+  }
 };

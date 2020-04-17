@@ -47,9 +47,14 @@ export default function PullChangeLog() {
   return (
     <PullRequestPage
       headSha={headSha}
-      readOnly={pr.pullRequest.permission !== 'edit' || !headSha}
+      readOnly={
+        pr.pullRequest.permission !== 'edit' ||
+        pr.pullRequest.unreleasedPackages.length === 0 ||
+        !headSha
+      }
       saving={pr.updating || saving}
       packages={pr.pullRequest.changeLogState.packages}
+      unreleasedPackages={pr.pullRequest.unreleasedPackages}
       onSave={async (updates) => {
         if (!headSha) return;
         setSaving(true);
