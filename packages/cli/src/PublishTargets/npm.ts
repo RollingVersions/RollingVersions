@@ -81,6 +81,15 @@ export async function getPackageInfo(
   }
 
   if (isObject(result) && typeof result.name === 'string') {
+    if (result['@rollingversions/ignore']) {
+      return null;
+    }
+    if (
+      isObject(result['@rollingversions']) &&
+      result['@rollingversions'].ignore
+    ) {
+      return null;
+    }
     return {
       publishTarget: PublishTarget.npm,
       packageName: result.name,
