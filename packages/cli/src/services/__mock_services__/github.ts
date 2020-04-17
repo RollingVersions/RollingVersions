@@ -41,7 +41,7 @@ export const getAllFiles: typeof real.getAllFiles = async function*(
   _client,
   pr,
 ) {
-  const files = byRepo(pr.repo).files;
+  const files = byRepo(pr.repo || pr).files;
   for (const file of files) {
     yield {
       path: file.path,
