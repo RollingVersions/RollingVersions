@@ -1,6 +1,6 @@
 import React from 'react';
 import NavBar from '../NavBar';
-import HeroBar from '../HeroBar';
+import HeroBar, {HeroBarFooter} from '../HeroBar';
 import MarketingContent from '../MarketingContent';
 
 export default function LandingPage() {
@@ -13,6 +13,7 @@ export default function LandingPage() {
       <div className="py-16">
         <MarketingContent />
       </div>
+      <HeroBarFooter />
     </>
   );
 }
