@@ -67,7 +67,8 @@ jobs:
       - run:
           name: Dry run (production)
           command: |
-            if [ $USE_PRODUCTION -eq true ]
+            set -e
+            if [ "$USE_PRODUCTION" = "true" ]
             then
             sudo npm i -g rollingversions && rollingversions publish
             fi
@@ -88,7 +89,8 @@ jobs:
       - run:
           name: Publish Packages
           command: |
-            if [ $USE_PRODUCTION -eq true ]
+            set -e
+            if [ "$USE_PRODUCTION" = "true" ]
             then
             sudo npm i -g rollingversions && rollingversions publish
             else
