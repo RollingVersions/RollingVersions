@@ -1,9 +1,14 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Rolling Versions</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no,user-scalable=1">
+# Your Favicon Package
+
+This package was generated with [RealFaviconGenerator](https://realfavicongenerator.net/) [v0.16](https://realfavicongenerator.net/change_log#v0.16)
+
+## Install instructions
+
+To install this package:
+
+Extract this package in the root of your web site. If your site is <code>http://www.example.com</code>, you should be able to access a file named <code>http://www.example.com/favicon.ico</code>.
+
+Insert the following code in the `head` section of your pages:
 
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -14,11 +19,5 @@
     <meta name="application-name" content="Rolling Versions">
     <meta name="msapplication-TileColor" content="#ff8000">
     <meta name="theme-color" content="#ff8000">
-  </head>
 
-  <body class="bg-gray-300">
-    <div id="app"></div>
-
-    <!--webpack will inject script tag here-->
-  </body>
-</html>
+_Optional_ - Check your favicon with the [favicon checker](https://realfavicongenerator.net/favicon_checker)
