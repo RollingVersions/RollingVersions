@@ -66,7 +66,12 @@ jobs:
           command: node packages/cli/lib/cli publish --dry-run --deploy-branch $CIRCLE_BRANCH
       - run:
           name: Dry run (production)
-          command: sudo npm i -g rollingversions && rollingversions publish --dry-run --deploy-branch $CIRCLE_BRANCH
+          command: |
+            set -e
+            if [ "$USE_PRODUCTION" = "true" ]
+            then
+            sudo npm i -g rollingversions && rollingversions publish --dry-run --deploy-branch $CIRCLE_BRANCH
+            fi
       - run:
           name: Publish Canary
           command: node publish-canary
@@ -83,7 +88,14 @@ jobs:
       - build
       - run:
           name: Publish Packages
-          command: sudo npm i -g rollingversions && rollingversions publish
+          command: |
+            set -e
+            if [ "$USE_PRODUCTION" = "true" ]
+            then
+            sudo npm i -g rollingversions && rollingversions publish
+            else
+            node packages/cli/lib/cli publish
+            fi
       - deploy:
           environment: production
 
