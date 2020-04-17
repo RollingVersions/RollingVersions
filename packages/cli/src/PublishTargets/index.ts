@@ -73,14 +73,16 @@ export async function prepublish(
   packageVersions: Map<string, string | null>,
 ): Promise<PrePublishResult[]> {
   return Promise.all(
-    pkg.pkgInfos.map((pi) =>
-      targets[pi.publishTarget].prepublish(
-        config,
-        pi,
-        pkg.newVersion,
-        packageVersions,
+    pkg.pkgInfos
+      .filter((pi) => !pi.notToBePublished)
+      .map((pi) =>
+        targets[pi.publishTarget].prepublish(
+          config,
+          pi,
+          pkg.newVersion,
+          packageVersions,
+        ),
       ),
-    ),
   );
 }
 
