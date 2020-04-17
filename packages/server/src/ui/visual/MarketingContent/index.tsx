@@ -14,7 +14,7 @@ export default function MarketingContent() {
           <Heading>Submit a Pull Request</Heading>
           <Description>
             When your developers submit a pull request, Rolling Versions asks
-            them to descirbe the changes.
+            them to describe the changes.
           </Description>
         </section>
         <section>
@@ -43,7 +43,7 @@ export default function MarketingContent() {
           <Description>
             When the new version is published, the Rolling Versions CLI
             automatically creates a beautiful change log in GitHub and selects
-            the correct new version number so your users know what they're
+            the correct new version number so that your users know what they're
             getting when they upgrade.
           </Description>
         </section>
