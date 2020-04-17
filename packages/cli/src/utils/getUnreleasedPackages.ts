@@ -17,28 +17,25 @@ export default async function getUnreleasedPackages(
   }
   const unreleasedPackages = new Set(packages.keys());
   for await (const commit of getAllCommits(client, pullRequest.repo)) {
-    if (
-      commit.associatedPullRequests?.nodes?.some(
-        (pr) => pr?.number === pullRequest.number,
-      )
-    ) {
-      return unreleasedPackages;
-    } else {
-      for (const [packageName, {info}] of packages) {
-        if (unknownPackages.has(packageName)) {
-          for (const packageInfo of info) {
-            if (
-              packageInfo.versionTag &&
-              packageInfo.versionTag.commitSha === commit.oid
-            ) {
-              unknownPackages.delete(packageName);
-              unreleasedPackages.delete(packageName);
-            }
+    for (const [packageName, {info}] of packages) {
+      if (unknownPackages.has(packageName)) {
+        for (const packageInfo of info) {
+          if (
+            packageInfo.versionTag &&
+            packageInfo.versionTag.commitSha === commit.oid
+          ) {
+            unknownPackages.delete(packageName);
+            unreleasedPackages.delete(packageName);
           }
         }
       }
     }
-    if (!unknownPackages.size) {
+    if (
+      commit.associatedPullRequests?.nodes?.some(
+        (pr) => pr?.number === pullRequest.number,
+      ) ||
+      !unknownPackages.size
+    ) {
       return unreleasedPackages;
     }
   }
