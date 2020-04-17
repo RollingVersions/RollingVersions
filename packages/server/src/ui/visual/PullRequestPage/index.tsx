@@ -67,7 +67,7 @@ export default function PullRequestPage({
   );
 
   return (
-    <div className="pb-16 pt-4 px-8">
+    <div className="pb-16 pt-4 px-8 min-h-full bg-gray-300">
       <h1>ChangeLog</h1>
       {state
         .filter(({info}) => info.length !== 0)

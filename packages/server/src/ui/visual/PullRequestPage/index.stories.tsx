@@ -22,32 +22,30 @@ function packageInfo(
 
 export const Default = () => {
   return (
-    <div className="w-full min-h-full bg-gray-300">
-      <PullRequestPage
-        headSha="sdjfkasjfkdsjvoixjvof"
-        readOnly={false}
-        saving={false}
-        packages={
-          new Map([
-            [
-              '@databases/pg',
-              {
-                changes: getEmptyChangeSet(),
-                info: [packageInfo({packageName: '@databases/pg'})],
-              },
-            ],
-            [
-              '@databases/mysql',
-              {
-                changes: getEmptyChangeSet(),
-                info: [packageInfo({packageName: '@databases/mysql'})],
-              },
-            ],
-          ])
-        }
-        unreleasedPackages={['@databases/pg', '@databases/mysql']}
-        onSave={action('save')}
-      />
-    </div>
+    <PullRequestPage
+      headSha="sdjfkasjfkdsjvoixjvof"
+      readOnly={false}
+      saving={false}
+      packages={
+        new Map([
+          [
+            '@databases/pg',
+            {
+              changes: getEmptyChangeSet(),
+              info: [packageInfo({packageName: '@databases/pg'})],
+            },
+          ],
+          [
+            '@databases/mysql',
+            {
+              changes: getEmptyChangeSet(),
+              info: [packageInfo({packageName: '@databases/mysql'})],
+            },
+          ],
+        ])
+      }
+      unreleasedPackages={['@databases/pg', '@databases/mysql']}
+      onSave={action('save')}
+    />
   );
 };

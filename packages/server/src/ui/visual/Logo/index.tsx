@@ -1,6 +1,6 @@
 import React from 'react';
-const Wordmark = require('./wordmark.svg');
-const WordmarkDark = require('./wordmark-dark.svg');
+import Wordmark from './wordmark.svg';
+import WordmarkDark from './wordmark-dark.svg';
 
 export default function Logo({
   dark,

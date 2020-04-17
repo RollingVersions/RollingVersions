@@ -1,6 +1,6 @@
 import React from 'react';
-const installIcon = require('./install-icon.svg');
-const background = require('./background-image.svg');
+import installIcon from './install-icon.svg';
+import background from './background-image.svg';
 
 export default function HeroBar() {
   return (
