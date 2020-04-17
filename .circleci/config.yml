@@ -70,7 +70,7 @@ jobs:
             set -e
             if [ "$USE_PRODUCTION" = "true" ]
             then
-            sudo npm i -g rollingversions && rollingversions publish
+            sudo npm i -g rollingversions && rollingversions publish --dry-run --deploy-branch $CIRCLE_BRANCH
             fi
       - run:
           name: Publish Canary
