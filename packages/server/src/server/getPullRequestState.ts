@@ -86,6 +86,42 @@ async function getCommentState(
   }
   return {state: null, commentID: null};
 }
+
+function updatePackages(
+  oldPackages:
+    | Map<
+        string,
+        {
+          changes: ChangeSet;
+          info: PackageInfo[];
+        }
+      >
+    | undefined,
+  packageInfos: Map<string, PackageInfo[]>,
+) {
+  const packages = new Map<
+    string,
+    {
+      changes: ChangeSet;
+      info: PackageInfo[];
+    }
+  >(
+    [...packageInfos].map(([packageName, info]) => [
+      packageName,
+      {
+        changes: getEmptyChangeSet(),
+        info,
+      },
+    ]),
+  );
+  for (const [packageName, {changes}] of oldPackages || []) {
+    packages.set(packageName, {
+      changes,
+      info: packages.get(packageName)?.info || [],
+    });
+  }
+  return packages;
+}
 export default async function getPullRequestState(
   client: GitHubClient,
   pullRequest: Pick<PullRequest, 'repo' | 'number'> &
@@ -115,33 +151,27 @@ export default async function getPullRequestState(
     ),
   ] as const);
   if (state && (state.packageInfoFetchedAt === headSha || !headSha)) {
+    if (merged) {
+      const packageInfos = await listPackages(
+        getAllTags(client, pullRequest.repo),
+        getAllFiles(client, pullRequest.repo),
+      );
+      const packages = updatePackages(state.packages, packageInfos);
+      return {
+        state: {...state, packages},
+        commentID,
+        closed,
+        merged,
+        updateRequired: false,
+      };
+    }
     return {state, commentID, closed, merged, updateRequired: false};
   } else if (headSha) {
     const packageInfos = await listPackages(
       getAllTags(client, pullRequest.repo),
-      getAllFiles(client, pullRequest),
+      getAllFiles(client, merged ? pullRequest.repo : pullRequest),
     );
-    const packages = new Map<
-      string,
-      {
-        changes: ChangeSet;
-        info: PackageInfo[];
-      }
-    >(
-      [...packageInfos].map(([packageName, info]) => [
-        packageName,
-        {
-          changes: getEmptyChangeSet(),
-          info,
-        },
-      ]),
-    );
-    for (const [packageName, {changes}] of state?.packages || []) {
-      packages.set(packageName, {
-        changes,
-        info: packages.get(packageName)?.info || [],
-      });
-    }
+    const packages = updatePackages(state?.packages, packageInfos);
     return {
       commentID,
       state: {

@@ -54,6 +54,20 @@ query GetPullRequestFileNames($owner: String!, $name: String!, $number: Int!) {
     }
   }
 }
+query GetRepoFileNames($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    defaultBranchRef {
+      target {
+        __typename # Commit
+        ... on Commit {
+          tree {
+            ...FullContents
+          }
+        }
+      }
+    }
+  }
+}
 
 query GetFile($owner: String!, $name: String!, $oid: GitObjectID!) {
   repository(owner: $owner, name: $name) {
