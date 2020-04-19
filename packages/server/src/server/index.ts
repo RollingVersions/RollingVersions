@@ -1,10 +1,13 @@
 import express from 'express';
 import {json} from 'body-parser';
 import morgan from 'morgan';
+import onFinished from 'on-finished';
+import onHeaders from 'on-headers';
 import webhooks from './webhooks';
 import authMiddleware from './middleware/auth';
 import staticMiddleware from './middleware/static';
 import appMiddleware from './middleware/app';
+import log from './logger';
 
 const app = express();
 type EventSource = typeof EventSource;
@@ -26,7 +29,48 @@ if (WEBHOOK_PROXY_URL) {
   };
 }
 
-app.use(morgan('tiny'));
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('tiny'));
+} else {
+  app.use((req, res, next) => {
+    const reqStartAt = process.hrtime();
+    let resStartElapsed: typeof reqStartAt | null = null;
+    onHeaders(res, () => {
+      resStartElapsed = process.hrtime(reqStartAt);
+    });
+    onFinished(res, (err, res) => {
+      if (!resStartElapsed) {
+        resStartElapsed = process.hrtime(reqStartAt);
+      }
+
+      const responseTimeMs =
+        resStartElapsed[0] * 1e3 + resStartElapsed[1] * 1e-6;
+      const resEndElapsed = process.hrtime(reqStartAt);
+      const totalTimeMs = resEndElapsed[0] * 1e3 + resEndElapsed[1] * 1e-6;
+
+      log({
+        status:
+          err || res.statusCode >= 500
+            ? 'error'
+            : res.statusCode >= 400
+            ? 'warn'
+            : 'ok',
+        type: 'response',
+        message: `${req.method} ${req.url} ${
+          res.statusCode
+        } ${responseTimeMs.toFixed(3)} ms${
+          err ? `:\n\n${err.stack || err.message || err}` : ``
+        }`,
+        method: req.method,
+        url: req.url,
+        status_code: res.statusCode,
+        response_time: responseTimeMs,
+        total_time: totalTimeMs,
+      });
+    });
+    next();
+  });
+}
 webhooks.on('error', (error) => {
   console.error(
     `Error occured in "${
