@@ -19,8 +19,8 @@ export default async function onPullRequestUpdate(
     },
   } = e;
   log({
-    status: 'ok',
-    type: 'pr_update_event_received',
+    event_status: 'ok',
+    event_type: 'pr_update_event_received',
     message: `Update event received for ${owner}/${name}#${pullNumber} to ${headSha}`,
     event_id: e.id,
     repo_owner: owner,
@@ -39,8 +39,8 @@ export default async function onPullRequestUpdate(
       headSha,
     });
     log({
-      status: 'ok',
-      type: 'pr_updated',
+      event_status: 'ok',
+      event_type: 'pr_updated',
       message: `Updated ${owner}/${name}#${pullNumber} to ${headSha}`,
       event_id: e.id,
       repo_owner: owner,
@@ -50,8 +50,8 @@ export default async function onPullRequestUpdate(
     });
   } catch (ex) {
     log({
-      status: 'error',
-      type: 'pr_update_failed',
+      event_status: 'error',
+      event_type: 'pr_update_failed',
       message: `Failed to update ${owner}/${name}#${pullNumber} to ${headSha}:\n\n${ex.stack ||
         ex.message ||
         ex}`,

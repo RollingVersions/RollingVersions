@@ -44,8 +44,8 @@ appMiddleware.get(
       loadStart.set(loadStartKey, Date.now());
 
       log({
-        status: 'ok',
-        type: 'loaded_change_set',
+        event_status: 'ok',
+        event_type: 'loaded_change_set',
         message: `Loaded change set`,
         packages_count: pr.state?.packages.size,
         closed: pr.closed,
@@ -104,8 +104,8 @@ appMiddleware.post(
       loadStart.delete(loadStartKey);
 
       log({
-        status: 'ok',
-        type: 'submitted_change_set',
+        event_status: 'ok',
+        event_type: 'submitted_change_set',
         message: `Submitted change set`,
         time_taken_to_add_changeset_ms: startTime
           ? Date.now() - startTime

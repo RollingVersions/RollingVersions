@@ -30,8 +30,8 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
       permisisonInfoMap.set(req, permissionInfo);
       if (!allowedPermissions.includes(permissionInfo.permission)) {
         log({
-          status: 'warn',
-          type: 'permission_denied',
+          event_status: 'warn',
+          event_type: 'permission_denied',
           message: `${permissionInfo.login} does not have access to ${pullRequest.repo.owner}/${pullRequest.repo.name}#${pullRequest.number}`,
           reason: permissionInfo.reason,
           login: permissionInfo.login,

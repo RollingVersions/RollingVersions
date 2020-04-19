@@ -76,8 +76,8 @@ async function getCommentState(
         } else {
           // we have a duplicate comment
           log({
-            status: 'warn',
-            type: 'deleting_duplicate_comment',
+            event_status: 'warn',
+            event_type: 'deleting_duplicate_comment',
             message: `Deleting duplicate comment`,
             repo_owner: pullRequest.repo.owner,
             repo_name: pullRequest.repo.name,
@@ -86,8 +86,8 @@ async function getCommentState(
           deleteComment(client, pullRequest, comment.commentID).then(
             () => {
               log({
-                status: 'warn',
-                type: 'deleted_duplicate_comment',
+                event_status: 'warn',
+                event_type: 'deleted_duplicate_comment',
                 message: `Deleted duplicate comment`,
                 repo_owner: pullRequest.repo.owner,
                 repo_name: pullRequest.repo.name,
@@ -96,8 +96,8 @@ async function getCommentState(
             },
             (ex) => {
               log({
-                status: 'error',
-                type: 'delete_comment_failed',
+                event_status: 'error',
+                event_type: 'delete_comment_failed',
                 message: `Unable to delete comment:\n\n${ex.stack ||
                   ex.message ||
                   ex}`,

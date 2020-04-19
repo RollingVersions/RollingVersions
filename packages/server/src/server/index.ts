@@ -49,13 +49,13 @@ if (process.env.NODE_ENV !== 'production') {
       const totalTimeMs = resEndElapsed[0] * 1e3 + resEndElapsed[1] * 1e-6;
 
       log({
-        status:
+        event_status:
           err || res.statusCode >= 500
             ? 'error'
             : res.statusCode >= 400
             ? 'warn'
             : 'ok',
-        type: 'response',
+        event_type: 'response',
         message: `${req.method} ${req.url} ${
           res.statusCode
         } ${responseTimeMs.toFixed(3)} ms${

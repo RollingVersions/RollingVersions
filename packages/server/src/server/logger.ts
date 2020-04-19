@@ -1,6 +1,6 @@
 interface LogEvent {
-  status: 'ok' | 'warn' | 'error';
-  type: string;
+  event_status: 'ok' | 'warn' | 'error';
+  event_type: string;
   message: string;
   [key: string]: any;
 }

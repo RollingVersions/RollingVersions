@@ -7,8 +7,8 @@ export default async function onInstallation(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadInstallation>,
 ) {
   log({
-    status: 'ok',
-    type: 'install_event_received',
+    event_status: 'ok',
+    event_type: 'install_event_received',
     message: `Install event for ${e.payload.sender.login}`,
     event_id: e.id,
     repo_owner: e.payload.sender.login,
@@ -18,8 +18,8 @@ export default async function onInstallation(
     const [owner, name] = r.full_name.split('/');
     await updateRepo(client, {owner, name});
     log({
-      status: 'ok',
-      type: 'installed',
+      event_status: 'ok',
+      event_type: 'installed',
       message: `Installed on ${owner}/${name}`,
       event_id: e.id,
       repo_owner: owner,
