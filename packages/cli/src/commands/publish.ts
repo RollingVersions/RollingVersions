@@ -116,8 +116,6 @@ export default async function publish(config: PublishConfig): Promise<Result> {
     };
   }
 
-  // TODO: print change logs here
-
   // prepublish checks
   const gitHubPrepublishInfo = await checkGitHubReleaseStatus(config, client);
   if (!gitHubPrepublishInfo.ok) {

@@ -1,5 +1,4 @@
 import {PullRequest} from 'rollingversions/lib/types';
-import {GitHubClient} from 'rollingversions/lib/services/github';
 import Permission from './Permission';
 import {getClientForToken, getClientForRepo} from '../getClient';
 
@@ -9,23 +8,28 @@ export {Permission};
 export default async function getPermissionLevel(
   pr: Pick<PullRequest, 'repo' | 'number'>,
   userAuth: string,
-): Promise<Permission> {
+): Promise<{
+  permission: Permission;
+  login: string;
+  email: string | null;
+  reason?: string;
+}> {
   const client = getClientForToken(userAuth);
 
-  let repoClient: GitHubClient;
-  let login: string;
-  try {
-    [
-      repoClient,
-      {
-        data: {login},
-      },
-    ] = await Promise.all([
-      getClientForRepo(pr.repo),
-      client.rest.users.getAuthenticated(),
-    ]);
-  } catch (ex) {
-    return 'none';
+  const [
+    repoClient,
+    {
+      data: {login, email},
+    },
+  ] = await Promise.all([
+    getClientForRepo(pr.repo).catch(() => null),
+    client.rest.users
+      .getAuthenticated()
+      .catch(() => ({data: {login: 'unknown', email: null}})),
+  ] as const);
+
+  if (!repoClient) {
+    return {permission: 'none', login, email, reason: 'no_repo_client'};
   }
 
   const [pull, permission] = await Promise.all([
@@ -49,20 +53,20 @@ export default async function getPermissionLevel(
   ]);
 
   if (!pull) {
-    return 'none';
+    return {permission: 'none', login, email, reason: 'no_pull_request_found'};
   }
 
   if (permission === 'admin' || permission === 'write') {
-    return 'edit';
+    return {permission: 'edit', login, email};
   }
 
   if (pull.data.merged) {
-    return 'view';
+    return {permission: 'view', login, email};
   }
 
   if (pull.data.user.login === login) {
-    return 'edit';
+    return {permission: 'edit', login, email};
   }
 
-  return 'view';
+  return {permission: 'view', login, email};
 }
