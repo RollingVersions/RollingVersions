@@ -1,6 +1,7 @@
 import {PullRequest} from 'rollingversions/lib/types';
 import Permission from './Permission';
 import {getClientForToken, getClientForRepo} from '../getClient';
+import log from '../logger';
 
 // TODO: this should use GraphQL rather than the REST API
 
@@ -22,10 +23,22 @@ export default async function getPermissionLevel(
       data: {login, email},
     },
   ] = await Promise.all([
-    getClientForRepo(pr.repo).catch(() => null),
-    client.rest.users
-      .getAuthenticated()
-      .catch(() => ({data: {login: 'unknown', email: null}})),
+    getClientForRepo(pr.repo).catch((ex) => {
+      log({
+        event_status: 'warn',
+        event_type: 'failed_to_get_client_for_pr',
+        message: ex.stack,
+      });
+      return null;
+    }),
+    client.rest.users.getAuthenticated().catch((ex) => {
+      log({
+        event_status: 'error',
+        event_type: 'failed_to_authenticate_user',
+        message: ex.stack,
+      });
+      return {data: {login: 'unknown', email: null}};
+    }),
   ] as const);
 
   if (!repoClient) {
@@ -61,7 +74,11 @@ export default async function getPermissionLevel(
   }
 
   if (pull.data.merged) {
-    return {permission: 'view', login, email};
+    return {
+      permission: 'view',
+      login,
+      email,
+    };
   }
 
   if (pull.data.user.login === login) {
