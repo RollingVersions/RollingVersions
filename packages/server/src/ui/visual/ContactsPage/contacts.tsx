@@ -32,7 +32,7 @@ export default function Contacts() {
   return (
     <div className="container mx-auto">
       {ContactMethod(
-        'ByEmail',
+        'By Email',
         <a href="mailto: hi@rollingversions.com?subject=Rolling Versions">
           hi@rollingversions.com
         </a>,
