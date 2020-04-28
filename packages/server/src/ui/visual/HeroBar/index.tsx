@@ -6,7 +6,10 @@ export default function HeroBar() {
   return (
     <>
       <div className="bg-orange-500 py-12 block md:hidden">
-        <div className="container mx-auto grid grid-cols-1 gap-6 max-w-4xl font-poppins font-normal text-3xl text-white italic">
+        {/* TODO Forbes - I have removed `grid grid-cols-1 gap-6 max-w-4xl ` from the following as it seems to upset the layout of the text - squeezing it to the side - and I don't think it is applicable here.
+        If I'm wrong it will need to go back.
+        Note: text on this and everything else is jammed against left margins on small screens*/}
+        <div className="container mx-auto font-poppins font-normal text-3xl text-white italic">
           <p>Add change sets to pull requests</p>
           <p>Automatically release with change logs</p>
         </div>
@@ -82,7 +85,7 @@ export function HeroBarBanner({children}: {children: string}) {
   return (
     <>
       <div className="bg-black py-12 block md:hidden">
-        <div className="container mx-auto grid grid-cols-1 gap-6 max-w-4xl font-poppins font-normal text-2xl text-white italic">
+        <div className="container mx-auto grid font-poppins font-normal text-2xl text-white italic">
           {children}
         </div>
       </div>
@@ -97,10 +100,9 @@ export function HeroBarBanner({children}: {children: string}) {
         }}
       >
         <div className="container mx-auto flex items-end">
-          <div className="flex-grow max-w-4xl font-poppins font-normal text-2xl text-white italic">
+          <div className="flex-grow font-poppins text-2xl text-white italic">
             {children}
           </div>
-          <p className="mx-auto flex flex-grow items-center">This is text</p>
         </div>
       </div>
     </>
