@@ -1,7 +1,6 @@
 import React from 'react';
 import NavBar from '../NavBar';
-import HeroBar, {HeroBarFooter} from '../HeroBar';
-import {HeroBarBanner} from '../HeroBar';
+import HeroBar, {HeroBarFooter, HeroBarBanner} from '../HeroBar';
 import Contacts from './contacts';
 
 export default function LandingPage() {
