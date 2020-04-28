@@ -75,3 +75,34 @@ export function HeroBarFooter() {
     </div>
   );
 }
+
+//TODO I'm not sure this is the right place for this I'm also not convinced about using
+// `top: '-51px'` but this was the only way I could get the two polygons to "connect"
+export function HeroBarBanner({children}: {children: string}) {
+  return (
+    <>
+      <div className="bg-black py-12 block md:hidden">
+        <div className="container mx-auto grid grid-cols-1 gap-6 max-w-4xl font-poppins font-normal text-2xl text-white italic">
+          {children}
+        </div>
+      </div>
+      <div
+        className="bg-black h-64 pt-20 bg-no-repeat hidden md:block "
+        style={{
+          position: 'relative',
+          top: '-51px',
+          clipPath: 'polygon(0 0, 100% 20%, 100% 100%, 0 100%)',
+          backgroundSize: 'auto 130%',
+          backgroundPosition: 'center left 10%',
+        }}
+      >
+        <div className="container mx-auto flex items-end">
+          <div className="flex-grow max-w-4xl font-poppins font-normal text-2xl text-white italic">
+            {children}
+          </div>
+          <p className="mx-auto flex flex-grow items-center">This is text</p>
+        </div>
+      </div>
+    </>
+  );
+}
