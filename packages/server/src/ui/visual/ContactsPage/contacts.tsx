@@ -17,7 +17,9 @@ export default function Contacts() {
       />
       <ContactMethod
         contactDescription="By Twitter"
-        contactLink={'@rollingversions'}
+        contactLink={
+          <a href="https://twitter.com/RollingVersions">@rollingversions</a>
+        }
       />
       <ContactMethod
         contactDescription="On Github"
