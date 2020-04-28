@@ -126,7 +126,7 @@ function updatePackages(
         }
       >
     | undefined,
-  packageInfos: Map<string, PackageInfo[]>,
+  packageInfos: Map<string, {infos: PackageInfo[]}>,
 ) {
   const packages = new Map<
     string,
@@ -135,11 +135,11 @@ function updatePackages(
       info: PackageInfo[];
     }
   >(
-    [...packageInfos].map(([packageName, info]) => [
+    [...packageInfos].map(([packageName, {infos}]) => [
       packageName,
       {
         changes: getEmptyChangeSet(),
-        info,
+        info: infos,
       },
     ]),
   );

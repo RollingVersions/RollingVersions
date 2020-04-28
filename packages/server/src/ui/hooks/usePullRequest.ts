@@ -15,7 +15,7 @@ export default function usePullRequest({
   repo: string;
   pull_number: string | number;
 }) {
-  const path = `/${owner}/${repo}/pulls/${pull_number}`;
+  const path = `/${owner}/${repo}/pull/${pull_number}`;
   const ref = React.useRef(path);
   ref.current = path;
   const [pullRequest, setPullRequest] = React.useState<

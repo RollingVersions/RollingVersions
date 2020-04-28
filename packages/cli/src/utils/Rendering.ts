@@ -66,7 +66,7 @@ export function getUrlForChangeLog(
   rollingVersionsUrl: URL,
 ) {
   const url = new URL(
-    `/${pr.repo.owner}/${pr.repo.name}/pulls/${pr.number}`,
+    `/${pr.repo.owner}/${pr.repo.name}/pull/${pr.number}`,
     rollingVersionsUrl,
   );
   return url;

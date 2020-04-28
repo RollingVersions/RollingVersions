@@ -2,8 +2,9 @@ import {Response, Request} from 'express';
 import {getGitHubAccessToken} from '../auth';
 import getPermissionLevel, {
   Permission,
+  getRepoPermissionLevel,
 } from '../../permissions/getPermissionLevel';
-import {parseParams} from './validateParams';
+import {parseParams, parseRepoParams} from './validateParams';
 import log from '../../logger';
 
 export {Permission};
@@ -16,9 +17,10 @@ export function getPermission(req: Request) {
   return permisisonInfoMap.get(req)?.permission || 'none';
 }
 export function getUser(req: Request) {
+  const pi = permisisonInfoMap.get(req) || repoPermisisonInfoMap.get(req);
   return {
-    login: permisisonInfoMap.get(req)?.login || 'unknown',
-    email: permisisonInfoMap.get(req)?.email,
+    login: pi?.login || 'unknown',
+    email: pi?.email,
   };
 }
 export default function checkPermissions(allowedPermissions: Permission[]) {
@@ -44,6 +46,45 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
           .status(404)
           .send(
             'Either this PR does not exist, you do not have acess to it, or Rolling Versions is not installed on this repository.',
+          );
+      } else {
+        next();
+      }
+    } catch (ex) {
+      next(ex || new Error('Permissions check failed'));
+    }
+  };
+}
+
+const repoPermisisonInfoMap = new WeakMap<
+  Request,
+  {permission: Permission; login: string; email: string | null}
+>();
+export function getRepoPermission(req: Request) {
+  return repoPermisisonInfoMap.get(req)?.permission || 'none';
+}
+export function checkRepoPermissions(allowedPermissions: Permission[]) {
+  return async (req: Request, res: Response, next: (err?: any) => void) => {
+    try {
+      const userAuth = getGitHubAccessToken(req, res);
+      const repo = parseRepoParams(req);
+      const permissionInfo = await getRepoPermissionLevel(repo, userAuth);
+      repoPermisisonInfoMap.set(req, permissionInfo);
+      if (!allowedPermissions.includes(permissionInfo.permission)) {
+        log({
+          event_status: 'warn',
+          event_type: 'permission_denied',
+          message: `${permissionInfo.login} does not have access to ${repo.owner}/${repo.name}`,
+          reason: permissionInfo.reason,
+          login: permissionInfo.login,
+          email: permissionInfo.email,
+          repo_owner: repo.owner,
+          repo_name: repo.name,
+        });
+        res
+          .status(404)
+          .send(
+            'Either this repository does not exist, you do not have acess to it, or Rolling Versions is not installed on this repository.',
           );
       } else {
         next();

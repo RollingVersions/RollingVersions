@@ -1,8 +1,8 @@
 import {readFileSync} from 'fs';
 import {Router, static as expressStatic} from 'express';
 import {requiresAuth} from './auth';
-import validateParams from './utils/validateParams';
-import checkPermissions from './utils/checkPermissions';
+import validateParams, {validateRepoParams} from './utils/validateParams';
+import checkPermissions, {checkRepoPermissions} from './utils/checkPermissions';
 
 const staticMiddleware = Router();
 
@@ -33,7 +33,19 @@ const getHtml = () => {
 const htmlCache = process.env.NODE_ENV !== 'production' ? null : getHtml();
 
 staticMiddleware.get(
-  `/:owner/:repo/pulls/:pull_number`,
+  `/:owner/:repo`,
+  requiresAuth(),
+  validateRepoParams(),
+  checkRepoPermissions(['view', 'edit']),
+);
+
+staticMiddleware.get(`/:owner/:repo/pulls/:pull_number`, (req, res) => {
+  res.redirect(
+    `/${req.params.owner}/${req.params.name}/pull/${req.params.pull_number}`,
+  );
+});
+staticMiddleware.get(
+  `/:owner/:repo/pull/:pull_number`,
   requiresAuth(),
   validateParams(),
   checkPermissions(['view', 'edit']),

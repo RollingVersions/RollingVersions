@@ -4,69 +4,78 @@ import {
   readComments,
   getPullRequestsForCommit,
 } from '../services/github';
-import {getCommits} from '../services/git';
 import {getCurrentVerion, getNewVersion} from '../utils/Versioning';
 import {
   PackageInfo,
-  PublishConfig,
   ChangeSet,
   Repository,
   PullRequest,
+  PackageDependencies,
 } from '../types';
 import {ChangeTypes} from '../types/PullRequestState';
 import {readState} from './CommentState';
 import isTruthy from '../ts-utils/isTruthy';
 import {COMMENT_GUID} from './Rendering';
 import getEmptyChangeSet from './getEmptyChangeSet';
+import isString from '../ts-utils/isString';
+import notFn from '../ts-utils/notFn';
+import {ListedPackages} from './listPackages';
+import PackageStatus from '../types/PackageStatus';
 
-export enum Status {
-  MissingTag,
-  NoUpdateRequired,
-  NewVersionToBePublished,
-}
+export {PackageStatus};
 
 export interface MissingTag {
-  status: Status.MissingTag;
+  status: PackageStatus.MissingTag;
   packageName: string;
   currentVersion: string;
   pkgInfos: readonly PackageInfo[];
+  dependencies: PackageDependencies;
 }
 
 export interface NoUpdateRequired {
-  status: Status.NoUpdateRequired;
+  status: PackageStatus.NoUpdateRequired;
   packageName: string;
   currentVersion: string | null;
   newVersion: string | null;
   pkgInfos: readonly PackageInfo[];
+  dependencies: PackageDependencies;
 }
 
 export interface NewVersionToBePublished {
-  status: Status.NewVersionToBePublished;
+  status: PackageStatus.NewVersionToBePublished;
   packageName: string;
   currentVersion: string | null;
   newVersion: string;
   changeSet: ChangeSet<{pr: number}>;
   pkgInfos: readonly PackageInfo[];
+  dependencies: PackageDependencies;
 }
 
-export type PackageStatus =
+export type PackageStatusDetail =
   | MissingTag
   | NoUpdateRequired
   | NewVersionToBePublished;
 
 export type SuccessPackageStatus = NoUpdateRequired | NewVersionToBePublished;
 
-export function isPackageStatus<TStatus extends Status>(status: TStatus) {
+export function isPackageStatus<TStatus extends PackageStatus>(
+  status: TStatus,
+) {
   return (
-    packageStatus: PackageStatus,
-  ): packageStatus is Extract<PackageStatus, {status: TStatus}> =>
+    packageStatus: PackageStatusDetail,
+  ): packageStatus is Extract<PackageStatusDetail, {status: TStatus}> =>
     packageStatus.status === status;
 }
 
 export default async function getPackageStatuses(
-  {dirname, owner, name}: PublishConfig,
   client: GitHubClient,
-  pkgInfos: Map<string, PackageInfo[]>,
+  {owner, name}: Repository,
+  pkgInfos: ListedPackages,
+  getCommits: (
+    sinceCommitSha: string | undefined,
+  ) => Promise<
+    readonly (string | {associatedPullRequests: {number: number}[]})[]
+  >,
 ) {
   const getChangeLogsFromCommits = getChangeLogFetcher(
     client,
@@ -86,26 +95,31 @@ export default async function getPackageStatuses(
       return undefined;
     },
   );
-  const commitsLoader = new DataLoader(async (since: readonly string[]) => {
-    return await Promise.all(
-      since.map((t) => getCommits(dirname, t || undefined)),
-    );
-  });
+  const commitsLoader = new DataLoader(
+    async (sinceCommitSha: readonly string[]) => {
+      return await Promise.all(
+        sinceCommitSha.map((sha) => getCommits(sha || undefined)),
+      );
+    },
+  );
 
   const packages = await Promise.all(
     [...pkgInfos.entries()].map(
-      async ([packageName, pkgInfos]): Promise<PackageStatus> => {
-        const currentVersion = getCurrentVerion(pkgInfos);
+      async ([packageName, {infos, dependencies}]): Promise<
+        PackageStatusDetail
+      > => {
+        const currentVersion = getCurrentVerion(infos);
         const currentTag = currentVersion
-          ? pkgInfos.find((info) => info.versionTag?.version === currentVersion)
+          ? infos.find((info) => info.versionTag?.version === currentVersion)
               ?.versionTag
           : null;
         if (currentVersion && !currentTag) {
           return {
-            status: Status.MissingTag,
+            status: PackageStatus.MissingTag,
             packageName,
             currentVersion,
-            pkgInfos,
+            pkgInfos: infos,
+            dependencies,
           };
         }
         const commits = await commitsLoader.load(
@@ -130,21 +144,23 @@ export default async function getPackageStatuses(
         const newVersion = getNewVersion(currentVersion, changeSet);
         if (!newVersion) {
           return {
-            status: Status.NoUpdateRequired,
+            status: PackageStatus.NoUpdateRequired,
             currentVersion,
             newVersion: currentVersion,
             packageName,
-            pkgInfos,
+            pkgInfos: infos,
+            dependencies,
           };
         }
 
         return {
-          status: Status.NewVersionToBePublished,
+          status: PackageStatus.NewVersionToBePublished,
           currentVersion,
           newVersion,
           packageName,
           changeSet,
-          pkgInfos,
+          pkgInfos: infos,
+          dependencies,
         };
       },
     ),
@@ -174,20 +190,32 @@ export function getChangeLogFetcher<TChangeLog>(
       );
     },
   );
-  return async function getChangeLog(commitShas: readonly string[]) {
+  return async function getChangeLog(
+    commitShas: readonly (
+      | string
+      | {associatedPullRequests: {number: number}[]}
+    )[],
+  ) {
     const pullRequests = [
       ...new Set(
-        (await pullRequestsFromCommit.loadMany(commitShas))
-          .map((v) => {
+        [
+          ...(
+            await pullRequestsFromCommit.loadMany(commitShas.filter(isString))
+          ).map((v) => {
             if (v instanceof Error) {
               throw v;
             }
             return v;
-          })
-          .reduce((a, b) => {
-            a.push(...b);
-            return a;
-          }, []),
+          }),
+          ...commitShas
+            .filter(notFn(isString))
+            .map(({associatedPullRequests}) =>
+              associatedPullRequests.map((pr) => pr.number),
+            ),
+        ].reduce((a, b) => {
+          a.push(...b);
+          return a;
+        }, []),
       ),
     ];
     return (await commentFromPullRequest.loadMany(pullRequests)).map((s) => {

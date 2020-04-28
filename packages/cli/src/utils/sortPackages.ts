@@ -1,5 +1,3 @@
-import {PublishConfig, PackageDependencies} from '../types';
-import {getDependencies} from '../PublishTargets';
 import {SuccessPackageStatus} from './getPackageStatuses';
 
 export interface CircularPackages {
@@ -14,27 +12,17 @@ export interface SortedPackages {
 export type SortResult = CircularPackages | SortedPackages;
 
 export default async function sortPackages(
-  config: Pick<PublishConfig, 'dirname'>,
   statuses: SuccessPackageStatus[],
 ): Promise<SortResult> {
   const input = new Map(
     await Promise.all(
-      statuses.map(
-        async (pkg) =>
-          [
-            pkg.packageName,
-            {pkg, dependencies: await getDependencies(config, pkg)},
-          ] as const,
-      ),
+      statuses.map(async (pkg) => [pkg.packageName, pkg] as const),
     ),
   );
   function putPackage(
     stack: readonly string[],
     resultSoFar: SortedPackages,
-    {
-      pkg,
-      dependencies,
-    }: {pkg: SuccessPackageStatus; dependencies: PackageDependencies},
+    pkg: SuccessPackageStatus,
   ): SortResult {
     if (resultSoFar.packages.includes(pkg)) {
       return resultSoFar;
@@ -53,7 +41,7 @@ export default async function sortPackages(
     const childStack = [...stack, pkg.packageName];
 
     for (const kind of ['required', 'optional', 'development'] as const) {
-      for (const dependencyName of dependencies[kind]) {
+      for (const dependencyName of pkg.dependencies[kind]) {
         const dep = input.get(dependencyName);
         if (dep) {
           const child = putPackage(childStack, result, dep);

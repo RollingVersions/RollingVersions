@@ -134,9 +134,7 @@ export const getAllCommits: typeof real.getAllCommits = async function*(
   for (const commit of commits.slice().reverse()) {
     yield {
       oid: commit.sha,
-      associatedPullRequests: {
-        nodes: commit.pullRequests.map((n) => ({number: n})),
-      },
+      associatedPullRequests: commit.pullRequests.map((n) => ({number: n})),
     };
   }
 };

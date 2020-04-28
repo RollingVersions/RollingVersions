@@ -12,17 +12,24 @@ test('listPackages - single npm package', async () => {
   expect(await listPackages(getAllTags(dirname), getAllFiles(dirname)))
     .toMatchInlineSnapshot(`
     Map {
-      "example-package" => Array [
-        Object {
-          "notToBePublished": false,
-          "packageName": "example-package",
-          "path": "package.json",
-          "publishConfigAccess": "public",
-          "publishTarget": "npm",
-          "registryVersion": null,
-          "versionTag": null,
+      "example-package" => Object {
+        "dependencies": Object {
+          "development": Array [],
+          "optional": Array [],
+          "required": Array [],
         },
-      ],
+        "infos": Array [
+          Object {
+            "notToBePublished": false,
+            "packageName": "example-package",
+            "path": "package.json",
+            "publishConfigAccess": "public",
+            "publishTarget": "npm",
+            "registryVersion": null,
+            "versionTag": null,
+          },
+        ],
+      },
     }
   `);
   newCommit({tags: ['1.0.0']});
@@ -32,21 +39,28 @@ test('listPackages - single npm package', async () => {
   expect(await listPackages(getAllTags(dirname), getAllFiles(dirname)))
     .toMatchInlineSnapshot(`
     Map {
-      "example-package" => Array [
-        Object {
-          "notToBePublished": false,
-          "packageName": "example-package",
-          "path": "package.json",
-          "publishConfigAccess": "public",
-          "publishTarget": "npm",
-          "registryVersion": "2.0.0",
-          "versionTag": Object {
-            "commitSha": "COMMIT_SHA_2",
-            "name": "2.0.0",
-            "version": "2.0.0",
-          },
+      "example-package" => Object {
+        "dependencies": Object {
+          "development": Array [],
+          "optional": Array [],
+          "required": Array [],
         },
-      ],
+        "infos": Array [
+          Object {
+            "notToBePublished": false,
+            "packageName": "example-package",
+            "path": "package.json",
+            "publishConfigAccess": "public",
+            "publishTarget": "npm",
+            "registryVersion": "2.0.0",
+            "versionTag": Object {
+              "commitSha": "COMMIT_SHA_2",
+              "name": "2.0.0",
+              "version": "2.0.0",
+            },
+          },
+        ],
+      },
     }
   `);
 });
@@ -71,28 +85,42 @@ test('listPackages - multiple npm packages', async () => {
   expect(await listPackages(getAllTags(dirname), getAllFiles(dirname)))
     .toMatchInlineSnapshot(`
     Map {
-      "@root-package/a" => Array [
-        Object {
-          "notToBePublished": false,
-          "packageName": "@root-package/a",
-          "path": "package.json",
-          "publishConfigAccess": "restricted",
-          "publishTarget": "npm",
-          "registryVersion": null,
-          "versionTag": null,
+      "@root-package/a" => Object {
+        "dependencies": Object {
+          "development": Array [],
+          "optional": Array [],
+          "required": Array [],
         },
-      ],
-      "@root-package/b" => Array [
-        Object {
-          "notToBePublished": false,
-          "packageName": "@root-package/b",
-          "path": "package.json",
-          "publishConfigAccess": "restricted",
-          "publishTarget": "npm",
-          "registryVersion": null,
-          "versionTag": null,
+        "infos": Array [
+          Object {
+            "notToBePublished": false,
+            "packageName": "@root-package/a",
+            "path": "package.json",
+            "publishConfigAccess": "restricted",
+            "publishTarget": "npm",
+            "registryVersion": null,
+            "versionTag": null,
+          },
+        ],
+      },
+      "@root-package/b" => Object {
+        "dependencies": Object {
+          "development": Array [],
+          "optional": Array [],
+          "required": Array [],
         },
-      ],
+        "infos": Array [
+          Object {
+            "notToBePublished": false,
+            "packageName": "@root-package/b",
+            "path": "package.json",
+            "publishConfigAccess": "restricted",
+            "publishTarget": "npm",
+            "registryVersion": null,
+            "versionTag": null,
+          },
+        ],
+      },
     }
   `);
   newCommit({tags: ['@root-package/a@1.0.0']});
@@ -102,32 +130,46 @@ test('listPackages - multiple npm packages', async () => {
   expect(await listPackages(getAllTags(dirname), getAllFiles(dirname)))
     .toMatchInlineSnapshot(`
     Map {
-      "@root-package/a" => Array [
-        Object {
-          "notToBePublished": false,
-          "packageName": "@root-package/a",
-          "path": "package.json",
-          "publishConfigAccess": "restricted",
-          "publishTarget": "npm",
-          "registryVersion": "2.0.0",
-          "versionTag": Object {
-            "commitSha": "COMMIT_SHA_2",
-            "name": "@root-package/a@2.0.0",
-            "version": "2.0.0",
+      "@root-package/a" => Object {
+        "dependencies": Object {
+          "development": Array [],
+          "optional": Array [],
+          "required": Array [],
+        },
+        "infos": Array [
+          Object {
+            "notToBePublished": false,
+            "packageName": "@root-package/a",
+            "path": "package.json",
+            "publishConfigAccess": "restricted",
+            "publishTarget": "npm",
+            "registryVersion": "2.0.0",
+            "versionTag": Object {
+              "commitSha": "COMMIT_SHA_2",
+              "name": "@root-package/a@2.0.0",
+              "version": "2.0.0",
+            },
           },
+        ],
+      },
+      "@root-package/b" => Object {
+        "dependencies": Object {
+          "development": Array [],
+          "optional": Array [],
+          "required": Array [],
         },
-      ],
-      "@root-package/b" => Array [
-        Object {
-          "notToBePublished": false,
-          "packageName": "@root-package/b",
-          "path": "package.json",
-          "publishConfigAccess": "restricted",
-          "publishTarget": "npm",
-          "registryVersion": null,
-          "versionTag": null,
-        },
-      ],
+        "infos": Array [
+          Object {
+            "notToBePublished": false,
+            "packageName": "@root-package/b",
+            "path": "package.json",
+            "publishConfigAccess": "restricted",
+            "publishTarget": "npm",
+            "registryVersion": null,
+            "versionTag": null,
+          },
+        ],
+      },
     }
   `);
 });
