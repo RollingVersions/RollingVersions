@@ -35,6 +35,23 @@ export async function getPullRequestStatus(
     ).repository?.pullRequest || undefined
   );
 }
+export async function getViewer(client: GitHubClient) {
+  return (await gh.getViewer(client)).viewer;
+}
+export async function getPullRequestAuthor(
+  client: GitHubClient,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
+) {
+  return (
+    (
+      await gh.getPullRequestAuthor(client, {
+        owner: pr.repo.owner,
+        name: pr.repo.name,
+        number: pr.number,
+      })
+    ).repository?.pullRequest?.author || null
+  );
+}
 
 export async function getRepositoryViewerPermissions(
   client: GitHubClient,
@@ -43,6 +60,15 @@ export async function getRepositoryViewerPermissions(
   return (
     (await gh.getRepositoryViewerPermissions(client, repo)).repository
       ?.viewerPermission || null
+  );
+}
+export async function getRepositoryIsPublic(
+  client: GitHubClient,
+  repo: Repository,
+) {
+  return (
+    (await gh.getRepositoryIsPrivate(client, repo)).repository?.isPrivate ===
+    false
   );
 }
 
@@ -298,7 +324,12 @@ export async function* getAllCommits(
       undefined,
   )) {
     if (commit) {
-      yield commit;
+      yield {
+        oid: commit.oid,
+        associatedPullRequests: (
+          commit.associatedPullRequests?.nodes || []
+        ).filter(isTruthy),
+      };
     }
   }
 }

@@ -1,5 +1,5 @@
 import {Response, Request} from 'express';
-import {PullRequest} from 'rollingversions/lib/types';
+import {PullRequest, Repository} from 'rollingversions/lib/types';
 
 const validRequests = new WeakSet<Request>();
 export default function validateParams() {
@@ -29,4 +29,28 @@ export function parseParams(
   }
   const {owner, repo, pull_number} = req.params;
   return {repo: {owner, name: repo}, number: parseInt(pull_number, 10)};
+}
+
+const validRepoRequests = new WeakSet<Request>();
+export function validateRepoParams() {
+  return (req: Request, res: Response, next: (err?: any) => void) => {
+    const {owner, repo} = req.params;
+    if (!owner) {
+      res.status(400).send('Expected a owner parameter');
+    } else if (!repo) {
+      res.status(400).send('Expected a repo parameter');
+    } else {
+      validRepoRequests.add(req);
+      next();
+    }
+  };
+}
+export function parseRepoParams(req: Request): Repository {
+  if (!validRepoRequests.has(req)) {
+    throw new Error(
+      'This request has not been passed through the validation middleware',
+    );
+  }
+  const {owner, repo} = req.params;
+  return {owner, name: repo};
 }

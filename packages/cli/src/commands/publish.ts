@@ -1,12 +1,12 @@
 import {PublishConfig} from '../types';
 import {GitHubClient, auth} from '../services/github';
-import {getAllTags, getAllFiles} from '../services/git';
+import {getAllTags, getAllFiles, getCommits} from '../services/git';
 import getPackageStatuses, {
   NoUpdateRequired,
   SuccessPackageStatus,
   MissingTag,
   NewVersionToBePublished,
-  Status,
+  PackageStatus,
   isPackageStatus,
 } from '../utils/getPackageStatuses';
 import sortPackages from '../utils/sortPackages';
@@ -73,14 +73,15 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   );
 
   const unsortedPackageStatuses = await getPackageStatuses(
-    config,
     client,
+    config,
     packageInfos,
+    (lastTag) => getCommits(config.dirname, lastTag),
   );
 
   const isSuccessPackageStatus = orFn(
-    isPackageStatus(Status.NewVersionToBePublished),
-    isPackageStatus(Status.NoUpdateRequired),
+    isPackageStatus(PackageStatus.NewVersionToBePublished),
+    isPackageStatus(PackageStatus.NoUpdateRequired),
   );
   if (!arrayEvery(unsortedPackageStatuses, isSuccessPackageStatus)) {
     return {
@@ -89,7 +90,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
     };
   }
 
-  const sortResult = await sortPackages(config, unsortedPackageStatuses);
+  const sortResult = await sortPackages(unsortedPackageStatuses);
 
   if (sortResult.circular) {
     return {
@@ -107,7 +108,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
 
   if (
     !packageStatuses.some(
-      (pkg) => pkg.status === Status.NewVersionToBePublished,
+      (pkg) => pkg.status === PackageStatus.NewVersionToBePublished,
     )
   ) {
     return {
@@ -131,7 +132,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
 
   const failures: PrepublishFailures['failures'][number][] = [];
   for (const pkg of packageStatuses) {
-    if (pkg.status === Status.NewVersionToBePublished) {
+    if (pkg.status === PackageStatus.NewVersionToBePublished) {
       const reasons = [];
       const tagName = getNewTagName(packageStatuses, pkg);
       if (gitHubPrepublishInfo.tags.includes(tagName)) {
@@ -160,7 +161,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   }
 
   for (const pkg of packageStatuses) {
-    if (pkg.status === Status.NewVersionToBePublished) {
+    if (pkg.status === PackageStatus.NewVersionToBePublished) {
       await publishTarget(config, pkg, {
         packageVersions,
         packageStatuses,

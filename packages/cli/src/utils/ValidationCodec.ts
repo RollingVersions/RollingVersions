@@ -117,7 +117,13 @@ export function compressedObjectCodec<
   TVersion extends number,
   TProps extends Record<string, t.Mixed>,
   TKeys extends readonly [typeof versionSymbol, ...(keyof TProps)[]]
->(version: TVersion, name: string, props: TProps, keys: TKeys) {
+>(
+  version: TVersion,
+  name: string,
+  props: TProps,
+  keys: TKeys,
+  {deprecated}: {deprecated?: boolean} = {},
+) {
   const BaseCodec = t.tuple<
     ArrayExtract<
       TProps & Record<typeof versionSymbol, t.LiteralC<TVersion>>,
@@ -136,7 +142,7 @@ export function compressedObjectCodec<
 
   const ConversionCodec = new t.Type<FullType, CompressedType, CompressedType>(
     name,
-    ValidationCodec.is,
+    deprecated ? (_v: unknown): _v is FullType => false : ValidationCodec.is,
     (v) => {
       const result: any = {};
       keys.forEach((key, i) => {

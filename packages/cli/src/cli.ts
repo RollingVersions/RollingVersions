@@ -5,7 +5,7 @@ import printHelp from './commands/help';
 import publish, {PublishResultKind} from './commands/publish';
 import {changesToMarkdown} from './utils/Rendering';
 import {
-  Status,
+  PackageStatus,
   NoUpdateRequired,
   NewVersionToBePublished,
 } from './utils/getPackageStatuses';
@@ -109,10 +109,10 @@ switch (COMMAND) {
       logger: {
         onValidatedPackages({packages}) {
           const hasUpdates = packages.some(
-            (p) => p.status === Status.NewVersionToBePublished,
+            (p) => p.status === PackageStatus.NewVersionToBePublished,
           );
           const hasPkgsWithoutUpdates = packages.some(
-            (p) => p.status === Status.NoUpdateRequired,
+            (p) => p.status === PackageStatus.NoUpdateRequired,
           );
 
           if (hasPkgsWithoutUpdates) {
@@ -124,7 +124,7 @@ switch (COMMAND) {
             console.warn(``);
             for (const p of packages.filter(
               (p): p is NoUpdateRequired =>
-                p.status === Status.NoUpdateRequired,
+                p.status === PackageStatus.NoUpdateRequired,
             )) {
               console.warn(
                 p.currentVersion
@@ -140,7 +140,7 @@ switch (COMMAND) {
             console.warn(``);
             for (const p of packages.filter(
               (p): p is NewVersionToBePublished =>
-                p.status === Status.NewVersionToBePublished,
+                p.status === PackageStatus.NewVersionToBePublished,
             )) {
               console.warn(
                 chalk.yellow(

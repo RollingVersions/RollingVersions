@@ -29,6 +29,25 @@ query GetPullRequestHeadSha($owner: String!, $name: String!, $number: Int!) {
   }
 }
 
+query GetViewer {
+  viewer {
+    __typename
+    login
+    email
+  }
+}
+
+query GetPullRequestAuthor($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      author {
+        __typename
+        login
+      }
+    }
+  }
+}
+
 query GetPullRequestStatus($owner: String!, $name: String!, $number: Int!) {
   repository(owner: $owner, name: $name) {
     pullRequest(number: $number) {
@@ -121,6 +140,11 @@ query GetPullRequestsForCommit($owner: String!, $name: String!, $sha: String!) {
   }
 }
 
+query GetRepositoryIsPrivate($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    isPrivate
+  }
+}
 query GetRepositoryViewerPermissions($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     viewerPermission

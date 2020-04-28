@@ -48,9 +48,9 @@ test('getUnreleasedPackages', async () => {
       new Map(
         [
           ...(await listPackages(getAllTags(dirname), getAllFiles(dirname))),
-        ].map(([packageName, info]) => [
+        ].map(([packageName, {infos}]) => [
           packageName,
-          {changes: null as any, info},
+          {changes: null as any, info: infos},
         ]),
       ),
     ),

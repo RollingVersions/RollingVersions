@@ -132,6 +132,6 @@ test('renderCommentWithoutState', () => {
     - changelogversion-server
     - changelogversion-utils
 
-    [Edit changelogs](https://example.com/Foo/bar/pulls/10)"
+    [Edit changelogs](https://example.com/Foo/bar/pull/10)"
   `);
 });

@@ -1,11 +1,59 @@
-import {PullRequest} from 'rollingversions/lib/types';
+import {PullRequest, Repository} from 'rollingversions/lib/types';
+import * as gh from 'rollingversions/lib/services/github';
 import Permission from './Permission';
 import {getClientForToken, getClientForRepo} from '../getClient';
 import log from '../logger';
 
-// TODO: this should use GraphQL rather than the REST API
-
 export {Permission};
+
+/**
+ * Check the viewer's permissions on a repository. This only considers
+ * permissions from collaborators, so it can return "none" even if
+ * the repository is public.
+ */
+async function checkViewerPermissions(
+  userAuth: string,
+  repo: Repository,
+): Promise<'none' | 'view' | 'edit'> {
+  try {
+    // We create our own client in this function to prevent it being
+    // batched with any other request. This is because getRepositoryViewerPermissions
+    // can throw an error even if the repository is public.
+    const client = getClientForToken(userAuth);
+    const viewerPermission = await gh
+      .getRepositoryViewerPermissions(client, repo)
+      .catch((ex) => {
+        log({
+          event_status: 'warn',
+          event_type: 'failed_to_get_repository_viewer_permissions',
+          message: ex.stack,
+        });
+        return null;
+      });
+
+    // see: https://developer.github.com/v4/enum/repositorypermission/
+    if (
+      viewerPermission === 'ADMIN' ||
+      viewerPermission === 'MAINTAIN' ||
+      viewerPermission === 'TRIAGE' ||
+      viewerPermission === 'WRITE'
+    ) {
+      return 'edit';
+    }
+    if (viewerPermission === 'READ') {
+      return 'view';
+    }
+    return 'none';
+  } catch (ex) {
+    log({
+      event_status: 'warn',
+      event_type: 'failed_to_get_repository_viewer_permissions',
+      message: ex.stack,
+    });
+    return 'none';
+  }
+}
+
 export default async function getPermissionLevel(
   pr: Pick<PullRequest, 'repo' | 'number'>,
   userAuth: string,
@@ -15,75 +63,99 @@ export default async function getPermissionLevel(
   email: string | null;
   reason?: string;
 }> {
-  const client = getClientForToken(userAuth);
-
+  const viewerPromise = gh.getViewer(getClientForToken(userAuth));
   const [
-    repoClient,
-    {
-      data: {login, email},
-    },
+    {login, email, __typename: viewerTypeName},
+    viewerPermission,
+    pullRequest,
   ] = await Promise.all([
-    getClientForRepo(pr.repo).catch((ex) => {
-      log({
-        event_status: 'warn',
-        event_type: 'failed_to_get_client_for_pr',
-        message: ex.stack,
-      });
-      return null;
-    }),
-    client.rest.users.getAuthenticated().catch((ex) => {
-      log({
-        event_status: 'error',
-        event_type: 'failed_to_authenticate_user',
-        message: ex.stack,
-      });
-      return {data: {login: 'unknown', email: null}};
-    }),
+    viewerPromise,
+    checkViewerPermissions(userAuth, pr.repo),
+    getClientForRepo(pr.repo)
+      .then((repoClient) =>
+        Promise.all([
+          gh.getRepositoryIsPublic(repoClient, pr.repo),
+          gh.getPullRequestAuthor(repoClient, pr),
+          gh.getPullRequestStatus(repoClient, pr),
+        ] as const),
+      )
+      .catch(async (ex) => {
+        const {login, email} = await viewerPromise;
+        log({
+          event_status: 'warn',
+          event_type: 'failed_to_get_pull_request',
+          message: ex.stack,
+          login,
+          email,
+          repo_owner: pr.repo.owner,
+          repo_name: pr.repo.name,
+          pull_number: pr.number,
+        });
+        return null;
+      }),
   ] as const);
 
-  if (!repoClient) {
-    return {permission: 'none', login, email, reason: 'no_repo_client'};
+  if (!pullRequest) {
+    return {permission: 'none', login, email};
   }
 
-  const [pull, permission] = await Promise.all([
-    repoClient.rest.pulls
-      .get({
-        owner: pr.repo.owner,
-        repo: pr.repo.name,
-        pull_number: pr.number,
-      })
-      .catch(() => null),
-    repoClient.rest.repos
-      .getCollaboratorPermissionLevel({
-        owner: pr.repo.owner,
-        repo: pr.repo.name,
-        username: login,
-      })
-      .then(
-        ({data}) => data.permission,
-        () => 'none',
-      ),
-  ]);
+  const [isPublic, author, status] = pullRequest;
 
-  if (!pull) {
-    return {permission: 'none', login, email, reason: 'no_pull_request_found'};
-  }
+  const viewerIsAuthor =
+    login === author?.login && viewerTypeName === author.__typename;
+  const isPrOpen = !(status?.closed || status?.merged);
 
-  if (permission === 'admin' || permission === 'write') {
+  if (viewerPermission === 'edit') {
     return {permission: 'edit', login, email};
   }
 
-  if (pull.data.merged) {
-    return {
-      permission: 'view',
-      login,
-      email,
-    };
+  if (isPublic || viewerPermission === 'view') {
+    if (viewerIsAuthor && isPrOpen) {
+      return {permission: 'edit', login, email};
+    }
+    return {permission: 'view', login, email};
   }
 
-  if (pull.data.user.login === login) {
+  return {permission: 'none', login, email};
+}
+
+export async function getRepoPermissionLevel(
+  repo: Repository,
+  userAuth: string,
+): Promise<{
+  permission: Permission;
+  login: string;
+  email: string | null;
+  reason?: string;
+}> {
+  const viewerPromise = gh.getViewer(getClientForToken(userAuth));
+  const [{login, email}, viewerPermission, isPublic] = await Promise.all([
+    viewerPromise,
+    checkViewerPermissions(userAuth, repo),
+    getClientForRepo(repo)
+      .then((repoClient) => gh.getRepositoryIsPublic(repoClient, repo))
+      .catch(async (ex) => {
+        const {login, email} = await viewerPromise;
+        log({
+          event_status: 'warn',
+          event_type: 'failed_to_get_repo',
+          message: ex.stack,
+          login,
+          email,
+          repo_owner: repo.owner,
+          repo_name: repo.name,
+        });
+        return false;
+      }),
+  ] as const);
+
+  if (viewerPermission === 'edit') {
     return {permission: 'edit', login, email};
   }
 
-  return {permission: 'view', login, email};
+  if (isPublic || viewerPermission === 'view') {
+    return {permission: 'view', login, email};
+  }
+
+  return {permission: 'none', login, email};
 }

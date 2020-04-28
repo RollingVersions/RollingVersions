@@ -3,22 +3,117 @@ import {Router} from 'express';
 import getUnreleasedPackages from 'rollingversions/lib/utils/getUnreleasedPackages';
 import {requiresAuth} from './auth';
 import {getClientForRepo} from '../getClient';
-import {PullRequestResponseCodec} from '../../types';
+import {PullRequestResponseCodec, RepoResponse} from '../../types';
 import updatePullRequestWithState from '../actions/updatePullRequestWithState';
-import validateParams, {parseParams} from './utils/validateParams';
+import validateParams, {
+  parseParams,
+  validateRepoParams,
+  parseRepoParams,
+} from './utils/validateParams';
 import checkPermissions, {
   getPermission,
   getUser,
+  checkRepoPermissions,
 } from './utils/checkPermissions';
 import validateBody, {getBody} from './utils/validateBody';
 import getPullRequestState from '../getPullRequestState';
 import log from '../logger';
 import {ChangeTypes} from 'rollingversions/lib/types/PullRequestState';
+import listPackages from 'rollingversions/lib/utils/listPackages';
+import {
+  getAllTags,
+  getAllFiles,
+  getAllCommits,
+  getBranch,
+} from 'rollingversions/lib/services/github';
+import getPackageStatuses, {
+  isPackageStatus,
+  PackageStatus,
+} from 'rollingversions/lib/utils/getPackageStatuses';
+import splitAsyncGenerator from 'rollingversions/lib/ts-utils/splitAsyncGenerator';
+import orFn from 'rollingversions/lib/ts-utils/orFn';
+import arrayEvery from 'rollingversions/lib/ts-utils/arrayEvery';
+import sortPackages from 'rollingversions/lib/utils/sortPackages';
 
 const appMiddleware = Router();
 
-const loadStart = new Map<string, number>();
+appMiddleware.get(
+  `/:owner/:repo/json`,
+  requiresAuth({api: true}),
+  validateRepoParams(),
+  checkRepoPermissions(['view', 'edit']),
+  async (req, res, next) => {
+    try {
+      const repo = parseRepoParams(req);
+      const client = await getClientForRepo(repo);
 
+      const branch = await getBranch(client, repo);
+      const packageInfos = await listPackages(
+        getAllTags(client, repo),
+        getAllFiles(client, repo),
+      );
+
+      const getAllCommitsCached = splitAsyncGenerator(
+        getAllCommits(client, repo),
+      );
+
+      const unsortedPackageStatuses = await getPackageStatuses(
+        client,
+        repo,
+        packageInfos,
+        async (sinceCommitSha) => {
+          const results: {associatedPullRequests: {number: number}[]}[] = [];
+          for await (const commit of getAllCommitsCached()) {
+            if (commit.oid === sinceCommitSha) {
+              return results;
+            }
+            results.push(commit);
+          }
+          return results;
+        },
+      );
+
+      const isSuccessPackageStatus = orFn(
+        isPackageStatus(PackageStatus.NewVersionToBePublished),
+        isPackageStatus(PackageStatus.NoUpdateRequired),
+      );
+
+      if (!arrayEvery(unsortedPackageStatuses, isSuccessPackageStatus)) {
+        const response: RepoResponse = {
+          headSha: branch?.headSha || null,
+          packages: unsortedPackageStatuses,
+          cycleDetected: null,
+        };
+        res.json(response);
+        return;
+      }
+
+      const sortResult = await sortPackages(unsortedPackageStatuses);
+
+      if (sortResult.circular) {
+        const response: RepoResponse = {
+          headSha: branch?.headSha || null,
+          packages: unsortedPackageStatuses,
+          cycleDetected: sortResult.packageNames,
+        };
+        res.json(response);
+        return;
+      } else {
+        const response: RepoResponse = {
+          headSha: branch?.headSha || null,
+          packages: sortResult.packages,
+          cycleDetected: null,
+        };
+        res.json(response);
+        return;
+      }
+    } catch (ex) {
+      next(ex);
+    }
+  },
+);
+
+const loadStart = new Map<string, number>();
 setInterval(() => {
   for (const [key, timestamp] of loadStart) {
     if (Date.now() - timestamp > 60 * 60_000) {
@@ -27,7 +122,7 @@ setInterval(() => {
   }
 }, 60_000);
 appMiddleware.get(
-  `/:owner/:repo/pulls/:pull_number/json`,
+  `/:owner/:repo/pull/:pull_number/json`,
   requiresAuth({api: true}),
   validateParams(),
   checkPermissions(['view', 'edit']),
@@ -83,7 +178,7 @@ appMiddleware.get(
 );
 
 appMiddleware.post(
-  `/:owner/:repo/pulls/:pull_number`,
+  `/:owner/:repo/pull/:pull_number`,
   requiresAuth({api: true}),
   validateParams(),
   checkPermissions(['edit']),

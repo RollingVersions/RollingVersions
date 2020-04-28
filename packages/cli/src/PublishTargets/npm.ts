@@ -110,11 +110,10 @@ export async function getPackageInfo(
 }
 
 export async function getDependencies(
-  config: Pick<PublishConfig, 'dirname'>,
-  pkg: PackageInfo,
+  _path: string,
+  content: string,
 ): Promise<PackageDependencies> {
-  const original = await readRepoFile(config.dirname, pkg.path, 'utf8');
-  const pkgData: unknown = JSON.parse(original);
+  const pkgData: unknown = JSON.parse(content);
 
   const required = [
     ...(isObject(pkgData) && isObject(pkgData.dependencies)

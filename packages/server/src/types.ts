@@ -9,6 +9,13 @@ import PullRequestState, {
   ChangeSetCodec,
 } from 'rollingversions/lib/types/PullRequestState';
 import Permission, {PermissionCodec} from './server/permissions/Permission';
+import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
+
+export interface RepoResponse {
+  headSha: string | null;
+  packages: readonly PackageStatusDetail[];
+  cycleDetected: readonly string[] | null;
+}
 
 export interface PullRequestResponse {
   permission: Permission;

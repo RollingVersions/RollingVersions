@@ -1,6 +1,6 @@
 import {pathMayContainPackage, getPackageInfo} from '../PublishTargets';
 import getVersionTag from './getVersionTag';
-import {PackageInfo} from '../types';
+import {PackageInfo, PackageDependencies} from '../types';
 
 async function listPackagesWithoutTags(
   files: AsyncGenerator<
@@ -12,7 +12,13 @@ async function listPackagesWithoutTags(
     any
   >,
 ) {
-  const packagesByName = new Map<string, Omit<PackageInfo, 'versionTag'>[]>();
+  const packagesByName = new Map<
+    string,
+    {
+      infos: Omit<PackageInfo, 'versionTag'>[];
+      dependencies: PackageDependencies;
+    }
+  >();
   const pending: Promise<void>[] = [];
   async function pushFile(file: {
     path: string;
@@ -20,13 +26,20 @@ async function listPackagesWithoutTags(
   }) {
     const contents = await file.getContents();
     const packages = await getPackageInfo(file.path, contents);
-    for (const p of packages) {
-      let r = packagesByName.get(p.packageName);
+    for (const {info, dependencies} of packages) {
+      const r = packagesByName.get(info.packageName);
       if (!r) {
-        r = [];
-        packagesByName.set(p.packageName, r);
+        packagesByName.set(info.packageName, {infos: [info], dependencies});
+      } else {
+        r.infos.push(info);
+        for (const type of ['required', 'optional', 'development'] as const) {
+          r.dependencies[type].push(
+            ...dependencies[type].filter(
+              (d) => !r.dependencies[type].includes(d),
+            ),
+          );
+        }
       }
-      r.push(p);
     }
   }
   for await (const file of files) {
@@ -40,6 +53,10 @@ async function listPackagesWithoutTags(
   return packagesByName;
 }
 
+export type ListedPackages = Map<
+  string,
+  {infos: PackageInfo[]; dependencies: PackageDependencies}
+>;
 export default async function listPackages(
   allTagsPromise: Promise<{commitSha: string; name: string}[]>,
   files: AsyncGenerator<
@@ -50,7 +67,7 @@ export default async function listPackages(
     any,
     any
   >,
-) {
+): Promise<ListedPackages> {
   const [allTags, packagesByName] = await Promise.all([
     allTagsPromise,
     listPackagesWithoutTags(files),
@@ -58,20 +75,23 @@ export default async function listPackages(
 
   return new Map(
     [...packagesByName.entries()].map(
-      ([packageName, packageInfos]) =>
+      ([packageName, {infos, dependencies}]) =>
         [
           packageName,
-          packageInfos.map(
-            (pi): PackageInfo => ({
-              ...pi,
-              versionTag: getVersionTag(
-                allTags,
-                packageName,
-                pi.registryVersion,
-                {isMonoRepo: packagesByName.size > 1},
-              ),
-            }),
-          ),
+          {
+            infos: infos.map(
+              (pi): PackageInfo => ({
+                ...pi,
+                versionTag: getVersionTag(
+                  allTags,
+                  packageName,
+                  pi.registryVersion,
+                  {isMonoRepo: packagesByName.size > 1},
+                ),
+              }),
+            ),
+            dependencies,
+          },
         ] as const,
     ),
   );

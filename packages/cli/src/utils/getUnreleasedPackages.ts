@@ -31,7 +31,7 @@ export default async function getUnreleasedPackages(
       }
     }
     if (
-      commit.associatedPullRequests?.nodes?.some(
+      commit.associatedPullRequests.some(
         (pr) => pr?.number === pullRequest.number,
       ) ||
       !unknownPackages.size

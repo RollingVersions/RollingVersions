@@ -28,43 +28,21 @@ export function pathMayContainPackage(filename: string): boolean {
 export async function getPackageInfo(
   filename: string,
   content: string,
-): Promise<Omit<PackageInfo, 'versionTag'>[]> {
+): Promise<
+  {info: Omit<PackageInfo, 'versionTag'>; dependencies: PackageDependencies}[]
+> {
   return (
     await Promise.all(
       Object.values(targets)
         .filter((p) => p.pathMayContainPackage(filename))
-        .map((p) => p.getPackageInfo(filename, content)),
+        .map(async (p) => {
+          const info = await p.getPackageInfo(filename, content);
+          if (!info) return info;
+          const dependencies = await p.getDependencies(filename, content);
+          return {info, dependencies};
+        }),
     )
   ).filter(isTruthy);
-}
-
-export async function getDependencies(
-  config: Pick<PublishConfig, 'dirname'>,
-  pkg: SuccessPackageStatus,
-) {
-  const deps = await Promise.all(
-    pkg.pkgInfos.map((pi) =>
-      targets[pi.publishTarget].getDependencies(config, pi),
-    ),
-  );
-
-  if (deps.length === 1) return deps[0];
-
-  const result: PackageDependencies = {
-    required: [],
-    optional: [],
-    development: [],
-  };
-
-  deps.forEach((dependencies) => {
-    for (const key of ['required', 'optional', 'development'] as const) {
-      result[key].push(
-        ...dependencies[key].filter((d) => !result[key].includes(d)),
-      );
-    }
-  });
-
-  return result;
 }
 
 export async function prepublish(
