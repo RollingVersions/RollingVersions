@@ -128,7 +128,9 @@ appMiddleware.post(
         repo: repo.name,
         event_type: 'rollingversions_publish_approved',
       });
-      res.redirect(`https://github.com/${repo.owner}/${repo.name}/actions`);
+      res.redirect(
+        `https://github.com/${repo.owner}/${repo.name}/actions?query=workflow%3ARelease`,
+      );
     } catch (ex) {
       next(ex);
     }
