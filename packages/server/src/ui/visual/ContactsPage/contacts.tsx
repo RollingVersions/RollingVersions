@@ -1,5 +1,6 @@
 import React from 'react';
 import ContactMethod from './contactMethod';
+import EmailIcon from '../../icons/emailMono.svg';
 
 // TODO make more obvious that these are links?
 // TODO twitter link - no idea how to do this
@@ -11,7 +12,10 @@ export default function Contacts() {
         contactDescription="By Email"
         contactLink={
           <a href="mailto: hi@rollingversions.com?subject=Rolling Versions">
-            hi@rollingversions.com
+            <span>
+              <img src={EmailIcon} height="1em" alt="Email Icon" />{' '}
+              hi@rollingversions.com
+            </span>
           </a>
         }
       />
