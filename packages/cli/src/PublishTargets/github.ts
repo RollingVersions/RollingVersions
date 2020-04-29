@@ -30,7 +30,7 @@ export async function checkGitHubReleaseStatus(
   if (!permission || !['ADMIN', 'MAINTAIN', 'WRITE'].includes(permission)) {
     return {
       ok: false,
-      reason: `This viewer does not have permisison to publish tags/releases to GitHub`,
+      reason: `This GitHub token does not have permisison to publish tags/releases to GitHub. It has viewerPermission ${permission} but needs one of ADMIN, MAINTAIN or WRITE`,
     };
   }
   if (!branch) {
