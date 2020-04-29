@@ -283,44 +283,36 @@ export async function updateStatus(
   });
 }
 
-export async function getPullRequestsForCommit(
-  client: GitHubClient,
-  repo: Repository,
-  sha: string,
-) {
-  const pulls = await gh.getPullRequestsForCommit(client, {
-    ...repo,
-    sha,
-  });
-  return (
-    (pulls.repository?.object?.__typename === 'Commit' &&
-      pulls.repository.object.associatedPullRequests?.nodes
-        ?.map((pr) => pr?.number)
-        .filter(isTruthy)) ||
-    []
-  );
-}
-
 export async function* getAllCommits(
   client: GitHubClient,
   repo: Repository,
-  {pageSize = 20}: {pageSize?: number} = {},
+  {
+    pageSize = 20,
+    deployBranch,
+  }: {pageSize?: number; deployBranch: string | null},
 ) {
   for await (const commit of paginate(
-    (after) =>
-      gh.getAllCommits(client, {
-        ...repo,
-        after,
-        first: pageSize,
-      }),
+    async (after) =>
+      deployBranch
+        ? gh.getAllCommits(client, {
+            ...repo,
+            after,
+            first: pageSize,
+            qualifiedName: `refs/heads/${deployBranch}`,
+          })
+        : gh.getAllDefaultBranchCommits(client, {
+            ...repo,
+            after,
+            first: pageSize,
+          }),
     (page) =>
-      (page?.repository?.defaultBranchRef?.target?.__typename === 'Commit' &&
-        page.repository.defaultBranchRef.target.history.nodes) ||
+      (page?.repository?.branch?.target?.__typename === 'Commit' &&
+        page.repository.branch.target.history.nodes) ||
       [],
     (page): string | undefined =>
-      (page?.repository?.defaultBranchRef?.target?.__typename === 'Commit' &&
-        page.repository.defaultBranchRef.target.history.pageInfo.hasNextPage &&
-        page.repository.defaultBranchRef.target.history.pageInfo.endCursor) ||
+      (page?.repository?.branch?.target?.__typename === 'Commit' &&
+        page.repository.branch.target.history.pageInfo.hasNextPage &&
+        page.repository.branch.target.history.pageInfo.endCursor) ||
       undefined,
   )) {
     if (commit) {

@@ -114,18 +114,6 @@ export const updateStatus: typeof real.updateStatus = async (
   };
 };
 
-export const getPullRequestsForCommit: typeof real.getPullRequestsForCommit = async (
-  _client,
-  repo,
-  sha,
-) => {
-  const commit = byRepo(repo).commits.find((c) => c.sha === sha);
-  if (!commit) {
-    throw new Error(`The mock has no commit ${sha} in ${repo.name}`);
-  }
-  return commit.pullRequests;
-};
-
 export const getAllCommits: typeof real.getAllCommits = async function*(
   _client,
   repo,

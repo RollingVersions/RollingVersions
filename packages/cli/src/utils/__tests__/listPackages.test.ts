@@ -3,14 +3,16 @@ import {
   createRepository,
   createNpmPackage,
 } from '../../services/__mock_services__';
-import {getAllTags, getAllFiles} from '../../services/git';
+import {getAllFiles} from '../../services/git';
+import {getAllTags} from '../../services/github';
 
 test('listPackages - single npm package', async () => {
-  const {dirname, newCommit} = createRepository({
+  const {dirname, repo, newCommit} = createRepository({
     files: [{path: 'package.json', contents: '{"name": "example-package"}'}],
   });
-  expect(await listPackages(getAllTags(dirname), getAllFiles(dirname)))
-    .toMatchInlineSnapshot(`
+  expect(
+    await listPackages(getAllTags(null as any, repo), getAllFiles(dirname)),
+  ).toMatchInlineSnapshot(`
     Map {
       "example-package" => Object {
         "dependencies": Object {
@@ -36,8 +38,9 @@ test('listPackages - single npm package', async () => {
   newCommit({tags: ['2.0.0']});
   newCommit({tags: ['3.0.0']});
   createNpmPackage('example-package', {versions: ['2.0.0']});
-  expect(await listPackages(getAllTags(dirname), getAllFiles(dirname)))
-    .toMatchInlineSnapshot(`
+  expect(
+    await listPackages(getAllTags(null as any, repo), getAllFiles(dirname)),
+  ).toMatchInlineSnapshot(`
     Map {
       "example-package" => Object {
         "dependencies": Object {
@@ -66,7 +69,7 @@ test('listPackages - single npm package', async () => {
 });
 
 test('listPackages - multiple npm packages', async () => {
-  const {dirname, newCommit} = createRepository({
+  const {dirname, repo, newCommit} = createRepository({
     files: [
       {
         path: 'package.json',
@@ -82,8 +85,9 @@ test('listPackages - multiple npm packages', async () => {
       },
     ],
   });
-  expect(await listPackages(getAllTags(dirname), getAllFiles(dirname)))
-    .toMatchInlineSnapshot(`
+  expect(
+    await listPackages(getAllTags(null as any, repo), getAllFiles(dirname)),
+  ).toMatchInlineSnapshot(`
     Map {
       "@root-package/a" => Object {
         "dependencies": Object {
@@ -127,8 +131,9 @@ test('listPackages - multiple npm packages', async () => {
   newCommit({tags: ['@root-package/a@2.0.0']});
   newCommit({tags: ['@root-package/a@3.0.0']});
   createNpmPackage('@root-package/a', {versions: ['2.0.0']});
-  expect(await listPackages(getAllTags(dirname), getAllFiles(dirname)))
-    .toMatchInlineSnapshot(`
+  expect(
+    await listPackages(getAllTags(null as any, repo), getAllFiles(dirname)),
+  ).toMatchInlineSnapshot(`
     Map {
       "@root-package/a" => Object {
         "dependencies": Object {

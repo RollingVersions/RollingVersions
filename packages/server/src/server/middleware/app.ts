@@ -54,7 +54,7 @@ appMiddleware.get(
       );
 
       const getAllCommitsCached = splitAsyncGenerator(
-        getAllCommits(client, repo),
+        getAllCommits(client, repo, {deployBranch: null}),
       );
 
       const unsortedPackageStatuses = await getPackageStatuses(

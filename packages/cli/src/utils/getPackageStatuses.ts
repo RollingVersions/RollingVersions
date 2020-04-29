@@ -1,9 +1,5 @@
 import DataLoader from 'dataloader';
-import {
-  GitHubClient,
-  readComments,
-  getPullRequestsForCommit,
-} from '../services/github';
+import {GitHubClient, readComments} from '../services/github';
 import {getCurrentVerion, getNewVersion} from '../utils/Versioning';
 import {
   PackageInfo,
@@ -17,8 +13,6 @@ import {readState} from './CommentState';
 import isTruthy from '../ts-utils/isTruthy';
 import {COMMENT_GUID} from './Rendering';
 import getEmptyChangeSet from './getEmptyChangeSet';
-import isString from '../ts-utils/isString';
-import notFn from '../ts-utils/notFn';
 import {ListedPackages} from './listPackages';
 import PackageStatus from '../types/PackageStatus';
 
@@ -73,12 +67,9 @@ export default async function getPackageStatuses(
   pkgInfos: ListedPackages,
   getCommits: (
     sinceCommitSha: string | undefined,
-  ) => Promise<
-    readonly (string | {associatedPullRequests: {number: number}[]})[]
-  >,
+  ) => Promise<readonly {associatedPullRequests: {number: number}[]}[]>,
 ) {
   const getChangeLogsFromCommits = getChangeLogFetcher(
-    client,
     {owner, name},
     async (pr) => {
       for await (const comment of readComments(client, pr)) {
@@ -170,19 +161,9 @@ export default async function getPackageStatuses(
 }
 
 export function getChangeLogFetcher<TChangeLog>(
-  client: GitHubClient,
   repo: Repository,
   getChangLog: (pr: Omit<PullRequest, 'headSha'>) => Promise<TChangeLog>,
 ) {
-  const pullRequestsFromCommit = new DataLoader<string, number[]>(
-    async (commitShas) => {
-      return await Promise.all(
-        commitShas.map(async (sha) => {
-          return getPullRequestsForCommit(client, repo, sha);
-        }),
-      );
-    },
-  );
   const commentFromPullRequest = new DataLoader<number, TChangeLog>(
     async (pullNumbers) => {
       return await Promise.all(
@@ -191,31 +172,18 @@ export function getChangeLogFetcher<TChangeLog>(
     },
   );
   return async function getChangeLog(
-    commitShas: readonly (
-      | string
-      | {associatedPullRequests: {number: number}[]}
-    )[],
+    commitShas: readonly {associatedPullRequests: {number: number}[]}[],
   ) {
     const pullRequests = [
       ...new Set(
-        [
-          ...(
-            await pullRequestsFromCommit.loadMany(commitShas.filter(isString))
-          ).map((v) => {
-            if (v instanceof Error) {
-              throw v;
-            }
-            return v;
-          }),
-          ...commitShas
-            .filter(notFn(isString))
-            .map(({associatedPullRequests}) =>
-              associatedPullRequests.map((pr) => pr.number),
-            ),
-        ].reduce((a, b) => {
-          a.push(...b);
-          return a;
-        }, []),
+        commitShas
+          .map(({associatedPullRequests}) =>
+            associatedPullRequests.map((pr) => pr.number),
+          )
+          .reduce((a, b) => {
+            a.push(...b);
+            return a;
+          }, []),
       ),
     ];
     return (await commentFromPullRequest.loadMany(pullRequests)).map((s) => {

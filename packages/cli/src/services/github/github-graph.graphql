@@ -125,21 +125,6 @@ query GetPullRequestComments(
   }
 }
 
-query GetPullRequestsForCommit($owner: String!, $name: String!, $sha: String!) {
-  repository(owner: $owner, name: $name) {
-    object(expression: $sha) {
-      __typename
-      ... on Commit {
-        associatedPullRequests(first: 10) {
-          nodes {
-            number
-          }
-        }
-      }
-    }
-  }
-}
-
 query GetRepositoryIsPrivate($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     isPrivate
@@ -151,36 +136,28 @@ query GetRepositoryViewerPermissions($owner: String!, $name: String!) {
   }
 }
 
-query GetAllCommits(
+query GetAllDefaultBranchCommits(
   $owner: String!
   $name: String!
   $first: Int!
   $after: String
 ) {
   repository(owner: $owner, name: $name) {
-    defaultBranchRef {
-      name
-      target {
-        __typename # Commit
-        oid
-        ... on Commit {
-          id
-          history(first: $first, after: $after) {
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              oid
-              associatedPullRequests(first: 10) {
-                nodes {
-                  number
-                }
-              }
-            }
-          }
-        }
-      }
+    branch: defaultBranchRef {
+      ...AllCommits
+    }
+  }
+}
+query GetAllCommits(
+  $owner: String!
+  $name: String!
+  $qualifiedName: String!
+  $first: Int!
+  $after: String
+) {
+  repository(owner: $owner, name: $name) {
+    branch: ref(qualifiedName: $qualifiedName) {
+      ...AllCommits
     }
   }
 }
@@ -209,6 +186,30 @@ query GetBranch($owner: String!, $name: String!, $qualifiedName: String!) {
   }
 }
 
+fragment AllCommits on Ref {
+  name
+  target {
+    __typename # Commit
+    oid
+    ... on Commit {
+      id
+      history(first: $first, after: $after) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          oid
+          associatedPullRequests(first: 10) {
+            nodes {
+              number
+            }
+          }
+        }
+      }
+    }
+  }
+}
 # supports up to 6 levels deep
 fragment FullContents on Tree {
   entries {

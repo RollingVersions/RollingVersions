@@ -4,10 +4,11 @@ import {
   createRepository,
   createNpmPackage,
 } from '../../services/__mock_services__';
-import {getAllTags, getAllFiles} from '../../services/git';
+import {getAllFiles} from '../../services/git';
+import {getAllTags} from '../../services/github';
 
 test('getUnreleasedPackages', async () => {
-  const {dirname, newPullRequest, newCommit} = createRepository({
+  const {dirname, repo, newPullRequest, newCommit} = createRepository({
     files: [
       {path: 'a/package.json', contents: '{"name": "example-package-a"}'},
       {path: 'b/package.json', contents: '{"name": "example-package-b"}'},
@@ -47,7 +48,10 @@ test('getUnreleasedPackages', async () => {
       {...pullRequest, closed: true},
       new Map(
         [
-          ...(await listPackages(getAllTags(dirname), getAllFiles(dirname))),
+          ...(await listPackages(
+            getAllTags(null as any, repo),
+            getAllFiles(dirname),
+          )),
         ].map(([packageName, {infos}]) => [
           packageName,
           {changes: null as any, info: infos},
