@@ -22,8 +22,6 @@ workflows:
 
       - staging-approval:
           type: approval
-          requires:
-            - unit-tests
 
       - deploy-staging:
           <<: *not_master
