@@ -2,6 +2,14 @@ import * as real from '../github';
 import {byRepo, byPullRequest} from './fixtures';
 import {RepositoryPermission} from '../github/github-graph';
 
+export const getViewer: typeof real.getViewer = async (_client) => {
+  return {
+    __typename: 'User',
+    login: 'ForbesLindesay',
+    email: 'forbes@lindesay.co.uk',
+  };
+};
+
 export const getPullRequestHeadSha: typeof real.getPullRequestHeadSha = async (
   _client,
   pr,
