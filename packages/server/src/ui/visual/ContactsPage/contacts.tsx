@@ -29,6 +29,14 @@ export default function Contacts() {
           </a>
         }
       />
+      <ContactMethod
+        contactDescription="On Facebook"
+        contactLink={
+          <a href="https://www.facebook.com/RollingVersions/">
+            Rolling Versions
+          </a>
+        }
+      />
     </div>
   );
 }
