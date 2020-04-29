@@ -3,6 +3,7 @@ import {
   getAllTags,
   getRepositoryViewerPermissions,
   getBranch,
+  getViewer,
 } from '../services/github';
 import {getHeadSha} from '../services/git';
 import {changesToMarkdown} from '../utils/Rendering';
@@ -19,6 +20,7 @@ export async function checkGitHubReleaseStatus(
   }: Pick<PublishConfig, 'owner' | 'name' | 'dirname' | 'deployBranch'>,
   client: GitHubClient,
 ): Promise<{ok: true; tags: string[]} | {ok: false; reason: string}> {
+  console.info(await getViewer(client));
   const [permission, branch, allTags] = await Promise.all([
     getRepositoryViewerPermissions(client, {
       owner,
