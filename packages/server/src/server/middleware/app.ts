@@ -128,8 +128,9 @@ appMiddleware.post(
         repo: repo.name,
         event_type: 'rollingversions_publish_approved',
       });
+      await new Promise((resolve) => setTimeout(resolve, 4000));
       res.redirect(
-        `https://github.com/${repo.owner}/${repo.name}/actions?query=workflow%3ARelease`,
+        `https://github.com/${repo.owner}/${repo.name}/actions?query=event%3Arepository_dispatch`,
       );
     } catch (ex) {
       next(ex);
