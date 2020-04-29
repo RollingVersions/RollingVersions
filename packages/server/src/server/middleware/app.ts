@@ -113,6 +113,27 @@ appMiddleware.get(
   },
 );
 
+appMiddleware.post(
+  `/:owner/:repo/dispatch/rollingversions_publish_approved`,
+  requiresAuth({api: true}),
+  validateRepoParams(),
+  checkRepoPermissions(['edit']),
+  async (req, res, next) => {
+    try {
+      const repo = parseRepoParams(req);
+      const client = await getClientForRepo(repo);
+      await client.rest.repos.createDispatchEvent({
+        owner: repo.owner,
+        repo: repo.name,
+        event_type: 'rollingversions_publish_approved',
+      });
+      res.redirect(`https://github.com/${repo.owner}/${repo.name}/actions`);
+    } catch (ex) {
+      next(ex);
+    }
+  },
+);
+
 const loadStart = new Map<string, number>();
 setInterval(() => {
   for (const [key, timestamp] of loadStart) {
