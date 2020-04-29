@@ -1,8 +1,8 @@
 // tslint:disable-next-line: no-implicit-dependencies
 import {Router} from 'express';
 import getUnreleasedPackages from 'rollingversions/lib/utils/getUnreleasedPackages';
-import {requiresAuth} from './auth';
-import {getClientForRepo} from '../getClient';
+import {requiresAuth, getGitHubAccessToken} from './auth';
+import {getClientForRepo, getClientForToken} from '../getClient';
 import {PullRequestResponseCodec, RepoResponse} from '../../types';
 import updatePullRequestWithState from '../actions/updatePullRequestWithState';
 import validateParams, {
@@ -121,7 +121,8 @@ appMiddleware.post(
   async (req, res, next) => {
     try {
       const repo = parseRepoParams(req);
-      const client = await getClientForRepo(repo);
+      const token = getGitHubAccessToken(req, res);
+      const client = getClientForToken(token);
       await client.rest.repos.createDispatchEvent({
         owner: repo.owner,
         repo: repo.name,
