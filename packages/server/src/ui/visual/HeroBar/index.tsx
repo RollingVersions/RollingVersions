@@ -6,7 +6,9 @@ export default function HeroBar() {
   return (
     <>
       <div className="bg-orange-500 py-12 block md:hidden">
-        <div className="container mx-auto grid grid-cols-1 gap-6 max-w-4xl font-poppins font-normal text-3xl text-white italic">
+        {/* TODO Forbes - I have removed `grid grid-cols-1 gap-6 max-w-4xl ` from the following as it seems to upset the layout of the text - squeezing it to the side - and I don't think it is applicable here.
+        If I'm wrong it will need to go back.*/}
+        <div className="container mx-auto font-poppins font-normal text-3xl text-white italic">
           <p>Add change sets to pull requests</p>
           <p>Automatically release with change logs</p>
         </div>
@@ -73,5 +75,36 @@ export function HeroBarFooter() {
         </a>
       </div>
     </div>
+  );
+}
+
+//TODO I'm not sure this is the right place for this I'm also not convinced about using
+// `top: '-51px'` but this was the only way I could get the two polygons to "connect"
+//Note: On small screens this goes "square" as on the header. I'm not displaying the header and footer at all so the banner can be a lot smaller as it does not need to be proportional to the headerhero - even if both are displayed it still looks OK I think.
+export function HeroBarBanner({children}: {children: string}) {
+  return (
+    <>
+      <div className="bg-black py-8 block md:hidden">
+        <div className="container mx-auto grid font-poppins font-normal text-xl text-white italic">
+          {children}
+        </div>
+      </div>
+      <div
+        className="bg-black h-64 pt-20 bg-no-repeat hidden md:block "
+        style={{
+          position: 'relative',
+          top: '-51px',
+          clipPath: 'polygon(0 0, 100% 20%, 100% 100%, 0 100%)',
+          backgroundSize: 'auto 130%',
+          backgroundPosition: 'center left 10%',
+        }}
+      >
+        <div className="container mx-auto flex items-end">
+          <div className="flex-grow font-poppins text-2xl text-white italic">
+            {children}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
