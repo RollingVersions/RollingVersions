@@ -7,7 +7,7 @@ import TwitterIcon from '../../icons/twitterMono.svg';
 
 export default function Contacts() {
   return (
-    <div className="container mx-auto grid gap-4 md:gap-8">
+    <div className="grid gap-4 md:gap-8">
       <ContactMethod
         contactDescription="Email"
         contactLink="mailto: hi@rollingversions.com?subject=Rolling Versions"

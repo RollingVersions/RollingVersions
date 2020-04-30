@@ -1,24 +1,14 @@
 import React from 'react';
-import NavBar from '../NavBar';
-import HeroBar, {HeroBarFooter, HeroBarBanner} from '../HeroBar';
+import HeroBar, {HeroBarFooter} from '../HeroBar';
 import Contacts from './contacts';
 
 export default function ContactsPage() {
   return (
     <>
-      <div className="pb-6 pt-16">
-        <NavBar></NavBar>
-      </div>
-      {/* Only display HeroBar on larger screens to avoid masses of scrolling when all that is wanted is contacts */}
-      <div className="hidden md:block">
-        <HeroBar />
-      </div>
-      <HeroBarBanner>
-        We want you to love Rolling Versions and to use it on all your projects.
-        So if you have any queries or suggestions then do contact us by clicking
-        on one of the links below.
-      </HeroBarBanner>
-      <div className="py-16">
+      <HeroBar>
+        <p>We are here to help.</p>
+      </HeroBar>
+      <div className="py-16 container mx-auto">
         <Contacts />
       </div>
       <HeroBarFooter />
