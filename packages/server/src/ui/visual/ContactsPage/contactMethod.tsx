@@ -2,14 +2,14 @@ import React from 'react';
 
 function ContactDescription({children}: {children: string}) {
   return (
-    <span className="font-poppins text-sm text-gray-700 sm:text-xl md:text-2xl">
+    <span className="font-poppins text-gray-700 text-sm sm:text-xl md:text-2xl">
       {children}
     </span>
   );
 }
 function ContactLink({children}: {children: React.ReactNode}) {
   return (
-    <span className="font-sans text-2xl sm:text-3xl md:text-4xl sm:col-span-3">
+    <span className="font-sans text-gray-900 text-2xl sm:text-3xl md:text-4xl sm:col-span-3">
       {children}
     </span>
   );
