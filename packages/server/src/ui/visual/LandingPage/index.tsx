@@ -1,15 +1,14 @@
 import React from 'react';
-import NavBar from '../NavBar';
-import HeroBar, {HeroBarFooter} from '../HeroBar';
+import HeroBar, {HeroBarFooter, InstallButton} from '../HeroBar';
 import MarketingContent from '../MarketingContent';
 
 export default function LandingPage() {
   return (
     <>
-      <div className="pb-6 pt-16">
-        <NavBar></NavBar>
-      </div>
-      <HeroBar />
+      <HeroBar callToAction={<InstallButton />}>
+        <p>Add change sets to pull requests</p>
+        <p>Automatically release with change logs</p>
+      </HeroBar>
       <div className="py-16">
         <MarketingContent />
       </div>

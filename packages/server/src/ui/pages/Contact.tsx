@@ -1,9 +1,9 @@
 import React from 'react';
-import LandingPage from '../visual/LandingPage';
+import ContactsPage from '../visual/ContactsPage';
 import NavBar from '../visual/NavBar';
 import NavBarLink from '../visual/NavBarLink';
 
-export default function Home() {
+export default function Contact() {
   return (
     <>
       <NavBar>
@@ -11,7 +11,7 @@ export default function Home() {
         {/* <NavBarLink to="/help/github-actions">DOCS</NavBarLink> */}
         <NavBarLink to="/contact">CONTACT</NavBarLink>
       </NavBar>
-      <LandingPage />
+      <ContactsPage />
     </>
   );
 }
