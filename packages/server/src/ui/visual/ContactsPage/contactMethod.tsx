@@ -1,21 +1,21 @@
 import React from 'react';
 
-// Normally we make contact  links larger than the description
-// as that is where users click
-// However on mobile phones where description becomes a visual header
-// this just looks wrong so we switch sizing around.
 function ContactDescription({children}: {children: string}) {
-  return <span className="font-poppins text-3xl sm:text-2xl">{children}</span>;
+  return (
+    <span className="font-poppins text-sm text-gray-700 sm:text-xl md:text-2xl">
+      {children}
+    </span>
+  );
 }
 function ContactLink({children}: {children: React.ReactNode}) {
   return (
-    <span className="font-sans text-2xl sm:text-3xl md:text-4xl  sm:col-span-2">
+    <span className="font-sans text-2xl sm:text-3xl md:text-4xl sm:col-span-3">
       {children}
     </span>
   );
 }
 
-// TODO in order to force unequal columns I'm declaring a grid of 3 cols - is that ok? I'm also messing around with top margin to get spacing working on mobile
+// TODO in order to force unequal columns I'm declaring a grid of multiple cols and spanning with the ContactLink - is that ok? I'm also messing around with top margin to get spacing working on mobile
 // TODO All the icons I'm using have the same size viewports, so I've fixed h and w to the same amount, but I'm not sure if this is right as some icons could be different
 export default function ContactMethod({
   contactDescription,
@@ -29,7 +29,7 @@ export default function ContactMethod({
   contactIcon: string;
 }) {
   return (
-    <div className="grid items-center mb-8 sm:mb-4 sm:grid-cols-3">
+    <div className="grid items-center mb-8 sm:mb-4 sm:grid-cols-4">
       <ContactDescription>{contactDescription}</ContactDescription>
       <ContactLink>
         <a className="flex items-center" href={contactLink}>
