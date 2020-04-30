@@ -16,7 +16,9 @@ export default async function getUnreleasedPackages(
     }
   }
   const unreleasedPackages = new Set(packages.keys());
-  for await (const commit of getAllCommits(client, pullRequest.repo)) {
+  for await (const commit of getAllCommits(client, pullRequest.repo, {
+    deployBranch: null,
+  })) {
     for (const [packageName, {info}] of packages) {
       if (unknownPackages.has(packageName)) {
         for (const packageInfo of info) {

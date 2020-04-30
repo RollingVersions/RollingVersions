@@ -1,6 +1,11 @@
 import {PublishConfig} from '../types';
-import {GitHubClient, auth} from '../services/github';
-import {getAllTags, getAllFiles, getCommits} from '../services/git';
+import {
+  GitHubClient,
+  auth,
+  getAllTags,
+  getAllCommits,
+} from '../services/github';
+import {getAllFiles} from '../services/git';
 import getPackageStatuses, {
   NoUpdateRequired,
   SuccessPackageStatus,
@@ -17,6 +22,7 @@ import notFn from '../ts-utils/notFn';
 import arrayEvery from '../ts-utils/arrayEvery';
 import orFn from '../ts-utils/orFn';
 import listPackages from '../utils/listPackages';
+import splitAsyncGenerator from '../ts-utils/splitAsyncGenerator';
 
 export enum PublishResultKind {
   NoUpdatesRequired,
@@ -68,15 +74,31 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   });
 
   const packageInfos = await listPackages(
-    getAllTags(config.dirname),
+    getAllTags(client, {owner: config.owner, name: config.name}),
     getAllFiles(config.dirname),
   );
 
+  const getAllCommitsCached = splitAsyncGenerator(
+    getAllCommits(
+      client,
+      {owner: config.owner, name: config.name},
+      {deployBranch: config.deployBranch},
+    ),
+  );
   const unsortedPackageStatuses = await getPackageStatuses(
     client,
     config,
     packageInfos,
-    (lastTag) => getCommits(config.dirname, lastTag),
+    async (sinceCommitSha) => {
+      const results: {associatedPullRequests: {number: number}[]}[] = [];
+      for await (const commit of getAllCommitsCached()) {
+        if (commit.oid === sinceCommitSha) {
+          return results;
+        }
+        results.push(commit);
+      }
+      return results;
+    },
   );
 
   const isSuccessPackageStatus = orFn(

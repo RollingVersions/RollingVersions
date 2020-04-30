@@ -1,8 +1,8 @@
 // tslint:disable-next-line: no-implicit-dependencies
 import {Router} from 'express';
 import getUnreleasedPackages from 'rollingversions/lib/utils/getUnreleasedPackages';
-import {requiresAuth} from './auth';
-import {getClientForRepo} from '../getClient';
+import {requiresAuth, getGitHubAccessToken} from './auth';
+import {getClientForRepo, getClientForToken} from '../getClient';
 import {PullRequestResponseCodec, RepoResponse} from '../../types';
 import updatePullRequestWithState from '../actions/updatePullRequestWithState';
 import validateParams, {
@@ -54,7 +54,7 @@ appMiddleware.get(
       );
 
       const getAllCommitsCached = splitAsyncGenerator(
-        getAllCommits(client, repo),
+        getAllCommits(client, repo, {deployBranch: null}),
       );
 
       const unsortedPackageStatuses = await getPackageStatuses(
@@ -107,6 +107,31 @@ appMiddleware.get(
         res.json(response);
         return;
       }
+    } catch (ex) {
+      next(ex);
+    }
+  },
+);
+
+appMiddleware.post(
+  `/:owner/:repo/dispatch/rollingversions_publish_approved`,
+  requiresAuth({api: true}),
+  validateRepoParams(),
+  checkRepoPermissions(['edit']),
+  async (req, res, next) => {
+    try {
+      const repo = parseRepoParams(req);
+      const token = getGitHubAccessToken(req, res);
+      const client = getClientForToken(token);
+      await client.rest.repos.createDispatchEvent({
+        owner: repo.owner,
+        repo: repo.name,
+        event_type: 'rollingversions_publish_approved',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 4000));
+      res.redirect(
+        `https://github.com/${repo.owner}/${repo.name}/actions?query=event%3Arepository_dispatch`,
+      );
     } catch (ex) {
       next(ex);
     }

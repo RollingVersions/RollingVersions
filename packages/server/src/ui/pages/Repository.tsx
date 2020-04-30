@@ -87,6 +87,12 @@ export default function Repository() {
             );
         }
       })}
+      <form
+        method="POST"
+        action={`/${params.owner}/${params.repo}/dispatch/rollingversions_publish_approved`}
+      >
+        <button type="submit">Release These Changes</button>
+      </form>
     </>
   );
 }

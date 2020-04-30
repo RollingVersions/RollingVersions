@@ -73,7 +73,7 @@ switch (COMMAND) {
       }
     }
 
-    if (!repoSlug) repoSlug = CI_ENV.slug;
+    if (!repoSlug) repoSlug = CI_ENV.slug || process.env.GITHUB_REPOSITORY; // GITHUB_REPOSITORY for GitHub Actions
     if (!githubToken) {
       githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
     }

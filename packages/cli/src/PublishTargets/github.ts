@@ -3,6 +3,7 @@ import {
   getAllTags,
   getRepositoryViewerPermissions,
   getBranch,
+  getViewer,
 } from '../services/github';
 import {getHeadSha} from '../services/git';
 import {changesToMarkdown} from '../utils/Rendering';
@@ -19,7 +20,8 @@ export async function checkGitHubReleaseStatus(
   }: Pick<PublishConfig, 'owner' | 'name' | 'dirname' | 'deployBranch'>,
   client: GitHubClient,
 ): Promise<{ok: true; tags: string[]} | {ok: false; reason: string}> {
-  const [permission, branch, allTags] = await Promise.all([
+  const [viewer, permission, branch, allTags] = await Promise.all([
+    getViewer(client),
     getRepositoryViewerPermissions(client, {
       owner,
       name,
@@ -27,10 +29,13 @@ export async function checkGitHubReleaseStatus(
     getBranch(client, {owner, name}, deployBranch),
     getAllTags(client, {owner, name}),
   ]);
-  if (!permission || !['ADMIN', 'MAINTAIN', 'WRITE'].includes(permission)) {
+  if (
+    viewer?.login !== 'github-actions[bot]' &&
+    (!permission || !['ADMIN', 'MAINTAIN', 'WRITE'].includes(permission))
+  ) {
     return {
       ok: false,
-      reason: `This viewer does not have permisison to publish tags/releases to GitHub`,
+      reason: `This GitHub token does not have permisison to publish tags/releases to GitHub. It has viewerPermission ${permission} but needs one of ADMIN, MAINTAIN or WRITE`,
     };
   }
   if (!branch) {

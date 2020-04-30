@@ -2,6 +2,14 @@ import * as real from '../github';
 import {byRepo, byPullRequest} from './fixtures';
 import {RepositoryPermission} from '../github/github-graph';
 
+export const getViewer: typeof real.getViewer = async (_client) => {
+  return {
+    __typename: 'User',
+    login: 'ForbesLindesay',
+    email: 'forbes@lindesay.co.uk',
+  };
+};
+
 export const getPullRequestHeadSha: typeof real.getPullRequestHeadSha = async (
   _client,
   pr,
@@ -112,18 +120,6 @@ export const updateStatus: typeof real.updateStatus = async (
     url: status.url.href,
     description: status.description,
   };
-};
-
-export const getPullRequestsForCommit: typeof real.getPullRequestsForCommit = async (
-  _client,
-  repo,
-  sha,
-) => {
-  const commit = byRepo(repo).commits.find((c) => c.sha === sha);
-  if (!commit) {
-    throw new Error(`The mock has no commit ${sha} in ${repo.name}`);
-  }
-  return commit.pullRequests;
 };
 
 export const getAllCommits: typeof real.getAllCommits = async function*(
