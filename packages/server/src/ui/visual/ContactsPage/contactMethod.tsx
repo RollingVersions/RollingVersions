@@ -15,7 +15,8 @@ function ContactLink({children}: {children: React.ReactNode}) {
   );
 }
 
-// TODO Forbes in order to force unequal columns I'm declaring a grid of 3 cols - is that ok? I'm also messing around with top margin to get spacing working on mobile
+// TODO in order to force unequal columns I'm declaring a grid of 3 cols - is that ok? I'm also messing around with top margin to get spacing working on mobile
+// TODO All the icons I'm using have the same size viewports, so I've fixed h and w to the same amount, but I'm not sure if this is right as some icons could be different
 export default function ContactMethod({
   contactDescription,
   contactLink,
@@ -25,7 +26,7 @@ export default function ContactMethod({
   contactDescription: string;
   contactLink: string;
   contactAddress: string;
-  contactIcon: any;
+  contactIcon: string;
 }) {
   return (
     <div className="grid items-center mb-8 sm:mb-4 sm:grid-cols-3">
@@ -33,7 +34,7 @@ export default function ContactMethod({
       <ContactLink>
         <a className="flex items-center" href={contactLink}>
           <img
-            className="h-12"
+            className="h-12 w-12"
             src={contactIcon}
             alt={contactDescription + ' Icon'}
           />{' '}
