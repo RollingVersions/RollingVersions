@@ -7,8 +7,7 @@ export default function HeroBar() {
     <>
       <div className="bg-orange-500 py-12 block md:hidden">
         {/* TODO Forbes - I have removed `grid grid-cols-1 gap-6 max-w-4xl ` from the following as it seems to upset the layout of the text - squeezing it to the side - and I don't think it is applicable here.
-        If I'm wrong it will need to go back.
-        Note: text on this and everything else is jammed against left margins on small screens*/}
+        If I'm wrong it will need to go back.*/}
         <div className="container mx-auto font-poppins font-normal text-3xl text-white italic">
           <p>Add change sets to pull requests</p>
           <p>Automatically release with change logs</p>
@@ -81,11 +80,12 @@ export function HeroBarFooter() {
 
 //TODO I'm not sure this is the right place for this I'm also not convinced about using
 // `top: '-51px'` but this was the only way I could get the two polygons to "connect"
+//Note: On small screens this goes "square" as on the header. I'm not displaying the header and footer at all so the banner can be a lot smaller as it does not need to be proportional to the headerhero - even if both are displayed it still looks OK I think.
 export function HeroBarBanner({children}: {children: string}) {
   return (
     <>
-      <div className="bg-black py-12 block md:hidden">
-        <div className="container mx-auto grid font-poppins font-normal text-2xl text-white italic">
+      <div className="bg-black py-8 block md:hidden">
+        <div className="container mx-auto grid font-poppins font-normal text-xl text-white italic">
           {children}
         </div>
       </div>
