@@ -3,13 +3,13 @@ import NavBar from '../NavBar';
 import HeroBar, {HeroBarFooter, HeroBarBanner} from '../HeroBar';
 import Contacts from './contacts';
 
-export default function LandingPage() {
+export default function ContactsPage() {
   return (
     <>
       <div className="pb-6 pt-16">
         <NavBar></NavBar>
       </div>
-      {/* Only display HeroBar and Footer on larger screens to avoid masses of scrolling when all that is wanted is contacts */}
+      {/* Only display HeroBar on larger screens to avoid masses of scrolling when all that is wanted is contacts */}
       <div className="hidden md:block">
         <HeroBar />
       </div>
@@ -21,9 +21,7 @@ export default function LandingPage() {
       <div className="py-16">
         <Contacts />
       </div>
-      <div className="hidden lg:block">
-        <HeroBarFooter />
-      </div>
+      <HeroBarFooter />
     </>
   );
 }
