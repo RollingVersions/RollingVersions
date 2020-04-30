@@ -4,11 +4,6 @@ import EmailIcon from '../../icons/emailMono.svg';
 import GithubIcon from '../../icons/githubMono.svg';
 import FacebookIcon from '../../icons/facebookMono.svg';
 import TwitterIcon from '../../icons/twitterMono.svg';
-// TODO Forbes: These are the alternative's in colour, but I think that monochrome looks better.  I've left these in incase you want to have a look, we can then delete the set that you go for
-// import EmailIcon from '../../icons/email.svg';
-// import GithubIcon from '../../icons/github.svg';
-// import FacebookIcon from '../../icons/facebook.svg';
-// import TwitterIcon from '../../icons/twitter.svg';
 
 export default function Contacts() {
   return (
