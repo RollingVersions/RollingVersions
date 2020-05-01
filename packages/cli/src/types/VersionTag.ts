@@ -10,7 +10,7 @@ export default interface VersionTag {
   version: string;
 }
 
-export const VersionTagCodec = compressedObjectCodec(
+export const VersionTagCodec = compressedObjectCodec<VersionTag>()(
   1,
   'VersionTag',
   {
