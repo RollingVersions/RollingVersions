@@ -11,7 +11,7 @@ export interface ChangeLogEntry {
   readonly body: string;
 }
 
-export const ChangeLogEntryCodec = compressedObjectCodec(
+export const ChangeLogEntryCodec = compressedObjectCodec<ChangeLogEntry>()(
   1,
   'ChangLogEntry',
   {title: t.string, body: t.string},
@@ -39,7 +39,7 @@ export function isEmptyChangeSet(changes: ChangeSet) {
   return ChangeTypes.every((changeType) => changes[changeType].length === 0);
 }
 
-export const ChangeSetCodec = compressedObjectCodec(
+export const ChangeSetCodec = compressedObjectCodec<ChangeSet>()(
   1,
   'ChangeSet',
   {
@@ -63,7 +63,7 @@ export default interface PullRequestState {
   readonly packages: Map<string, {changes: ChangeSet; info: PackageInfo[]}>;
 }
 
-export const PullRequestStateCodec = compressedObjectCodec(
+export const PullRequestStateCodec = compressedObjectCodec<PullRequestState>()(
   1,
   'PullRequestState',
   {
@@ -71,7 +71,7 @@ export const PullRequestStateCodec = compressedObjectCodec(
     packageInfoFetchedAt: t.string,
     packages: map(
       t.string,
-      compressedObjectCodec(
+      compressedObjectCodec<{changes: ChangeSet; info: PackageInfo[]}>()(
         1,
         'Package',
         {

@@ -26,7 +26,7 @@ export interface PullRequestResponse {
 }
 
 export const PullRequestResponseCodec = new ValidationCodec(
-  compressedObjectCodec(
+  compressedObjectCodec<PullRequestResponse>()(
     2,
     'PullRequestResponse',
     {
@@ -53,13 +53,13 @@ export interface UpdatePullRequestBody {
 }
 
 export const UpdatePullRequestBodyCodec = new ValidationCodec(
-  compressedObjectCodec(
+  compressedObjectCodec<UpdatePullRequestBody>()(
     1,
     'UpdatePullRequestBody',
     {
       headSha: t.string,
       updates: t.array(
-        compressedObjectCodec(
+        compressedObjectCodec<{packageName: string; changes: ChangeSet}>()(
           1,
           'Updates',
           {

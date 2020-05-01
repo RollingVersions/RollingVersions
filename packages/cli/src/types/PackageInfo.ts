@@ -21,7 +21,7 @@ const PublishConfigAccessCodec = t.union([
   t.literal('public'),
 ]);
 
-export const PackageInfoCodec = compressedObjectCodec(
+export const PackageInfoCodec = compressedObjectCodec<PackageInfo>()(
   1,
   'PackageInfo',
   {

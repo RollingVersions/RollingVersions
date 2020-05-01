@@ -112,49 +112,84 @@ type ArrayExtract<
 > = {
   [key in keyof TKeys]: TProps[TKeys[key] & keyof TProps];
 };
+type ArrayResults<T> = {
+  [K in keyof T]: T[K] extends t.Mixed ? t.OutputOf<T[K]> : unknown;
+};
 
-export function compressedObjectCodec<
-  TVersion extends number,
-  TProps extends Record<string, t.Mixed>,
-  TKeys extends readonly [typeof versionSymbol, ...(keyof TProps)[]]
->(
-  version: TVersion,
-  name: string,
-  props: TProps,
-  keys: TKeys,
-  {deprecated}: {deprecated?: boolean} = {},
-) {
-  const BaseCodec = t.tuple<
-    ArrayExtract<
-      TProps & Record<typeof versionSymbol, t.LiteralC<TVersion>>,
-      TKeys
-    >
-  >(
-    keys.map((k) =>
-      k === versionSymbol ? t.literal(version) : props[k],
-    ) as any,
-  );
-
-  const ValidationCodec = t.type(props);
-
-  type CompressedType = t.TypeOf<typeof BaseCodec>;
-  type FullType = t.TypeOf<typeof ValidationCodec>;
-
-  const ConversionCodec = new t.Type<FullType, CompressedType, CompressedType>(
-    name,
-    deprecated ? (_v: unknown): _v is FullType => false : ValidationCodec.is,
-    (v) => {
-      const result: any = {};
-      keys.forEach((key, i) => {
-        if (key !== versionSymbol) {
-          result[key] = v[i];
-        }
-      });
-      return t.success(result);
+export function compressedObjectCodec<TUncompressed>() {
+  return function compressedObjectCodecInner<
+    TVersion extends number,
+    TProps extends {
+      [P in keyof TUncompressed]: t.Type<TUncompressed[P], any, unknown>;
     },
-    (v) => keys.map((k) => (k === versionSymbol ? version : v[k])) as any,
-  );
-  return BaseCodec.pipe(ConversionCodec);
+    TKeys extends readonly [typeof versionSymbol, ...(keyof TUncompressed)[]]
+  >(
+    version: TVersion,
+    name: string,
+    props: TProps,
+    keys: TKeys,
+    {deprecated = false}: {deprecated?: boolean} = {},
+  ): t.Type<
+    TUncompressed,
+    ArrayResults<
+      ArrayExtract<
+        TProps & Record<typeof versionSymbol, t.LiteralC<TVersion>>,
+        TKeys
+      >
+    >,
+    unknown
+  > {
+    Object.keys(props).forEach((key) => {
+      if (!keys.includes(key as any)) {
+        throw new Error(`Missing key ${key}`);
+      }
+    });
+    keys.forEach((key, i) => {
+      if (keys.indexOf(key) !== i) {
+        throw new Error(`Duplicate key ${key as any}`);
+      }
+    });
+    const BaseCodec = t.tuple<
+      ArrayExtract<
+        TProps & Record<typeof versionSymbol, t.LiteralC<TVersion>>,
+        TKeys
+      >
+    >(
+      keys.map((k) =>
+        k === versionSymbol ? t.literal(version) : props[k],
+      ) as any,
+    );
+
+    const ValidationCodec = (t.type(props) as unknown) as {
+      is: (v: unknown) => v is TUncompressed;
+    };
+
+    type CompressedType = t.TypeOf<typeof BaseCodec>;
+
+    const ConversionCodec = new t.Type<
+      TUncompressed,
+      CompressedType,
+      CompressedType
+    >(
+      name,
+      deprecated
+        ? (_v: unknown): _v is TUncompressed => false
+        : ValidationCodec.is,
+      (v) => {
+        const result: any = {};
+        keys.forEach((key, i) => {
+          if (key !== versionSymbol) {
+            result[key] = v[i];
+          }
+        });
+        return t.success(result);
+      },
+      (v) =>
+        keys.map((k) => (k === versionSymbol ? version : (v as any)[k])) as any,
+    );
+
+    return BaseCodec.pipe(ConversionCodec) as any;
+  };
 }
 
 export function map<TKey extends t.Mixed, TValue extends t.Mixed>(
