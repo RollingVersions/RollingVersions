@@ -45,7 +45,7 @@ export default function Repository() {
     <AppContainer>
       <AppNavBar>
         <AppNavBarLink to={`/${params.owner}`}>{params.owner}</AppNavBarLink>
-        <AppNavBarLink>{params.owner}</AppNavBarLink>
+        <AppNavBarLink>{params.repo}</AppNavBarLink>
       </AppNavBar>
       {(() => {
         if (error) {

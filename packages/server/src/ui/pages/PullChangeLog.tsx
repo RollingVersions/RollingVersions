@@ -20,8 +20,8 @@ export default function PullChangeLog() {
     <AppContainer>
       <AppNavBar>
         <AppNavBarLink to={`/${params.owner}`}>{params.owner}</AppNavBarLink>
-        <AppNavBarLink to={`/${params.owner}/${params.owner}`}>
-          {params.owner}
+        <AppNavBarLink to={`/${params.owner}/${params.repo}`}>
+          {params.repo}
         </AppNavBarLink>
         <AppNavBarLink>PR {params.pull_number}</AppNavBarLink>
       </AppNavBar>
