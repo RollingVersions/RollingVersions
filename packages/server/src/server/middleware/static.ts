@@ -41,7 +41,7 @@ staticMiddleware.get(
 
 staticMiddleware.get(`/:owner/:repo/pulls/:pull_number`, (req, res) => {
   res.redirect(
-    `/${req.params.owner}/${req.params.name}/pull/${req.params.pull_number}`,
+    `/${req.params.owner}/${req.params.repo}/pull/${req.params.pull_number}`,
   );
 });
 staticMiddleware.get(
