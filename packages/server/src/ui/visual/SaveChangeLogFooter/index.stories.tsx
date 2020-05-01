@@ -7,11 +7,7 @@ export default {title: 'modules/SaveChangeLogFooter'};
 export const Default = () => {
   return (
     <div className="w-full min-h-full bg-gray-300 p-2">
-      <SaveChangeLogFooter
-        disabled={false}
-        headSha="kdsjafklsadjfvoixhv"
-        onClick={action('save')}
-      />
+      <SaveChangeLogFooter disabled={false} onClick={action('save')} />
     </div>
   );
 };
@@ -19,11 +15,7 @@ export const Default = () => {
 export const Disabled = () => {
   return (
     <div className="w-full min-h-full bg-gray-300 p-2">
-      <SaveChangeLogFooter
-        disabled={true}
-        headSha="kdsjafklsadjfvoixhv"
-        onClick={action('save')}
-      />
+      <SaveChangeLogFooter disabled={true} onClick={action('save')} />
     </div>
   );
 };

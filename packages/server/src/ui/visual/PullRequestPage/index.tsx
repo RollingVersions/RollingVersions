@@ -67,26 +67,26 @@ export default function PullRequestPage({
   );
 
   return (
-    <div className="pb-16 pt-4 px-8 min-h-full bg-gray-300">
-      <h1>ChangeLog</h1>
-      {state
-        .filter(({info}) => info.length !== 0)
-        .map(({packageName, changes, info}) => (
-          <PackageChangeSet
-            key={packageName}
-            disabled={
-              readOnly || !unreleasedPackages.includes(packageName) || saving
-            }
-            packageName={packageName}
-            packageInfo={info}
-            changes={changes}
-            onChange={onChange}
-          />
-        ))}
+    <>
+      <div className="pb-16 pt-4 px-8">
+        {state
+          .filter(({info}) => info.length !== 0)
+          .map(({packageName, changes, info}) => (
+            <PackageChangeSet
+              key={packageName}
+              disabled={
+                readOnly || !unreleasedPackages.includes(packageName) || saving
+              }
+              packageName={packageName}
+              packageInfo={info}
+              changes={changes}
+              onChange={onChange}
+            />
+          ))}
+      </div>
       {!readOnly && headSha && (
         <SaveChangeLogFooter
           disabled={saving}
-          headSha={headSha}
           onClick={() => {
             if (saving) return;
             const oldState = new Map(
@@ -108,6 +108,6 @@ export default function PullRequestPage({
           }}
         />
       )}
-    </div>
+    </>
   );
 }
