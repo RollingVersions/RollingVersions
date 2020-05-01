@@ -27,6 +27,7 @@ const Story = ({disabled}: {disabled: boolean}) => {
           title={change.title}
           body={change.body}
           disabled={disabled}
+          readOnly={false}
           onChange={setChange}
           onFocus={action('focus 1')}
           onBlur={action('blur 1')}
@@ -35,6 +36,7 @@ const Story = ({disabled}: {disabled: boolean}) => {
           title={change2.title}
           body={change2.body}
           disabled={disabled}
+          readOnly={false}
           onChange={setChange2}
           onFocus={action('focus 2')}
           onBlur={action('blur 2')}
@@ -43,6 +45,7 @@ const Story = ({disabled}: {disabled: boolean}) => {
           title={change3.title}
           body={change3.body}
           disabled={disabled}
+          readOnly={false}
           onChange={setChange3}
           onFocus={action('focus 3')}
           onBlur={action('blur 3')}

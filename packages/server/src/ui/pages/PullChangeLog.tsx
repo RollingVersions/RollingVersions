@@ -62,11 +62,9 @@ export default function PullChangeLog() {
         return (
           <PullRequestPage
             headSha={headSha}
-            readOnly={
-              pr.pullRequest.permission !== 'edit' ||
-              pr.pullRequest.unreleasedPackages.length === 0 ||
-              !headSha
-            }
+            permission={pr.pullRequest.permission}
+            closed={pr.pullRequest.closed}
+            merged={pr.pullRequest.merged}
             saving={pr.updating || saving}
             packages={pr.pullRequest.changeLogState.packages}
             unreleasedPackages={pr.pullRequest.unreleasedPackages}

@@ -72,12 +72,14 @@ console.log(await resultB);
       <Changes
         title="Breaking Changes"
         disabled={false}
+        readOnly={false}
         changes={changes.breaking}
         onChange={(breaking) => setChanges((old) => ({...old, breaking}))}
       />
       <Changes
         title="New Features"
         disabled={false}
+        readOnly={false}
         changes={changes.feat}
         onChange={(feat) => setChanges((old) => ({...old, feat}))}
       />

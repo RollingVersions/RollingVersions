@@ -1,5 +1,5 @@
 import * as React from 'react';
-import PullRequestPage from './';
+import PullRequestPage, {PullRequestPageProps} from './';
 import {PublishTarget, PackageInfo} from 'rollingversions/lib/types';
 import {action} from '@storybook/addon-actions';
 import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
@@ -22,8 +22,8 @@ function packageInfo(
     ...info,
   };
 }
-
-export const Default = () => {
+const Template = (props: Partial<PullRequestPageProps>) => {
+  const [saving, setSaving] = React.useState(false);
   return (
     <MemoryRouter>
       <AppContainer>
@@ -34,8 +34,10 @@ export const Default = () => {
         </AppNavBar>
         <PullRequestPage
           headSha="sdjfkasjfkdsjvoixjvof"
-          readOnly={false}
-          saving={false}
+          permission="edit"
+          closed={false}
+          merged={false}
+          saving={saving}
           packages={
             new Map([
               [
@@ -55,9 +57,162 @@ export const Default = () => {
             ])
           }
           unreleasedPackages={['@databases/pg', '@databases/mysql']}
-          onSave={action('save')}
+          onSave={async (...args) => {
+            action('save')(...args);
+            setSaving(true);
+            await new Promise((r) => setTimeout(r, 2000));
+            setSaving(false);
+          }}
+          {...props}
         />
       </AppContainer>
     </MemoryRouter>
+  );
+};
+export const Default = () => {
+  return <Template />;
+};
+
+export const ReadOnlyPackage = () => {
+  return (
+    <Template
+      closed={true}
+      merged={true}
+      packages={
+        new Map([
+          [
+            '@databases/pg',
+            {
+              changes: getEmptyChangeSet(),
+              info: [packageInfo({packageName: '@databases/pg'})],
+            },
+          ],
+          [
+            '@databases/mysql',
+            {
+              changes: {
+                ...getEmptyChangeSet(),
+                breaking: [
+                  {
+                    title: 'Renamed `querySingleResult` to `queryOneResult`',
+                    body: '',
+                  },
+                ],
+              },
+              info: [packageInfo({packageName: '@databases/mysql'})],
+            },
+          ],
+        ])
+      }
+      unreleasedPackages={['@databases/pg']}
+    />
+  );
+};
+
+export const AllChangesReleased = () => {
+  return (
+    <Template
+      closed={true}
+      merged={true}
+      packages={
+        new Map([
+          [
+            '@databases/pg',
+            {
+              changes: getEmptyChangeSet(),
+              info: [packageInfo({packageName: '@databases/pg'})],
+            },
+          ],
+          [
+            '@databases/mysql',
+            {
+              changes: {
+                ...getEmptyChangeSet(),
+                breaking: [
+                  {
+                    title: 'Renamed `querySingleResult` to `queryOneResult`',
+                    body: '',
+                  },
+                ],
+              },
+              info: [packageInfo({packageName: '@databases/mysql'})],
+            },
+          ],
+        ])
+      }
+      unreleasedPackages={[]}
+    />
+  );
+};
+
+export const ClosedNonAdmin = () => {
+  return (
+    <Template
+      permission="view"
+      closed={true}
+      merged={true}
+      packages={
+        new Map([
+          [
+            '@databases/pg',
+            {
+              changes: getEmptyChangeSet(),
+              info: [packageInfo({packageName: '@databases/pg'})],
+            },
+          ],
+          [
+            '@databases/mysql',
+            {
+              changes: {
+                ...getEmptyChangeSet(),
+                breaking: [
+                  {
+                    title: 'Renamed `querySingleResult` to `queryOneResult`',
+                    body: '',
+                  },
+                ],
+              },
+              info: [packageInfo({packageName: '@databases/mysql'})],
+            },
+          ],
+        ])
+      }
+      unreleasedPackages={['@databases/pg']}
+    />
+  );
+};
+
+export const OpenNonAdminNonAuthor = () => {
+  return (
+    <Template
+      permission="view"
+      packages={
+        new Map([
+          [
+            '@databases/pg',
+            {
+              changes: getEmptyChangeSet(),
+              info: [packageInfo({packageName: '@databases/pg'})],
+            },
+          ],
+          [
+            '@databases/mysql',
+            {
+              changes: {
+                ...getEmptyChangeSet(),
+                breaking: [
+                  {
+                    title: 'Renamed `querySingleResult` to `queryOneResult`',
+                    body: '',
+                  },
+                ],
+              },
+              info: [packageInfo({packageName: '@databases/mysql'})],
+            },
+          ],
+        ])
+      }
+      unreleasedPackages={['@databases/pg']}
+    />
   );
 };
