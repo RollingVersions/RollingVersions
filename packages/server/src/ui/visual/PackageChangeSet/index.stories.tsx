@@ -24,6 +24,7 @@ export const Default = () => {
         ]}
         changes={changes}
         disabled={false}
+        readOnly={false}
         onChange={(_packageName, update) => setChanges(update)}
       />
     </div>

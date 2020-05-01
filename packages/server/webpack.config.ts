@@ -35,7 +35,7 @@ const config: webpack.Configuration = {
     ? false
     : {
         hints: 'error',
-        maxEntrypointSize: 300000,
+        maxEntrypointSize: 400000,
         maxAssetSize: 500000,
       },
 

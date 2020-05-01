@@ -9,6 +9,8 @@ export interface PackageChangeSetProps {
   packageInfo: RegistryStatusProps['packageInfo'];
   changes: ChangeSet<{localId: number}>;
   disabled: boolean;
+  readOnly: boolean;
+  warning?: React.ReactNode;
   onChange: (
     packageName: string,
     update: (
@@ -34,6 +36,8 @@ function PackageChangeSet({
   packageName,
   changes,
   disabled,
+  readOnly,
+  warning,
   onChange,
 }: PackageChangeSetProps) {
   const handleChange = {
@@ -45,16 +49,20 @@ function PackageChangeSet({
   };
   // TODO: show warning if no changes are added and the commit has modified files in the directory
   return (
-    <>
-      <h2 className="font-sans text-3xl text-blue-800 font-light mt-8 mb-4">
-        {packageName}
-      </h2>
-      <RegistryStatus packageInfo={packageInfo} />
+    <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
+      <div>
+        <h2 className="font-sans text-3xl text-gray-900 font-light mb-4">
+          {packageName}
+        </h2>
+        {warning}
+        <RegistryStatus packageInfo={packageInfo} />
+      </div>
       <ChangeSetEditorLayout
         breaking={
           <Changes
             title="Breaking Changes"
             disabled={disabled}
+            readOnly={readOnly}
             changes={changes.breaking}
             onChange={handleChange.breaking}
           />
@@ -63,6 +71,7 @@ function PackageChangeSet({
           <Changes
             title="New Features"
             disabled={disabled}
+            readOnly={readOnly}
             changes={changes.feat}
             onChange={handleChange.feat}
           />
@@ -71,6 +80,7 @@ function PackageChangeSet({
           <Changes
             title="Refactors"
             disabled={disabled}
+            readOnly={readOnly}
             changes={changes.refactor}
             onChange={handleChange.refactor}
           />
@@ -79,6 +89,7 @@ function PackageChangeSet({
           <Changes
             title="Bug Fixes"
             disabled={disabled}
+            readOnly={readOnly}
             changes={changes.fix}
             onChange={handleChange.fix}
           />
@@ -87,12 +98,13 @@ function PackageChangeSet({
           <Changes
             title="Performance Improvements"
             disabled={disabled}
+            readOnly={readOnly}
             changes={changes.perf}
             onChange={handleChange.perf}
           />
         }
       />
-    </>
+    </div>
   );
 }
 export default React.memo(PackageChangeSet);
