@@ -10,7 +10,7 @@ export default function SaveChangeLogFooter({
 }: SaveChangeLogFooterProps) {
   return (
     <div
-      className="px-6 h-24 w-full bg-white flex justify-end items-center lg:sticky bottom-0"
+      className="flex-shrink-0 px-6 h-24 w-full bg-white flex justify-end items-center lg:sticky bottom-0"
       style={{
         boxShadow:
           '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)',

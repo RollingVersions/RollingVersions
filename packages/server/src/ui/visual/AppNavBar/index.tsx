@@ -9,7 +9,7 @@ export interface NavBarProps {
 
 export default function AppNavBar({children}: NavBarProps) {
   return (
-    <nav className="flex items-center text-2xl px-10 bg-white h-16 sticky top-0 z-50 overflow-x-auto">
+    <nav className="flex flex-shrink-0 items-center text-2xl px-10 bg-white h-16 sticky top-0 z-50 overflow-x-auto">
       <Link className="flex-shrink-0" to="/">
         <Logo className="w-auto h-8" />
       </Link>

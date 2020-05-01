@@ -98,7 +98,7 @@ export default function PullRequestPage({
 
   return (
     <>
-      <div className="pb-16 pt-16 px-8 container mx-auto">
+      <div className="flex-grow flex-shrink-0 pb-16 pt-16 px-8 container mx-auto">
         {!unreleasedPackages.length ? (
           <Alert className="mb-6">
             This change set is read only because all these changes have already
