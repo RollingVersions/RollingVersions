@@ -1184,16 +1184,16 @@
     postcss "7.0.27"
     purgecss "^2.1.0"
 
-"@github-graph/api@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@github-graph/api/-/api-1.2.0.tgz#c10f07f1ef981c3a51b1581ba63b396802339fa9"
-  integrity sha512-30kc5YiKOm+w1vtYgLvJCwC0VX1PFlHF0cNQjT/lt6jDQjs9oHidDtb87ZqRbAENSbL2EhWNFZBGzbcHefzfVg==
+"@github-graph/api@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@github-graph/api/-/api-1.2.2.tgz#36db341cd84b25a1184f52feb23ac29bc0c9cd62"
+  integrity sha512-8VNkxTABfYcxif4PGj7QLlWS79+tg03uty5D08VSb8DL7MKDBLOeNDujYyJyrR601y4k5MgU1TBbeDJ6e9fQ+g==
   dependencies:
     "@octokit/auth" "^2.0.0"
     "@octokit/request" "^5.3.2"
     "@octokit/rest" "^17.1.0"
     graphql "^14.6.0"
-    graphql-merge-unmerge "^2.0.0"
+    graphql-merge-unmerge "^3.0.0"
     graphql-tag "^2.10.3"
     universal-user-agent "^5.0.0"
 
@@ -7073,10 +7073,10 @@ graceful-fs@^4.1.11, graceful-fs@^4.1.15, graceful-fs@^4.1.2, graceful-fs@^4.1.6
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.2.3.tgz#4a12ff1b60376ef09862c2093edd908328be8423"
   integrity sha512-a30VEBm4PEdx1dRB7MFK7BejejvCvBronbLjht+sHuGYj8PHs7M/5Z+rt5lw551vZ7yfTCj4Vuyy3mSJytDWRQ==
 
-graphql-merge-unmerge@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/graphql-merge-unmerge/-/graphql-merge-unmerge-2.0.0.tgz#3487c55fc112b837c66a07bcef98d6a1b6f7b636"
-  integrity sha512-K8Ol+C64ZFzWAdJSruRcDI8RCqjFBrC+y5TyZB60zH5U8Mb3EjmscwIdvN99/H7UVPL9pUcHqOelHFGitkqsfw==
+graphql-merge-unmerge@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/graphql-merge-unmerge/-/graphql-merge-unmerge-3.0.0.tgz#14ff83bbe5a3e7c21a2cea0342a1a3e5dfca2981"
+  integrity sha512-v9jHy0txChHMRJraMsNW8hu9w683otzTPsT9dSKZFcmiriQQwlq9SGtZk9TeX2MlH2kbHHnHjZVusgYJKokDjA==
   dependencies:
     generate-alphabetic-name "^1.0.0"
     graphql "^14.6.0"
@@ -13564,6 +13564,11 @@ text-table@0.2.0, text-table@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
   integrity sha1-f17oI66AUgfACvLfSoTsP8+lcLQ=
+
+then-retry@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/then-retry/-/then-retry-1.0.0.tgz#f0f8c8e8c7da5df1d7a8182919f2a658491fc863"
+  integrity sha512-qxDO/RiEu6wHdAJ1tFR7EfjCRHHkdBuMtb0drIKf2cuchoTwiWDsP2S+3qSoKdNpaRx8t3AKH8vwOGRxbXQBIQ==
 
 throat@^4.0.0, throat@^4.1.0:
   version "4.1.0"

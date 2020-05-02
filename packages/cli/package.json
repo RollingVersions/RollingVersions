@@ -18,7 +18,7 @@
     "postbuild": "rimraf lib/**/{__tests__,__mock_services__}"
   },
   "dependencies": {
-    "@github-graph/api": "^1.2.0",
+    "@github-graph/api": "^1.2.2",
     "@types/pacote": "^11.1.0",
     "@types/semver": "^7.1.0",
     "assert-never": "^1.2.0",
@@ -35,7 +35,8 @@
     "npm-profile": "^5.0.1",
     "pacote": "^11.1.4",
     "semver": "^7.2.2",
-    "stringify-package": "^1.0.1"
+    "stringify-package": "^1.0.1",
+    "then-retry": "^1.0.0"
   },
   "devDependencies": {
     "@forbeslindesay/tsconfig": "^2.0.0",

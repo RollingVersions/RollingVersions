@@ -1,5 +1,6 @@
 import {URL} from 'url';
 import GitHubClient, {auth} from '@github-graph/api';
+import retry, {withRetry} from 'then-retry';
 
 import {Repository, PullRequest} from '../../types';
 
@@ -9,98 +10,103 @@ import isTruthy from '../../ts-utils/isTruthy';
 
 export {GitHubClient, auth};
 
-export async function getPullRequestHeadSha(
-  client: GitHubClient,
-  pr: Pick<PullRequest, 'repo' | 'number'>,
-) {
-  return (
-    await gh.getPullRequestHeadSha(client, {
-      owner: pr.repo.owner,
-      name: pr.repo.name,
-      number: pr.number,
-    })
-  ).repository?.pullRequest?.headRef?.target.oid;
-}
-export async function getPullRequestStatus(
-  client: GitHubClient,
-  pr: Pick<PullRequest, 'repo' | 'number'>,
-) {
-  return (
-    (
-      await gh.getPullRequestStatus(client, {
+export const getPullRequestHeadSha = withRetry(
+  async (client: GitHubClient, pr: Pick<PullRequest, 'repo' | 'number'>) => {
+    return (
+      await gh.getPullRequestHeadSha(client, {
         owner: pr.repo.owner,
         name: pr.repo.name,
         number: pr.number,
       })
-    ).repository?.pullRequest || undefined
-  );
-}
-export async function getViewer(client: GitHubClient) {
+    ).repository?.pullRequest?.headRef?.target.oid;
+  },
+);
+
+export const getPullRequestStatus = withRetry(
+  async (client: GitHubClient, pr: Pick<PullRequest, 'repo' | 'number'>) => {
+    return (
+      (
+        await gh.getPullRequestStatus(client, {
+          owner: pr.repo.owner,
+          name: pr.repo.name,
+          number: pr.number,
+        })
+      ).repository?.pullRequest || undefined
+    );
+  },
+);
+
+export const getViewer = withRetry(async (client: GitHubClient) => {
   return (await gh.getViewer(client)).viewer;
-}
-export async function getPullRequestAuthor(
-  client: GitHubClient,
-  pr: Pick<PullRequest, 'repo' | 'number'>,
-) {
-  return (
-    (
-      await gh.getPullRequestAuthor(client, {
-        owner: pr.repo.owner,
-        name: pr.repo.name,
-        number: pr.number,
-      })
-    ).repository?.pullRequest?.author || null
-  );
-}
+});
 
-export async function getRepositoryViewerPermissions(
-  client: GitHubClient,
-  repo: Repository,
-) {
-  return (
-    (await gh.getRepositoryViewerPermissions(client, repo)).repository
-      ?.viewerPermission || null
-  );
-}
-export async function getRepositoryIsPublic(
-  client: GitHubClient,
-  repo: Repository,
-) {
-  return (
-    (await gh.getRepositoryIsPrivate(client, repo)).repository?.isPrivate ===
-    false
-  );
-}
+export const getPullRequestAuthor = withRetry(
+  async (client: GitHubClient, pr: Pick<PullRequest, 'repo' | 'number'>) => {
+    return (
+      (
+        await gh.getPullRequestAuthor(client, {
+          owner: pr.repo.owner,
+          name: pr.repo.name,
+          number: pr.number,
+        })
+      ).repository?.pullRequest?.author || null
+    );
+  },
+);
 
-export async function getBranch(
-  client: GitHubClient,
-  repo: Repository,
-  deployBranch?: string | null,
-) {
-  const data = await (deployBranch
-    ? gh.getBranch(client, {
-        ...repo,
-        qualifiedName: `refs/heads/${deployBranch}`,
-      })
-    : gh.getDefaultBranch(client, repo));
+export const getRepositoryViewerPermissions = withRetry(
+  async (client: GitHubClient, repo: Repository) => {
+    return (
+      (await gh.getRepositoryViewerPermissions(client, repo)).repository
+        ?.viewerPermission || null
+    );
+  },
+  {
+    shouldRetry: (_e, failedAttempts) => failedAttempts < 3,
+    retryDelay: () => 100,
+  },
+);
 
-  if (data.repository?.branch) {
-    return {
-      name: data.repository.branch.name,
-      headSha:
-        data.repository.branch.target.__typename === 'Commit'
-          ? `${data.repository.branch.target.oid}`
-          : null,
-    };
-  }
+export const getRepositoryIsPublic = withRetry(
+  async (client: GitHubClient, repo: Repository) => {
+    return (
+      (await gh.getRepositoryIsPrivate(client, repo)).repository?.isPrivate ===
+      false
+    );
+  },
+);
 
-  return null;
-}
+export const getBranch = withRetry(
+  async (
+    client: GitHubClient,
+    repo: Repository,
+    deployBranch?: string | null,
+  ) => {
+    const data = await (deployBranch
+      ? gh.getBranch(client, {
+          ...repo,
+          qualifiedName: `refs/heads/${deployBranch}`,
+        })
+      : gh.getDefaultBranch(client, repo));
+
+    if (data.repository?.branch) {
+      return {
+        name: data.repository.branch.name,
+        headSha:
+          data.repository.branch.target.__typename === 'Commit'
+            ? `${data.repository.branch.target.oid}`
+            : null,
+      };
+    }
+
+    return null;
+  },
+);
 
 export async function getAllTags(client: GitHubClient, repo: Repository) {
   const results: {commitSha: string; name: string}[] = [];
   for await (const tag of paginate(
-    (after) => gh.getTags(client, {...repo, after}),
+    (after) => retry(() => gh.getTags(client, {...repo, after})),
     (page) => page?.repository?.refs?.nodes || [],
     (page) =>
       (page?.repository?.refs?.pageInfo?.hasNextPage &&
@@ -131,16 +137,19 @@ export async function* getAllFiles(
     | Pick<PullRequest, 'repo' | 'number'>,
 ) {
   const repo = pullRequestOrRepo.repo || pullRequestOrRepo;
-  const commit = (pullRequestOrRepo.repo
-    ? (
-        await gh.getPullRequestFileNames(client, {
-          ...pullRequestOrRepo.repo,
-          number: pullRequestOrRepo.number,
-        })
-      ).repository?.pullRequest?.headRef
-    : (await gh.getRepoFileNames(client, pullRequestOrRepo)).repository
-        ?.defaultBranchRef
-  )?.target;
+  const commit = await retry(
+    async () =>
+      (pullRequestOrRepo.repo
+        ? (
+            await gh.getPullRequestFileNames(client, {
+              ...pullRequestOrRepo.repo,
+              number: pullRequestOrRepo.number,
+            })
+          ).repository?.pullRequest?.headRef
+        : (await gh.getRepoFileNames(client, pullRequestOrRepo)).repository
+            ?.defaultBranchRef
+      )?.target,
+  );
 
   if (!commit || commit.__typename !== 'Commit') {
     throw new Error(
@@ -165,10 +174,12 @@ export async function* getAllFiles(
         yield {
           path: path.join('/'),
           getContents: async () => {
-            const file = await gh.getFile(client, {
-              ...repo,
-              oid,
-            });
+            const file = await retry(() =>
+              gh.getFile(client, {
+                ...repo,
+                oid,
+              }),
+            );
             if (!file.repository) {
               throw new Error('Could not find repository');
             }
@@ -199,16 +210,18 @@ export async function* getAllFiles(
 export async function* readComments(
   client: GitHubClient,
   pr: Pick<PullRequest, 'repo' | 'number'>,
-  {pageSize = 5}: {pageSize?: number} = {},
+  {pageSize = 20}: {pageSize?: number} = {},
 ) {
   for await (const comment of paginate(
     (after) =>
-      gh.getPullRequestComments(client, {
-        ...pr.repo,
-        number: pr.number,
-        after,
-        first: pageSize,
-      }),
+      retry(() =>
+        gh.getPullRequestComments(client, {
+          ...pr.repo,
+          number: pr.number,
+          after,
+          first: pageSize,
+        }),
+      ),
     (page) => page?.repository?.pullRequest?.comments?.nodes || [],
     (page): string | undefined =>
       (page?.repository?.pullRequest?.comments?.pageInfo?.hasNextPage &&
@@ -232,12 +245,14 @@ export async function writeComment(
 ) {
   if (existingComment) {
     return (
-      await client.rest.issues.updateComment({
-        owner: pr.repo.owner,
-        repo: pr.repo.name,
-        body,
-        comment_id: existingComment,
-      })
+      await retry(() =>
+        client.rest.issues.updateComment({
+          owner: pr.repo.owner,
+          repo: pr.repo.name,
+          body,
+          comment_id: existingComment,
+        }),
+      )
     ).data.id;
   } else {
     return (
@@ -251,60 +266,66 @@ export async function writeComment(
   }
 }
 
-export async function deleteComment(
-  client: GitHubClient,
-  pr: Pick<PullRequest, 'repo' | 'number'>,
-  existingComment: number,
-) {
-  await client.rest.issues.deleteComment({
-    owner: pr.repo.owner,
-    repo: pr.repo.name,
-    comment_id: existingComment,
-  });
-}
-
-export async function updateStatus(
-  client: GitHubClient,
-  pr: Pick<PullRequest, 'repo' | 'number' | 'headSha'>,
-  status: {
-    state: 'success' | 'pending' | 'error' | 'failure';
-    url: URL;
-    description: string;
+export const deleteComment = withRetry(
+  async (
+    client: GitHubClient,
+    pr: Pick<PullRequest, 'repo' | 'number'>,
+    existingComment: number,
+  ) => {
+    await client.rest.issues.deleteComment({
+      owner: pr.repo.owner,
+      repo: pr.repo.name,
+      comment_id: existingComment,
+    });
   },
-) {
-  await client.rest.repos.createStatus({
-    owner: pr.repo.owner,
-    repo: pr.repo.name,
-    sha: pr.headSha,
-    state: status.state,
-    target_url: status.url.href,
-    description: status.description,
-    context: 'RollingVersions',
-  });
-}
+);
+
+export const updateStatus = withRetry(
+  async (
+    client: GitHubClient,
+    pr: Pick<PullRequest, 'repo' | 'number' | 'headSha'>,
+    status: {
+      state: 'success' | 'pending' | 'error' | 'failure';
+      url: URL;
+      description: string;
+    },
+  ) => {
+    await client.rest.repos.createStatus({
+      owner: pr.repo.owner,
+      repo: pr.repo.name,
+      sha: pr.headSha,
+      state: status.state,
+      target_url: status.url.href,
+      description: status.description,
+      context: 'RollingVersions',
+    });
+  },
+);
 
 export async function* getAllCommits(
   client: GitHubClient,
   repo: Repository,
   {
-    pageSize = 20,
+    pageSize = 100,
     deployBranch,
   }: {pageSize?: number; deployBranch: string | null},
 ) {
   for await (const commit of paginate(
     async (after) =>
-      deployBranch
-        ? gh.getAllCommits(client, {
-            ...repo,
-            after,
-            first: pageSize,
-            qualifiedName: `refs/heads/${deployBranch}`,
-          })
-        : gh.getAllDefaultBranchCommits(client, {
-            ...repo,
-            after,
-            first: pageSize,
-          }),
+      retry(async () =>
+        deployBranch
+          ? gh.getAllCommits(client, {
+              ...repo,
+              after,
+              first: pageSize,
+              qualifiedName: `refs/heads/${deployBranch}`,
+            })
+          : gh.getAllDefaultBranchCommits(client, {
+              ...repo,
+              after,
+              first: pageSize,
+            }),
+      ),
     (page) =>
       (page?.repository?.branch?.target?.__typename === 'Commit' &&
         page.repository.branch.target.history.nodes) ||
