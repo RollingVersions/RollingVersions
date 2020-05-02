@@ -199,7 +199,7 @@ export async function* getAllFiles(
 export async function* readComments(
   client: GitHubClient,
   pr: Pick<PullRequest, 'repo' | 'number'>,
-  {pageSize = 5}: {pageSize?: number} = {},
+  {pageSize = 20}: {pageSize?: number} = {},
 ) {
   for await (const comment of paginate(
     (after) =>
@@ -287,7 +287,7 @@ export async function* getAllCommits(
   client: GitHubClient,
   repo: Repository,
   {
-    pageSize = 20,
+    pageSize = 100,
     deployBranch,
   }: {pageSize?: number; deployBranch: string | null},
 ) {
