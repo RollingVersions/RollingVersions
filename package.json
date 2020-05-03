@@ -74,5 +74,9 @@
       "prettier --write",
       "git add"
     ]
+  },
+  "dependencies": {
+    "@databases/pg": "^2.1.1",
+    "@databases/pg-test": "^2.0.0"
   }
 }
