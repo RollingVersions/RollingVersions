@@ -2,7 +2,39 @@ import connect, {sql, Connection} from '@databases/pg';
 import {ChangeType} from 'rollingversions/lib/types/PullRequestState';
 import {Repository} from 'rollingversions/lib/types';
 
+export {Connection};
 export const db = connect();
+
+// export async function getRepository(db: Connection, repo: Repository) {
+//   const result = await db.query(sql`
+//     SELECT * FROM git_repositories WHERE owner = ${repo.owner} AND name = ${repo.name};
+//   `);
+// }
+// CREATE TABLE git_repositories (
+//   id INT NOT NULL PRIMARY KEY,
+//   graphql_id TEXT NOT NULL,
+//   owner TEXT NOT NULL,
+//   name TEXT NOT NULL,
+//   default_branch_name TEXT NOT NULL
+// );
+
+export async function upsertRepository(
+  db: Connection,
+  repo: {
+    id: number;
+    graphql_id: string;
+    owner: string;
+    name: string;
+    default_branch_name: string;
+  },
+) {
+  await db.query(sql`
+    INSERT INTO git_repositories (id, graphql_id, owner, name, default_branch_name)
+    VALUES (${repo.id}, ${repo.graphql_id}, ${repo.owner}, ${repo.name}, ${repo.default_branch_name})
+    ON CONFLICT (id) DO UPDATE
+    SET graphql_id=EXCLUDED.graphql_id, owner=EXCLUDED.owner, name=EXCLUDED.name, default_branch_name=EXCLUDED.default_branch_name
+  `);
+}
 
 export async function getAllUnreleasedChanges(
   db: Connection,

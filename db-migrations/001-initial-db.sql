@@ -49,7 +49,8 @@ CREATE TABLE pull_requests (
   title TEXT NOT NULL,
   is_merged BOOLEAN NOT NULL DEFAULT false,
   is_closed BOOLEAN NOT NULL DEFAULT false,
-  head_git_commit_id BIGINT NOT NULL REFERENCES git_commits(id),
+
+  head_git_commit_id BIGINT NULL REFERENCES git_commits(id),
 
   change_set_submitted_at_git_commit_id BIGINT NULL REFERENCES git_commits(id),
   package_info_fetched_at_commit_id BIGINT NULL REFERENCES git_commits(id)

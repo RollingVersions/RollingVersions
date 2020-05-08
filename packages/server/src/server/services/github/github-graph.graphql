@@ -1,0 +1,74 @@
+query GetTags($owner: String!, $name: String!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    refs(first: 100, after: $after, refPrefix: "refs/tags/") {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        name
+        target {
+          # __typename: Commit
+          oid
+        }
+      }
+    }
+  }
+}
+
+query GetRepository($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    databaseId
+    id
+  }
+}
+
+query GetDefaultBranch($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    branch: defaultBranchRef {
+      name
+      target {
+        __typename # Commit
+        oid
+      }
+    }
+  }
+}
+
+query GetAllDefaultBranchCommitsFromTail(
+  $owner: String!
+  $name: String!
+  $before: String
+) {
+  repository(owner: $owner, name: $name) {
+    branch: defaultBranchRef {
+      target {
+        __typename # Commit
+        oid
+        ... on Commit {
+          id
+          history(last: 100, before: $before) {
+            pageInfo {
+              hasNextPage
+              startCursor
+            }
+            nodes {
+              id
+              oid
+              parents(first: 100) {
+                nodes {
+                  oid
+                }
+              }
+              associatedPullRequests(first: 100) {
+                nodes {
+                  number
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
