@@ -3,13 +3,20 @@ export default async function* paginate<TPage, TEntry>(
   getEntries: (page: TPage) => TEntry[],
   getNextPageToken: (page: TPage) => string | undefined,
 ) {
-  let page;
-  let nextPageToken;
+  let nextPage: Promise<TPage> | undefined;
+  let currentPage: TPage | undefined;
+  let nextPageToken: string | undefined;
   do {
-    page = await getPage(nextPageToken);
-    nextPageToken = getNextPageToken(page);
-    for (const entry of getEntries(page)) {
+    nextPage = getPage(nextPageToken);
+    nextPage.catch(() => {
+      // swallow errors here because otherwise they can be
+      // reported as unhandled exceptions before we get to
+      // the part where we await this promise
+    });
+    for (const entry of currentPage ? getEntries(currentPage) : []) {
       yield entry;
     }
+    currentPage = await nextPage;
+    nextPageToken = getNextPageToken(currentPage);
   } while (nextPageToken);
 }
