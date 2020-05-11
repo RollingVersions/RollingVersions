@@ -62,7 +62,7 @@ body,
   @apply list-decimal;
 }
 .markdown ul {
-  @apply list-disc;
+  @apply list-square;
 }
 /* Blockquotes */
 .markdown blockquote {

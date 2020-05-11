@@ -64,7 +64,14 @@ module.exports = {
         'monospace',
       ],
     },
+
+    listStyleType: {
+      none: 'none',
+      decimal: 'decimal',
+      square: 'square',
+    },
   },
+
   variants: {},
   plugins: [],
 };
