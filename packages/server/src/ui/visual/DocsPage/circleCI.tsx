@@ -24,19 +24,19 @@ export default function CircleCI() {
       <Details>
         In the settings for this repository on Circle CI, add these environment
         variables:
-        {/* TODO Forbes I think a square bullet point to tie in with squares in logo and amended tailwind config and index.css (hopefully correctly). If you don't agree you will need to undo. */}
-        {/* TODO Alignment is wrong */}
-        <ul className="list-square">
-          <li>
-            <InlineCode>GITHUB_TOKEN</InlineCode> - a GitHub personal access
-            token with at least "repo" scope.
-          </li>
-          <li>
-            <InlineCode>NPM_TOKEN</InlineCode> - an npm token with permission to
-            publish all the packages in this repo
-          </li>
-        </ul>
       </Details>
+      {/* TODO Forbes I think a square bullet point to tie in with squares in logo and amended tailwind config and index.css (hopefully correctly). If you don't agree you will need to undo. */}
+      {/* TODO Alignment is wrong */}
+      <ul className="font-sans text-xl list-square">
+        <li>
+          <InlineCode>GITHUB_TOKEN</InlineCode> - a GitHub personal access token
+          with at least "repo" scope.
+        </li>
+        <li>
+          <InlineCode>NPM_TOKEN</InlineCode> - an npm token with permission to
+          publish all the packages in this repo
+        </li>
+      </ul>
       <Details>
         Next time you submit a pull request, you will be asked to add a change
         log. Once you've merged the pull request, you can go to the workflow in

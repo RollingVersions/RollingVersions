@@ -3,6 +3,7 @@ import {InstallButton} from '../HeroBar';
 import GithubActions from './githubActions';
 import CircleCI from './circleCI';
 import MonoRepos from './monoRepos';
+import Selector from './selector';
 
 export function Heading({children}: {children: string}) {
   return <h2 className="font-poppins text-4xl">{children}</h2>;
@@ -55,6 +56,7 @@ export function CodePrefix({children}: {children: string}) {
 }
 
 export default function Docs() {
+  let selected: string = '';
   return (
     <>
       <div className="grid gap-4 md:gap-8">
@@ -67,7 +69,15 @@ export default function Docs() {
           actions workflows if you use them for releases.
         </Details>
         <InstallButton />
-
+        <Selector
+          selected={selected}
+          setSelected={(value: string) => (selected = value)}
+        />
+        {selected === 'github' ? (
+          <GithubActions />
+        ) : selected === 'circle' ? (
+          <CircleCI />
+        ) : null}
         <GithubActions />
         <CircleCI />
         <MonoRepos />
