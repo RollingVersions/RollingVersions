@@ -2,6 +2,7 @@ import React from 'react';
 import {InstallButton} from '../HeroBar';
 import GithubActions from './githubActions';
 import CircleCI from './circleCI';
+import MonoRepos from './monoRepos';
 
 export function Heading({children}: {children: string}) {
   return <h2 className="font-poppins text-4xl">{children}</h2>;
@@ -69,6 +70,7 @@ export default function Docs() {
 
         <GithubActions />
         <CircleCI />
+        <MonoRepos />
       </div>
     </>
   );
