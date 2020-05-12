@@ -1,8 +1,9 @@
 import React from 'react';
-import {Instruction, Details, InlineCode} from './docsFormats';
+import {Instruction} from './docsFormats';
 import SelectedRadio from '../../icons/selectedRadio.svg';
 import OpenRadio from '../../icons/openRadio.svg';
 
+// TODO This looks horrible! I have been trying to get rid of blue outline when focussed/active but haven't succeeded.  I've also been unable to position the indicators or anything else. Not getting to grips with flex or tailwind at all. This has meant that I've not been able to experiment with appearance/styles.
 function SelectorButton({
   children,
   isSelected,
@@ -16,20 +17,19 @@ function SelectorButton({
     <button
       className={
         'btn ' +
-        (isSelected ? 'bg-gray-400 ' : 'bg-transparent ') +
-        'hover:bg-gray-100 ' +
+        (isSelected ? 'bg-gray-400 ' : 'bg-transparent hover:bg-gray-100 ') +
         'font-poppins text-2xl py-2 px-4 outline-none ' +
         (isSelected ? 'border-4 ' : 'border ') +
-        'border-orange-500 hover:border-orange-300'
+        'border-orange-500 ' +
+        (isSelected ? '' : 'hover:border-orange-300')
       }
       onClick={() => onClick()}
     >
-      {/* <img
+      <img
         className="h-12 w-12"
-        src={!isSelected ? SelectedRadio : OpenRadio}
+        src={isSelected ? SelectedRadio : OpenRadio}
         alt={(isSelected ? 'Selected' : 'Not Selected') + ' Icon'}
-      /> */}
-      {/* <input type="radio" id="workflow-manager" checked={!isSelected}></input> */}
+      />
       <p>{children}</p>
     </button>
   );
@@ -47,7 +47,7 @@ export default function CircleCI({
     <>
       <Instruction>Select Workflow Manager</Instruction>
 
-      <div className="grid grid-cols-2 col-gap-4">
+      <div className="grid grid-cols-2 col-gap-12">
         <SelectorButton
           isSelected={selected === 'github'}
           onClick={() => setSelected('github')}
