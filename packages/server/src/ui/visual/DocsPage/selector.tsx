@@ -1,5 +1,5 @@
 import React from 'react';
-import {Instruction, Details, InlineCode} from './docs';
+import {Instruction, Details, InlineCode} from './docsFormats';
 import SelectedRadio from '../../icons/selectedRadio.svg';
 import OpenRadio from '../../icons/openRadio.svg';
 

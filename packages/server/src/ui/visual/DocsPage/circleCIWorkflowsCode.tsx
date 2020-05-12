@@ -1,5 +1,5 @@
 import React from 'react';
-import {CodeBlock, CodeLine, CodePrefix} from './docs';
+import {CodeBlock, CodeLine, CodePrefix} from './docsFormats';
 
 export default function CircleCIWorkflowsCode() {
   return (

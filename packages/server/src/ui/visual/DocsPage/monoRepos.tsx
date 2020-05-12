@@ -1,5 +1,5 @@
 import React from 'react';
-import {Instruction, Details, InlineCode} from './docs';
+import {Instruction, Details, InlineCode} from './docsFormats';
 
 // TODO I have used the fixed link rather than linking to the current version of the package.  Is this the right thing to do - means that appropriate line is highlighted but it  will go out of date
 
