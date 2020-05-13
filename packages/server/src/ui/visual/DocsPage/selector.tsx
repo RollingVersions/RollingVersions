@@ -44,10 +44,9 @@ export default function CircleCI({
   selected: Options;
   setSelected: (value: Options) => void;
 }) {
-  // TODO What is generic name for CircleCI and Github actions
   return (
     <>
-      <Instruction>Select Workflow Manager</Instruction>
+      <Instruction>Select Continuous Integration Service</Instruction>
 
       <div className="grid grid-cols-2 col-gap-12">
         <SelectorButton
