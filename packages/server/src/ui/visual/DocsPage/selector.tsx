@@ -35,12 +35,14 @@ function SelectorButton({
   );
 }
 
+export type Options = '' | 'github' | 'circle';
+
 export default function CircleCI({
   selected,
   setSelected,
 }: {
-  selected: string;
-  setSelected: (value: string) => void;
+  selected: Options;
+  setSelected: (value: Options) => void;
 }) {
   // TODO What is generic name for CircleCI and Github actions
   return (
