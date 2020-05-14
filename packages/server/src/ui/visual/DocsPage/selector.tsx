@@ -1,7 +1,15 @@
 import React from 'react';
 import {Instruction} from './docsFormats';
-import SelectedRadio from '../../icons/selectedRadio.svg';
-import OpenRadio from '../../icons/openRadio.svg';
+
+function Radio({isSelected}: {isSelected: boolean}) {
+  return (
+    <div className="flex justify-center items-center border border-solid border-gray-800 border-6 rounded-full h-12 w-12">
+      {!isSelected ? null : (
+        <div className="bg-orange-500 border rounded-full h-8 w-8"></div>
+      )}
+    </div>
+  );
+}
 
 // TODO This looks horrible! I have been trying to get rid of blue outline when focussed/active but haven't succeeded.  I've also been unable to position the indicators or anything else. Not getting to grips with flex or tailwind at all. This has meant that I've not been able to experiment with appearance/styles.
 function SelectorButton({
@@ -25,11 +33,7 @@ function SelectorButton({
       }
       onClick={() => onClick()}
     >
-      <img
-        className="h-12 w-12"
-        src={isSelected ? SelectedRadio : OpenRadio}
-        alt={(isSelected ? 'Selected' : 'Not Selected') + ' Icon'}
-      />
+      <Radio isSelected={isSelected} />
       <p>{children}</p>
     </button>
   );
@@ -37,7 +41,7 @@ function SelectorButton({
 
 export type Options = '' | 'github' | 'circle';
 
-export default function CircleCI({
+export default function Selector({
   selected,
   setSelected,
 }: {
