@@ -1,6 +1,9 @@
 export {PullRequest, Repository} from './GitHub';
 export {default as PackageDependencies} from './PackageDependencies';
-export {default as PackageInfo} from './PackageInfo';
+export {
+  default as PackageManifest,
+  PackageManifestWithVersion,
+} from './PackageManifest';
 export {PublishConfig, PublishEvents, PublishEventHandlers} from './publish';
 export {default as PublishTarget} from './PublishTarget';
 export {

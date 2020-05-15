@@ -19,8 +19,8 @@ function isSinglePackageWithDirectVersion(
 ) {
   return (
     packages.length === 1 &&
-    packages[0].pkgInfos.some((p) => p.versionTag) &&
-    packages[0].pkgInfos.every(
+    packages[0].manifests.some((p) => p.versionTag) &&
+    packages[0].manifests.every(
       (p) => !p.versionTag || !p.versionTag.name.includes?.('@'),
     )
   );
@@ -39,9 +39,9 @@ function isSinglePackageWithDirectVersion(
  */
 function gitTagsHavePrefixV(packages: readonly SuccessPackageStatus[]) {
   return (
-    packages.some((p) => p.pkgInfos.some((pi) => pi.versionTag)) &&
+    packages.some((p) => p.manifests.some((pi) => pi.versionTag)) &&
     packages.every((p) =>
-      p.pkgInfos.every(
+      p.manifests.every(
         (pi) =>
           !pi.versionTag ||
           pi.versionTag.name.replace(/^.*\@/, '').startsWith('v'),

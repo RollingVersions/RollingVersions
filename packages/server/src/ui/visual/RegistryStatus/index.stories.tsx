@@ -7,9 +7,9 @@ export default {title: 'modules/RegistryStatus'};
 export const Default = () => {
   return (
     <div className="w-full min-h-full bg-gray-300 p-2">
-      <RegistryStatus packageInfo={[]} />
+      <RegistryStatus packageManifest={[]} />
       <RegistryStatus
-        packageInfo={[
+        packageManifest={[
           {
             publishTarget: PublishTarget.npm,
             notToBePublished: true,
@@ -20,7 +20,7 @@ export const Default = () => {
         ]}
       />
       <RegistryStatus
-        packageInfo={[
+        packageManifest={[
           {
             publishTarget: PublishTarget.npm,
             notToBePublished: false,
@@ -31,7 +31,7 @@ export const Default = () => {
         ]}
       />
       <RegistryStatus
-        packageInfo={[
+        packageManifest={[
           {
             publishTarget: PublishTarget.npm,
             notToBePublished: false,
@@ -42,7 +42,7 @@ export const Default = () => {
         ]}
       />
       <RegistryStatus
-        packageInfo={[
+        packageManifest={[
           {
             publishTarget: PublishTarget.npm,
             notToBePublished: false,
@@ -57,7 +57,7 @@ export const Default = () => {
         ]}
       />
       <RegistryStatus
-        packageInfo={[
+        packageManifest={[
           {
             publishTarget: PublishTarget.npm,
             notToBePublished: false,

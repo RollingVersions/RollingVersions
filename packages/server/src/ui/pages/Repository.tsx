@@ -3,7 +3,7 @@ import {useParams} from 'react-router-dom';
 import {RepoResponse} from '../../types';
 import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import GitHubMarkdownAsync from '../visual/GitHubMarkdown/async';
-import {changesToMarkdown} from 'rollingversions/lib/utils/Rendering';
+import changesToMarkdown from 'rollingversions/lib/utils/changesToMarkdown';
 import AppContainer from '../visual/AppContainer';
 import AppNavBar, {AppNavBarLink} from '../visual/AppNavBar';
 

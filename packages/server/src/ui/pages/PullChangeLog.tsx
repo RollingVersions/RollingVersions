@@ -32,32 +32,8 @@ export default function PullChangeLog() {
         if (!pr.pullRequest) {
           return <div>Loading...</div>;
         }
-        if (!pr.pullRequest.changeLogState) {
-          if (pr.pullRequest.merged) {
-            return (
-              <div>
-                This PR is already merged and does not seem to have a change
-                log.
-              </div>
-            );
-          } else if (pr.pullRequest.closed) {
-            return (
-              <div>
-                This PR is already closed and does not seem to have a change
-                log.
-              </div>
-            );
-          } else {
-            return (
-              <div>
-                This PR does not seem to have a change log, or any way to add
-                one.
-              </div>
-            );
-          }
-        }
 
-        const headSha = pr.pullRequest.changeLogState?.packageInfoFetchedAt;
+        const headSha = pr.pullRequest.headSha || undefined;
 
         return (
           <PullRequestPage
@@ -66,9 +42,9 @@ export default function PullChangeLog() {
             closed={pr.pullRequest.closed}
             merged={pr.pullRequest.merged}
             saving={pr.updating || saving}
-            packages={pr.pullRequest.changeLogState.packages}
-            unreleasedPackages={pr.pullRequest.unreleasedPackages}
+            packages={pr.pullRequest.packages}
             onSave={async (updates) => {
+              // TODO: headSha should not be **needed** to save
               if (!headSha) return;
               setSaving(true);
               if (

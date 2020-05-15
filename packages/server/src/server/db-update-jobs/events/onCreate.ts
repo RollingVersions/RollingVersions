@@ -51,8 +51,6 @@ export default async function onCreate(
     getAllRefCommits(client, repo, ref),
   );
 
-  // TODO(perf): fetch package info for head commit to speed up later page loads
-
   const gitRef = await getRef(client, repo, ref);
   if (!gitRef) {
     throw new Error(`Could not find the git ref`);
@@ -66,6 +64,7 @@ export default async function onCreate(
     throw new Error('Cannot find id for head commit');
   }
   if (ref.type === 'head') {
+    // TODO(perf): fetch package manifests for head commit to speed up later page loads
     await writeBranch(
       db,
       gitRepositoryId,

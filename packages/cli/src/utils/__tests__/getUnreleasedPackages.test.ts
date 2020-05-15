@@ -6,6 +6,7 @@ import {
 } from '../../services/__mock_services__';
 import {getAllFiles} from '../../services/git';
 import {getAllTags} from '../../services/github';
+import addPackageVersions from '../addPackageVersions';
 
 test('getUnreleasedPackages', async () => {
   const {dirname, repo, newPullRequest, newCommit} = createRepository({
@@ -41,20 +42,24 @@ test('getUnreleasedPackages', async () => {
     versions: ['1.0.0'],
   });
 
+  const [packageManifestsWithoutVersions, allTags] = await Promise.all([
+    listPackages(getAllFiles(dirname)),
+    getAllTags(null as any, repo),
+  ]);
+  const packageManifests = await addPackageVersions(
+    packageManifestsWithoutVersions,
+    allTags,
+  );
+
   // the only package that does not have a release on or after this PR is package-b
   expect(
     await getUnreleasedPackages(
       null as any,
       {...pullRequest, closed: true},
       new Map(
-        [
-          ...(await listPackages(
-            getAllTags(null as any, repo),
-            getAllFiles(dirname),
-          )),
-        ].map(([packageName, {infos}]) => [
+        [...packageManifests].map(([packageName, {manifests}]) => [
           packageName,
-          {changes: null as any, info: infos},
+          {changes: null as any, manifests},
         ]),
       ),
     ),

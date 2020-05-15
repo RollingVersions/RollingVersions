@@ -6,6 +6,7 @@ query GetTags($owner: String!, $name: String!, $after: String) {
         endCursor
       }
       nodes {
+        id
         name
         target {
           # __typename: Commit
@@ -83,6 +84,17 @@ query GetRepoFileNames($owner: String!, $name: String!) {
             ...FullContents
           }
         }
+      }
+    }
+  }
+}
+
+query GetCommitFileNames($id: ID!) {
+  node(id: $id) {
+    __typename
+    ... on Commit {
+      tree {
+        ...FullContents
       }
     }
   }

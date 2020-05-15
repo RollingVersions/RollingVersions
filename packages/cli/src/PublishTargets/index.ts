@@ -1,6 +1,6 @@
 import {
   PackageDependencies,
-  PackageInfo,
+  PackageManifest,
   PrePublishResult,
   PublishConfig,
   PublishTarget,
@@ -25,24 +25,32 @@ export function pathMayContainPackage(filename: string): boolean {
   return Object.values(targets).some((p) => p.pathMayContainPackage(filename));
 }
 
-export async function getPackageInfo(
+export async function getPackageManifests(
   filename: string,
   content: string,
 ): Promise<
-  {info: Omit<PackageInfo, 'versionTag'>; dependencies: PackageDependencies}[]
+  {
+    manifest: Omit<PackageManifest, 'versionTag'>;
+    dependencies: PackageDependencies;
+  }[]
 > {
   return (
     await Promise.all(
       Object.values(targets)
         .filter((p) => p.pathMayContainPackage(filename))
         .map(async (p) => {
-          const info = await p.getPackageInfo(filename, content);
-          if (!info) return info;
+          const manifest = await p.getPackageManifest(filename, content);
+          if (!manifest) return manifest;
           const dependencies = await p.getDependencies(filename, content);
-          return {info, dependencies};
+          return {manifest, dependencies};
         }),
     )
   ).filter(isTruthy);
+}
+
+export async function getRegistryVersion(pkg: PackageManifest) {
+  if (pkg.notToBePublished) return null;
+  return await targets[pkg.publishTarget].getRegistryVersion(pkg);
 }
 
 export async function prepublish(
@@ -51,7 +59,7 @@ export async function prepublish(
   packageVersions: Map<string, string | null>,
 ): Promise<PrePublishResult[]> {
   return Promise.all(
-    pkg.pkgInfos
+    pkg.manifests
       .filter((pi) => !pi.notToBePublished)
       .map((pi) =>
         targets[pi.publishTarget].prepublish(
@@ -77,22 +85,22 @@ export async function publish(
     client: GitHubClient;
   },
 ) {
-  for (const pkgInfo of pkg.pkgInfos) {
-    if (!pkgInfo.notToBePublished) {
+  for (const pkgManifest of pkg.manifests) {
+    if (!pkgManifest.notToBePublished) {
       config.logger.onPublishTargetRelease?.({
         pkg,
-        pkgInfo,
+        pkgManifest,
         dryRun: config.dryRun,
       });
-      await targets[pkgInfo.publishTarget].publish(
+      await targets[pkgManifest.publishTarget].publish(
         config,
-        pkgInfo,
+        pkgManifest,
         pkg.newVersion,
         packageVersions,
       );
       config.logger.onPublishedTargetRelease?.({
         pkg,
-        pkgInfo,
+        pkgManifest,
         dryRun: config.dryRun,
       });
     }

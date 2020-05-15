@@ -6,7 +6,7 @@ import {
   publish as npmPublish,
 } from '../services/npm';
 import {
-  PackageInfo,
+  PackageManifest,
   PublishTarget,
   PublishConfig,
   PrePublishResult,
@@ -21,7 +21,7 @@ const detectNewline = require('detect-newline').graceful;
 
 async function withNpmVersion<T>(
   config: PublishConfig,
-  pkg: PackageInfo,
+  pkg: PackageManifest,
   newVersion: string,
   packageVersions: Map<string, string | null>,
   fn: () => Promise<T>,
@@ -65,14 +65,19 @@ export function pathMayContainPackage(filename: string): boolean {
   return filename === 'package.json' || filename.endsWith('/package.json');
 }
 
+export async function getRegistryVersion(pkg: PackageManifest) {
+  if (pkg.notToBePublished) return null;
+  return await getNpmVersion(pkg.packageName);
+}
+
 /**
  * Parses the JSON and returns all the package info except
  * the version tag.
  */
-export async function getPackageInfo(
+export async function getPackageManifest(
   path: string,
   content: string,
-): Promise<Omit<PackageInfo, 'versionTag'> | null> {
+): Promise<PackageManifest | null> {
   let result: unknown;
   try {
     result = JSON.parse(content);
@@ -93,7 +98,6 @@ export async function getPackageInfo(
     return {
       publishTarget: PublishTarget.npm,
       packageName: result.name,
-      registryVersion: await getNpmVersion(result.name),
       path,
       publishConfigAccess:
         result.name[0] === '@'
@@ -139,7 +143,7 @@ export async function getDependencies(
 
 export async function prepublish(
   config: PublishConfig,
-  pkg: PackageInfo,
+  pkg: PackageManifest,
   newVersion: string,
   packageVersions: Map<string, string | null>,
 ): Promise<PrePublishResult> {
@@ -201,7 +205,7 @@ export async function prepublish(
 
 export async function publish(
   config: PublishConfig,
-  pkg: PackageInfo,
+  pkg: PackageManifest,
   newVersion: string,
   packageVersions: Map<string, string | null>,
 ) {

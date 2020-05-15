@@ -1,17 +1,20 @@
 import {GitHubClient, getAllCommits} from '../services/github';
-import {ChangeSet, PackageInfo, PullRequest} from '../types';
+import {ChangeSet, PackageManifestWithVersion, PullRequest} from '../types';
 
 export default async function getUnreleasedPackages(
   client: GitHubClient,
   pullRequest: Pick<PullRequest, 'repo' | 'number'> & {closed: boolean},
-  packages: Map<string, {changes: ChangeSet; info: PackageInfo[]}>,
+  packages: Map<
+    string,
+    {changes: ChangeSet; manifests: PackageManifestWithVersion[]}
+  >,
 ) {
   if (!pullRequest.closed) {
     return new Set(packages.keys());
   }
   const unknownPackages = new Set(packages.keys());
-  for (const [packageName, {info}] of packages) {
-    if (!info.some((i) => i.versionTag)) {
+  for (const [packageName, {manifests}] of packages) {
+    if (!manifests.some((i) => i.versionTag)) {
       unknownPackages.delete(packageName);
     }
   }
@@ -19,12 +22,12 @@ export default async function getUnreleasedPackages(
   for await (const commit of getAllCommits(client, pullRequest.repo, {
     deployBranch: null,
   })) {
-    for (const [packageName, {info}] of packages) {
+    for (const [packageName, {manifests}] of packages) {
       if (unknownPackages.has(packageName)) {
-        for (const packageInfo of info) {
+        for (const packageManifest of manifests) {
           if (
-            packageInfo.versionTag &&
-            packageInfo.versionTag.commitSha === commit.oid
+            packageManifest.versionTag &&
+            packageManifest.versionTag.commitSha === commit.oid
           ) {
             unknownPackages.delete(packageName);
             unreleasedPackages.delete(packageName);

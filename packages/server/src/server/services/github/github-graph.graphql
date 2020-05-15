@@ -157,6 +157,36 @@ query GetPullRequestFromNumber($owner: String!, $name: String!, $number: Int!) {
     }
   }
 }
+query GetAllPullRequestCommits(
+  $owner: String!
+  $name: String!
+  $number: Int!
+  $pageSize: Int!
+  $after: String
+) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      headRef {
+        target {
+          __typename # Commit
+          oid
+          ... on Commit {
+            id
+            history(first: $pageSize, after: $after) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              nodes {
+                ...CommitDetail
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 fragment CommitDetail on Commit {
   id

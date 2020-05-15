@@ -12,6 +12,8 @@
     "build": "concurrently -n server,ui \"yarn build:server\" \"yarn build:ui\"",
     "build:ui": "NODE_ENV=production TS_NODE_PROJECT='tsconfig.webpack.json' webpack",
     "build:server": "tsc",
+    "pretypecheck": "yarn prebuild",
+    "typecheck": "tsc",
     "postbuild": "rimraf lib/**/__tests__",
     "dev": "concurrently -n server,ui \"yarn dev:server\" \"sleep 2 && yarn dev:ui\"",
     "dev:ui": "TS_NODE_PROJECT='tsconfig.webpack.json' webpack-dev-server -d --open",
@@ -38,7 +40,8 @@
     "on-finished": "^2.3.0",
     "on-headers": "^1.0.2",
     "react-textarea-autosize": "^7.1.2",
-    "rollingversions": "0.0.0"
+    "rollingversions": "0.0.0",
+    "then-retry": "^1.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",

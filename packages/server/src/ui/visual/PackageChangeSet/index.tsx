@@ -6,7 +6,7 @@ import Changes from '../Changes';
 
 export interface PackageChangeSetProps {
   packageName: string;
-  packageInfo: RegistryStatusProps['packageInfo'];
+  packageManifest: RegistryStatusProps['packageManifest'];
   changes: ChangeSet<{localId: number}>;
   disabled: boolean;
   readOnly: boolean;
@@ -32,7 +32,7 @@ function useOnChange(
   );
 }
 function PackageChangeSet({
-  packageInfo,
+  packageManifest,
   packageName,
   changes,
   disabled,
@@ -55,7 +55,7 @@ function PackageChangeSet({
           {packageName}
         </h2>
         {warning}
-        <RegistryStatus packageInfo={packageInfo} />
+        <RegistryStatus packageManifest={packageManifest} />
       </div>
       <ChangeSetEditorLayout
         breaking={

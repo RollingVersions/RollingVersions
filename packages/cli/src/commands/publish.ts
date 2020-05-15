@@ -23,6 +23,7 @@ import arrayEvery from '../ts-utils/arrayEvery';
 import orFn from '../ts-utils/orFn';
 import listPackages from '../utils/listPackages';
 import splitAsyncGenerator from '../ts-utils/splitAsyncGenerator';
+import addPackageVersions from '../utils/addPackageVersions';
 
 export enum PublishResultKind {
   NoUpdatesRequired,
@@ -73,9 +74,13 @@ export default async function publish(config: PublishConfig): Promise<Result> {
     auth: auth.createTokenAuth(config.accessToken),
   });
 
-  const packageInfos = await listPackages(
+  const [packageManifestsWithoutVersions, allTags] = await Promise.all([
+    listPackages(getAllFiles(config.dirname)),
     getAllTags(client, {owner: config.owner, name: config.name}),
-    getAllFiles(config.dirname),
+  ]);
+  const packageManifests = await addPackageVersions(
+    packageManifestsWithoutVersions,
+    allTags,
   );
 
   const getAllCommitsCached = splitAsyncGenerator(
@@ -88,7 +93,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   const unsortedPackageStatuses = await getPackageStatuses(
     client,
     config,
-    packageInfos,
+    packageManifests,
     async (sinceCommitSha) => {
       const results: {associatedPullRequests: {number: number}[]}[] = [];
       for await (const commit of getAllCommitsCached()) {

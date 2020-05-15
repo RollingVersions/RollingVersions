@@ -7,7 +7,7 @@
 - check permissions
 - get head sha & closed state from GitHub
 - run "Update Commits From Head" - with small page size because it should already be up to date because of the events
-- return `git_tags`, `change_log_entries` and `package_info_records`
+- return `git_tags`, `change_log_entries` and `package_manifest_records`
 
 ## Read All Unreleased Changes
 
@@ -25,7 +25,7 @@ Input: branch name or pull request
 
 - check permissions
 - run "Update Commits From Head" - with small page size because it should already be up to date because of the events
-- return `package_info_records`
+- return `package_manifest_records`
 
 # Events
 
@@ -42,7 +42,7 @@ On: [installation_repositories.added](https://developer.github.com/v3/activity/e
 - Get head commit for default branch
 - Run "Update commits from tail"
 - List all tags
-  - Run "Update Commits From Head" for each tag, but do not populate `package_info_records`
+  - Run "Update Commits From Head" for each tag, but do not populate `package_manifest_records`
   - upsert into `git_tags`
 
 ## On Branch/Tag Push
@@ -101,10 +101,10 @@ Input: Repo + Head Commit + page size (defaults to 100)
     - insert into `git_commit_pull_requests`
   - if "queue" is empty, break out of loop
 - Commit Transaction
-- if head commit's `has_package_info` is `false`:
-  - fetch `package_info_records` for the head commit
-  - insert into `package_info_records`
-  - set `has_package_info` to `true` for head commit
+- if head commit's `has_package_manifests` is `false`:
+  - fetch `package_manifest_records` for the head commit
+  - insert into `package_manifest_records`
+  - set `has_package_manifests` to `true` for head commit
 
 ## Update commits from tail
 

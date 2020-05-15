@@ -1,14 +1,12 @@
 import WebhooksApi from '@octokit/webhooks';
 import {WEBHOOK_SECRET} from '../environment';
-import onPullRequestUpdate from './onPullRequestUpdate';
-import onRelease from './onRelease';
-import onPush from './onPush';
 import log from '../logger';
 import onPullRequestClosed from '../db-update-jobs/events/onPullRequestClosed';
 import onInstallationRepositoriesAdded from '../db-update-jobs/events/onInstallationRepositoriesAdded';
 import onInstallation from '../db-update-jobs/events/onInstallation';
 import onCreate from '../db-update-jobs/events/onCreate';
 import onDelete from '../db-update-jobs/events/onDelete';
+import onPullRequestUpdate from '../db-update-jobs/events/onPullRequestUpdate';
 
 const webhooks = new WebhooksApi({secret: WEBHOOK_SECRET});
 
@@ -90,9 +88,36 @@ webhooks.on('delete', async (e) => {
   });
 });
 
-webhooks.on('pull_request.opened', onPullRequestUpdate);
-webhooks.on('pull_request.edited', onPullRequestUpdate);
-webhooks.on('pull_request.synchronize', onPullRequestUpdate);
+webhooks.on(
+  'pull_request.opened',
+  onPullRequest('pull_request.opened', 'Pull Request Opened'),
+);
+webhooks.on(
+  'pull_request.edited',
+  onPullRequest('pull_request.edited', 'Pull Request Edited'),
+);
+webhooks.on(
+  'pull_request.synchronize',
+  onPullRequest('pull_request.synchronize', 'Pull Request Synchronize'),
+);
+
+function onPullRequest(event_type: string, message: string) {
+  return async (
+    e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadPullRequest>,
+  ) => {
+    await withLog(() => onPullRequestUpdate(e), {
+      event_type,
+      message,
+      event_id: e.id,
+      repo_id: e.payload.repository.id,
+      repo_owner: e.payload.repository.owner.login,
+      repo_name: e.payload.repository.name,
+      pull_number: e.payload.pull_request.number,
+      pull_id: e.payload.pull_request.id,
+    });
+  };
+}
+
 webhooks.on('pull_request.closed', async (e) => {
   await withLog(() => onPullRequestClosed(e), {
     event_type: 'pull_request.closed',
@@ -106,7 +131,9 @@ webhooks.on('pull_request.closed', async (e) => {
   });
 });
 
-webhooks.on('release', onRelease);
-webhooks.on('push', onPush);
+// TODO: do we need to handle push, or does "create" get called here anyway
+// webhooks.on('push', e => {
+//   e.payload.
+// });
 
 export default webhooks;

@@ -225,6 +225,38 @@ export async function getPullRequestFromNumber(
     head_sha: result.headRef?.target.oid,
   };
 }
+export async function* getAllPullRequestCommits(
+  client: GitHubClient,
+  repo: Repository,
+  prNumber: number,
+) {
+  let pageSize = 5;
+  for await (const result of paginateBatched(
+    async (token) => {
+      const currentPagesize = pageSize;
+      pageSize = Math.min(100, pageSize + 5);
+      return queries.getAllPullRequestCommits(client, {
+        owner: repo.owner,
+        name: repo.name,
+        number: prNumber,
+        pageSize: currentPagesize,
+        after: token,
+      });
+    },
+    (page) =>
+      page.repository?.pullRequest?.headRef?.target.__typename === 'Commit'
+        ? page.repository.pullRequest.headRef.target.history.nodes || []
+        : [],
+    (page) =>
+      page.repository?.pullRequest?.headRef?.target.__typename === 'Commit' &&
+      page.repository.pullRequest.headRef.target.history.pageInfo.hasNextPage
+        ? page.repository.pullRequest.headRef.target.history.pageInfo
+            .endCursor || undefined
+        : undefined,
+  )) {
+    yield result.filter(isTruthy).map(formatCommit);
+  }
+}
 
 export interface PullRequestDetail {
   id: number;

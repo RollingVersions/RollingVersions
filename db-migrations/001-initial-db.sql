@@ -13,10 +13,10 @@ CREATE TABLE git_commits (
   graphql_id TEXT NOT NULL,
   git_repository_id INT NOT NULL REFERENCES git_repositories(id),
   commit_sha TEXT NOT NULL,
-  has_package_info BOOLEAN NOT NULL DEFAULT false,
+  has_package_manifests BOOLEAN NOT NULL DEFAULT false,
   UNIQUE (git_repository_id, commit_sha)
 );
-COMMENT ON COLUMN git_commits.has_package_info IS 'Have we fetched the package_info_records for this commit';
+COMMENT ON COLUMN git_commits.has_package_manifests IS 'Have we fetched the package_manifest_records for this commit';
 
 CREATE TABLE git_commit_parents (
   child_git_commit_id BIGINT NOT NULL REFERENCES git_commits(id),
@@ -50,6 +50,7 @@ CREATE TABLE pull_requests (
   title TEXT NOT NULL,
   is_merged BOOLEAN NOT NULL DEFAULT false,
   is_closed BOOLEAN NOT NULL DEFAULT false,
+  comment_id BIGINT NULL,
 
   change_set_submitted_at_git_commit_sha TEXT NULL
 );
@@ -77,14 +78,14 @@ CREATE TABLE change_log_entries (
   body TEXT NOT NULL
 );
 
--- package_info is just a cache and can be re-fetched for a given commit
+-- packag manifests are just a cache and can be re-fetched for a given commit
 
 CREATE TABLE publish_targets (
   id TEXT NOT NULL PRIMARY KEY
 );
 INSERT INTO publish_targets (id) VALUES ('npm');
 
-CREATE TABLE package_info_records (
+CREATE TABLE package_manifest_records (
   id BIGSERIAL NOT NULL PRIMARY KEY,
   git_commit_id BIGINT NOT NULL REFERENCES git_commits(id),
   file_path TEXT NOT NULL,
@@ -92,4 +93,19 @@ CREATE TABLE package_info_records (
   package_name TEXT NOT NULL,
   publish_access TEXT NOT NULL, -- 'restricted' | 'public'
   not_to_be_published BOOLEAN NOT NULL DEFAULT false
+  UNIQUE (git_commit_id, file_path, publish_target, package_name)
+);
+
+CREATE TABLE package_dependency_records_kinds (
+  id TEXT NOT NULL PRIMARY KEY
+);
+INSERT INTO package_dependency_records_kinds (id) VALUES ('required'), ('optional'), ('development');
+
+CREATE TABLE package_dependency_records (
+  id BIGSERIAL NOT NULL PRIMARY KEY,
+  git_commit_id BIGINT NOT NULL REFERENCES git_commits(id),
+  package_name TEXT NOT NULL,
+  kind TEXT NOT NULL REFERENCES package_dependency_records_kinds(id),
+  dependency_name TEXT NOT NULL
+  UNIQUE (git_commit_id, package_name, kind, dependency_name)
 );

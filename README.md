@@ -18,4 +18,4 @@ Rolling Versions is free for non-commercial open source use. Just [install the G
 - Change Entry - a markdown title and body describing something that changed
 - Change Type - breaking (major), feat (minor), refactor (minor), fix (patch), perf (patch)
 - Change Set - a set of Change Entries categorised by their Change Type
-- Package Info - the current state of a package, including where it gets published to and the latest version that's been published
+- Package Manifest - the metadata about a package and where it gets published

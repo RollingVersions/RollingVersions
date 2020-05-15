@@ -7,6 +7,7 @@
   ],
   "scripts": {
     "build": "yarn wsrun -e --stages build",
+    "typecheck": "yarn workspace rollingversions build && yarn workspace @rollingversions/server typecheck",
     "dev": "yarn build && concurrently -n build,run \"yarn wsrun -e --exclude @rollingversions/server build --watch --preserveWatchOutput\" \"yarn workspace @rollingversions/server dev\"",
     "start": "yarn workspace @rollingversions/server start",
     "prestorybook": "yarn workspace rollingversions build",

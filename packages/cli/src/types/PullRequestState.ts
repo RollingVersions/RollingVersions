@@ -1,4 +1,4 @@
-import PackageInfo, {PackageInfoCodec} from './PackageInfo';
+import PackageManifest, {PackageManifestCodec} from './PackageManifest';
 import {
   t,
   versionSymbol,
@@ -60,7 +60,7 @@ interface PullRequestStateLegacy {
    */
   readonly submittedAtCommitSha: string | null;
   readonly packageInfoFetchedAt: string;
-  readonly packages: Map<string, {changes: ChangeSet; info: PackageInfo[]}>;
+  readonly packages: Map<string, {changes: ChangeSet; info: PackageManifest[]}>;
 }
 export default interface PullRequestState {
   /**
@@ -82,12 +82,12 @@ const PullRequestStateLegacyCodec = compressedObjectCodec<
     packageInfoFetchedAt: t.string,
     packages: map(
       t.string,
-      compressedObjectCodec<{changes: ChangeSet; info: PackageInfo[]}>()(
+      compressedObjectCodec<{changes: ChangeSet; info: PackageManifest[]}>()(
         1,
         'Package',
         {
           changes: ChangeSetCodec,
-          info: t.array(PackageInfoCodec),
+          info: t.array(PackageManifestCodec),
         },
         [versionSymbol, 'changes', 'info'],
       ),

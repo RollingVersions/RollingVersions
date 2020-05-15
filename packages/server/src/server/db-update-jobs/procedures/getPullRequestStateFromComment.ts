@@ -46,7 +46,7 @@ async function getCommentState(
       {
         state: 'pending',
         url: getUrlForChangeLog(pullRequest, APP_URL),
-        description: '',
+        description: 'please add a changelog',
       },
     );
 

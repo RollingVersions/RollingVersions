@@ -1081,6 +1081,195 @@ export const getPullRequestFromNumber = getMethod<
 `);
 
 // ====================================================
+// GraphQL query operation: GetAllPullRequestCommits
+// ====================================================
+
+export interface GetAllPullRequestCommits_repository_pullRequest_headRef_target_Tree {
+  __typename: 'Tree' | 'Blob' | 'Tag';
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+}
+
+export interface GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_pageInfo {
+  /**
+   * When paginating forwards, are there more items?
+   */
+  hasNextPage: boolean;
+  /**
+   * When paginating forwards, the cursor to continue.
+   */
+  endCursor: string | null;
+}
+
+export interface GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_nodes_parents_nodes {
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+}
+
+export interface GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_nodes_parents {
+  /**
+   * A list of nodes.
+   */
+  nodes:
+    | (GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_nodes_parents_nodes | null)[]
+    | null;
+}
+
+export interface GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_nodes_associatedPullRequests_nodes {
+  id: string;
+  /**
+   * Identifies the primary key from the database.
+   */
+  databaseId: number | null;
+}
+
+export interface GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_nodes_associatedPullRequests {
+  /**
+   * A list of nodes.
+   */
+  nodes:
+    | (GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_nodes_associatedPullRequests_nodes | null)[]
+    | null;
+}
+
+export interface GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_nodes {
+  id: string;
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+  /**
+   * The parents of a commit.
+   */
+  parents: GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_nodes_parents;
+  /**
+   * The pull requests associated with a commit
+   */
+  associatedPullRequests: GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_nodes_associatedPullRequests | null;
+}
+
+export interface GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history {
+  /**
+   * Information to aid in pagination.
+   */
+  pageInfo: GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_pageInfo;
+  /**
+   * A list of nodes.
+   */
+  nodes:
+    | (GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history_nodes | null)[]
+    | null;
+}
+
+export interface GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit {
+  __typename: 'Commit';
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+  id: string;
+  /**
+   * The linear commit history starting from (and including) this commit, in the same order as `git log`.
+   */
+  history: GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit_history;
+}
+
+export type GetAllPullRequestCommits_repository_pullRequest_headRef_target =
+  | GetAllPullRequestCommits_repository_pullRequest_headRef_target_Tree
+  | GetAllPullRequestCommits_repository_pullRequest_headRef_target_Commit;
+
+export interface GetAllPullRequestCommits_repository_pullRequest_headRef {
+  /**
+   * The object the ref points to.
+   */
+  target: GetAllPullRequestCommits_repository_pullRequest_headRef_target;
+}
+
+export interface GetAllPullRequestCommits_repository_pullRequest {
+  /**
+   * Identifies the head Ref associated with the pull request.
+   */
+  headRef: GetAllPullRequestCommits_repository_pullRequest_headRef | null;
+}
+
+export interface GetAllPullRequestCommits_repository {
+  /**
+   * Returns a single pull request from the current repository by number.
+   */
+  pullRequest: GetAllPullRequestCommits_repository_pullRequest | null;
+}
+
+export interface GetAllPullRequestCommits {
+  /**
+   * Lookup a given repository by the owner and repository name.
+   */
+  repository: GetAllPullRequestCommits_repository | null;
+}
+
+export interface GetAllPullRequestCommitsVariables {
+  owner: string;
+  name: string;
+  number: number;
+  pageSize: number;
+  after?: string | null;
+}
+
+export const getAllPullRequestCommits = getMethod<
+  GetAllPullRequestCommits,
+  GetAllPullRequestCommitsVariables
+>(gql`
+  query GetAllPullRequestCommits(
+    $owner: String!
+    $name: String!
+    $number: Int!
+    $pageSize: Int!
+    $after: String
+  ) {
+    repository(owner: $owner, name: $name) {
+      pullRequest(number: $number) {
+        headRef {
+          target {
+            __typename
+            oid
+            ... on Commit {
+              id
+              history(first: $pageSize, after: $after) {
+                pageInfo {
+                  hasNextPage
+                  endCursor
+                }
+                nodes {
+                  ...CommitDetail
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  fragment CommitDetail on Commit {
+    id
+    oid
+    parents(first: 100) {
+      nodes {
+        oid
+      }
+    }
+    associatedPullRequests(first: 100) {
+      nodes {
+        id
+        databaseId
+      }
+    }
+  }
+`);
+
+// ====================================================
 // GraphQL fragment: CommitDetail
 // ====================================================
 

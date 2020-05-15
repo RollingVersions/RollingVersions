@@ -1,6 +1,6 @@
 import {
   Connection,
-  getPullRequestExists,
+  getPullRequestCommentID,
   insertPullRequest,
   updatePullRequest,
   setPullRequestSubmittedAtSha,
@@ -28,16 +28,20 @@ export default async function upsertPullRequest(
   if (!pr) {
     throw new Error(`Unable to load the requested pull request`);
   }
-  const exists = await getPullRequestExists(db, repositoryId, pr.id);
-  if (exists) {
+  const existingPr = await getPullRequestCommentID(db, repositoryId, pr.id);
+  if (existingPr) {
     await updatePullRequest(db, repositoryId, {
       ...pr,
     });
+    return {...pr, commentID: existingPr.commentID};
   } else {
     // by reading (and writing) state to the actual pull request itself (via a comment)
     // we can ensure that RollingVersions state is persisted even if Rolling Versions is
     // removed from the repository
-    const {state} = await getPullRequestStateFromComment(client, {...pr, repo});
+    const {state, commentID} = await getPullRequestStateFromComment(client, {
+      ...pr,
+      repo,
+    });
     await db.tx(async (tx) => {
       await insertPullRequest(tx, repositoryId, {
         ...pr,
@@ -67,6 +71,6 @@ export default async function upsertPullRequest(
         );
       }
     });
+    return {...pr, commentID};
   }
-  return pr.number;
 }
