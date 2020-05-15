@@ -72,13 +72,13 @@ export function getUrlForChangeLog(
   return url;
 }
 
-export function getShortDescription(changeLog: PullRequestState | undefined) {
-  if (
-    changeLog &&
-    changeLog.submittedAtCommitSha === changeLog.packageInfoFetchedAt
-  ) {
+export function getShortDescription(
+  changeLog: PullRequestState | undefined,
+  currentHeadSha: string,
+) {
+  if (changeLog && changeLog.submittedAtCommitSha === currentHeadSha) {
     const packagesToRelease = [...changeLog.packages.entries()].filter(
-      ([, {changes}]) => !isEmptyChangeSet(changes),
+      ([, changes]) => !isEmptyChangeSet(changes),
     );
     if (packagesToRelease.length === 0) {
       return 'no changes to release';
@@ -102,8 +102,9 @@ export function renderInitialCommentWithoutState(
 }
 
 export function renderCommentWithoutState(
-  pullRequest: Omit<PullRequest, 'headSha'>,
+  pullRequest: PullRequest,
   changeLog: PullRequestState | undefined,
+  packageInfos: Map<string, PackageInfo[]>,
   rollingVersionsUrl: URL,
 ) {
   const url = getUrlForChangeLog(pullRequest, rollingVersionsUrl);
@@ -111,29 +112,30 @@ export function renderCommentWithoutState(
     return renderInitialCommentWithoutState(pullRequest, rollingVersionsUrl);
   }
   const outdated =
-    changeLog.packageInfoFetchedAt === changeLog.submittedAtCommitSha
+    pullRequest.headSha === changeLog.submittedAtCommitSha
       ? ``
       : `\n\n> **Change log has not been updated since latest commit** [Update Changelog](${url.href})`;
 
   const packages = [...changeLog.packages].sort(([a], [b]) => (a < b ? -1 : 1));
   if (packages.length === 1) {
-    const [packageName, pkg] = packages[0];
-    if (!pkg || isEmptyChangeSet(pkg.changes)) {
+    const [packageName, changes] = packages[0];
+    if (isEmptyChangeSet(changes)) {
       return `This PR will **not** result in a new version of ${packageName} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
     }
+    const pkg = packageInfos.get(packageName) || [];
     return `### Change Log for ${packageName} ${getVersionShift(
-      pkg.info,
-      pkg.changes,
-    )}\n\n${changesToMarkdown(pkg.changes, 4)}\n\n[Edit changelog](${
+      pkg,
+      changes,
+    )}\n\n${changesToMarkdown(changes, 4)}\n\n[Edit changelog](${
       url.href
     })${outdated}`;
   }
 
-  const packagesWithChanges = packages.filter(([, pkg]) => {
-    return !isEmptyChangeSet(pkg.changes);
+  const packagesWithChanges = packages.filter(([, changes]) => {
+    return !isEmptyChangeSet(changes);
   });
-  const packagesWithoutChanges = packages.filter(([, pkg]) => {
-    return isEmptyChangeSet(pkg.changes);
+  const packagesWithoutChanges = packages.filter(([, changes]) => {
+    return isEmptyChangeSet(changes);
   });
   if (!packagesWithChanges.length) {
     return `This PR will **not** result in a new version of the following packages as there are no user facing changes:\n\n${packages
@@ -143,13 +145,13 @@ export function renderCommentWithoutState(
     })${outdated}`;
   }
   return `${packagesWithChanges
-    .map(
-      ([packageName, pkg]) =>
-        `### ${packageName} ${getVersionShift(
-          pkg.info,
-          pkg.changes,
-        )}\n\n${changesToMarkdown(pkg.changes, 4)}`,
-    )
+    .map(([packageName, changes]) => {
+      const pkg = packageInfos.get(packageName) || [];
+      return `### ${packageName} ${getVersionShift(
+        pkg,
+        changes,
+      )}\n\n${changesToMarkdown(changes, 4)}`;
+    })
     .join('\n\n')}${
     packagesWithoutChanges.length
       ? `\n\n### Packages With No Changes\n\nThe following packages have no user facing changes, so won't be released:\n\n${packagesWithoutChanges
@@ -169,14 +171,16 @@ export function renderInitialComment(
   )}`;
 }
 export function renderComment(
-  pullRequest: Omit<PullRequest, 'headSha'>,
+  pullRequest: PullRequest,
   changeLog: PullRequestState | undefined,
+  packageInfos: Map<string, PackageInfo[]>,
   rollingVersionsUrl: URL,
 ) {
   return writeState(
     `${COMMENT_PREFIX}${renderCommentWithoutState(
       pullRequest,
       changeLog,
+      packageInfos,
       rollingVersionsUrl,
     )}`,
     changeLog,

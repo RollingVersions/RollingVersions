@@ -29,8 +29,16 @@
     "ts-jest": "^24.1.0",
     "ts-node": "^8.5.3",
     "tslint": "^6.0.0-beta0",
-    "typescript": "^3.7.4",
+    "typescript": "^3.8.3",
     "wsrun": "^5.0.0"
+  },
+  "pg": {
+    "test": {
+      "migrationsScript": [
+        "node",
+        "scripts/db-migrate"
+      ]
+    }
   },
   "jest": {
     "setupFilesAfterEnv": [

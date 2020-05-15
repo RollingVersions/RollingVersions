@@ -16,7 +16,7 @@ import checkPermissions, {
   checkRepoPermissions,
 } from './utils/checkPermissions';
 import validateBody, {getBody} from './utils/validateBody';
-import getPullRequestState from '../getPullRequestState';
+import getPullRequestState from '../db-update-jobs/procedures/getPullRequestStateFromComment';
 import log from '../logger';
 import {ChangeTypes} from 'rollingversions/lib/types/PullRequestState';
 import listPackages from 'rollingversions/lib/utils/listPackages';

@@ -10,7 +10,7 @@ import {
   getShortDescription,
   getUrlForChangeLog,
 } from 'rollingversions/lib/utils/Rendering';
-import getPullRequestState from '../getPullRequestState';
+import getPullRequestState from '../db-update-jobs/procedures/getPullRequestStateFromComment';
 
 export default async function updatePullRequestWithState(
   github: GitHubClient,

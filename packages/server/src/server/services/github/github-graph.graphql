@@ -23,9 +23,28 @@ query GetRepository($owner: String!, $name: String!) {
   }
 }
 
+query GetRepositoryPullRequests(
+  $owner: String!
+  $name: String!
+  $after: String
+) {
+  repository(owner: $owner, name: $name) {
+    pullRequests(first: 100, after: $after, states: [CLOSED, MERGED, OPEN]) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        id
+      }
+    }
+  }
+}
+
 query GetDefaultBranch($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     branch: defaultBranchRef {
+      id
       name
       target {
         __typename # Commit
@@ -35,10 +54,10 @@ query GetDefaultBranch($owner: String!, $name: String!) {
   }
 }
 
-query GetAllDefaultBranchCommitsFromTail(
+query GetAllDefaultBranchCommits(
   $owner: String!
   $name: String!
-  $before: String
+  $after: String
 ) {
   repository(owner: $owner, name: $name) {
     branch: defaultBranchRef {
@@ -47,28 +66,110 @@ query GetAllDefaultBranchCommitsFromTail(
         oid
         ... on Commit {
           id
-          history(last: 100, before: $before) {
+          history(first: 100, after: $after) {
             pageInfo {
               hasNextPage
-              startCursor
+              endCursor
             }
             nodes {
-              id
-              oid
-              parents(first: 100) {
-                nodes {
-                  oid
-                }
-              }
-              associatedPullRequests(first: 100) {
-                nodes {
-                  number
-                }
-              }
+              ...CommitDetail
             }
           }
         }
       }
+    }
+  }
+}
+
+query GetRef($owner: String!, $name: String!, $qualifiedName: String!) {
+  repository(owner: $owner, name: $name) {
+    ref(qualifiedName: $qualifiedName) {
+      id
+      name
+      target {
+        __typename # Commit
+        oid
+      }
+    }
+  }
+}
+query GetAllRefCommits(
+  $owner: String!
+  $name: String!
+  $qualifiedName: String!
+  $after: String
+) {
+  repository(owner: $owner, name: $name) {
+    ref(qualifiedName: $qualifiedName) {
+      target {
+        __typename # Commit
+        oid
+        ... on Commit {
+          id
+          history(first: 20, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              ...CommitDetail
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+query GetPullRequestFromGraphID($id: ID!) {
+  node(id: $id) {
+    __typename
+    ... on PullRequest {
+      databaseId
+      number
+      title
+      merged
+      closed
+      headRef {
+        target {
+          # __typename: Commit
+          oid
+        }
+      }
+    }
+  }
+}
+query GetPullRequestFromNumber($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      id
+      databaseId
+      number
+      title
+      merged
+      closed
+      headRef {
+        target {
+          # __typename: Commit
+          oid
+        }
+      }
+    }
+  }
+}
+
+fragment CommitDetail on Commit {
+  id
+  oid
+  parents(first: 100) {
+    nodes {
+      oid
+    }
+  }
+  associatedPullRequests(first: 100) {
+    nodes {
+      id
+      databaseId
     }
   }
 }

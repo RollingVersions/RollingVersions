@@ -43,6 +43,6 @@
     "@github-graph/cli": "^1.1.0",
     "@types/jest": "^24.0.21",
     "rimraf": "^3.0.0",
-    "typescript": "^3.7.4"
+    "typescript": "^3.8.3"
   }
 }

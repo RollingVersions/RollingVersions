@@ -13,7 +13,8 @@ CREATE TABLE git_commits (
   graphql_id TEXT NOT NULL,
   git_repository_id INT NOT NULL REFERENCES git_repositories(id),
   commit_sha TEXT NOT NULL,
-  has_package_info BOOLEAN NOT NULL DEFAULT false
+  has_package_info BOOLEAN NOT NULL DEFAULT false,
+  UNIQUE (git_repository_id, commit_sha)
 );
 COMMENT ON COLUMN git_commits.has_package_info IS 'Have we fetched the package_info_records for this commit';
 
@@ -50,17 +51,14 @@ CREATE TABLE pull_requests (
   is_merged BOOLEAN NOT NULL DEFAULT false,
   is_closed BOOLEAN NOT NULL DEFAULT false,
 
-  head_git_commit_id BIGINT NULL REFERENCES git_commits(id),
-
-  change_set_submitted_at_git_commit_id BIGINT NULL REFERENCES git_commits(id),
-  package_info_fetched_at_commit_id BIGINT NULL REFERENCES git_commits(id)
+  change_set_submitted_at_git_commit_sha TEXT NULL
 );
 
 COMMENT ON COLUMN pull_requests.id IS 'The databaseId from GitHub';
 
 CREATE TABLE git_commit_pull_requests (
   git_commit_id BIGINT NOT NULL REFERENCES git_commits(id),
-  pull_request_id BIGINT NOT NULL REFERENCES pull_requests(id),
+  pull_request_id INT NOT NULL REFERENCES pull_requests(id),
   PRIMARY KEY (git_commit_id, pull_request_id)
 );
 
@@ -95,19 +93,3 @@ CREATE TABLE package_info_records (
   publish_access TEXT NOT NULL, -- 'restricted' | 'public'
   not_to_be_published BOOLEAN NOT NULL DEFAULT false
 );
-
-
-INSERT INTO git_repositories (id, graphql_id, owner, name, default_branch)
-VALUES (-1, 'FAKE_ID', 'ForbesLindesay', 'non-existent-test-repo', 'master');
-
-INSERT INTO git_commits (id, graphql_id, git_repository_id, commit_sha, has_package_info)
-VALUES (1, 'FAKE_ID_1', -1, 'shashasha1', false),
-       (2, 'FAKE_ID_2', -1, 'shashasha2', false),
-       (3, 'FAKE_ID_3', -1, 'shashasha3', false),
-       (4, 'FAKE_ID_4', -1, 'shashasha4', false);
-
-INSERT INTO git_commit_parents (child_git_commit_id, parent_git_commit_id)
-VALUES (1, 2),
-       (1, 3),
-       (2, 4),
-       (3, 4);

@@ -52,7 +52,7 @@ export const ChangeSetCodec = compressedObjectCodec<ChangeSet>()(
   [versionSymbol, 'breaking', 'feat', 'refactor', 'perf', 'fix'] as const,
 );
 
-export default interface PullRequestState {
+interface PullRequestStateLegacy {
   /**
    * The latest commit on the PR at the time this Change Log was submitted.
    *
@@ -62,10 +62,21 @@ export default interface PullRequestState {
   readonly packageInfoFetchedAt: string;
   readonly packages: Map<string, {changes: ChangeSet; info: PackageInfo[]}>;
 }
+export default interface PullRequestState {
+  /**
+   * The latest commit on the PR at the time this Change Log was submitted.
+   *
+   * The change log should be confirmed after each new commit.
+   */
+  readonly submittedAtCommitSha: string | null;
+  readonly packages: Map<string, ChangeSet>;
+}
 
-export const PullRequestStateCodec = compressedObjectCodec<PullRequestState>()(
+const PullRequestStateLegacyCodec = compressedObjectCodec<
+  PullRequestStateLegacy
+>()(
   1,
-  'PullRequestState',
+  'PullRequestStateLegacy',
   {
     submittedAtCommitSha: t.union([t.null, t.string]),
     packageInfoFetchedAt: t.string,
@@ -83,4 +94,38 @@ export const PullRequestStateCodec = compressedObjectCodec<PullRequestState>()(
     ),
   },
   [versionSymbol, 'submittedAtCommitSha', 'packageInfoFetchedAt', 'packages'],
+).pipe(
+  new t.Type<PullRequestState, PullRequestStateLegacy, PullRequestStateLegacy>(
+    'PullRequestStateLegacy',
+    // never use this for encoding
+    (_v: any): _v is PullRequestState => false,
+    (v) =>
+      t.success({
+        submittedAtCommitSha: v.submittedAtCommitSha,
+        packages: new Map(
+          [...v.packages].map(([packageName, {changes}]) => [
+            packageName,
+            changes,
+          ]),
+        ),
+      }),
+    () => {
+      throw new Error('Encoding to the legacy encoding is not supported');
+    },
+  ),
 );
+
+const PullRequestStateModernCodec = compressedObjectCodec<PullRequestState>()(
+  2,
+  'PullRequestState',
+  {
+    submittedAtCommitSha: t.union([t.null, t.string]),
+    packages: map(t.string, ChangeSetCodec),
+  },
+  [versionSymbol, 'submittedAtCommitSha', 'packages'],
+);
+
+export const PullRequestStateCodec = t.union([
+  PullRequestStateLegacyCodec,
+  PullRequestStateModernCodec,
+]);

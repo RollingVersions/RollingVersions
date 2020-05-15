@@ -174,6 +174,81 @@ export const getRepository = getMethod<
 `);
 
 // ====================================================
+// GraphQL query operation: GetRepositoryPullRequests
+// ====================================================
+
+export interface GetRepositoryPullRequests_repository_pullRequests_pageInfo {
+  /**
+   * When paginating forwards, are there more items?
+   */
+  hasNextPage: boolean;
+  /**
+   * When paginating forwards, the cursor to continue.
+   */
+  endCursor: string | null;
+}
+
+export interface GetRepositoryPullRequests_repository_pullRequests_nodes {
+  id: string;
+}
+
+export interface GetRepositoryPullRequests_repository_pullRequests {
+  /**
+   * Information to aid in pagination.
+   */
+  pageInfo: GetRepositoryPullRequests_repository_pullRequests_pageInfo;
+  /**
+   * A list of nodes.
+   */
+  nodes:
+    | (GetRepositoryPullRequests_repository_pullRequests_nodes | null)[]
+    | null;
+}
+
+export interface GetRepositoryPullRequests_repository {
+  /**
+   * A list of pull requests that have been opened in the repository.
+   */
+  pullRequests: GetRepositoryPullRequests_repository_pullRequests;
+}
+
+export interface GetRepositoryPullRequests {
+  /**
+   * Lookup a given repository by the owner and repository name.
+   */
+  repository: GetRepositoryPullRequests_repository | null;
+}
+
+export interface GetRepositoryPullRequestsVariables {
+  owner: string;
+  name: string;
+  after?: string | null;
+}
+
+export const getRepositoryPullRequests = getMethod<
+  GetRepositoryPullRequests,
+  GetRepositoryPullRequestsVariables
+>(gql`
+  query GetRepositoryPullRequests(
+    $owner: String!
+    $name: String!
+    $after: String
+  ) {
+    repository(owner: $owner, name: $name) {
+      pullRequests(first: 100, after: $after, states: [CLOSED, MERGED, OPEN]) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+        }
+      }
+    }
+  }
+`);
+
+// ====================================================
 // GraphQL query operation: GetDefaultBranch
 // ====================================================
 
@@ -186,6 +261,7 @@ export interface GetDefaultBranch_repository_branch_target {
 }
 
 export interface GetDefaultBranch_repository_branch {
+  id: string;
   /**
    * The ref name.
    */
@@ -222,6 +298,7 @@ export const getDefaultBranch = getMethod<
   query GetDefaultBranch($owner: String!, $name: String!) {
     repository(owner: $owner, name: $name) {
       branch: defaultBranchRef {
+        id
         name
         target {
           __typename
@@ -233,10 +310,10 @@ export const getDefaultBranch = getMethod<
 `);
 
 // ====================================================
-// GraphQL query operation: GetAllDefaultBranchCommitsFromTail
+// GraphQL query operation: GetAllDefaultBranchCommits
 // ====================================================
 
-export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Tree {
+export interface GetAllDefaultBranchCommits_repository_branch_target_Tree {
   __typename: 'Tree' | 'Blob' | 'Tag';
   /**
    * The Git object ID
@@ -244,50 +321,51 @@ export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Tre
   oid: GitObjectID;
 }
 
-export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_pageInfo {
+export interface GetAllDefaultBranchCommits_repository_branch_target_Commit_history_pageInfo {
   /**
    * When paginating forwards, are there more items?
    */
   hasNextPage: boolean;
   /**
-   * When paginating backwards, the cursor to continue.
+   * When paginating forwards, the cursor to continue.
    */
-  startCursor: string | null;
+  endCursor: string | null;
 }
 
-export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_nodes_parents_nodes {
+export interface GetAllDefaultBranchCommits_repository_branch_target_Commit_history_nodes_parents_nodes {
   /**
    * The Git object ID
    */
   oid: GitObjectID;
 }
 
-export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_nodes_parents {
+export interface GetAllDefaultBranchCommits_repository_branch_target_Commit_history_nodes_parents {
   /**
    * A list of nodes.
    */
   nodes:
-    | (GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_nodes_parents_nodes | null)[]
+    | (GetAllDefaultBranchCommits_repository_branch_target_Commit_history_nodes_parents_nodes | null)[]
     | null;
 }
 
-export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_nodes_associatedPullRequests_nodes {
+export interface GetAllDefaultBranchCommits_repository_branch_target_Commit_history_nodes_associatedPullRequests_nodes {
+  id: string;
   /**
-   * Identifies the pull request number.
+   * Identifies the primary key from the database.
    */
-  number: number;
+  databaseId: number | null;
 }
 
-export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_nodes_associatedPullRequests {
+export interface GetAllDefaultBranchCommits_repository_branch_target_Commit_history_nodes_associatedPullRequests {
   /**
    * A list of nodes.
    */
   nodes:
-    | (GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_nodes_associatedPullRequests_nodes | null)[]
+    | (GetAllDefaultBranchCommits_repository_branch_target_Commit_history_nodes_associatedPullRequests_nodes | null)[]
     | null;
 }
 
-export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_nodes {
+export interface GetAllDefaultBranchCommits_repository_branch_target_Commit_history_nodes {
   id: string;
   /**
    * The Git object ID
@@ -296,27 +374,27 @@ export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Com
   /**
    * The parents of a commit.
    */
-  parents: GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_nodes_parents;
+  parents: GetAllDefaultBranchCommits_repository_branch_target_Commit_history_nodes_parents;
   /**
    * The pull requests associated with a commit
    */
-  associatedPullRequests: GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_nodes_associatedPullRequests | null;
+  associatedPullRequests: GetAllDefaultBranchCommits_repository_branch_target_Commit_history_nodes_associatedPullRequests | null;
 }
 
-export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history {
+export interface GetAllDefaultBranchCommits_repository_branch_target_Commit_history {
   /**
    * Information to aid in pagination.
    */
-  pageInfo: GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_pageInfo;
+  pageInfo: GetAllDefaultBranchCommits_repository_branch_target_Commit_history_pageInfo;
   /**
    * A list of nodes.
    */
   nodes:
-    | (GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history_nodes | null)[]
+    | (GetAllDefaultBranchCommits_repository_branch_target_Commit_history_nodes | null)[]
     | null;
 }
 
-export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit {
+export interface GetAllDefaultBranchCommits_repository_branch_target_Commit {
   __typename: 'Commit';
   /**
    * The Git object ID
@@ -326,48 +404,48 @@ export interface GetAllDefaultBranchCommitsFromTail_repository_branch_target_Com
   /**
    * The linear commit history starting from (and including) this commit, in the same order as `git log`.
    */
-  history: GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit_history;
+  history: GetAllDefaultBranchCommits_repository_branch_target_Commit_history;
 }
 
-export type GetAllDefaultBranchCommitsFromTail_repository_branch_target =
-  | GetAllDefaultBranchCommitsFromTail_repository_branch_target_Tree
-  | GetAllDefaultBranchCommitsFromTail_repository_branch_target_Commit;
+export type GetAllDefaultBranchCommits_repository_branch_target =
+  | GetAllDefaultBranchCommits_repository_branch_target_Tree
+  | GetAllDefaultBranchCommits_repository_branch_target_Commit;
 
-export interface GetAllDefaultBranchCommitsFromTail_repository_branch {
+export interface GetAllDefaultBranchCommits_repository_branch {
   /**
    * The object the ref points to.
    */
-  target: GetAllDefaultBranchCommitsFromTail_repository_branch_target;
+  target: GetAllDefaultBranchCommits_repository_branch_target;
 }
 
-export interface GetAllDefaultBranchCommitsFromTail_repository {
+export interface GetAllDefaultBranchCommits_repository {
   /**
    * The Ref associated with the repository's default branch.
    */
-  branch: GetAllDefaultBranchCommitsFromTail_repository_branch | null;
+  branch: GetAllDefaultBranchCommits_repository_branch | null;
 }
 
-export interface GetAllDefaultBranchCommitsFromTail {
+export interface GetAllDefaultBranchCommits {
   /**
    * Lookup a given repository by the owner and repository name.
    */
-  repository: GetAllDefaultBranchCommitsFromTail_repository | null;
+  repository: GetAllDefaultBranchCommits_repository | null;
 }
 
-export interface GetAllDefaultBranchCommitsFromTailVariables {
+export interface GetAllDefaultBranchCommitsVariables {
   owner: string;
   name: string;
-  before?: string | null;
+  after?: string | null;
 }
 
-export const getAllDefaultBranchCommitsFromTail = getMethod<
-  GetAllDefaultBranchCommitsFromTail,
-  GetAllDefaultBranchCommitsFromTailVariables
+export const getAllDefaultBranchCommits = getMethod<
+  GetAllDefaultBranchCommits,
+  GetAllDefaultBranchCommitsVariables
 >(gql`
-  query GetAllDefaultBranchCommitsFromTail(
+  query GetAllDefaultBranchCommits(
     $owner: String!
     $name: String!
-    $before: String
+    $after: String
   ) {
     repository(owner: $owner, name: $name) {
       branch: defaultBranchRef {
@@ -376,24 +454,13 @@ export const getAllDefaultBranchCommitsFromTail = getMethod<
           oid
           ... on Commit {
             id
-            history(last: 100, before: $before) {
+            history(first: 100, after: $after) {
               pageInfo {
                 hasNextPage
-                startCursor
+                endCursor
               }
               nodes {
-                id
-                oid
-                parents(first: 100) {
-                  nodes {
-                    oid
-                  }
-                }
-                associatedPullRequests(first: 100) {
-                  nodes {
-                    number
-                  }
-                }
+                ...CommitDetail
               }
             }
           }
@@ -401,4 +468,663 @@ export const getAllDefaultBranchCommitsFromTail = getMethod<
       }
     }
   }
+  fragment CommitDetail on Commit {
+    id
+    oid
+    parents(first: 100) {
+      nodes {
+        oid
+      }
+    }
+    associatedPullRequests(first: 100) {
+      nodes {
+        id
+        databaseId
+      }
+    }
+  }
 `);
+
+// ====================================================
+// GraphQL query operation: GetRef
+// ====================================================
+
+export interface GetRef_repository_ref_target {
+  __typename: 'Commit' | 'Tree' | 'Blob' | 'Tag';
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+}
+
+export interface GetRef_repository_ref {
+  id: string;
+  /**
+   * The ref name.
+   */
+  name: string;
+  /**
+   * The object the ref points to.
+   */
+  target: GetRef_repository_ref_target;
+}
+
+export interface GetRef_repository {
+  /**
+   * Fetch a given ref from the repository
+   */
+  ref: GetRef_repository_ref | null;
+}
+
+export interface GetRef {
+  /**
+   * Lookup a given repository by the owner and repository name.
+   */
+  repository: GetRef_repository | null;
+}
+
+export interface GetRefVariables {
+  owner: string;
+  name: string;
+  qualifiedName: string;
+}
+
+export const getRef = getMethod<GetRef, GetRefVariables>(gql`
+  query GetRef($owner: String!, $name: String!, $qualifiedName: String!) {
+    repository(owner: $owner, name: $name) {
+      ref(qualifiedName: $qualifiedName) {
+        id
+        name
+        target {
+          __typename
+          oid
+        }
+      }
+    }
+  }
+`);
+
+// ====================================================
+// GraphQL query operation: GetAllRefCommits
+// ====================================================
+
+export interface GetAllRefCommits_repository_ref_target_Tree {
+  __typename: 'Tree' | 'Blob' | 'Tag';
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+}
+
+export interface GetAllRefCommits_repository_ref_target_Commit_history_pageInfo {
+  /**
+   * When paginating forwards, are there more items?
+   */
+  hasNextPage: boolean;
+  /**
+   * When paginating forwards, the cursor to continue.
+   */
+  endCursor: string | null;
+}
+
+export interface GetAllRefCommits_repository_ref_target_Commit_history_nodes_parents_nodes {
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+}
+
+export interface GetAllRefCommits_repository_ref_target_Commit_history_nodes_parents {
+  /**
+   * A list of nodes.
+   */
+  nodes:
+    | (GetAllRefCommits_repository_ref_target_Commit_history_nodes_parents_nodes | null)[]
+    | null;
+}
+
+export interface GetAllRefCommits_repository_ref_target_Commit_history_nodes_associatedPullRequests_nodes {
+  id: string;
+  /**
+   * Identifies the primary key from the database.
+   */
+  databaseId: number | null;
+}
+
+export interface GetAllRefCommits_repository_ref_target_Commit_history_nodes_associatedPullRequests {
+  /**
+   * A list of nodes.
+   */
+  nodes:
+    | (GetAllRefCommits_repository_ref_target_Commit_history_nodes_associatedPullRequests_nodes | null)[]
+    | null;
+}
+
+export interface GetAllRefCommits_repository_ref_target_Commit_history_nodes {
+  id: string;
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+  /**
+   * The parents of a commit.
+   */
+  parents: GetAllRefCommits_repository_ref_target_Commit_history_nodes_parents;
+  /**
+   * The pull requests associated with a commit
+   */
+  associatedPullRequests: GetAllRefCommits_repository_ref_target_Commit_history_nodes_associatedPullRequests | null;
+}
+
+export interface GetAllRefCommits_repository_ref_target_Commit_history {
+  /**
+   * Information to aid in pagination.
+   */
+  pageInfo: GetAllRefCommits_repository_ref_target_Commit_history_pageInfo;
+  /**
+   * A list of nodes.
+   */
+  nodes:
+    | (GetAllRefCommits_repository_ref_target_Commit_history_nodes | null)[]
+    | null;
+}
+
+export interface GetAllRefCommits_repository_ref_target_Commit {
+  __typename: 'Commit';
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+  id: string;
+  /**
+   * The linear commit history starting from (and including) this commit, in the same order as `git log`.
+   */
+  history: GetAllRefCommits_repository_ref_target_Commit_history;
+}
+
+export type GetAllRefCommits_repository_ref_target =
+  | GetAllRefCommits_repository_ref_target_Tree
+  | GetAllRefCommits_repository_ref_target_Commit;
+
+export interface GetAllRefCommits_repository_ref {
+  /**
+   * The object the ref points to.
+   */
+  target: GetAllRefCommits_repository_ref_target;
+}
+
+export interface GetAllRefCommits_repository {
+  /**
+   * Fetch a given ref from the repository
+   */
+  ref: GetAllRefCommits_repository_ref | null;
+}
+
+export interface GetAllRefCommits {
+  /**
+   * Lookup a given repository by the owner and repository name.
+   */
+  repository: GetAllRefCommits_repository | null;
+}
+
+export interface GetAllRefCommitsVariables {
+  owner: string;
+  name: string;
+  qualifiedName: string;
+  after?: string | null;
+}
+
+export const getAllRefCommits = getMethod<
+  GetAllRefCommits,
+  GetAllRefCommitsVariables
+>(gql`
+  query GetAllRefCommits(
+    $owner: String!
+    $name: String!
+    $qualifiedName: String!
+    $after: String
+  ) {
+    repository(owner: $owner, name: $name) {
+      ref(qualifiedName: $qualifiedName) {
+        target {
+          __typename
+          oid
+          ... on Commit {
+            id
+            history(first: 20, after: $after) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              nodes {
+                ...CommitDetail
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  fragment CommitDetail on Commit {
+    id
+    oid
+    parents(first: 100) {
+      nodes {
+        oid
+      }
+    }
+    associatedPullRequests(first: 100) {
+      nodes {
+        id
+        databaseId
+      }
+    }
+  }
+`);
+
+// ====================================================
+// GraphQL query operation: GetPullRequestFromGraphID
+// ====================================================
+
+export interface GetPullRequestFromGraphID_node_CodeOfConduct {
+  __typename:
+    | 'CodeOfConduct'
+    | 'Enterprise'
+    | 'EnterpriseUserAccount'
+    | 'Organization'
+    | 'RegistryPackage'
+    | 'RegistryPackageVersion'
+    | 'RegistryPackageDependency'
+    | 'RegistryPackageFile'
+    | 'Release'
+    | 'User'
+    | 'Project'
+    | 'ProjectColumn'
+    | 'ProjectCard'
+    | 'Issue'
+    | 'UserContentEdit'
+    | 'Label'
+    | 'Reaction'
+    | 'Repository'
+    | 'License'
+    | 'BranchProtectionRule'
+    | 'Ref'
+    | 'PushAllowance'
+    | 'App'
+    | 'Team'
+    | 'UserStatus'
+    | 'TeamDiscussion'
+    | 'TeamDiscussionComment'
+    | 'OrganizationInvitation'
+    | 'ReviewDismissalAllowance'
+    | 'CommitComment'
+    | 'Commit'
+    | 'Deployment'
+    | 'DeploymentStatus'
+    | 'Status'
+    | 'StatusContext'
+    | 'StatusCheckRollup'
+    | 'Tree'
+    | 'DeployKey'
+    | 'Language'
+    | 'Milestone'
+    | 'RepositoryTopic'
+    | 'Topic'
+    | 'RepositoryVulnerabilityAlert'
+    | 'SecurityAdvisory'
+    | 'IssueComment'
+    | 'PullRequestCommit'
+    | 'ReviewRequest'
+    | 'Mannequin'
+    | 'PullRequestReviewThread'
+    | 'PullRequestReviewComment'
+    | 'PullRequestReview'
+    | 'AssignedEvent'
+    | 'Bot'
+    | 'BaseRefForcePushedEvent'
+    | 'ClosedEvent'
+    | 'CommitCommentThread'
+    | 'CrossReferencedEvent'
+    | 'DemilestonedEvent'
+    | 'DeployedEvent'
+    | 'DeploymentEnvironmentChangedEvent'
+    | 'HeadRefDeletedEvent'
+    | 'HeadRefForcePushedEvent'
+    | 'HeadRefRestoredEvent'
+    | 'LabeledEvent'
+    | 'LockedEvent'
+    | 'MergedEvent'
+    | 'MilestonedEvent'
+    | 'ReferencedEvent'
+    | 'RenamedTitleEvent'
+    | 'ReopenedEvent'
+    | 'ReviewDismissedEvent'
+    | 'ReviewRequestRemovedEvent'
+    | 'ReviewRequestedEvent'
+    | 'SubscribedEvent'
+    | 'UnassignedEvent'
+    | 'UnlabeledEvent'
+    | 'UnlockedEvent'
+    | 'UnsubscribedEvent'
+    | 'UserBlockedEvent'
+    | 'AddedToProjectEvent'
+    | 'BaseRefChangedEvent'
+    | 'CommentDeletedEvent'
+    | 'ConnectedEvent'
+    | 'ConvertedNoteToIssueEvent'
+    | 'DisconnectedEvent'
+    | 'MarkedAsDuplicateEvent'
+    | 'MentionedEvent'
+    | 'MovedColumnsInProjectEvent'
+    | 'PinnedEvent'
+    | 'PullRequestCommitCommentThread'
+    | 'ReadyForReviewEvent'
+    | 'RemovedFromProjectEvent'
+    | 'TransferredEvent'
+    | 'UnmarkedAsDuplicateEvent'
+    | 'UnpinnedEvent'
+    | 'Gist'
+    | 'GistComment'
+    | 'SponsorsListing'
+    | 'SponsorsTier'
+    | 'Sponsorship'
+    | 'PublicKey'
+    | 'SavedReply'
+    | 'ReleaseAsset'
+    | 'RegistryPackageTag'
+    | 'MembersCanDeleteReposClearAuditEntry'
+    | 'MembersCanDeleteReposDisableAuditEntry'
+    | 'MembersCanDeleteReposEnableAuditEntry'
+    | 'OauthApplicationCreateAuditEntry'
+    | 'OrgAddBillingManagerAuditEntry'
+    | 'OrgAddMemberAuditEntry'
+    | 'OrgBlockUserAuditEntry'
+    | 'OrgConfigDisableCollaboratorsOnlyAuditEntry'
+    | 'OrgConfigEnableCollaboratorsOnlyAuditEntry'
+    | 'OrgCreateAuditEntry'
+    | 'OrgDisableOauthAppRestrictionsAuditEntry'
+    | 'OrgDisableSamlAuditEntry'
+    | 'OrgDisableTwoFactorRequirementAuditEntry'
+    | 'OrgEnableOauthAppRestrictionsAuditEntry'
+    | 'OrgEnableSamlAuditEntry'
+    | 'OrgEnableTwoFactorRequirementAuditEntry'
+    | 'OrgInviteMemberAuditEntry'
+    | 'OrgInviteToBusinessAuditEntry'
+    | 'OrgOauthAppAccessApprovedAuditEntry'
+    | 'OrgOauthAppAccessDeniedAuditEntry'
+    | 'OrgOauthAppAccessRequestedAuditEntry'
+    | 'OrgRemoveBillingManagerAuditEntry'
+    | 'OrgRemoveMemberAuditEntry'
+    | 'OrgRemoveOutsideCollaboratorAuditEntry'
+    | 'OrgRestoreMemberAuditEntry'
+    | 'OrgUnblockUserAuditEntry'
+    | 'OrgUpdateDefaultRepositoryPermissionAuditEntry'
+    | 'OrgUpdateMemberAuditEntry'
+    | 'OrgUpdateMemberRepositoryCreationPermissionAuditEntry'
+    | 'OrgUpdateMemberRepositoryInvitationPermissionAuditEntry'
+    | 'PrivateRepositoryForkingDisableAuditEntry'
+    | 'PrivateRepositoryForkingEnableAuditEntry'
+    | 'RepoAccessAuditEntry'
+    | 'RepoAddMemberAuditEntry'
+    | 'RepoAddTopicAuditEntry'
+    | 'RepoArchivedAuditEntry'
+    | 'RepoChangeMergeSettingAuditEntry'
+    | 'RepoConfigDisableAnonymousGitAccessAuditEntry'
+    | 'RepoConfigDisableCollaboratorsOnlyAuditEntry'
+    | 'RepoConfigDisableContributorsOnlyAuditEntry'
+    | 'RepoConfigDisableSockpuppetDisallowedAuditEntry'
+    | 'RepoConfigEnableAnonymousGitAccessAuditEntry'
+    | 'RepoConfigEnableCollaboratorsOnlyAuditEntry'
+    | 'RepoConfigEnableContributorsOnlyAuditEntry'
+    | 'RepoConfigEnableSockpuppetDisallowedAuditEntry'
+    | 'RepoConfigLockAnonymousGitAccessAuditEntry'
+    | 'RepoConfigUnlockAnonymousGitAccessAuditEntry'
+    | 'RepoCreateAuditEntry'
+    | 'RepoDestroyAuditEntry'
+    | 'RepoRemoveMemberAuditEntry'
+    | 'RepoRemoveTopicAuditEntry'
+    | 'RepositoryVisibilityChangeDisableAuditEntry'
+    | 'RepositoryVisibilityChangeEnableAuditEntry'
+    | 'TeamAddMemberAuditEntry'
+    | 'TeamAddRepositoryAuditEntry'
+    | 'TeamChangeParentTeamAuditEntry'
+    | 'TeamRemoveMemberAuditEntry'
+    | 'TeamRemoveRepositoryAuditEntry'
+    | 'OrganizationIdentityProvider'
+    | 'ExternalIdentity'
+    | 'EnterpriseServerInstallation'
+    | 'EnterpriseServerUserAccount'
+    | 'EnterpriseServerUserAccountEmail'
+    | 'EnterpriseServerUserAccountsUpload'
+    | 'IpAllowListEntry'
+    | 'EnterpriseRepositoryInfo'
+    | 'EnterpriseAdministratorInvitation'
+    | 'EnterpriseIdentityProvider'
+    | 'MarketplaceCategory'
+    | 'MarketplaceListing'
+    | 'Blob'
+    | 'RepositoryInvitation'
+    | 'Tag';
+}
+
+export interface GetPullRequestFromGraphID_node_PullRequest_headRef_target {
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+}
+
+export interface GetPullRequestFromGraphID_node_PullRequest_headRef {
+  /**
+   * The object the ref points to.
+   */
+  target: GetPullRequestFromGraphID_node_PullRequest_headRef_target;
+}
+
+export interface GetPullRequestFromGraphID_node_PullRequest {
+  __typename: 'PullRequest';
+  /**
+   * Identifies the primary key from the database.
+   */
+  databaseId: number | null;
+  /**
+   * Identifies the pull request number.
+   */
+  number: number;
+  /**
+   * Identifies the pull request title.
+   */
+  title: string;
+  /**
+   * Whether or not the pull request was merged.
+   */
+  merged: boolean;
+  /**
+   * `true` if the pull request is closed
+   */
+  closed: boolean;
+  /**
+   * Identifies the head Ref associated with the pull request.
+   */
+  headRef: GetPullRequestFromGraphID_node_PullRequest_headRef | null;
+}
+
+export type GetPullRequestFromGraphID_node =
+  | GetPullRequestFromGraphID_node_CodeOfConduct
+  | GetPullRequestFromGraphID_node_PullRequest;
+
+export interface GetPullRequestFromGraphID {
+  /**
+   * Fetches an object given its ID.
+   */
+  node: GetPullRequestFromGraphID_node | null;
+}
+
+export interface GetPullRequestFromGraphIDVariables {
+  id: string;
+}
+
+export const getPullRequestFromGraphId = getMethod<
+  GetPullRequestFromGraphID,
+  GetPullRequestFromGraphIDVariables
+>(gql`
+  query GetPullRequestFromGraphID($id: ID!) {
+    node(id: $id) {
+      __typename
+      ... on PullRequest {
+        databaseId
+        number
+        title
+        merged
+        closed
+        headRef {
+          target {
+            oid
+          }
+        }
+      }
+    }
+  }
+`);
+
+// ====================================================
+// GraphQL query operation: GetPullRequestFromNumber
+// ====================================================
+
+export interface GetPullRequestFromNumber_repository_pullRequest_headRef_target {
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+}
+
+export interface GetPullRequestFromNumber_repository_pullRequest_headRef {
+  /**
+   * The object the ref points to.
+   */
+  target: GetPullRequestFromNumber_repository_pullRequest_headRef_target;
+}
+
+export interface GetPullRequestFromNumber_repository_pullRequest {
+  id: string;
+  /**
+   * Identifies the primary key from the database.
+   */
+  databaseId: number | null;
+  /**
+   * Identifies the pull request number.
+   */
+  number: number;
+  /**
+   * Identifies the pull request title.
+   */
+  title: string;
+  /**
+   * Whether or not the pull request was merged.
+   */
+  merged: boolean;
+  /**
+   * `true` if the pull request is closed
+   */
+  closed: boolean;
+  /**
+   * Identifies the head Ref associated with the pull request.
+   */
+  headRef: GetPullRequestFromNumber_repository_pullRequest_headRef | null;
+}
+
+export interface GetPullRequestFromNumber_repository {
+  /**
+   * Returns a single pull request from the current repository by number.
+   */
+  pullRequest: GetPullRequestFromNumber_repository_pullRequest | null;
+}
+
+export interface GetPullRequestFromNumber {
+  /**
+   * Lookup a given repository by the owner and repository name.
+   */
+  repository: GetPullRequestFromNumber_repository | null;
+}
+
+export interface GetPullRequestFromNumberVariables {
+  owner: string;
+  name: string;
+  number: number;
+}
+
+export const getPullRequestFromNumber = getMethod<
+  GetPullRequestFromNumber,
+  GetPullRequestFromNumberVariables
+>(gql`
+  query GetPullRequestFromNumber(
+    $owner: String!
+    $name: String!
+    $number: Int!
+  ) {
+    repository(owner: $owner, name: $name) {
+      pullRequest(number: $number) {
+        id
+        databaseId
+        number
+        title
+        merged
+        closed
+        headRef {
+          target {
+            oid
+          }
+        }
+      }
+    }
+  }
+`);
+
+// ====================================================
+// GraphQL fragment: CommitDetail
+// ====================================================
+
+export interface CommitDetail_parents_nodes {
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+}
+
+export interface CommitDetail_parents {
+  /**
+   * A list of nodes.
+   */
+  nodes: (CommitDetail_parents_nodes | null)[] | null;
+}
+
+export interface CommitDetail_associatedPullRequests_nodes {
+  id: string;
+  /**
+   * Identifies the primary key from the database.
+   */
+  databaseId: number | null;
+}
+
+export interface CommitDetail_associatedPullRequests {
+  /**
+   * A list of nodes.
+   */
+  nodes: (CommitDetail_associatedPullRequests_nodes | null)[] | null;
+}
+
+export interface CommitDetail {
+  id: string;
+  /**
+   * The Git object ID
+   */
+  oid: GitObjectID;
+  /**
+   * The parents of a commit.
+   */
+  parents: CommitDetail_parents;
+  /**
+   * The pull requests associated with a commit
+   */
+  associatedPullRequests: CommitDetail_associatedPullRequests | null;
+}

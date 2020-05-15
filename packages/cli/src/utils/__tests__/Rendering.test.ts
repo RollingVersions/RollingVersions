@@ -55,67 +55,66 @@ test('renderCommentWithoutState', () => {
       {
         repo: {owner: 'Foo', name: 'bar'},
         number: 10,
+        headSha: 'd38990d3d54749a1408e7ca29e139e3c9743aa2e',
       },
       {
-        packageInfoFetchedAt: 'd38990d3d54749a1408e7ca29e139e3c9743aa2e',
         submittedAtCommitSha: 'd38990d3d54749a1408e7ca29e139e3c9743aa2e',
         packages: new Map([
-          [
-            'changelogversion\u002dutils',
-            {
-              changes: getEmptyChangeSet(),
-              info: [
-                {
-                  path: 'changelogversion-utils/package.json',
-                  publishTarget: PublishTarget.npm,
-                  publishConfigAccess: 'public',
-                  packageName: 'changelogversion\u002dutils',
-                  notToBePublished: true,
-                  registryVersion: null,
-                  versionTag: null,
-                },
-              ],
-            },
-          ],
+          ['changelogversion\u002dutils', getEmptyChangeSet()],
           [
             'changelogversion',
             {
-              changes: {
-                ...getEmptyChangeSet(),
-                feat: [{title: 'Something awesome was added', body: ''}],
-              },
-              info: [
-                {
-                  path: 'changelogversion/package.json',
-                  publishTarget: PublishTarget.npm,
-                  publishConfigAccess: 'public',
-                  packageName: 'changelogversion',
-                  notToBePublished: true,
-                  registryVersion: null,
-                  versionTag: null,
-                },
-              ],
+              ...getEmptyChangeSet(),
+              feat: [{title: 'Something awesome was added', body: ''}],
             },
           ],
-          [
-            'changelogversion\u002dserver',
-            {
-              changes: getEmptyChangeSet(),
-              info: [
-                {
-                  path: 'changelogversion-server/package.json',
-                  publishTarget: PublishTarget.npm,
-                  publishConfigAccess: 'public',
-                  packageName: 'changelogversion\u002dserver',
-                  notToBePublished: true,
-                  registryVersion: null,
-                  versionTag: null,
-                },
-              ],
-            },
-          ],
+          ['changelogversion\u002dserver', getEmptyChangeSet()],
         ]),
       },
+      new Map([
+        [
+          'changelogversion\u002dutils',
+          [
+            {
+              path: 'changelogversion-utils/package.json',
+              publishTarget: PublishTarget.npm,
+              publishConfigAccess: 'public',
+              packageName: 'changelogversion\u002dutils',
+              notToBePublished: true,
+              registryVersion: null,
+              versionTag: null,
+            },
+          ],
+        ],
+        [
+          'changelogversion',
+          [
+            {
+              path: 'changelogversion/package.json',
+              publishTarget: PublishTarget.npm,
+              publishConfigAccess: 'public',
+              packageName: 'changelogversion',
+              notToBePublished: true,
+              registryVersion: null,
+              versionTag: null,
+            },
+          ],
+        ],
+        [
+          'changelogversion\u002dserver',
+          [
+            {
+              path: 'changelogversion-server/package.json',
+              publishTarget: PublishTarget.npm,
+              publishConfigAccess: 'public',
+              packageName: 'changelogversion\u002dserver',
+              notToBePublished: true,
+              registryVersion: null,
+              versionTag: null,
+            },
+          ],
+        ],
+      ]),
       new URL('https://example.com'),
     ),
   ).toMatchInlineSnapshot(`

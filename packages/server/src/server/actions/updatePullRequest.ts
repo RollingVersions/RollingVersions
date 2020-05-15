@@ -5,7 +5,7 @@ import {
 } from 'rollingversions/lib/services/github';
 import {PullRequest} from 'rollingversions/lib/types';
 import {APP_URL} from '../environment';
-import getPullRequestState from '../getPullRequestState';
+import getPullRequestState from '../db-update-jobs/procedures/getPullRequestStateFromComment';
 import {
   renderComment,
   getUrlForChangeLog,

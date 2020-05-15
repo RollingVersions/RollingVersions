@@ -120,11 +120,11 @@ export default async function getPackageStatuses(
 
         const changeSet = getEmptyChangeSet<{pr: number}>();
         for (const pullChangeLog of changeLogs.filter(isTruthy)) {
-          const pkg = pullChangeLog.packages.get(packageName);
-          if (pkg) {
+          const changes = pullChangeLog.packages.get(packageName);
+          if (changes) {
             for (const key of ChangeTypes) {
               changeSet[key].push(
-                ...pkg.changes[key].map((c) => ({
+                ...changes[key].map((c) => ({
                   ...c,
                   pr: pullChangeLog.pr,
                 })),

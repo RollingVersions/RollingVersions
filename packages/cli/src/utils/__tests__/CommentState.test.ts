@@ -5,7 +5,6 @@ test('writeState', () => {
   expect(
     writeState('Comment', {
       submittedAtCommitSha: '-->',
-      packageInfoFetchedAt: 'SHASHASHA',
       packages: new Map(),
     }),
   ).toMatchInlineSnapshot(`
@@ -16,7 +15,6 @@ test('writeState', () => {
   expect(
     writeState('Comment', {
       submittedAtCommitSha: 'SHASHASHA',
-      packageInfoFetchedAt: 'SHASHASHA',
       packages: new Map(),
     }),
   ).toMatchInlineSnapshot(`
@@ -31,7 +29,6 @@ test('readState', () => {
     readState(
       writeState('Comment', {
         submittedAtCommitSha: '-->',
-        packageInfoFetchedAt: 'SHASHASHA',
         packages: new Map(),
       }),
     ),
@@ -46,10 +43,7 @@ test('readState', () => {
     readState(
       writeState('Comment', {
         submittedAtCommitSha: 'SHASHASHA',
-        packageInfoFetchedAt: 'SHASHASHA',
-        packages: new Map([
-          ['fake package', {changes: getEmptyChangeSet(), info: []}],
-        ]),
+        packages: new Map([['fake package', getEmptyChangeSet()]]),
       }).replace(/\n/g, '\r\n'),
     ),
   ).toMatchInlineSnapshot(`

@@ -1,4 +1,4 @@
-export default async function* paginate<TPage, TEntry>(
+export default async function* paginateBatched<TPage, TEntry>(
   getPage: (token?: string) => Promise<TPage>,
   getEntries: (page: TPage) => TEntry[],
   getNextPageToken: (page: TPage) => string | undefined,
@@ -13,13 +13,19 @@ export default async function* paginate<TPage, TEntry>(
       // reported as unhandled exceptions before we get to
       // the part where we await this promise
     });
-    for (const entry of currentPage ? getEntries(currentPage) : []) {
-      yield entry;
+    if (currentPage) {
+      const entries = getEntries(currentPage);
+      if (entries.length) {
+        yield entries;
+      }
     }
     currentPage = await nextPage;
     nextPageToken = getNextPageToken(currentPage);
   } while (nextPageToken);
-  for (const entry of currentPage ? getEntries(currentPage) : []) {
-    yield entry;
+  if (currentPage) {
+    const entries = getEntries(currentPage);
+    if (entries.length) {
+      yield entries;
+    }
   }
 }

@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "lib",
     "esModuleInterop": true,
-    "jsx": "react"
+    "jsx": "react",
+    "lib": ["DOM", "ES2020"]
   },
   "include": ["packages/*/src"]
 }

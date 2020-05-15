@@ -6,7 +6,7 @@
     "rootDir": "src",
     "tsBuildInfoFile": "lib/.tsbuildinfo",
     "esModuleInterop": true,
-    "lib": ["DOM"],
+    "lib": ["DOM", "ES2020"],
     "jsx": "react"
   },
   "include": ["src"]

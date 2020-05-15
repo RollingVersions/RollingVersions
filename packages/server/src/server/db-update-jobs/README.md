@@ -97,7 +97,7 @@ Input: Repo + Head Commit + page size (defaults to 100)
     - if commit parent is in `git_commits`, insert into `git_commit_parents`
     - else add `[parent_sha, commit_id]` to "queue"
   - read the associated pull requets for the commit
-    - upsert into `pull_requests` (normally a no-op)
+    - run "Load Pull Request"
     - insert into `git_commit_pull_requests`
   - if "queue" is empty, break out of loop
 - Commit Transaction
@@ -114,6 +114,16 @@ Input: Repo
   - inster into `git_commits`
   - insert parents into `git_commit_parents` - we are reading from oldest to newest, so we have already inserted the parent
   - read the associated pull requets for the commit
-    - upsert into `pull_requests` (normally a no-op)
+    - run "Load Pull Request"
     - insert into `git_commit_pull_requests`
 - insert into `git_branches`
+
+## Load Pull Request
+
+Input: Pull Request ID
+
+- if pull request alerady loaded, no-op
+- read pull request (pr number, title, open/merged/closed)
+- read comments - TODO: this is only needed to read in state created before the db migration. We could do it as a one off job for all existing pull requests.
+  - if comment contains state
+  - write changes
