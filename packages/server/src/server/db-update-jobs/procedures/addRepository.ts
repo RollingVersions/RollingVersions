@@ -77,23 +77,28 @@ export default async function addRepository(
     );
   }
 
-  const head = await upsertCommits(
-    db,
-    client,
-    repository.id,
-    {owner: repository.owner, name: repository.name},
-    // TODO(perf): make first page small in case the repo is mostly up to date
-    // then grow page size over time
-    getAllDefaultBranchCommits(client, repo),
-  );
-
-  const commitID = await getCommitIdFromSha(
+  let commitID = await getCommitIdFromSha(
     db,
     repository.id,
-    defaultBranch.target,
+    defaultBranch.target.commit_sha,
   );
   if (!commitID) {
-    throw new Error('Missing commitID for head of branch');
+    await upsertCommits(
+      db,
+      client,
+      repository.id,
+      {owner: repository.owner, name: repository.name},
+      getAllDefaultBranchCommits(client, repo),
+    );
+
+    commitID = await getCommitIdFromSha(
+      db,
+      repository.id,
+      defaultBranch.target.commit_sha,
+    );
+    if (!commitID) {
+      throw new Error('Missing commitID for head of branch');
+    }
   }
 
   await writeBranch(
@@ -148,5 +153,9 @@ export default async function addRepository(
     )
   ).filter(isTruthy);
 
-  return {...repository, tags, head: head && {id: commitID, ...head}};
+  return {
+    ...repository,
+    tags,
+    head: {id: commitID, ...defaultBranch.target},
+  };
 }

@@ -49,6 +49,7 @@ query GetDefaultBranch($owner: String!, $name: String!) {
       name
       target {
         __typename # Commit
+        id
         oid
       }
     }

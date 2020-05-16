@@ -58,7 +58,10 @@ export async function getDefaultBranch(client: GitHubClient, repo: Repository) {
   }
   return {
     name: branch.name,
-    target: branch.target.oid,
+    target: {
+      graphql_id: branch.target.id,
+      commit_sha: branch.target.oid,
+    },
     graphql_id: branch.id,
   };
 }
