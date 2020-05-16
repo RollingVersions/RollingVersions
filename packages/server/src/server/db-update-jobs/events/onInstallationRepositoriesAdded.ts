@@ -11,6 +11,11 @@ export default async function onInstallationRepositoriesAdded(
   const client = getClientForEvent(e);
   for (const repository of e.payload.repositories_added) {
     const [owner, name] = repository.full_name.split('/');
-    await addRepository(db, client, {owner, name});
+    await addRepository(
+      db,
+      client,
+      {owner, name},
+      {refreshTags: true, refreshPRs: true},
+    );
   }
 }

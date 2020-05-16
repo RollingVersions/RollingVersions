@@ -37,7 +37,10 @@ export default async function readPullRequestState(
   pullRequest: Pick<PullRequest, 'repo' | 'number'>,
 ) {
   let start = Date.now();
-  const repo = await addRepository(db, client, pullRequest.repo);
+  const repo = await addRepository(db, client, pullRequest.repo, {
+    refreshPRs: false,
+    refreshTags: false,
+  });
 
   log({
     event_type: 'add_repository',

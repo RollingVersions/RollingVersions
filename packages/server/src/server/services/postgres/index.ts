@@ -1,17 +1,9 @@
 import connect, {sql, Connection} from '@databases/pg';
 import {ChangeType} from 'rollingversions/lib/types/PullRequestState';
-import {Repository, PublishTarget} from 'rollingversions/lib/types';
+import {PublishTarget} from 'rollingversions/lib/types';
 
 export {Connection};
 export const db = connect();
-
-// CREATE TABLE git_repositories (
-//   id INT NOT NULL PRIMARY KEY,
-//   graphql_id TEXT NOT NULL,
-//   owner TEXT NOT NULL,
-//   name TEXT NOT NULL,
-//   default_branch_name TEXT NOT NULL
-// );
 
 export async function upsertRepository(
   db: Connection,
@@ -342,16 +334,23 @@ export async function updateChangeLogEntries(
     );
   });
 }
-
 export async function getAllTags(
   db: Connection,
-  repo: Repository,
-): Promise<{name: string; target_git_commit_id: number}[]> {
+  git_repository_id: number,
+): Promise<
+  {
+    id: number;
+    graphql_id: string;
+    name: string;
+    target_git_commit_id: number;
+    commit_sha: string;
+  }[]
+> {
   return await db.query(sql`
-    SELECT t.name, t.target_git_commit_id
-    FROM git_repositories r
-    INNER JOIN git_tags t ON (t.git_repository_id = r.id)
-    WHERE r.owner = ${repo.owner} AND r.name = ${repo.name}
+    SELECT gt.id, gt.graphql_id, gt.name, gt.target_git_commit_id, gc.commit_sha
+    FROM git_tags gt
+    INNER JOIN git_commits gc ON (gt.target_git_commit_id = gc.id)
+    WHERE gt.git_repository_id = ${git_repository_id}
   `);
 }
 
