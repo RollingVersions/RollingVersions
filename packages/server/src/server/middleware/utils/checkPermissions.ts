@@ -32,7 +32,15 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
     try {
       const userAuth = getGitHubAccessToken(req, res);
       const pullRequest = parseParams(req);
+      const start = Date.now();
       const permissionInfo = await getPermissionLevel(pullRequest, userAuth);
+      log({
+        event_type: 'loaded_permission_level',
+        event_status: 'ok',
+        message: 'Loaded permission level',
+        ...permissionInfo,
+        duraiton: Date.now() - start,
+      });
       permisisonInfoMap.set(req, permissionInfo);
       if (!allowedPermissions.includes(permissionInfo.permission)) {
         log({
