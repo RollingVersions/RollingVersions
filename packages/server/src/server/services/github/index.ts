@@ -3,6 +3,7 @@ import {Repository} from 'rollingversions/lib/types';
 import paginateBatched from 'rollingversions/lib/services/github/paginateBatched';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import * as queries from './github-graph';
+import retry from 'then-retry';
 
 export {GitHubClient};
 
@@ -100,14 +101,21 @@ export async function* getAllRefCommits(
   repo: Repository,
   ref: GitReference,
 ) {
+  let pageSize = 5;
   for await (const result of paginateBatched(
-    (token) =>
-      queries.getAllRefCommits(client, {
-        owner: repo.owner,
-        name: repo.name,
-        qualifiedName: getQualifiedName(ref),
-        after: token,
-      }),
+    async (token) => {
+      const currentPageSize = pageSize;
+      pageSize = Math.min(100, pageSize + 20);
+      return retry(() =>
+        queries.getAllRefCommits(client, {
+          owner: repo.owner,
+          name: repo.name,
+          qualifiedName: getQualifiedName(ref),
+          pageSize: currentPageSize,
+          after: token,
+        }),
+      );
+    },
     (page) =>
       page.repository?.ref?.target.__typename === 'Commit'
         ? page.repository.ref?.target.history.nodes || []
@@ -125,12 +133,17 @@ export async function* getAllDefaultBranchCommits(
   client: GitHubClient,
   repo: Repository,
 ) {
+  let pageSize = 5;
   for await (const result of paginateBatched(
-    (token) =>
-      queries.getAllDefaultBranchCommits(client, {
+    async (token) => {
+      const currentPageSize = pageSize;
+      pageSize = Math.min(100, pageSize + 20);
+      return queries.getAllDefaultBranchCommits(client, {
         ...repo,
+        pageSize: currentPageSize,
         after: token,
-      }),
+      });
+    },
     (page) =>
       page.repository?.branch?.target.__typename === 'Commit'
         ? page.repository.branch?.target.history.nodes || []

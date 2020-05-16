@@ -311,27 +311,28 @@ export const updateStatus = withRetry(
 export async function* getAllCommits(
   client: GitHubClient,
   repo: Repository,
-  {
-    pageSize = 100,
-    deployBranch,
-  }: {pageSize?: number; deployBranch: string | null},
+  {deployBranch}: {deployBranch: string | null},
 ) {
+  let pageSize = 5;
   for await (const commit of paginate(
-    async (after) =>
-      retry(async () =>
+    async (after) => {
+      const currentPageSize = pageSize;
+      pageSize = Math.min(100, pageSize + 20);
+      return retry(async () =>
         deployBranch
           ? gh.getAllCommits(client, {
               ...repo,
               after,
-              first: pageSize,
+              first: currentPageSize,
               qualifiedName: `refs/heads/${deployBranch}`,
             })
           : gh.getAllDefaultBranchCommits(client, {
               ...repo,
               after,
-              first: pageSize,
+              first: currentPageSize,
             }),
-      ),
+      );
+    },
     (page) =>
       (page?.repository?.branch?.target?.__typename === 'Commit' &&
         page.repository.branch.target.history.nodes) ||

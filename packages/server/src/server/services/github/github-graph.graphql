@@ -57,6 +57,7 @@ query GetDefaultBranch($owner: String!, $name: String!) {
 query GetAllDefaultBranchCommits(
   $owner: String!
   $name: String!
+  $pageSize: Int!
   $after: String
 ) {
   repository(owner: $owner, name: $name) {
@@ -66,7 +67,7 @@ query GetAllDefaultBranchCommits(
         oid
         ... on Commit {
           id
-          history(first: 100, after: $after) {
+          history(first: $pageSize, after: $after) {
             pageInfo {
               hasNextPage
               endCursor
@@ -97,6 +98,7 @@ query GetAllRefCommits(
   $owner: String!
   $name: String!
   $qualifiedName: String!
+  $pageSize: Int!
   $after: String
 ) {
   repository(owner: $owner, name: $name) {
@@ -106,7 +108,7 @@ query GetAllRefCommits(
         oid
         ... on Commit {
           id
-          history(first: 20, after: $after) {
+          history(first: $pageSize, after: $after) {
             pageInfo {
               hasNextPage
               endCursor
