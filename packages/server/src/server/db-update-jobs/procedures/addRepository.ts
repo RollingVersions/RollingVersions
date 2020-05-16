@@ -25,6 +25,11 @@ export default async function addRepository(
   client: GitHubClient,
   repo: Repository,
 ) {
+  // TODO(perf): find a way to avoid doing this after the first install (maybe just cache for some time?)
+  const gitTagsPromise = getAllTags(client, repo);
+  gitTagsPromise.catch(() => {
+    // do not report unhandled exceptions here as we will handle later
+  });
   const [repository, defaultBranch] = await Promise.all([
     getRepository(client, repo),
     getDefaultBranch(client, repo),
@@ -97,7 +102,7 @@ export default async function addRepository(
   );
 
   // TODO(perf): find a way to avoid doing this after the first install (maybe just cache for some time?)
-  const gitTags = await getAllTags(client, repo);
+  const gitTags = await gitTagsPromise;
 
   const tags = (
     await Promise.all(
