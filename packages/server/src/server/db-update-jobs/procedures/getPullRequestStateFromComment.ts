@@ -11,7 +11,7 @@ import {
   COMMENT_GUID,
   renderInitialComment,
   getUrlForChangeLog,
-} from 'rollingversions/lib/utils/Rendering';
+} from '../../../utils/Rendering';
 import {APP_URL} from '../../environment';
 import log from '../../logger';
 import {PullRequestDetail} from '../../services/github';

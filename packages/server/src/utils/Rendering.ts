@@ -14,7 +14,7 @@ import {
 import {PullRequestPackage} from '../types';
 
 // N.B. this comment guid must be kept in sync with the CLI for now
-const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
+export const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
 const COMMENT_PREFIX = `<!-- This comment is maintained by Rolling Versions. Do not edit it manually! -->\n<!-- ${COMMENT_GUID} -->\n\n`;
 
 export function getVersionShift(
