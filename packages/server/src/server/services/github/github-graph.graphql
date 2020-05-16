@@ -36,6 +36,7 @@ query GetRepositoryPullRequests(
       }
       nodes {
         id
+        databaseId
       }
     }
   }

@@ -23,7 +23,7 @@ export async function getRepository(client: GitHubClient, repo: Repository) {
   };
 }
 
-export function getRepositoryPullRequestGraphIDs(
+export function getRepositoryPullRequestIDs(
   client: GitHubClient,
   repo: Repository,
 ) {
@@ -35,8 +35,10 @@ export function getRepositoryPullRequestGraphIDs(
         after: token,
       }),
     (page) =>
-      page.repository?.pullRequests.nodes?.filter(isTruthy).map((n) => n.id) ||
-      [],
+      page.repository?.pullRequests.nodes?.filter(isTruthy).map((n) => ({
+        id: n.databaseId!,
+        graphql_id: n.id,
+      })) || [],
     (page) =>
       page.repository?.pullRequests.pageInfo.hasNextPage
         ? page.repository.pullRequests.pageInfo.endCursor || undefined

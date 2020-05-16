@@ -6,13 +6,14 @@ import {
   getBranch,
   writeBranch,
   upsertTag,
+  filterOutExisingPullRequestIDs,
 } from '../../services/postgres';
 import {
   GitHubClient,
   getRepository,
   getDefaultBranch,
   getAllDefaultBranchCommits,
-  getRepositoryPullRequestGraphIDs,
+  getRepositoryPullRequestIDs,
   getAllRefCommits,
 } from '../../services/github';
 import upsertCommits from './upsertCommits';
@@ -51,12 +52,17 @@ export default async function addRepository(
   const dbBranch = await getBranch(db, repository.id, defaultBranch.name);
 
   // TODO(perf): avoid reading all IDs once the initial first pass is complete
-  for await (const pullRequestGraphIDs of getRepositoryPullRequestGraphIDs(
+  for await (const pullRequestIDs of getRepositoryPullRequestIDs(
     client,
     repo,
   )) {
+    const newPullRequests = await filterOutExisingPullRequestIDs(
+      db,
+      repository.id,
+      pullRequestIDs,
+    );
     await Promise.all(
-      pullRequestGraphIDs.map((pullRequestGraphID) =>
+      newPullRequests.map(({graphql_id}) =>
         upsertPullRequest(
           db,
           client,
@@ -65,7 +71,7 @@ export default async function addRepository(
             owner: repository.owner,
             name: repository.name,
           },
-          pullRequestGraphID,
+          graphql_id,
         ),
       ),
     );
