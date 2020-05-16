@@ -111,21 +111,12 @@ export default async function getPullRequestStateFromComment(
   updateRequired: boolean;
 }> {
   const {state, commentID} = await getCommentState(client, pullRequest);
-  if (state) {
-    return {
-      state,
-      commentID,
-      closed: pullRequest.is_closed,
-      merged: pullRequest.is_merged,
-      updateRequired: false,
-    };
-  } else {
-    return {
-      commentID: null,
-      state: null,
-      closed: pullRequest.is_closed,
-      merged: pullRequest.is_merged,
-      updateRequired: false,
-    };
-  }
+
+  return {
+    state,
+    commentID,
+    closed: pullRequest.is_closed,
+    merged: pullRequest.is_merged,
+    updateRequired: false,
+  };
 }
