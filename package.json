@@ -19,10 +19,13 @@
     "ci:test": "jest --silent --maxWorkers=2"
   },
   "devDependencies": {
+    "@databases/pg": "^2.1.2",
+    "@databases/pg-test": "^2.0.0",
     "@forbeslindesay/tsconfig": "^2.0.0",
     "@types/jest": "^24.0.21",
     "concurrently": "^5.0.0",
     "husky": "^3.0.9",
+    "interrogator": "^1.1.0",
     "jest": "^24.9.0",
     "jskube": "^1.1.2",
     "lint-staged": "^9.4.2",
@@ -83,9 +86,5 @@
       "prettier --write",
       "git add"
     ]
-  },
-  "dependencies": {
-    "@databases/pg": "^2.1.2",
-    "@databases/pg-test": "^2.0.0"
   }
 }

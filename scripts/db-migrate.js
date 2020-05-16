@@ -1,14 +1,21 @@
 const {readdirSync} = require('fs');
 const {default: connect, sql} = require('@databases/pg');
+const interrogator = require('interrogator');
 
 console.log('Starting');
 
 (async () => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  const db = connect();
+  let DATABASE_URL = process.env.DATABASE_URL;
+  if (DATABASE_URL) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  } else {
+    DATABASE_URL = await interrogator.input(
+      'Please enter a connection string:',
+    );
+  }
+  const db = connect(DATABASE_URL);
   try {
     await db.tx(async (tx) => {
-      debugger;
       await tx.query(
         sql`CREATE TABLE IF NOT EXISTS db_migrations_applied (migration_name TEXT NOT NULL PRIMARY KEY)`,
       );
@@ -23,7 +30,10 @@ console.log('Starting');
       `${__dirname}/../db-migrations`,
     ).sort()) {
       if (!/\.sql$/.test(migrationName)) continue;
-      if (alreadyRun.has(migrationName)) continue;
+      if (alreadyRun.has(migrationName)) {
+        console.log(`already applied ${migrationName}`);
+      }
+      console.log(`applying ${migrationName}`);
       await db.tx(async (tx) => {
         await tx.query([
           sql.file(`${__dirname}/../db-migrations/${migrationName}`),
@@ -33,6 +43,7 @@ console.log('Starting');
         );
       });
     }
+    console.log(`all migrations successfully applied`);
   } finally {
     await db.dispose();
   }
