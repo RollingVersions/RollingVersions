@@ -10,7 +10,7 @@ test('writeState', () => {
   ).toMatchInlineSnapshot(`
     "Comment
 
-    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" [1,\\"--\\\\u003e\\",\\"SHASHASHA\\",[]] \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
+    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" [2,\\"--\\\\u003e\\",[]] \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
   `);
   expect(
     writeState('Comment', {
@@ -20,7 +20,7 @@ test('writeState', () => {
   ).toMatchInlineSnapshot(`
     "Comment
 
-    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" [1,\\"SHASHASHA\\",\\"SHASHASHA\\",[]] \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
+    <!-- \\"\\"\\"RollingVersions State Start\\"\\"\\" [2,\\"SHASHASHA\\",[]] \\"\\"\\"RollingVersions State End\\"\\"\\" -->"
   `);
 });
 
@@ -34,7 +34,6 @@ test('readState', () => {
     ),
   ).toMatchInlineSnapshot(`
     Object {
-      "packageInfoFetchedAt": "SHASHASHA",
       "packages": Map {},
       "submittedAtCommitSha": "-->",
     }
@@ -48,17 +47,13 @@ test('readState', () => {
     ),
   ).toMatchInlineSnapshot(`
     Object {
-      "packageInfoFetchedAt": "SHASHASHA",
       "packages": Map {
         "fake package" => Object {
-          "changes": Object {
-            "breaking": Array [],
-            "feat": Array [],
-            "fix": Array [],
-            "perf": Array [],
-            "refactor": Array [],
-          },
-          "info": Array [],
+          "breaking": Array [],
+          "feat": Array [],
+          "fix": Array [],
+          "perf": Array [],
+          "refactor": Array [],
         },
       },
       "submittedAtCommitSha": "SHASHASHA",

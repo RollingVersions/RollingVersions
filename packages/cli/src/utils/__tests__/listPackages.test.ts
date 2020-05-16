@@ -14,7 +14,7 @@ test('listPackages - single npm package', async () => {
           "optional": Array [],
           "required": Array [],
         },
-        "infos": Array [
+        "manifests": Array [
           Object {
             "notToBePublished": false,
             "packageName": "example-package",
@@ -53,7 +53,7 @@ test('listPackages - multiple npm packages', async () => {
           "optional": Array [],
           "required": Array [],
         },
-        "infos": Array [
+        "manifests": Array [
           Object {
             "notToBePublished": false,
             "packageName": "@root-package/a",
@@ -69,7 +69,7 @@ test('listPackages - multiple npm packages', async () => {
           "optional": Array [],
           "required": Array [],
         },
-        "infos": Array [
+        "manifests": Array [
           Object {
             "notToBePublished": false,
             "packageName": "@root-package/b",
