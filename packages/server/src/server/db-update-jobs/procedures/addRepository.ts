@@ -20,17 +20,29 @@ import upsertCommits from './upsertCommits';
 import upsertPullRequest from './upsertPullRequest';
 import {getAllTags} from 'rollingversions/lib/services/github';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
+import log from '../../logger';
 
 export default async function addRepository(
   db: Connection,
   client: GitHubClient,
   repo: Repository,
 ) {
+  const start = Date.now();
   // TODO(perf): find a way to avoid doing this after the first install (maybe just cache for some time?)
   const gitTagsPromise = getAllTags(client, repo);
-  gitTagsPromise.catch(() => {
-    // do not report unhandled exceptions here as we will handle later
-  });
+  gitTagsPromise.then(
+    () => {
+      log({
+        event_type: 'got_git_tags',
+        message: 'Read git tags',
+        event_status: 'ok',
+        duration: Date.now() - start,
+      });
+    },
+    () => {
+      // do not report unhandled exceptions here as we will handle later
+    },
+  );
   const [repository, defaultBranch] = await Promise.all([
     getRepository(client, repo),
     getDefaultBranch(client, repo),
@@ -51,6 +63,7 @@ export default async function addRepository(
   });
   const dbBranch = await getBranch(db, repository.id, defaultBranch.name);
 
+  const startReadingPullRequests = Date.now();
   // TODO(perf): avoid reading all IDs once the initial first pass is complete
   for await (const pullRequestIDs of getRepositoryPullRequestIDs(
     client,
@@ -76,6 +89,12 @@ export default async function addRepository(
       ),
     );
   }
+  log({
+    event_type: 'read_pull_requests',
+    message: 'Read all pull request IDs',
+    event_status: 'ok',
+    duration: Date.now() - startReadingPullRequests,
+  });
 
   let commitID = await getCommitIdFromSha(
     db,
