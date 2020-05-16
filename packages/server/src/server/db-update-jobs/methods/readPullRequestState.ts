@@ -47,32 +47,19 @@ export default async function readPullRequestState(
   });
   start = Date.now();
 
-  const {id, is_closed, is_merged, commentID} = await upsertPullRequest(
-    db,
-    client,
-    repo.id,
-    repo,
-    pullRequest.number,
-  );
+  const [{id, is_closed, is_merged, commentID}, head] = await Promise.all([
+    upsertPullRequest(db, client, repo.id, repo, pullRequest.number),
+    upsertCommits(
+      db,
+      client,
+      repo.id,
+      repo,
+      getAllPullRequestCommits(client, repo, pullRequest.number),
+    ),
+  ] as const);
   log({
     event_type: 'upsert_pull_request',
     message: 'Ran upsert pull request',
-    event_status: 'ok',
-    duration: Date.now() - start,
-  });
-
-  start = Date.now();
-  const head = await upsertCommits(
-    db,
-    client,
-    repo.id,
-    repo,
-    getAllPullRequestCommits(client, repo, pullRequest.number),
-  );
-
-  log({
-    event_type: 'upsert_pr_commits',
-    message: 'Ran upsert pr commits',
     event_status: 'ok',
     duration: Date.now() - start,
   });
