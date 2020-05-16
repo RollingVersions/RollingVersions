@@ -1059,15 +1059,6 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@databases/pg-config@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@databases/pg-config/-/pg-config-1.0.1.tgz#9c08f6b4d50eee7dd731f5102b5ff10d57e4cfd1"
-  integrity sha512-P4lYpcDQ3UPIZx3/YY6hF9TNX99w4WDlAOQWBfP57mvrKAuwbm8fDjhbV3mtcKOoXBYfQj4rYn3vpxe5Z0C40A==
-  dependencies:
-    "@types/cosmiconfig" "^5.0.3"
-    ajv "^6.7.0"
-    cosmiconfig "^5.0.7"
-
 "@databases/pg-config@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@databases/pg-config/-/pg-config-1.1.0.tgz#a21678b0b833dcab5a70f7d1c41579b4e1e68b23"
@@ -1099,13 +1090,13 @@
     parameter-reducers "^1.0.1"
     type-assertions "^1.1.0"
 
-"@databases/pg@^2.1.1":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@databases/pg/-/pg-2.1.1.tgz#7756a70806a92fe246c38e6beecbf5729a3b4f22"
-  integrity sha512-1St25qG/yUz3Z8wqJbDX1nDv0HFdZrPHoLM2OOJ9O2ZaEtVlPqC2uuRZWYl7Qhfk+FAGlJkCQQ4AyR/f6eR3aA==
+"@databases/pg@^2.1.2":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@databases/pg/-/pg-2.1.2.tgz#a741b650e955d22b5c43698bd05c995edd186c34"
+  integrity sha512-9K7RT0WlwcZLXNxn+wUDy4rlP/Ti/YC9vztKUGaE/OB55cJbIM0lk6ws3a8AOnkusYfrKzS8ukxhUv3wOnSulg==
   dependencies:
     "@babel/code-frame" "^7.0.0"
-    "@databases/pg-config" "^1.0.1"
+    "@databases/pg-config" "^1.1.0"
     "@databases/pg-data-type-id" "^0.0.1"
     "@databases/pg-errors" "^0.0.1"
     "@databases/push-to-async-iterable" "^1.0.0"

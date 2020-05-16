@@ -12,6 +12,7 @@ interface Secrets {
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
   SECURE_KEY: string;
+  DATABASE_URL: string;
 }
 export default function secrets(data: {staging: Secrets; production: Secrets}) {
   return [

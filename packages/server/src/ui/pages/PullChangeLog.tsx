@@ -33,24 +33,19 @@ export default function PullChangeLog() {
           return <div>Loading...</div>;
         }
 
-        const headSha = pr.pullRequest.headSha || undefined;
-
         return (
           <PullRequestPage
-            headSha={headSha}
             permission={pr.pullRequest.permission}
             closed={pr.pullRequest.closed}
             merged={pr.pullRequest.merged}
             saving={pr.updating || saving}
             packages={pr.pullRequest.packages}
             onSave={async (updates) => {
-              // TODO: headSha should not be **needed** to save
-              if (!headSha) return;
               setSaving(true);
               if (
                 pr.pullRequest &&
                 (await pr.update({
-                  headSha,
+                  headSha: pr.pullRequest.headSha,
                   updates,
                 }))
               ) {

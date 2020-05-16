@@ -53,7 +53,7 @@ export function getUrlForChangeLog(
 
 export function getShortDescription(
   pullRequest: PullRequest,
-  submittedAtCommitSha: string,
+  submittedAtCommitSha: string | null,
   packages: Map<string, PullRequestPackage>,
 ) {
   if (submittedAtCommitSha === pullRequest.headSha) {
@@ -80,8 +80,8 @@ export function renderInitialCommentWithoutState(
 }
 
 export function renderCommentWithoutState(
-  pullRequest: PullRequest,
-  submittedAtCommitSha: string,
+  pullRequest: Omit<PullRequest, 'headSha'> & {headSha: string | null},
+  submittedAtCommitSha: string | null,
   packagesMap: Map<string, PullRequestPackage>,
   rollingVersionsUrl: URL,
 ) {
@@ -144,8 +144,8 @@ export function renderInitialComment(
   )}`;
 }
 export function renderComment(
-  pullRequest: PullRequest,
-  submittedAtCommitSha: string,
+  pullRequest: Omit<PullRequest, 'headSha'> & {headSha: string | null},
+  submittedAtCommitSha: string | null,
   packages: Map<string, PullRequestPackage>,
   rollingVersionsUrl: URL,
 ) {

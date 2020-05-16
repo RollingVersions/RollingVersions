@@ -92,7 +92,7 @@ CREATE TABLE package_manifest_records (
   publish_target TEXT NOT NULL REFERENCES publish_targets(id),
   package_name TEXT NOT NULL,
   publish_access TEXT NOT NULL, -- 'restricted' | 'public'
-  not_to_be_published BOOLEAN NOT NULL DEFAULT false
+  not_to_be_published BOOLEAN NOT NULL DEFAULT false,
   UNIQUE (git_commit_id, file_path, publish_target, package_name)
 );
 
@@ -106,6 +106,6 @@ CREATE TABLE package_dependency_records (
   git_commit_id BIGINT NOT NULL REFERENCES git_commits(id),
   package_name TEXT NOT NULL,
   kind TEXT NOT NULL REFERENCES package_dependency_records_kinds(id),
-  dependency_name TEXT NOT NULL
+  dependency_name TEXT NOT NULL,
   UNIQUE (git_commit_id, package_name, kind, dependency_name)
 );

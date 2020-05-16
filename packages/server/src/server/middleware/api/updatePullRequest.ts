@@ -13,7 +13,6 @@ export default async function updatePullRequest(
   pullRequest: Pick<PullRequest, 'repo' | 'number'>,
   body: UpdatePullRequestBody,
 ) {
-  // TODO: prevent updating released packages
   log({
     event_status: 'ok',
     event_type: 'submitted_change_set',

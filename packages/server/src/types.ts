@@ -70,7 +70,7 @@ export const PullRequestResponseCodec = new ValidationCodec(
 );
 
 export interface UpdatePullRequestBody {
-  headSha: string;
+  headSha: string | null;
   updates: {packageName: string; changes: ChangeSet}[];
 }
 
@@ -79,7 +79,7 @@ export const UpdatePullRequestBodyCodec = new ValidationCodec(
     1,
     'UpdatePullRequestBody',
     {
-      headSha: t.string,
+      headSha: t.union([t.string, t.null]),
       updates: t.array(
         compressedObjectCodec<{packageName: string; changes: ChangeSet}>()(
           1,

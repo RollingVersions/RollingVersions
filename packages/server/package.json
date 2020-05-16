@@ -25,7 +25,7 @@
     "@authentication/cookie": "^0.1.2",
     "@authentication/github": "^0.2.0",
     "@authentication/lock-by-id": "^0.0.2",
-    "@databases/pg": "^2.1.1",
+    "@databases/pg": "^2.1.2",
     "@github-graph/api": "^1.2.2",
     "@octokit/webhooks": "^7.1.0",
     "@types/morgan": "^1.9.0",

@@ -50,7 +50,6 @@ export function Alert({
   );
 }
 export interface PullRequestPageProps {
-  headSha: string | undefined;
   saving: boolean;
   packages: Map<string, PullRequestPackage>;
   closed: boolean;
@@ -68,7 +67,6 @@ const alreadyReleasedWarning = (
   </Alert>
 );
 export default function PullRequestPage({
-  headSha,
   saving,
   packages,
   closed,
@@ -117,14 +115,14 @@ export default function PullRequestPage({
           </Alert>
         ) : null}
         {state
-          // TODO: consider still rendering these in some way
+          // TODO(feat): consider still rendering these in some way
           .filter(({manifests}) => manifests.length !== 0)
           .map(({packageName, changes, manifests: manifest, released}, i) => (
             <React.Fragment key={packageName}>
               {i === 0 ? null : <hr className="my-16" />}
               <PackageChangeSet
                 disabled={saving}
-                readOnly={!headSha || permission !== 'edit' || released}
+                readOnly={permission !== 'edit' || released}
                 warning={
                   !allReleased && released && permission === 'edit'
                     ? alreadyReleasedWarning
@@ -138,7 +136,7 @@ export default function PullRequestPage({
             </React.Fragment>
           ))}
       </div>
-      {headSha && permission === 'edit' && !allReleased && (
+      {permission === 'edit' && !allReleased && (
         <SaveChangeLogFooter
           disabled={saving}
           onClick={() => {

@@ -124,6 +124,6 @@ Input: Pull Request ID
 
 - if pull request alerady loaded, no-op
 - read pull request (pr number, title, open/merged/closed)
-- read comments - TODO: this is only needed to read in state created before the db migration. We could do it as a one off job for all existing pull requests.
+- read comments
   - if comment contains state
   - write changes

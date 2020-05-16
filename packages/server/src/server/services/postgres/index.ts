@@ -321,7 +321,7 @@ export async function updateChangeLogEntries(
     await tx.query(
       sql`DELETE FROM change_log_entries WHERE pull_request_id=${pull_request_id}`,
     );
-    // TODO: support replacing specific entries, rather than deleting and starting again on every write
+    // TODO(feat): support replacing specific entries, rather than deleting and starting again on every write
     if (entries.length) {
       await tx.query(sql`
         INSERT INTO change_log_entries (pull_request_id, package_name, sort_order_weight, kind, title, body)

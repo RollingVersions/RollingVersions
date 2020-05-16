@@ -47,7 +47,7 @@ function PackageChangeSet({
     fix: useOnChange(packageName, 'fix', onChange),
     perf: useOnChange(packageName, 'perf', onChange),
   };
-  // TODO: show warning if no changes are added and the commit has modified files in the directory
+  // TODO(feat): show warning if no changes are added and the commit has modified files in the directory
   return (
     <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
       <div>

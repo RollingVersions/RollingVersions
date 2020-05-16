@@ -85,7 +85,7 @@
     ]
   },
   "dependencies": {
-    "@databases/pg": "^2.1.1",
+    "@databases/pg": "^2.1.2",
     "@databases/pg-test": "^2.0.0"
   }
 }

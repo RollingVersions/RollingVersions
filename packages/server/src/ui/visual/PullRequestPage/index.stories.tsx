@@ -37,7 +37,6 @@ const Template = (props: Partial<PullRequestPageProps>) => {
           <AppNavBarLink>PR 100</AppNavBarLink>
         </AppNavBar>
         <PullRequestPage
-          headSha="sdjfkasjfkdsjvoixjvof"
           permission="edit"
           closed={false}
           merged={false}

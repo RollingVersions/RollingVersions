@@ -22,7 +22,7 @@ export default async function writePullRequestState(
   db: Connection,
   client: GitHubClient,
   pullRequest: Pick<PullRequest, 'repo' | 'number'>,
-  headSha: string,
+  headSha: string | null,
   changes: {packageName: string; changes: ChangeSet}[],
 ) {
   const changesByPackage = new Map(
@@ -82,7 +82,7 @@ export default async function writePullRequestState(
         state: pr.headSha === headSha ? 'success' : 'pending',
         url: getUrlForChangeLog(pullRequest, APP_URL),
         description: getShortDescription(
-          {...pullRequest, headSha: pr.headSha || headSha},
+          {...pullRequest, headSha: pr.headSha},
           headSha,
           packages,
         ),
