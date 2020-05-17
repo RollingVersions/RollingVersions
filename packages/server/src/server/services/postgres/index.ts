@@ -622,9 +622,13 @@ export async function getAllUnreleasedChanges(
   db: Connection,
   {
     headCommitID,
-    lastReleaseCommitID,
+    lastReleaseCommitIDs,
     packageName,
-  }: {headCommitID: number; lastReleaseCommitID: number; packageName: string},
+  }: {
+    headCommitID: number;
+    lastReleaseCommitIDs: number[];
+    packageName: string;
+  },
 ): Promise<
   {
     pr_number: number;
@@ -640,7 +644,7 @@ export async function getAllUnreleasedChanges(
       commits_to_exclude AS (
         SELECT c.id
         FROM git_commits c
-        WHERE c.id = ${lastReleaseCommitID}
+        WHERE c.id = ANY(${lastReleaseCommitIDs})
         UNION
         SELECT c.id
         FROM git_commits c
