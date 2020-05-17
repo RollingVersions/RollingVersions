@@ -3,7 +3,6 @@ import {
   db,
   writeBranch,
   getBranch,
-  getCommitIdFromSha,
   upsertTag,
   getCommitFromSha,
 } from '../../services/postgres';
