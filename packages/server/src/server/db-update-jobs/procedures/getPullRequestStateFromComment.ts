@@ -20,8 +20,13 @@ async function getCommentState(
 ) {
   for await (const comment of readComments(client, pullRequest)) {
     if (comment.body.includes(COMMENT_GUID)) {
-      const state = readState(comment.body) || null;
-      return {state, commentID: comment.commentID};
+      try {
+        const state = readState(comment.body) || null;
+        return {state, commentID: comment.commentID};
+      } catch (ex) {
+        // TODO: could we avoid swallowing these errors?
+        return {state: null, commentID: comment.commentID};
+      }
     }
   }
   if (!pullRequest.is_closed && pullRequest.head_sha) {
