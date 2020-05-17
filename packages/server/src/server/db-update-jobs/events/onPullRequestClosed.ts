@@ -21,6 +21,6 @@ export default async function onPullRequestClosed(
       owner: e.payload.repository.owner.login,
       name: e.payload.repository.name,
     },
-    {refreshTags: true, refreshPRs: false},
+    {refreshTags: true, refreshPRs: false, refreshPrAssociations: true},
   );
 }

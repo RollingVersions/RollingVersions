@@ -195,6 +195,26 @@ export async function upsertCommits(
   });
 }
 
+export async function addAssociatedPullRequests(
+  db: Connection,
+  git_repository_id: number,
+  associations: {commit_sha: string; pull_request_id: number}[],
+) {
+  const inserted = await db.query(sql`
+    INSERT INTO git_commit_pull_requests (git_commit_id, pull_request_id)
+    VALUES ${sql.join(
+      associations.map(
+        (ap) =>
+          sql`((SELECT c.id FROM git_commits c WHERE c.git_repository_id=${git_repository_id} AND c.commit_sha=${ap.commit_sha}), ${ap.pull_request_id})`,
+      ),
+      ',',
+    )}
+    ON CONFLICT (git_commit_id, pull_request_id) DO NOTHING
+    RETURNING git_commit_id, pull_request_id
+  `);
+  return inserted.length;
+}
+
 export async function getPullRequestCommentID(
   db: Connection,
   git_repository_id: number,
@@ -622,9 +642,13 @@ export async function getAllUnreleasedChanges(
   db: Connection,
   {
     headCommitID,
-    lastReleaseCommitID,
+    lastReleaseCommitIDs,
     packageName,
-  }: {headCommitID: number; lastReleaseCommitID: number; packageName: string},
+  }: {
+    headCommitID: number;
+    lastReleaseCommitIDs: number[];
+    packageName: string;
+  },
 ): Promise<
   {
     pr_number: number;
@@ -640,7 +664,7 @@ export async function getAllUnreleasedChanges(
       commits_to_exclude AS (
         SELECT c.id
         FROM git_commits c
-        WHERE c.id = ${lastReleaseCommitID}
+        WHERE c.id = ANY(${lastReleaseCommitIDs})
         UNION
         SELECT c.id
         FROM git_commits c

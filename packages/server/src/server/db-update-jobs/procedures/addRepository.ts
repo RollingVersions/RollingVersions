@@ -23,7 +23,17 @@ export default async function addRepository(
   db: Connection,
   client: GitHubClient,
   repo: Repository,
-  {refreshPRs, refreshTags}: {refreshPRs: boolean; refreshTags: boolean},
+  {
+    refreshPRs,
+    refreshTags,
+    refreshPrAssociations,
+    forceRefreshAllPrAssociations,
+  }: {
+    refreshPRs: boolean;
+    refreshTags: boolean;
+    refreshPrAssociations?: boolean;
+    forceRefreshAllPrAssociations?: boolean;
+  },
 ) {
   const [repository, defaultBranch] = await Promise.all([
     getRepository(client, repo),
@@ -85,13 +95,14 @@ export default async function addRepository(
     repository.id,
     defaultBranch.target.commit_sha,
   );
-  if (!commitID) {
+  if (!commitID || refreshPrAssociations || forceRefreshAllPrAssociations) {
     await upsertCommits(
       db,
       client,
       repository.id,
       {owner: repository.owner, name: repository.name},
       getAllDefaultBranchCommits(client, repo),
+      {forceFullScan: forceRefreshAllPrAssociations},
     );
 
     commitID = await getCommitIdFromSha(

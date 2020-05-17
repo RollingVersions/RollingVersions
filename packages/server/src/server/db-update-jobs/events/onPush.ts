@@ -12,6 +12,6 @@ export default async function onPush(
     db,
     client,
     {owner: repo.owner.login, name: repo.name},
-    {refreshTags: true, refreshPRs: false},
+    {refreshTags: true, refreshPRs: false, refreshPrAssociations: true},
   );
 }
