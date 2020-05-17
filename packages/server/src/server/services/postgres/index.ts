@@ -200,6 +200,7 @@ export async function addAssociatedPullRequests(
   git_repository_id: number,
   associations: {commit_sha: string; pull_request_id: number}[],
 ) {
+  if (associations.length === 0) return 0;
   const inserted = await db.query(sql`
     INSERT INTO git_commit_pull_requests (git_commit_id, pull_request_id)
     VALUES ${sql.join(
