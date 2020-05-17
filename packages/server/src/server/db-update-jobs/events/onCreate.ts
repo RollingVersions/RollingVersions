@@ -5,10 +5,12 @@ import {
   getBranch,
   getCommitIdFromSha,
   upsertTag,
+  getCommitFromSha,
 } from '../../services/postgres';
 import {GitReference, getAllRefCommits, getRef} from '../../services/github';
 import {getClientForEvent} from '../../getClient';
 import upsertCommits from '../procedures/upsertCommits';
+import getPackageManifests from '../procedures/getPackageManifests';
 
 export function getGitReference({
   ref_type,
@@ -55,31 +57,27 @@ export default async function onCreate(
   if (!gitRef) {
     throw new Error(`Could not find the git ref`);
   }
-  const headCommitId = await getCommitIdFromSha(
-    db,
-    gitRepositoryId,
-    gitRef.target,
-  );
-  if (!headCommitId) {
+  const headCommit = await getCommitFromSha(db, gitRepositoryId, gitRef.target);
+  if (!headCommit) {
     throw new Error('Cannot find id for head commit');
   }
   if (ref.type === 'head') {
-    // TODO(perf): fetch package manifests for head commit to speed up later page loads
     await writeBranch(
       db,
       gitRepositoryId,
       {
         graphql_id: gitRef.graphql_id,
         name: gitRef.name,
-        target_git_commit_id: headCommitId,
+        target_git_commit_id: headCommit.id,
       },
       dbBranch?.target_git_commit_id || null,
     );
+    await getPackageManifests(db, client, repo, headCommit);
   } else {
     await upsertTag(db, gitRepositoryId, {
       graphql_id: gitRef.graphql_id,
       name: gitRef.name,
-      target_git_commit_id: headCommitId,
+      target_git_commit_id: headCommit.id,
     });
   }
 }

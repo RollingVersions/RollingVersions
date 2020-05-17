@@ -278,6 +278,26 @@ export async function setPullRequestSubmittedAtSha(
   );
 }
 
+export async function getCommitFromSha(
+  db: Connection,
+  git_repository_id: number,
+  commit_sha: string,
+): Promise<null | {id: number; graphql_id: string}> {
+  const results = await db.query(
+    sql`
+      SELECT id, graphql_id FROM git_commits
+      WHERE git_repository_id = ${git_repository_id}
+      AND commit_sha = ${commit_sha}
+    `,
+  );
+  if (results.length === 0) {
+    return null;
+  }
+  if (results.length > 1) {
+    throw new Error('Multiple commits should not have the same sha');
+  }
+  return results[0];
+}
 export async function getCommitIdFromSha(
   db: Connection,
   git_repository_id: number,
