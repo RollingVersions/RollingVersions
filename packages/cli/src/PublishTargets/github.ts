@@ -6,7 +6,7 @@ import {
   getViewer,
 } from '../services/github';
 import {getHeadSha} from '../services/git';
-import {changesToMarkdown} from '../utils/Rendering';
+import changesToMarkdown from '../utils/changesToMarkdown';
 
 import {PublishConfig} from '../types';
 import {NewVersionToBePublished} from '../utils/getPackageStatuses';

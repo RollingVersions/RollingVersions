@@ -13,7 +13,7 @@ export const Default = () => {
     <div className="w-full min-h-full bg-gray-300 p-2">
       <PackageChangeSet
         packageName="@databases/pg"
-        packageInfo={[
+        packageManifest={[
           {
             publishTarget: PublishTarget.npm,
             notToBePublished: false,

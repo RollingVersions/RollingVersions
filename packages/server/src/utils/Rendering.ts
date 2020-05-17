@@ -1,46 +1,24 @@
 import {URL} from 'url';
-import {PullRequest, PackageInfo} from '../types';
-import PullRequestState, {
-  ChangeTypes,
+import {
+  PackageManifestWithVersion,
   ChangeSet,
-  isEmptyChangeSet,
-} from '../types/PullRequestState';
-import {writeState} from './CommentState';
-import {getNewVersion, getCurrentVerion} from './Versioning';
+  PullRequest,
+} from 'rollingversions/lib/types';
+import {isEmptyChangeSet} from 'rollingversions/lib/types/PullRequestState';
+import {writeState} from 'rollingversions/lib/utils/CommentState';
+import changesToMarkdown from 'rollingversions/lib/utils/changesToMarkdown';
+import {
+  getCurrentVerion,
+  getNewVersion,
+} from 'rollingversions/lib/utils/Versioning';
+import {PullRequestPackage} from '../types';
 
+// N.B. this comment guid must be kept in sync with the CLI for now
 export const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
 const COMMENT_PREFIX = `<!-- This comment is maintained by Rolling Versions. Do not edit it manually! -->\n<!-- ${COMMENT_GUID} -->\n\n`;
 
-export function changesToMarkdown(
-  changes: ChangeSet<{readonly pr?: number}>,
-  headingLevel: number,
-) {
-  const headingPrefix = '#'.repeat(headingLevel);
-  return ChangeTypes.filter((changeType) => changes[changeType].length)
-    .map(
-      (changeType) =>
-        `${headingPrefix} ${
-          {
-            breaking: 'Breaking Changes',
-            feat: 'New Features',
-            refactor: 'Refactorings',
-            perf: 'Performance Improvements',
-            fix: 'Bug Fixes',
-          }[changeType]
-        }\n\n${changes[changeType]
-          .map(
-            (c) =>
-              `- ${c.title}${c.pr ? ` (#${c.pr})` : ``}${
-                c.body ? `\n\n${c.body.replace(/^/gm, '  ')}` : ``
-              }`,
-          )
-          .join('\n\n')}`,
-    )
-    .join('\n\n');
-}
-
 export function getVersionShift(
-  currentVersion: PackageInfo[],
+  currentVersion: PackageManifestWithVersion[],
   changes: ChangeSet,
 ) {
   // if we want to support not knowing the previous version:
@@ -61,6 +39,7 @@ export function getVersionShift(
     'unreleased'} → ${getNewVersion(currentVersion, changes) ||
     'no new release'})`;
 }
+
 export function getUrlForChangeLog(
   pr: Pick<PullRequest, 'repo' | 'number'>,
   rollingVersionsUrl: URL,
@@ -72,13 +51,14 @@ export function getUrlForChangeLog(
   return url;
 }
 
-export function getShortDescription(changeLog: PullRequestState | undefined) {
-  if (
-    changeLog &&
-    changeLog.submittedAtCommitSha === changeLog.packageInfoFetchedAt
-  ) {
-    const packagesToRelease = [...changeLog.packages.entries()].filter(
-      ([, {changes}]) => !isEmptyChangeSet(changes),
+export function getShortDescription(
+  pullRequest: PullRequest,
+  submittedAtCommitSha: string | null,
+  packages: Map<string, PullRequestPackage>,
+) {
+  if (submittedAtCommitSha === pullRequest.headSha) {
+    const packagesToRelease = [...packages].filter(
+      ([, {changeSet}]) => !isEmptyChangeSet(changeSet),
     );
     if (packagesToRelease.length === 0) {
       return 'no changes to release';
@@ -88,9 +68,7 @@ export function getShortDescription(changeLog: PullRequestState | undefined) {
     }
     return 'releasing multiple packages';
   }
-  return changeLog && changeLog.submittedAtCommitSha
-    ? 'please update the changelog'
-    : 'please add a changelog';
+  return 'please update the changelog';
 }
 
 export function renderInitialCommentWithoutState(
@@ -102,38 +80,36 @@ export function renderInitialCommentWithoutState(
 }
 
 export function renderCommentWithoutState(
-  pullRequest: Omit<PullRequest, 'headSha'>,
-  changeLog: PullRequestState | undefined,
+  pullRequest: Omit<PullRequest, 'headSha'> & {headSha: string | null},
+  submittedAtCommitSha: string | null,
+  packagesMap: Map<string, PullRequestPackage>,
   rollingVersionsUrl: URL,
 ) {
   const url = getUrlForChangeLog(pullRequest, rollingVersionsUrl);
-  if (!changeLog || !changeLog.submittedAtCommitSha) {
-    return renderInitialCommentWithoutState(pullRequest, rollingVersionsUrl);
-  }
   const outdated =
-    changeLog.packageInfoFetchedAt === changeLog.submittedAtCommitSha
+    pullRequest.headSha === submittedAtCommitSha
       ? ``
       : `\n\n> **Change log has not been updated since latest commit** [Update Changelog](${url.href})`;
 
-  const packages = [...changeLog.packages].sort(([a], [b]) => (a < b ? -1 : 1));
+  const packages = [...packagesMap].sort(([a], [b]) => (a < b ? -1 : 1));
   if (packages.length === 1) {
-    const [packageName, pkg] = packages[0];
-    if (!pkg || isEmptyChangeSet(pkg.changes)) {
+    const [packageName, {changeSet, manifests}] = packages[0];
+    if (isEmptyChangeSet(changeSet)) {
       return `This PR will **not** result in a new version of ${packageName} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
     }
     return `### Change Log for ${packageName} ${getVersionShift(
-      pkg.info,
-      pkg.changes,
-    )}\n\n${changesToMarkdown(pkg.changes, 4)}\n\n[Edit changelog](${
+      manifests,
+      changeSet,
+    )}\n\n${changesToMarkdown(changeSet, 4)}\n\n[Edit changelog](${
       url.href
     })${outdated}`;
   }
 
-  const packagesWithChanges = packages.filter(([, pkg]) => {
-    return !isEmptyChangeSet(pkg.changes);
+  const packagesWithChanges = packages.filter(([, {changeSet}]) => {
+    return !isEmptyChangeSet(changeSet);
   });
-  const packagesWithoutChanges = packages.filter(([, pkg]) => {
-    return isEmptyChangeSet(pkg.changes);
+  const packagesWithoutChanges = packages.filter(([, {changeSet}]) => {
+    return isEmptyChangeSet(changeSet);
   });
   if (!packagesWithChanges.length) {
     return `This PR will **not** result in a new version of the following packages as there are no user facing changes:\n\n${packages
@@ -143,13 +119,12 @@ export function renderCommentWithoutState(
     })${outdated}`;
   }
   return `${packagesWithChanges
-    .map(
-      ([packageName, pkg]) =>
-        `### ${packageName} ${getVersionShift(
-          pkg.info,
-          pkg.changes,
-        )}\n\n${changesToMarkdown(pkg.changes, 4)}`,
-    )
+    .map(([packageName, {changeSet, manifests}]) => {
+      return `### ${packageName} ${getVersionShift(
+        manifests,
+        changeSet,
+      )}\n\n${changesToMarkdown(changeSet, 4)}`;
+    })
     .join('\n\n')}${
     packagesWithoutChanges.length
       ? `\n\n### Packages With No Changes\n\nThe following packages have no user facing changes, so won't be released:\n\n${packagesWithoutChanges
@@ -169,20 +144,26 @@ export function renderInitialComment(
   )}`;
 }
 export function renderComment(
-  pullRequest: Omit<PullRequest, 'headSha'>,
-  changeLog: PullRequestState | undefined,
+  pullRequest: Omit<PullRequest, 'headSha'> & {headSha: string | null},
+  submittedAtCommitSha: string | null,
+  packages: Map<string, PullRequestPackage>,
   rollingVersionsUrl: URL,
 ) {
   return writeState(
     `${COMMENT_PREFIX}${renderCommentWithoutState(
       pullRequest,
-      changeLog,
+      submittedAtCommitSha,
+      packages,
       rollingVersionsUrl,
     )}`,
-    changeLog,
+    {
+      submittedAtCommitSha,
+      packages: new Map(
+        [...packages].map(([packageName, {changeSet}]) => [
+          packageName,
+          changeSet,
+        ]),
+      ),
+    },
   );
-}
-
-export function renderReleaseNotes(changes: ChangeSet<{readonly pr?: number}>) {
-  return changesToMarkdown(changes, 3);
 }

@@ -1,6 +1,9 @@
 import * as React from 'react';
 import PullRequestPage, {PullRequestPageProps} from './';
-import {PublishTarget, PackageInfo} from 'rollingversions/lib/types';
+import {
+  PublishTarget,
+  PackageManifestWithVersion,
+} from 'rollingversions/lib/types';
 import {action} from '@storybook/addon-actions';
 import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import {MemoryRouter} from 'react-router-dom';
@@ -9,9 +12,10 @@ import AppContainer from '../AppContainer';
 
 export default {title: 'pages/PullRequestPage'};
 
-function packageInfo(
-  info: Pick<PackageInfo, 'packageName'> & Partial<PackageInfo>,
-): PackageInfo {
+function packageManifest(
+  manifest: Pick<PackageManifestWithVersion, 'packageName'> &
+    Partial<PackageManifestWithVersion>,
+): PackageManifestWithVersion {
   return {
     path: 'fake-path',
     publishTarget: PublishTarget.npm,
@@ -19,7 +23,7 @@ function packageInfo(
     notToBePublished: false,
     registryVersion: null,
     versionTag: null,
-    ...info,
+    ...manifest,
   };
 }
 const Template = (props: Partial<PullRequestPageProps>) => {
@@ -33,7 +37,6 @@ const Template = (props: Partial<PullRequestPageProps>) => {
           <AppNavBarLink>PR 100</AppNavBarLink>
         </AppNavBar>
         <PullRequestPage
-          headSha="sdjfkasjfkdsjvoixjvof"
           permission="edit"
           closed={false}
           merged={false}
@@ -43,20 +46,25 @@ const Template = (props: Partial<PullRequestPageProps>) => {
               [
                 '@databases/pg',
                 {
-                  changes: getEmptyChangeSet(),
-                  info: [packageInfo({packageName: '@databases/pg'})],
+                  changeSet: getEmptyChangeSet(),
+                  manifests: [packageManifest({packageName: '@databases/pg'})],
+                  dependencies: {required: [], optional: [], development: []},
+                  released: false,
                 },
               ],
               [
                 '@databases/mysql',
                 {
-                  changes: getEmptyChangeSet(),
-                  info: [packageInfo({packageName: '@databases/mysql'})],
+                  changeSet: getEmptyChangeSet(),
+                  manifests: [
+                    packageManifest({packageName: '@databases/mysql'}),
+                  ],
+                  dependencies: {required: [], optional: [], development: []},
+                  released: false,
                 },
               ],
             ])
           }
-          unreleasedPackages={['@databases/pg', '@databases/mysql']}
           onSave={async (...args) => {
             action('save')(...args);
             setSaving(true);
@@ -83,14 +91,16 @@ export const ReadOnlyPackage = () => {
           [
             '@databases/pg',
             {
-              changes: getEmptyChangeSet(),
-              info: [packageInfo({packageName: '@databases/pg'})],
+              changeSet: getEmptyChangeSet(),
+              manifests: [packageManifest({packageName: '@databases/pg'})],
+              dependencies: {required: [], optional: [], development: []},
+              released: false,
             },
           ],
           [
             '@databases/mysql',
             {
-              changes: {
+              changeSet: {
                 ...getEmptyChangeSet(),
                 breaking: [
                   {
@@ -99,12 +109,13 @@ export const ReadOnlyPackage = () => {
                   },
                 ],
               },
-              info: [packageInfo({packageName: '@databases/mysql'})],
+              manifests: [packageManifest({packageName: '@databases/mysql'})],
+              dependencies: {required: [], optional: [], development: []},
+              released: true,
             },
           ],
         ])
       }
-      unreleasedPackages={['@databases/pg']}
     />
   );
 };
@@ -119,14 +130,16 @@ export const AllChangesReleased = () => {
           [
             '@databases/pg',
             {
-              changes: getEmptyChangeSet(),
-              info: [packageInfo({packageName: '@databases/pg'})],
+              changeSet: getEmptyChangeSet(),
+              manifests: [packageManifest({packageName: '@databases/pg'})],
+              dependencies: {required: [], optional: [], development: []},
+              released: true,
             },
           ],
           [
             '@databases/mysql',
             {
-              changes: {
+              changeSet: {
                 ...getEmptyChangeSet(),
                 breaking: [
                   {
@@ -135,12 +148,13 @@ export const AllChangesReleased = () => {
                   },
                 ],
               },
-              info: [packageInfo({packageName: '@databases/mysql'})],
+              manifests: [packageManifest({packageName: '@databases/mysql'})],
+              dependencies: {required: [], optional: [], development: []},
+              released: true,
             },
           ],
         ])
       }
-      unreleasedPackages={[]}
     />
   );
 };
@@ -156,14 +170,16 @@ export const ClosedNonAdmin = () => {
           [
             '@databases/pg',
             {
-              changes: getEmptyChangeSet(),
-              info: [packageInfo({packageName: '@databases/pg'})],
+              changeSet: getEmptyChangeSet(),
+              manifests: [packageManifest({packageName: '@databases/pg'})],
+              dependencies: {required: [], optional: [], development: []},
+              released: true,
             },
           ],
           [
             '@databases/mysql',
             {
-              changes: {
+              changeSet: {
                 ...getEmptyChangeSet(),
                 breaking: [
                   {
@@ -172,12 +188,13 @@ export const ClosedNonAdmin = () => {
                   },
                 ],
               },
-              info: [packageInfo({packageName: '@databases/mysql'})],
+              manifests: [packageManifest({packageName: '@databases/mysql'})],
+              dependencies: {required: [], optional: [], development: []},
+              released: false,
             },
           ],
         ])
       }
-      unreleasedPackages={['@databases/pg']}
     />
   );
 };
@@ -191,14 +208,16 @@ export const OpenNonAdminNonAuthor = () => {
           [
             '@databases/pg',
             {
-              changes: getEmptyChangeSet(),
-              info: [packageInfo({packageName: '@databases/pg'})],
+              changeSet: getEmptyChangeSet(),
+              manifests: [packageManifest({packageName: '@databases/pg'})],
+              dependencies: {required: [], optional: [], development: []},
+              released: false,
             },
           ],
           [
             '@databases/mysql',
             {
-              changes: {
+              changeSet: {
                 ...getEmptyChangeSet(),
                 breaking: [
                   {
@@ -207,12 +226,13 @@ export const OpenNonAdminNonAuthor = () => {
                   },
                 ],
               },
-              info: [packageInfo({packageName: '@databases/mysql'})],
+              manifests: [packageManifest({packageName: '@databases/mysql'})],
+              dependencies: {required: [], optional: [], development: []},
+              released: true,
             },
           ],
         ])
       }
-      unreleasedPackages={['@databases/pg']}
     />
   );
 };

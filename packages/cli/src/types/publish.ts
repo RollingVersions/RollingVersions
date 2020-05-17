@@ -1,4 +1,4 @@
-import PackageInfo from './PackageInfo';
+import PackageManifest from './PackageManifest';
 import {
   SuccessPackageStatus,
   NewVersionToBePublished,
@@ -34,12 +34,12 @@ export interface PublishEvents {
 
   onPublishTargetRelease: {
     pkg: NewVersionToBePublished;
-    pkgInfo: PackageInfo;
+    pkgManifest: PackageManifest;
     dryRun: boolean;
   };
   onPublishedTargetRelease: {
     pkg: NewVersionToBePublished;
-    pkgInfo: PackageInfo;
+    pkgManifest: PackageManifest;
     dryRun: boolean;
   };
 }

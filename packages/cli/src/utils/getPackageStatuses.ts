@@ -2,19 +2,20 @@ import DataLoader from 'dataloader';
 import {GitHubClient, readComments} from '../services/github';
 import {getCurrentVerion, getNewVersion} from '../utils/Versioning';
 import {
-  PackageInfo,
   ChangeSet,
   Repository,
   PullRequest,
   PackageDependencies,
+  PackageManifestWithVersion,
 } from '../types';
 import {ChangeTypes} from '../types/PullRequestState';
 import {readState} from './CommentState';
 import isTruthy from '../ts-utils/isTruthy';
-import {COMMENT_GUID} from './Rendering';
 import getEmptyChangeSet from './getEmptyChangeSet';
-import {ListedPackages} from './listPackages';
 import PackageStatus from '../types/PackageStatus';
+
+// N.B. This comment GUID must be kept in sync with the server code for now
+const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
 
 export {PackageStatus};
 
@@ -22,7 +23,7 @@ export interface MissingTag {
   status: PackageStatus.MissingTag;
   packageName: string;
   currentVersion: string;
-  pkgInfos: readonly PackageInfo[];
+  manifests: readonly PackageManifestWithVersion[];
   dependencies: PackageDependencies;
 }
 
@@ -31,7 +32,7 @@ export interface NoUpdateRequired {
   packageName: string;
   currentVersion: string | null;
   newVersion: string | null;
-  pkgInfos: readonly PackageInfo[];
+  manifests: readonly PackageManifestWithVersion[];
   dependencies: PackageDependencies;
 }
 
@@ -41,7 +42,7 @@ export interface NewVersionToBePublished {
   currentVersion: string | null;
   newVersion: string;
   changeSet: ChangeSet<{pr: number}>;
-  pkgInfos: readonly PackageInfo[];
+  manifests: readonly PackageManifestWithVersion[];
   dependencies: PackageDependencies;
 }
 
@@ -64,7 +65,13 @@ export function isPackageStatus<TStatus extends PackageStatus>(
 export default async function getPackageStatuses(
   client: GitHubClient,
   {owner, name}: Repository,
-  pkgInfos: ListedPackages,
+  pkgManifests: Map<
+    string,
+    {
+      manifests: PackageManifestWithVersion[];
+      dependencies: PackageDependencies;
+    }
+  >,
   getCommits: (
     sinceCommitSha: string | undefined,
   ) => Promise<readonly {associatedPullRequests: {number: number}[]}[]>,
@@ -95,21 +102,22 @@ export default async function getPackageStatuses(
   );
 
   const packages = await Promise.all(
-    [...pkgInfos.entries()].map(
-      async ([packageName, {infos, dependencies}]): Promise<
+    [...pkgManifests.entries()].map(
+      async ([packageName, {manifests, dependencies}]): Promise<
         PackageStatusDetail
       > => {
-        const currentVersion = getCurrentVerion(infos);
+        const currentVersion = getCurrentVerion(manifests);
         const currentTag = currentVersion
-          ? infos.find((info) => info.versionTag?.version === currentVersion)
-              ?.versionTag
+          ? manifests.find(
+              (manifest) => manifest.versionTag?.version === currentVersion,
+            )?.versionTag
           : null;
         if (currentVersion && !currentTag) {
           return {
             status: PackageStatus.MissingTag,
             packageName,
             currentVersion,
-            pkgInfos: infos,
+            manifests: manifests,
             dependencies,
           };
         }
@@ -120,11 +128,11 @@ export default async function getPackageStatuses(
 
         const changeSet = getEmptyChangeSet<{pr: number}>();
         for (const pullChangeLog of changeLogs.filter(isTruthy)) {
-          const pkg = pullChangeLog.packages.get(packageName);
-          if (pkg) {
+          const changes = pullChangeLog.packages.get(packageName);
+          if (changes) {
             for (const key of ChangeTypes) {
               changeSet[key].push(
-                ...pkg.changes[key].map((c) => ({
+                ...changes[key].map((c) => ({
                   ...c,
                   pr: pullChangeLog.pr,
                 })),
@@ -139,7 +147,7 @@ export default async function getPackageStatuses(
             currentVersion,
             newVersion: currentVersion,
             packageName,
-            pkgInfos: infos,
+            manifests: manifests,
             dependencies,
           };
         }
@@ -150,7 +158,7 @@ export default async function getPackageStatuses(
           newVersion,
           packageName,
           changeSet,
-          pkgInfos: infos,
+          manifests: manifests,
           dependencies,
         };
       },

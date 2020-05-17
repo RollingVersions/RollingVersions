@@ -1,9 +1,9 @@
 import React from 'react';
-import {PackageInfo} from 'rollingversions/lib/types';
+import {PackageManifestWithVersion} from 'rollingversions/lib/types';
 
 export interface RegistryStatusProps {
-  packageInfo: Pick<
-    PackageInfo,
+  packageManifest: Pick<
+    PackageManifestWithVersion,
     | 'publishTarget'
     | 'notToBePublished'
     | 'versionTag'
@@ -12,9 +12,9 @@ export interface RegistryStatusProps {
   >[];
 }
 
-export default function RegistryStatus({packageInfo}: RegistryStatusProps) {
-  const publishTarget = packageInfo.map((p) => p.publishTarget).join(', ');
-  if (packageInfo.every((p) => p.notToBePublished)) {
+export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
+  const publishTarget = packageManifest.map((p) => p.publishTarget).join(', ');
+  if (packageManifest.every((p) => p.notToBePublished)) {
     return (
       <p>
         This package is not published on any registry, but git tags/releases
@@ -24,7 +24,7 @@ export default function RegistryStatus({packageInfo}: RegistryStatusProps) {
   }
   return (
     <>
-      {packageInfo
+      {packageManifest
         .filter((p) => !p.notToBePublished)
         .map((p, i) => {
           if (p.versionTag || p.registryVersion) {

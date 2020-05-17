@@ -104,7 +104,7 @@ export const getBranch = withRetry(
 );
 
 export async function getAllTags(client: GitHubClient, repo: Repository) {
-  const results: {commitSha: string; name: string}[] = [];
+  const results: {graphql_id: string; commitSha: string; name: string}[] = [];
   for await (const tag of paginate(
     (after) => retry(() => gh.getTags(client, {...repo, after})),
     (page) => page?.repository?.refs?.nodes || [],
@@ -114,7 +114,11 @@ export async function getAllTags(client: GitHubClient, repo: Repository) {
       undefined,
   )) {
     if (tag) {
-      results.push({commitSha: tag.target.oid, name: tag.name});
+      results.push({
+        graphql_id: tag.id,
+        commitSha: tag.target.oid,
+        name: tag.name,
+      });
     }
   }
   return results;
@@ -135,25 +139,27 @@ export async function* getAllFiles(
   pullRequestOrRepo:
     | (Repository & {repo?: undefined})
     | Pick<PullRequest, 'repo' | 'number'>,
+  commitGraphQLId?: string,
 ) {
   const repo = pullRequestOrRepo.repo || pullRequestOrRepo;
-  const commit = await retry(
-    async () =>
-      (pullRequestOrRepo.repo
-        ? (
-            await gh.getPullRequestFileNames(client, {
-              ...pullRequestOrRepo.repo,
-              number: pullRequestOrRepo.number,
-            })
-          ).repository?.pullRequest?.headRef
-        : (await gh.getRepoFileNames(client, pullRequestOrRepo)).repository
-            ?.defaultBranchRef
-      )?.target,
+  const commit = await retry(async () =>
+    commitGraphQLId
+      ? (await gh.getCommitFileNames(client, {id: commitGraphQLId})).node
+      : (pullRequestOrRepo.repo
+          ? (
+              await gh.getPullRequestFileNames(client, {
+                ...pullRequestOrRepo.repo,
+                number: pullRequestOrRepo.number,
+              })
+            ).repository?.pullRequest?.headRef
+          : (await gh.getRepoFileNames(client, pullRequestOrRepo)).repository
+              ?.defaultBranchRef
+        )?.target,
   );
 
   if (!commit || commit.__typename !== 'Commit') {
     throw new Error(
-      `Expected a Commit but got ${commit?.__typename || 'undefined'}`,
+      `Expected a Commit but got s${commit?.__typename || 'undefined'}`,
     );
   }
 
@@ -305,27 +311,28 @@ export const updateStatus = withRetry(
 export async function* getAllCommits(
   client: GitHubClient,
   repo: Repository,
-  {
-    pageSize = 100,
-    deployBranch,
-  }: {pageSize?: number; deployBranch: string | null},
+  {deployBranch}: {deployBranch: string | null},
 ) {
+  let pageSize = 5;
   for await (const commit of paginate(
-    async (after) =>
-      retry(async () =>
+    async (after) => {
+      const currentPageSize = pageSize;
+      pageSize = Math.min(100, pageSize + 20);
+      return retry(async () =>
         deployBranch
           ? gh.getAllCommits(client, {
               ...repo,
               after,
-              first: pageSize,
+              first: currentPageSize,
               qualifiedName: `refs/heads/${deployBranch}`,
             })
           : gh.getAllDefaultBranchCommits(client, {
               ...repo,
               after,
-              first: pageSize,
+              first: currentPageSize,
             }),
-      ),
+      );
+    },
     (page) =>
       (page?.repository?.branch?.target?.__typename === 'Commit' &&
         page.repository.branch.target.history.nodes) ||

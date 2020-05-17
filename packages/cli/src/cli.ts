@@ -3,7 +3,7 @@
 import chalk from 'chalk';
 import printHelp from './commands/help';
 import publish, {PublishResultKind} from './commands/publish';
-import {changesToMarkdown} from './utils/Rendering';
+import changesToMarkdown from './utils/changesToMarkdown';
 import {
   PackageStatus,
   NoUpdateRequired,
@@ -165,13 +165,13 @@ switch (COMMAND) {
             }`,
           );
         },
-        onPublishTargetRelease({pkg, pkgInfo, dryRun}) {
+        onPublishTargetRelease({pkg, pkgManifest, dryRun}) {
           console.warn(
-            `publishing ${chalk.yellow(pkgInfo.packageName)} to ${chalk.blue(
-              pkgInfo.publishTarget,
-            )} @ ${chalk.yellow(pkg.newVersion)}${
-              dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
-            }`,
+            `publishing ${chalk.yellow(
+              pkgManifest.packageName,
+            )} to ${chalk.blue(pkgManifest.publishTarget)} @ ${chalk.yellow(
+              pkg.newVersion,
+            )}${dryRun ? ` ${chalk.red(`(dry run)`)}` : ''}`,
           );
         },
       },

@@ -19,4 +19,7 @@ export default async function* paginate<TPage, TEntry>(
     currentPage = await nextPage;
     nextPageToken = getNextPageToken(currentPage);
   } while (nextPageToken);
+  for (const entry of currentPage ? getEntries(currentPage) : []) {
+    yield entry;
+  }
 }

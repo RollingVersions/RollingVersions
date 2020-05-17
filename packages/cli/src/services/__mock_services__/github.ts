@@ -41,7 +41,13 @@ export const getBranch: typeof real.getBranch = async (_client, repo) => {
 
 export const getAllTags: typeof real.getAllTags = async (_client, repo) => {
   return byRepo(repo)
-    .commits.map((c) => c.tags.map((name) => ({name, commitSha: c.sha})))
+    .commits.map((c) =>
+      c.tags.map((name) => ({
+        graphql_id: `TAG_${repo.owner}_${repo.name}_${name}`,
+        name,
+        commitSha: c.sha,
+      })),
+    )
     .reduce((a, b) => [...a, ...b], []);
 };
 

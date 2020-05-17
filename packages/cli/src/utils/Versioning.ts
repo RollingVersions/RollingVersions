@@ -1,5 +1,5 @@
 import {inc, gt, lt} from 'semver';
-import {ChangeSet, PackageInfo} from '../types';
+import {ChangeSet, PackageManifestWithVersion} from '../types';
 
 export function getVersionBump(changes: ChangeSet) {
   if (changes.breaking.length) {
@@ -14,7 +14,9 @@ export function getVersionBump(changes: ChangeSet) {
   return null;
 }
 
-export function getCurrentVerion(currentVersions: PackageInfo[]) {
+export function getCurrentVerion(
+  currentVersions: PackageManifestWithVersion[],
+) {
   const versionNumbers = currentVersions
     .map((v) => v.registryVersion || v.versionTag?.version)
     .filter(<T>(v: T): v is Exclude<T, undefined> => v !== undefined);
@@ -29,7 +31,7 @@ export function getCurrentVerion(currentVersions: PackageInfo[]) {
 }
 
 export function getNewVersion(
-  currentVersionsOrCurrentVersion: PackageInfo[] | string | null,
+  currentVersionsOrCurrentVersion: PackageManifestWithVersion[] | string | null,
   changes: ChangeSet,
 ) {
   const change = getVersionBump(changes);

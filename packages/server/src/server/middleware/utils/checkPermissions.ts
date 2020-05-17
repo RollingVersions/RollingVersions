@@ -16,11 +16,15 @@ const permisisonInfoMap = new WeakMap<
 export function getPermission(req: Request) {
   return permisisonInfoMap.get(req)?.permission || 'none';
 }
-export function getUser(req: Request) {
+export interface User {
+  login: string;
+  email: string | null;
+}
+export function getUser(req: Request): User {
   const pi = permisisonInfoMap.get(req) || repoPermisisonInfoMap.get(req);
   return {
     login: pi?.login || 'unknown',
-    email: pi?.email,
+    email: pi?.email || null,
   };
 }
 export default function checkPermissions(allowedPermissions: Permission[]) {
@@ -28,7 +32,15 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
     try {
       const userAuth = getGitHubAccessToken(req, res);
       const pullRequest = parseParams(req);
+      const start = Date.now();
       const permissionInfo = await getPermissionLevel(pullRequest, userAuth);
+      log({
+        event_type: 'loaded_permission_level',
+        event_status: 'ok',
+        message: 'Loaded permission level',
+        ...permissionInfo,
+        duraiton: Date.now() - start,
+      });
       permisisonInfoMap.set(req, permissionInfo);
       if (!allowedPermissions.includes(permissionInfo.permission)) {
         log({

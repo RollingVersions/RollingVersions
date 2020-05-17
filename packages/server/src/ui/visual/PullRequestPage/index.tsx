@@ -2,12 +2,9 @@ import React from 'react';
 import PackageChangeSet, {PackageChangeSetProps} from '../PackageChangeSet';
 import SaveChangeLogFooter from '../SaveChangeLogFooter';
 import getLocalId from '../../utils/getLocalId';
-import {
-  PullRequestState,
-  ChangeSet,
-  ChangeLogEntry,
-} from 'rollingversions/lib/types';
+import {ChangeSet, ChangeLogEntry} from 'rollingversions/lib/types';
 import Permission from '../../../server/permissions/Permission';
+import {PullRequestPackage} from '../../../types';
 
 function mapChangeSet<T, S>(
   changes: ChangeSet<T>,
@@ -22,15 +19,16 @@ function mapChangeSet<T, S>(
   };
 }
 
-function getState(packages: PullRequestState['packages']) {
+function getState(packages: Map<string, PullRequestPackage>) {
   return [...packages]
-    .map(([packageName, {changes, info}]) => ({
+    .map(([packageName, {changeSet, manifests, released}]) => ({
       packageName,
-      changes: mapChangeSet(changes, (c) => ({
+      changes: mapChangeSet(changeSet, (c) => ({
         ...c,
         localId: getLocalId(),
       })),
-      info,
+      manifests,
+      released,
     }))
     .sort(({packageName: a}, {packageName: b}) => (a < b ? -1 : 1));
 }
@@ -52,10 +50,8 @@ export function Alert({
   );
 }
 export interface PullRequestPageProps {
-  headSha: string | undefined;
   saving: boolean;
-  packages: PullRequestState['packages'];
-  unreleasedPackages: string[];
+  packages: Map<string, PullRequestPackage>;
   closed: boolean;
   merged: boolean;
   permission: Permission;
@@ -71,10 +67,8 @@ const alreadyReleasedWarning = (
   </Alert>
 );
 export default function PullRequestPage({
-  headSha,
   saving,
   packages,
-  unreleasedPackages,
   closed,
   merged,
   permission,
@@ -96,10 +90,12 @@ export default function PullRequestPage({
     [setState],
   );
 
+  const allReleased = state.every((p) => p.released);
+
   return (
     <>
       <div className="flex-grow flex-shrink-0 pb-16 pt-16 px-8 container mx-auto">
-        {!unreleasedPackages.length ? (
+        {allReleased ? (
           <Alert className="mb-6">
             This change set is read only because all these changes have already
             been released. If you need to edit the release notes, you can do so
@@ -119,33 +115,28 @@ export default function PullRequestPage({
           </Alert>
         ) : null}
         {state
-          .filter(({info}) => info.length !== 0)
-          .map(({packageName, changes, info}, i) => (
+          // TODO(feat): consider still rendering these in some way
+          .filter(({manifests}) => manifests.length !== 0)
+          .map(({packageName, changes, manifests: manifest, released}, i) => (
             <React.Fragment key={packageName}>
               {i === 0 ? null : <hr className="my-16" />}
               <PackageChangeSet
                 disabled={saving}
-                readOnly={
-                  !headSha ||
-                  permission !== 'edit' ||
-                  !unreleasedPackages.includes(packageName)
-                }
+                readOnly={permission !== 'edit' || released}
                 warning={
-                  unreleasedPackages.length &&
-                  !unreleasedPackages.includes(packageName) &&
-                  permission === 'edit'
+                  !allReleased && released && permission === 'edit'
                     ? alreadyReleasedWarning
                     : null
                 }
                 packageName={packageName}
-                packageInfo={info}
+                packageManifest={manifest}
                 changes={changes}
                 onChange={onChange}
               />
             </React.Fragment>
           ))}
       </div>
-      {headSha && permission === 'edit' && unreleasedPackages.length > 0 && (
+      {permission === 'edit' && !allReleased && (
         <SaveChangeLogFooter
           disabled={saving}
           onClick={() => {

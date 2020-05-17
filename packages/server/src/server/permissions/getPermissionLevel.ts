@@ -3,6 +3,7 @@ import * as gh from 'rollingversions/lib/services/github';
 import Permission from './Permission';
 import {getClientForToken, getClientForRepo} from '../getClient';
 import log from '../logger';
+import withCache from '../../utils/withCache';
 
 export {Permission};
 
@@ -11,48 +12,112 @@ export {Permission};
  * permissions from collaborators, so it can return "none" even if
  * the repository is public.
  */
-async function checkViewerPermissions(
-  userAuth: string,
-  repo: Repository,
-): Promise<'none' | 'view' | 'edit'> {
-  try {
-    // We create our own client in this function to prevent it being
-    // batched with any other request. This is because getRepositoryViewerPermissions
-    // can throw an error even if the repository is public.
-    const client = getClientForToken(userAuth);
-    const viewerPermission = await gh
-      .getRepositoryViewerPermissions(client, repo)
-      .catch((ex) => {
-        log({
-          event_status: 'warn',
-          event_type: 'failed_to_get_repository_viewer_permissions',
-          message: ex.stack,
+const checkViewerPermissions = withCache(
+  async (
+    userAuth: string,
+    repo: Repository,
+  ): Promise<{result: Permission; expiry: number}> => {
+    try {
+      // We create our own client in this function to prevent it being
+      // batched with any other request. This is because getRepositoryViewerPermissions
+      // can throw an error even if the repository is public.
+      const client = getClientForToken(userAuth);
+      const viewerPermission = await gh
+        .getRepositoryViewerPermissions(client, repo)
+        .catch((ex) => {
+          log({
+            event_status: 'warn',
+            event_type: 'failed_to_get_repository_viewer_permissions',
+            message: ex.stack,
+          });
+          return null;
         });
-        return null;
-      });
 
-    // see: https://developer.github.com/v4/enum/repositorypermission/
-    if (
-      viewerPermission === 'ADMIN' ||
-      viewerPermission === 'MAINTAIN' ||
-      viewerPermission === 'TRIAGE' ||
-      viewerPermission === 'WRITE'
-    ) {
-      return 'edit';
+      // see: https://developer.github.com/v4/enum/repositorypermission/
+      if (
+        viewerPermission === 'ADMIN' ||
+        viewerPermission === 'MAINTAIN' ||
+        viewerPermission === 'TRIAGE' ||
+        viewerPermission === 'WRITE'
+      ) {
+        return {result: 'edit', expiry: Date.now() + 60_000};
+      }
+      if (viewerPermission === 'READ') {
+        return {result: 'view', expiry: Date.now() + 60_000};
+      }
+      return {result: 'none', expiry: Date.now() + 60_000};
+    } catch (ex) {
+      log({
+        event_status: 'warn',
+        event_type: 'failed_to_get_repository_viewer_permissions',
+        message: ex.stack,
+      });
+      return {result: 'none', expiry: 5_000};
     }
-    if (viewerPermission === 'READ') {
-      return 'view';
+  },
+  (userAuth: string, repo: Repository) =>
+    `${userAuth}/${repo.owner}/${repo.name}`,
+);
+
+const getViewer = withCache(
+  async (userAuth: string) => ({
+    result: await gh.getViewer(getClientForToken(userAuth)),
+    expiry: Date.now() + 60 * 60_000,
+  }),
+  (userAuth) => userAuth,
+);
+
+const getRepositoryIsPublic = withCache(
+  async (repo: Repository) => {
+    try {
+      const client = await getClientForRepo(repo);
+      return {
+        result: await gh.getRepositoryIsPublic(client, repo),
+        expiry: Date.now() + 60_000,
+      };
+    } catch (ex) {
+      log({
+        event_status: 'warn',
+        event_type: 'failed_to_get_repo',
+        message: ex.stack,
+        repo_owner: repo.owner,
+        repo_name: repo.name,
+      });
+      return {
+        result: false,
+        expiry: 0,
+      };
     }
-    return 'none';
-  } catch (ex) {
-    log({
-      event_status: 'warn',
-      event_type: 'failed_to_get_repository_viewer_permissions',
-      message: ex.stack,
-    });
-    return 'none';
-  }
-}
+  },
+  (repo) => `${repo.owner}/${repo.name}`,
+);
+
+const getPullRequestAuthor = withCache(
+  async (pr: Pick<PullRequest, 'repo' | 'number'>) => {
+    try {
+      const client = await getClientForRepo(pr.repo);
+      const author = await gh.getPullRequestAuthor(client, pr);
+
+      return {
+        result: author,
+        expiry: author ? Date.now() + 60 * 60_000 : 0,
+      };
+    } catch (ex) {
+      log({
+        event_status: 'warn',
+        event_type: 'failed_to_get_pr',
+        message: ex.stack,
+        repo_owner: pr.repo.owner,
+        repo_name: pr.repo.name,
+      });
+      return {
+        result: null,
+        expiry: 0,
+      };
+    }
+  },
+  (pr) => `${pr.repo.owner}/${pr.repo.name}/${pr.number}`,
+);
 
 export default async function getPermissionLevel(
   pr: Pick<PullRequest, 'repo' | 'number'>,
@@ -63,22 +128,20 @@ export default async function getPermissionLevel(
   email: string | null;
   reason?: string;
 }> {
-  const viewerPromise = gh.getViewer(getClientForToken(userAuth));
+  const viewerPromise = getViewer(userAuth);
   const [
     {login, email, __typename: viewerTypeName},
     viewerPermission,
-    pullRequest,
+    isPublic,
+    author,
+    pullRequestStatus,
   ] = await Promise.all([
     viewerPromise,
     checkViewerPermissions(userAuth, pr.repo),
+    getRepositoryIsPublic(pr.repo),
+    getPullRequestAuthor(pr),
     getClientForRepo(pr.repo)
-      .then((repoClient) =>
-        Promise.all([
-          gh.getRepositoryIsPublic(repoClient, pr.repo),
-          gh.getPullRequestAuthor(repoClient, pr),
-          gh.getPullRequestStatus(repoClient, pr),
-        ] as const),
-      )
+      .then((repoClient) => gh.getPullRequestStatus(repoClient, pr))
       .catch(async (ex) => {
         const {login, email} = await viewerPromise;
         log({
@@ -95,15 +158,13 @@ export default async function getPermissionLevel(
       }),
   ] as const);
 
-  if (!pullRequest) {
+  if (!pullRequestStatus) {
     return {permission: 'none', login, email};
   }
 
-  const [isPublic, author, status] = pullRequest;
-
   const viewerIsAuthor =
     login === author?.login && viewerTypeName === author.__typename;
-  const isPrOpen = !(status?.closed || status?.merged);
+  const isPrOpen = !(pullRequestStatus.closed || pullRequestStatus.merged);
 
   if (viewerPermission === 'edit') {
     return {permission: 'edit', login, email};
@@ -128,25 +189,10 @@ export async function getRepoPermissionLevel(
   email: string | null;
   reason?: string;
 }> {
-  const viewerPromise = gh.getViewer(getClientForToken(userAuth));
   const [{login, email}, viewerPermission, isPublic] = await Promise.all([
-    viewerPromise,
+    getViewer(userAuth),
     checkViewerPermissions(userAuth, repo),
-    getClientForRepo(repo)
-      .then((repoClient) => gh.getRepositoryIsPublic(repoClient, repo))
-      .catch(async (ex) => {
-        const {login, email} = await viewerPromise;
-        log({
-          event_status: 'warn',
-          event_type: 'failed_to_get_repo',
-          message: ex.stack,
-          login,
-          email,
-          repo_owner: repo.owner,
-          repo_name: repo.name,
-        });
-        return false;
-      }),
+    getRepositoryIsPublic(repo),
   ] as const);
 
   if (viewerPermission === 'edit') {
