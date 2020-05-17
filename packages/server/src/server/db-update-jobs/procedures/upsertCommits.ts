@@ -90,7 +90,7 @@ export default async function upsertCommits(
 
   await Promise.all(
     newPullRequests.map(async (p) => {
-      await upsertPullRequest(db, client, repositoryId, repo, p.id);
+      await upsertPullRequest(db, client, repositoryId, repo, p.graphql_id);
     }),
   );
 
