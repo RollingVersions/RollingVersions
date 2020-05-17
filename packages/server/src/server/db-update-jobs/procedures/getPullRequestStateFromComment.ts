@@ -50,51 +50,6 @@ async function getCommentState(
       },
     );
 
-    let seenFirstComment = false;
-    for await (const comment of readComments(client, pullRequest, {
-      pageSize: 50,
-    })) {
-      if (comment.body.includes(COMMENT_GUID)) {
-        if (!seenFirstComment) {
-          seenFirstComment = true;
-        } else {
-          // we have a duplicate comment
-          log({
-            event_status: 'warn',
-            event_type: 'deleting_duplicate_comment',
-            message: `Deleting duplicate comment`,
-            repo_owner: pullRequest.repo.owner,
-            repo_name: pullRequest.repo.name,
-            pull_number: pullRequest.number,
-          });
-          deleteComment(client, pullRequest, comment.commentID).then(
-            () => {
-              log({
-                event_status: 'warn',
-                event_type: 'deleted_duplicate_comment',
-                message: `Deleted duplicate comment`,
-                repo_owner: pullRequest.repo.owner,
-                repo_name: pullRequest.repo.name,
-                pull_number: pullRequest.number,
-              });
-            },
-            (ex) => {
-              log({
-                event_status: 'error',
-                event_type: 'delete_comment_failed',
-                message: `Unable to delete comment:\n\n${ex.stack ||
-                  ex.message ||
-                  ex}`,
-                repo_owner: pullRequest.repo.owner,
-                repo_name: pullRequest.repo.name,
-                pull_number: pullRequest.number,
-              });
-            },
-          );
-        }
-      }
-    }
-
     return {state: null, commentID};
   }
   return {state: null, commentID: null};

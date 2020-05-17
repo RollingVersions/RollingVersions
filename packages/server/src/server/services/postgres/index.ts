@@ -193,12 +193,13 @@ export async function insertPullRequest(
     title: string;
     is_merged: boolean;
     is_closed: boolean;
+    comment_id: number | null;
   },
 ) {
   await db.query(
     sql`
-      INSERT INTO pull_requests (id, graphql_id, git_repository_id, pr_number, title, is_merged, is_closed)
-      VALUES (${pr.id}, ${pr.graphql_id}, ${git_repository_id}, ${pr.number}, ${pr.title}, ${pr.is_merged}, ${pr.is_closed})
+      INSERT INTO pull_requests (id, graphql_id, git_repository_id, pr_number, title, is_merged, is_closed, comment_id)
+      VALUES (${pr.id}, ${pr.graphql_id}, ${git_repository_id}, ${pr.number}, ${pr.title}, ${pr.is_merged}, ${pr.is_closed}, ${pr.comment_id})
     `,
   );
 }
