@@ -21,6 +21,7 @@ workflows:
           <<: *not_master
 
       - staging-approval:
+          <<: *not_master
           type: approval
 
       - deploy-staging:
