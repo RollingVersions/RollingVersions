@@ -39,6 +39,7 @@
     "morgan": "^1.10.0",
     "on-finished": "^2.3.0",
     "on-headers": "^1.0.2",
+    "quick-lru": "^5.1.0",
     "react-textarea-autosize": "^7.1.2",
     "rollingversions": "0.0.0",
     "then-retry": "^1.0.0"
