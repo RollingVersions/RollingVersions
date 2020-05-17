@@ -9,9 +9,12 @@ export default function withCache<TArgs extends any[], TResult>(
   });
   return async (...args: TArgs): Promise<TResult> => {
     const key = getKey(...args);
-    const cached = await cache.get(key);
-    if (cached && cached.expiry > Date.now()) {
-      return cached.result;
+    const cachedPromise = cache.get(key);
+    if (cachedPromise) {
+      const cached = await cachedPromise;
+      if (cached.expiry > Date.now()) {
+        return cached.result;
+      }
     }
     const livePromise = fn(...args);
     cache.set(key, livePromise);
