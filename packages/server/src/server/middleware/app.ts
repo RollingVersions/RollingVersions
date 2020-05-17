@@ -29,7 +29,7 @@ appMiddleware.get(
     try {
       const repo = parseRepoParams(req);
       const client = await getClientForRepo(repo);
-      const response = getRepository(client, repo);
+      const response = await getRepository(client, repo);
       res.json(response);
     } catch (ex) {
       next(ex);
