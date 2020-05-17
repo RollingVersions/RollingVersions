@@ -3,6 +3,7 @@ import {
   upsertCommits as upsertCommitsPg,
   filterOutExisingPullRequestIDs,
   filterToExistingCommitShas,
+  addAssociatedPullRequests,
 } from '../../services/postgres';
 import {GitHubClient, GitHubCommit} from '../../services/github';
 import upsertPullRequest from './upsertPullRequest';
@@ -14,6 +15,7 @@ export default async function upsertCommits(
   repositoryId: number,
   repo: Repository,
   allCommits: AsyncGenerator<GitHubCommit[], void, unknown>,
+  {forceFullScan}: {forceFullScan?: boolean} = {},
 ) {
   const missingParents = new Set<string>();
   const newCommits = [];
@@ -40,7 +42,27 @@ export default async function upsertCommits(
         break;
       }
     }
-    if (missingParents.size === 0) {
+    const exisingCommits = commits.filter((c) =>
+      existingShas.has(c.commit_sha),
+    );
+    let lastAssociatedPRInserted = 0;
+    if (exisingCommits.length) {
+      lastAssociatedPRInserted = await addAssociatedPullRequests(
+        db,
+        repositoryId,
+        exisingCommits.flatMap((c) =>
+          c.associatedPullRequests.map((pr) => ({
+            commit_sha: c.commit_sha,
+            pull_request_id: pr.id,
+          })),
+        ),
+      );
+    }
+    if (
+      missingParents.size === 0 &&
+      lastAssociatedPRInserted === 0 &&
+      !forceFullScan
+    ) {
       break;
     }
   }

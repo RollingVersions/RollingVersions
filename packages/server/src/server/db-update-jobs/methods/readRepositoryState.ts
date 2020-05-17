@@ -27,6 +27,7 @@ export default async function readRepositoryState(
   const repo = await addRepository(db, client, repository, {
     refreshPRs: false,
     refreshTags: true,
+    refreshPrAssociations: true,
   });
 
   log({
