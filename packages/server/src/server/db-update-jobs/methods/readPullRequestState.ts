@@ -23,6 +23,7 @@ import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import log from '../../logger';
+import readRepository from '../procedures/readRepository';
 
 interface PullRequestPackage {
   manifests: PackageManifestWithVersion[];
@@ -37,10 +38,12 @@ export default async function readPullRequestState(
   pullRequest: Pick<PullRequest, 'repo' | 'number'>,
 ) {
   let start = Date.now();
-  const repo = await addRepository(db, client, pullRequest.repo, {
-    refreshPRs: false,
-    refreshTags: false,
-  });
+  const repo =
+    (await readRepository(db, pullRequest.repo)) ||
+    (await addRepository(db, client, pullRequest.repo, {
+      refreshPRs: false,
+      refreshTags: false,
+    }));
 
   log({
     event_type: 'add_repository',
@@ -174,11 +177,13 @@ async function getPackages(
     graphql_id: string;
     owner: string;
     name: string;
-    head: {id: number; graphql_id: string} | undefined;
+    head: {id: number; graphql_id: string} | undefined | null;
   },
   head?: GitHubCommit,
 ) {
   if (head) {
+    // TODO: only use this head if the PR is open
+    // (once we are able to display changes on packages that no longer exist)
     const id = await getCommitIdFromSha(db, repo.id, head.commit_sha);
     if (id) {
       return getPackageManifests(db, client, repo, {
