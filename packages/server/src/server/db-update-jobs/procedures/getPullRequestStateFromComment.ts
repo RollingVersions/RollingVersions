@@ -4,7 +4,6 @@ import {
   readComments,
   writeComment,
   updateStatus,
-  deleteComment,
 } from 'rollingversions/lib/services/github';
 import {readState} from 'rollingversions/lib/utils/CommentState';
 import {
@@ -13,7 +12,6 @@ import {
   getUrlForChangeLog,
 } from '../../../utils/Rendering';
 import {APP_URL} from '../../environment';
-import log from '../../logger';
 import {PullRequestDetail} from '../../services/github';
 
 async function getCommentState(
