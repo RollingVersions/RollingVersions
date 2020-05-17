@@ -5,6 +5,32 @@ import {PublishTarget} from 'rollingversions/lib/types';
 export {Connection};
 export const db = connect();
 
+export async function getRepository(
+  db: Connection,
+  repo: {
+    owner: string;
+    name: string;
+  },
+): Promise<null | {
+  id: number;
+  graphql_id: string;
+  owner: string;
+  name: string;
+  default_branch_name: string;
+  target_git_commit_id: number | null;
+  target_commit_graphql_id: string | null;
+  commit_sha: string | null;
+}> {
+  const results = await db.query(sql`
+    SELECT r.id, r.graphql_id, r.owner, r.name, r.default_branch_name, b.target_git_commit_id, c.commit_sha, c.graphql_id AS target_commit_graphql_id
+    FROM git_repositories r
+    LEFT OUTER JOIN git_branches b ON (b.git_repository_id=r.id AND b.name=r.default_branch_name)
+    LEFT OUTER JOIN git_commits c ON (b.target_git_commit_id=c.id)
+    WHERE r.owner=${repo.owner} AND r.name=${repo.name}
+  `);
+  return results[0] || null;
+}
+
 export async function upsertRepository(
   db: Connection,
   repo: {
@@ -252,6 +278,26 @@ export async function setPullRequestSubmittedAtSha(
   );
 }
 
+export async function getCommitFromSha(
+  db: Connection,
+  git_repository_id: number,
+  commit_sha: string,
+): Promise<null | {id: number; graphql_id: string}> {
+  const results = await db.query(
+    sql`
+      SELECT id, graphql_id FROM git_commits
+      WHERE git_repository_id = ${git_repository_id}
+      AND commit_sha = ${commit_sha}
+    `,
+  );
+  if (results.length === 0) {
+    return null;
+  }
+  if (results.length > 1) {
+    throw new Error('Multiple commits should not have the same sha');
+  }
+  return results[0];
+}
 export async function getCommitIdFromSha(
   db: Connection,
   git_repository_id: number,

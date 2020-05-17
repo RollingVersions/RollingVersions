@@ -7,6 +7,7 @@ import onInstallation from '../db-update-jobs/events/onInstallation';
 import onCreate from '../db-update-jobs/events/onCreate';
 import onDelete from '../db-update-jobs/events/onDelete';
 import onPullRequestUpdate from '../db-update-jobs/events/onPullRequestUpdate';
+import onPush from '../db-update-jobs/events/onPush';
 
 const webhooks = new WebhooksApi({secret: WEBHOOK_SECRET});
 
@@ -131,9 +132,15 @@ webhooks.on('pull_request.closed', async (e) => {
   });
 });
 
-// TODO: do we need to handle push, or does "create" get called here anyway
-// webhooks.on('push', e => {
-//   e.payload.
-// });
+webhooks.on('push', async (e) => {
+  await withLog(() => onPush(e), {
+    event_type: 'push',
+    message: 'Repository Push',
+    event_id: e.id,
+    repo_id: e.payload.repository.id,
+    repo_owner: e.payload.repository.owner.login,
+    repo_name: e.payload.repository.name,
+  });
+});
 
 export default webhooks;

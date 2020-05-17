@@ -1,5 +1,7 @@
 import WebhooksApi from '@octokit/webhooks';
 import {updatePullRequest, db} from '../../services/postgres';
+import addRepository from '../procedures/addRepository';
+import {getClientForEvent} from '../../getClient';
 
 export default async function onPullRequestClosed(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadPullRequest>,
@@ -11,4 +13,14 @@ export default async function onPullRequestClosed(
     is_closed: true,
     is_merged: e.payload.pull_request.merged,
   });
+  const client = getClientForEvent(e);
+  await addRepository(
+    db,
+    client,
+    {
+      owner: e.payload.repository.owner.login,
+      name: e.payload.repository.name,
+    },
+    {refreshTags: true, refreshPRs: false},
+  );
 }

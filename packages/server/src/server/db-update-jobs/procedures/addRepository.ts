@@ -5,9 +5,7 @@ import {
   getCommitIdFromSha,
   getBranch,
   writeBranch,
-  upsertTag,
   filterOutExisingPullRequestIDs,
-  getAllTags as getAllTagsPg,
 } from '../../services/postgres';
 import {
   GitHubClient,
@@ -15,13 +13,11 @@ import {
   getDefaultBranch,
   getAllDefaultBranchCommits,
   getRepositoryPullRequestIDs,
-  getAllRefCommits,
 } from '../../services/github';
 import upsertCommits from './upsertCommits';
 import upsertPullRequest from './upsertPullRequest';
-import {getAllTags} from 'rollingversions/lib/services/github';
-import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import log from '../../logger';
+import getAllTags from './getAllTags';
 
 export default async function addRepository(
   db: Connection,
@@ -29,24 +25,6 @@ export default async function addRepository(
   repo: Repository,
   {refreshPRs, refreshTags}: {refreshPRs: boolean; refreshTags: boolean},
 ) {
-  const start = Date.now();
-  // TODO(perf): find a way to avoid doing this after the first install (maybe just cache for some time?)
-  const gitTagsPromise = refreshTags && getAllTags(client, repo);
-  if (gitTagsPromise) {
-    gitTagsPromise.then(
-      () => {
-        log({
-          event_type: 'got_git_tags',
-          message: 'Read git tags',
-          event_status: 'ok',
-          duration: Date.now() - start,
-        });
-      },
-      () => {
-        // do not report unhandled exceptions here as we will handle later
-      },
-    );
-  }
   const [repository, defaultBranch] = await Promise.all([
     getRepository(client, repo),
     getDefaultBranch(client, repo),
@@ -137,52 +115,9 @@ export default async function addRepository(
     dbBranch?.target_git_commit_id || null,
   );
 
-  const tags = (
-    await (gitTagsPromise
-      ? gitTagsPromise.then(async (gitTags) =>
-          (
-            await Promise.all(
-              gitTags.map(async (tag) => {
-                let headCommitId = await getCommitIdFromSha(
-                  db,
-                  repository.id,
-                  tag.commitSha,
-                );
-                if (!headCommitId) {
-                  await upsertCommits(
-                    db,
-                    client,
-                    repository.id,
-                    repo,
-                    getAllRefCommits(client, repo, {
-                      type: 'tag',
-                      name: tag.name,
-                    }),
-                  );
-                  headCommitId = await getCommitIdFromSha(
-                    db,
-                    repository.id,
-                    tag.commitSha,
-                  );
-                }
-                if (headCommitId) {
-                  // TODO(perf): this bumps id unnecessarily
-                  return {
-                    commit_sha: tag.commitSha,
-                    ...(await upsertTag(db, repository.id, {
-                      graphql_id: tag.graphql_id,
-                      name: tag.name,
-                      target_git_commit_id: headCommitId,
-                    })),
-                  };
-                }
-                return undefined;
-              }),
-            )
-          ).filter(isTruthy),
-        )
-      : getAllTagsPg(db, repository.id))
-  ).map(({commit_sha, ...tag}) => ({...tag, commitSha: commit_sha}));
+  const tags = await getAllTags(db, client, repository, {
+    loadFromGitHub: refreshTags,
+  });
 
   return {
     ...repository,
