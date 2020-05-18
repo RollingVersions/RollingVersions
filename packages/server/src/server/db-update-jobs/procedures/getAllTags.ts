@@ -9,6 +9,7 @@ import {Repository} from 'rollingversions/lib/types';
 import {getAllTags as getAllTagsGh} from 'rollingversions/lib/services/github';
 import upsertCommits from './upsertCommits';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
+import log from '../../logger';
 
 export default async function getAllTags(
   db: Connection,
@@ -50,6 +51,15 @@ export default async function getAllTags(
                 target_git_commit_id: headCommitId,
               })),
             };
+          } else {
+            log({
+              event_status: 'error',
+              event_type: 'missing_tag_head',
+              message: `Missing git tag head for ${tag.name}`,
+              repo_owner: repo.owner,
+              repo_name: repo.name,
+              ...tag,
+            });
           }
           return undefined;
         }),
