@@ -2,10 +2,9 @@ import React from 'react';
 import {useParams} from 'react-router-dom';
 import {RepoResponse} from '../../types';
 import PackageStatus from 'rollingversions/lib/types/PackageStatus';
-import GitHubMarkdownAsync from '../visual/GitHubMarkdown/async';
-import changesToMarkdown from 'rollingversions/lib/utils/changesToMarkdown';
 import AppContainer from '../visual/AppContainer';
 import AppNavBar, {AppNavBarLink} from '../visual/AppNavBar';
+import RepositoryPage, {ReleaseButton} from '../visual/RepositoryPage';
 
 interface Params {
   owner: string;
@@ -59,51 +58,27 @@ export default function Repository() {
           return <div>Loading...</div>;
         }
 
+        const updateRequired =
+          !state.cycleDetected &&
+          state.packages.some(
+            (p) => p.status === PackageStatus.NewVersionToBePublished,
+          ) &&
+          !state.packages.some((p) => p.status === PackageStatus.MissingTag);
+
         return (
-          <>
-            <h1>Future Releases</h1>
-            {state.cycleDetected ? (
-              <p>Cycle Detected: {state.cycleDetected.join(' -> ')}</p>
-            ) : null}
-            {state.packages.map((pkg) => {
-              switch (pkg.status) {
-                case PackageStatus.MissingTag:
-                  return (
-                    <React.Fragment key={pkg.packageName}>
-                      <h2>{pkg.packageName}</h2>
-                      <p>Missing tag for {pkg.currentVersion}</p>
-                    </React.Fragment>
-                  );
-                case PackageStatus.NewVersionToBePublished:
-                  return (
-                    <React.Fragment key={pkg.packageName}>
-                      <h2>
-                        {pkg.packageName} ({pkg.currentVersion} ->{' '}
-                        {pkg.newVersion})
-                      </h2>
-                      <GitHubMarkdownAsync>
-                        {changesToMarkdown(pkg.changeSet, 3)}
-                      </GitHubMarkdownAsync>
-                    </React.Fragment>
-                  );
-                case PackageStatus.NoUpdateRequired:
-                  return (
-                    <React.Fragment key={pkg.packageName}>
-                      <h2>
-                        {pkg.packageName} ({pkg.currentVersion})
-                      </h2>
-                      <p>No updates merged</p>
-                    </React.Fragment>
-                  );
-              }
-            })}
-            <form
-              method="POST"
-              action={`/${params.owner}/${params.repo}/dispatch/rollingversions_publish_approved`}
-            >
-              <button type="submit">Release These Changes</button>
-            </form>
-          </>
+          <RepositoryPage
+            {...state}
+            releaseButton={
+              updateRequired ? (
+                <form
+                  method="POST"
+                  action={`/${params.owner}/${params.repo}/dispatch/rollingversions_publish_approved`}
+                >
+                  <ReleaseButton />
+                </form>
+              ) : null
+            }
+          />
         );
       })()}
     </AppContainer>

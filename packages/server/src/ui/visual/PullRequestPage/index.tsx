@@ -5,6 +5,7 @@ import getLocalId from '../../utils/getLocalId';
 import {ChangeSet, ChangeLogEntry} from 'rollingversions/lib/types';
 import Permission from '../../../server/permissions/Permission';
 import {PullRequestPackage} from '../../../types';
+import Alert from '../Alert';
 
 function mapChangeSet<T, S>(
   changes: ChangeSet<T>,
@@ -33,22 +34,6 @@ function getState(packages: Map<string, PullRequestPackage>) {
     .sort(({packageName: a}, {packageName: b}) => (a < b ? -1 : 1));
 }
 
-export function Alert({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <p
-      className={`px-6 py-4 md:px-10 md:py-6 text-red-900 bg-red-200 rounded-lg border border-red-300 ${className ||
-        ''}`}
-    >
-      {children}
-    </p>
-  );
-}
 export interface PullRequestPageProps {
   saving: boolean;
   packages: Map<string, PullRequestPackage>;

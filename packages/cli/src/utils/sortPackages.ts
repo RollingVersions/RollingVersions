@@ -41,7 +41,7 @@ export default async function sortPackages(
     const childStack = [...stack, pkg.packageName];
 
     for (const kind of ['required', 'optional', 'development'] as const) {
-      for (const dependencyName of pkg.dependencies[kind]) {
+      for (const dependencyName of pkg.dependencies[kind].slice().sort()) {
         const dep = input.get(dependencyName);
         if (dep) {
           const child = putPackage(childStack, result, dep);
@@ -67,7 +67,7 @@ export default async function sortPackages(
     packages: [],
   };
   const EMPTY_ARRAY = [] as const;
-  for (const [, dep] of input) {
+  for (const [, dep] of [...input].sort(([a], [b]) => (a < b ? -1 : 1))) {
     const depResult = putPackage(EMPTY_ARRAY, result, dep);
     if (depResult.circular) {
       return depResult;
