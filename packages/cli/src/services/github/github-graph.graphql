@@ -9,8 +9,18 @@ query GetTags($owner: String!, $name: String!, $after: String) {
         id
         name
         target {
-          # __typename: Commit
-          oid
+          __typename
+          ... on Commit {
+            oid
+          }
+          ... on Tag {
+            target {
+              __typename
+              ... on Commit {
+                oid
+              }
+            }
+          }
         }
       }
     }
