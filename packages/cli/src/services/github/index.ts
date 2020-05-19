@@ -114,9 +114,19 @@ export async function getAllTags(client: GitHubClient, repo: Repository) {
       undefined,
   )) {
     if (tag) {
+      const target =
+        tag.target.__typename === 'Commit'
+          ? tag.target.oid
+          : tag.target.__typename === 'Tag' &&
+            tag.target.target.__typename === 'Commit'
+          ? tag.target.target.oid
+          : null;
+      if (!target) {
+        throw new Error(`Cannot find target commit of tag ${tag.name}`);
+      }
       results.push({
         graphql_id: tag.id,
-        commitSha: tag.target.oid,
+        commitSha: target,
         name: tag.name,
       });
     }
