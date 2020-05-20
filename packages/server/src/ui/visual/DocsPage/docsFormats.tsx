@@ -18,14 +18,9 @@ export function InlineCode({children}: {children: React.ReactNode}) {
   );
 }
 
-// TODO I've changed to 900 on both the block and the inline text to bump up contrast.  However I am less convinced with going to 100 on bg.
-// On my screens the 100 is really hard to distinguish and just looks like something has gone wrong.  I think it does depend on the screen a bit
-// To compensate I've added `border-gray-200` which does help, but on the inline code a border jars, so I've ended up leaving as 200.
-// This now feels a bit inconsistent.
-
 export function CodeBlock({children}: {children: React.ReactNode}) {
   return (
-    <pre className="bg-gray-100 border border-gray-200 py-4 block overflow-x-auto">
+    <pre className="bg-gray-200 py-4 block overflow-x-auto">
       <code className=" container mx-auto font-mono text-base text-gray-900 ml-2">
         {children}
       </code>

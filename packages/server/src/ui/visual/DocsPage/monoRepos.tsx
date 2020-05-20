@@ -14,7 +14,7 @@ export default function MonoRepos() {
         <InlineCode>"@rollingversions/ignore": true</InlineCode> to your
         package.json. We do exactly that on{' '}
         <a
-          className="border-b-4 border-orange-500 text-orange-900"
+          className="border-b-2 border-orange-400 text-orange-400 hover:border-orange-400 hover:text-orange-500 focus:outline-none focus:shadow-orange focus:text-orange-500"
           href="https://github.com/RollingVersions/RollingVersions/blob/0276c1a0918a8c79b5b69dd5dadecc0bfefe0ed8/package.json#L4"
         >
           Rolling Versions itself

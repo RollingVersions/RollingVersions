@@ -28,7 +28,7 @@ function SelectorButton({
         isSelected
           ? 'bg-gray-400 border-4 '
           : 'bg-transparent hover:bg-gray-100 border hover:border-orange-300 '
-      } font-poppins text-2xl py-2 px-4 border-orange-500 outline-none`}
+      } font-poppins text-2xl py-2 px-4 border-orange-500 focus:outline-none focus:shadow-orange`}
       onClick={() => onClick()}
     >
       <div className="flex justify-end">
