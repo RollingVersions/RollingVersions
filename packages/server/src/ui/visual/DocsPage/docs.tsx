@@ -4,10 +4,10 @@ import {Heading, Instruction, Details} from './docsFormats';
 import GithubActions from './githubActions';
 import CircleCI from './circleCI';
 import MonoRepos from './monoRepos';
-import Selector, {Options} from './selector';
+import Selector, {CIservice} from './selector';
 
 export default function Docs() {
-  const [selected, setSelected] = useState<Options>('');
+  const [selected, setSelected] = useState<CIservice | null>(null);
 
   return (
     <>
@@ -23,14 +23,14 @@ export default function Docs() {
         <InstallButton />
         <Selector
           selected={selected}
-          setSelected={(value: Options) => setSelected(value)}
+          setSelected={(value: CIservice) => setSelected(value)}
         />
         {selected === 'github' ? (
           <GithubActions />
-        ) : selected === 'circle' ? (
+        ) : selected === 'circle-ci' ? (
           <CircleCI />
         ) : null}
-        <MonoRepos />
+        {selected ? <MonoRepos /> : null}
       </div>
     </>
   );

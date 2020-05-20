@@ -11,7 +11,8 @@ function Radio({isSelected}: {isSelected: boolean}) {
   );
 }
 
-// TODO This looks horrible! I have been trying to get rid of blue outline when focussed/active but haven't succeeded.  I've also been unable to position the indicators or anything else. Not getting to grips with flex or tailwind at all. This has meant that I've not been able to experiment with appearance/styles.
+// TODO This looks horrible! I have been trying to get rid of blue outline when focussed/active but haven't succeeded.  I've tried ' outline-none focus:shadow-outline' and the outline is more shadowy but there all the time.
+
 function SelectorButton({
   children,
   isSelected,
@@ -23,30 +24,29 @@ function SelectorButton({
 }) {
   return (
     <button
-      className={
-        'btn ' +
-        (isSelected ? 'bg-gray-400 ' : 'bg-transparent hover:bg-gray-100 ') +
-        'font-poppins text-2xl py-2 px-4 outline-none ' +
-        (isSelected ? 'border-4 ' : 'border ') +
-        'border-orange-500 ' +
-        (isSelected ? '' : 'hover:border-orange-300')
-      }
+      className={`btn ${
+        isSelected
+          ? 'bg-gray-400 border-4 '
+          : 'bg-transparent hover:bg-gray-100 border hover:border-orange-300 '
+      } font-poppins text-2xl py-2 px-4 border-orange-500 outline-none`}
       onClick={() => onClick()}
     >
-      <Radio isSelected={isSelected} />
+      <div className="flex justify-end">
+        <Radio isSelected={isSelected} />
+      </div>
       <p>{children}</p>
     </button>
   );
 }
 
-export type Options = '' | 'github' | 'circle';
+export type CIservice = 'github' | 'circle-ci';
 
 export default function Selector({
   selected,
   setSelected,
 }: {
-  selected: Options;
-  setSelected: (value: Options) => void;
+  selected: CIservice | null;
+  setSelected: (value: CIservice) => void;
 }) {
   return (
     <>
@@ -60,8 +60,8 @@ export default function Selector({
           Github Actions
         </SelectorButton>
         <SelectorButton
-          isSelected={selected === 'circle'}
-          onClick={() => setSelected('circle')}
+          isSelected={selected === 'circle-ci'}
+          onClick={() => setSelected('circle-ci')}
         >
           Circle CI
         </SelectorButton>
