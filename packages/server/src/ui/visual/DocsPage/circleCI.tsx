@@ -9,7 +9,8 @@ export default function CircleCI() {
       <Instruction>Circle CI</Instruction>
       <Details>
         In your Circle CI config, add a workflow that has a{' '}
-        <InlineCode>publish-dry-run</InlineCode> and publish step separated by a{' '}
+        <InlineCode>publish-dry-run</InlineCode> and{' '}
+        <InlineCode>publish</InlineCode> step separated by a{' '}
         <InlineCode>publish-approval</InlineCode> step:
       </Details>
 
@@ -25,9 +26,8 @@ export default function CircleCI() {
         In the settings for this repository on Circle CI, add these environment
         variables:
       </Details>
-      {/* TODO Forbes I think a square bullet point to tie in with squares in logo and amended tailwind config and index.css (hopefully correctly). If you don't agree you will need to undo. */}
-      {/* TODO Alignment is wrong */}
-      <ul className="font-sans text-xl list-square">
+
+      <ul className="font-sans text-xl list-square ml-10">
         <li>
           <InlineCode>GITHUB_TOKEN</InlineCode> - a GitHub personal access token
           with at least "repo" scope.

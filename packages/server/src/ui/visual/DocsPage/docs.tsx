@@ -25,7 +25,7 @@ export default function Docs() {
           selected={selected}
           setSelected={(value: CIservice) => setSelected(value)}
         />
-        {selected === 'github' ? (
+        {selected === 'github-actions' ? (
           <GithubActions />
         ) : selected === 'circle-ci' ? (
           <CircleCI />

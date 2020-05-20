@@ -39,7 +39,7 @@ function SelectorButton({
   );
 }
 
-export type CIservice = 'github' | 'circle-ci';
+export type CIservice = 'github-actions' | 'circle-ci';
 
 export default function Selector({
   selected,
@@ -54,8 +54,8 @@ export default function Selector({
 
       <div className="grid grid-cols-2 col-gap-12">
         <SelectorButton
-          isSelected={selected === 'github'}
-          onClick={() => setSelected('github')}
+          isSelected={selected === 'github-actions'}
+          onClick={() => setSelected('github-actions')}
         >
           Github Actions
         </SelectorButton>
