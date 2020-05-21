@@ -14,7 +14,6 @@ import {
 import {getClientForEvent} from '../../getClient';
 import upsertCommits from '../procedures/upsertCommits';
 import getPackageManifests from '../procedures/getPackageManifests';
-import log from '../../logger';
 
 export default async function onCreate(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadCreate>,
