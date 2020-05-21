@@ -1,4 +1,4 @@
-import GitHubClient from '@github-graph/api';
+import GitHubClient, {auth} from '@github-graph/api';
 import {Repository} from 'rollingversions/lib/types';
 import paginateBatched from 'rollingversions/lib/services/github/paginateBatched';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
@@ -6,6 +6,7 @@ import * as queries from './github-graph';
 import retry from 'then-retry';
 
 export {GitHubClient};
+export {auth};
 
 export async function getRepository(client: GitHubClient, repo: Repository) {
   const repository = (await queries.getRepository(client, repo)).repository;
@@ -80,14 +81,21 @@ export async function getRef(
   if (!gitRef) {
     return null;
   }
-  if (gitRef?.target.__typename !== 'Commit') {
-    throw new Error(
-      `Expected ${ref.type} target to be "Commit" but got "${gitRef?.target.__typename}"`,
-    );
+  const target =
+    gitRef.target.__typename === 'Commit'
+      ? gitRef.target
+      : gitRef.target.__typename === 'Tag'
+      ? gitRef.target.target.__typename === 'Commit'
+        ? gitRef.target.target
+        : null
+      : null;
+  if (target?.__typename !== 'Commit') {
+    throw new Error(`Expected ${ref.type} target to be "Commit".`);
   }
   return {
     name: gitRef.name,
-    target: gitRef.target.oid,
+    target: target.oid,
+    targetGraphID: target.id,
     graphql_id: gitRef.id,
   };
 }
@@ -99,6 +107,42 @@ function getQualifiedName({type, name}: GitReference): string {
       return `refs/heads/${name}`;
     case 'tag':
       return `refs/tags/${name}`;
+  }
+}
+export async function* getCommitHistory(
+  client: GitHubClient,
+  commitID: string,
+) {
+  let pageSize = 5;
+  for await (const result of paginateBatched(
+    async (token) => {
+      const currentPageSize = pageSize;
+      pageSize = Math.min(100, pageSize + 20);
+      return retry(() =>
+        queries.getAllCommitHistory(client, {
+          commitID,
+          pageSize: currentPageSize,
+          after: token,
+        }),
+      );
+    },
+    (page) => {
+      if (page.node?.__typename !== 'Commit') {
+        throw new Error(
+          `Expected a Commit but got ${page.node?.__typename || 'undefined'}`,
+        );
+      }
+      return page.node?.__typename === 'Commit'
+        ? page.node.history.nodes || []
+        : [];
+    },
+    (page) =>
+      page.node?.__typename === 'Commit' &&
+      page.node.history.pageInfo.hasNextPage
+        ? page.node.history.pageInfo.endCursor || undefined
+        : undefined,
+  )) {
+    yield result.filter(isTruthy).map(formatCommit);
   }
 }
 export async function* getAllRefCommits(

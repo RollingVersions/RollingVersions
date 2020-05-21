@@ -104,7 +104,12 @@ export const getBranch = withRetry(
 );
 
 export async function getAllTags(client: GitHubClient, repo: Repository) {
-  const results: {graphql_id: string; commitSha: string; name: string}[] = [];
+  const results: {
+    graphql_id: string;
+    commitGraphId: string;
+    commitSha: string;
+    name: string;
+  }[] = [];
   for await (const tag of paginate(
     (after) => retry(() => gh.getTags(client, {...repo, after})),
     (page) => page?.repository?.refs?.nodes || [],
@@ -116,17 +121,18 @@ export async function getAllTags(client: GitHubClient, repo: Repository) {
     if (tag) {
       const target =
         tag.target.__typename === 'Commit'
-          ? tag.target.oid
+          ? tag.target
           : tag.target.__typename === 'Tag' &&
             tag.target.target.__typename === 'Commit'
-          ? tag.target.target.oid
+          ? tag.target.target
           : null;
       if (!target) {
         throw new Error(`Cannot find target commit of tag ${tag.name}`);
       }
       results.push({
         graphql_id: tag.id,
-        commitSha: target,
+        commitGraphId: target.id,
+        commitSha: target.oid,
         name: tag.name,
       });
     }

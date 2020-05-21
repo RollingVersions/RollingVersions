@@ -46,6 +46,7 @@ export const getAllTags: typeof real.getAllTags = async (_client, repo) => {
         graphql_id: `TAG_${repo.owner}_${repo.name}_${name}`,
         name,
         commitSha: c.sha,
+        commitGraphId: c.sha,
       })),
     )
     .reduce((a, b) => [...a, ...b], []);

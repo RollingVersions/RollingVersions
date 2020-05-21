@@ -1,17 +1,14 @@
 import WebhooksApi from '@octokit/webhooks';
 import {db, deleteBranch, deleteTag} from '../../services/postgres';
-import {getGitReference} from './onCreate';
 
 export default async function onDelete(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadDelete>,
 ) {
-  const ref = getGitReference(e.payload);
-
   const gitRepositoryId = e.payload.repository.id;
 
-  if (ref.type === 'head') {
-    await deleteBranch(db, gitRepositoryId, ref.name);
+  if (e.payload.ref_type === 'branch') {
+    await deleteBranch(db, gitRepositoryId, e.payload.ref);
   } else {
-    await deleteTag(db, gitRepositoryId, ref.name);
+    await deleteTag(db, gitRepositoryId, e.payload.ref);
   }
 }
