@@ -89,22 +89,21 @@ const config: webpack.Configuration = {
             ],
           },
 
-          // TODO: if we want to use SVGs as react elements instead.
-          // N.B. This would also need to update storybook
-          // {
-          //   test: /\.svg$/,
-          //   use: [
-          //     {
-          //       loader: require.resolve('react-svg-loader'),
-          //       options: {
-          //         jsx: false,
-          //         svgo: {
-          //           plugins: [{uniqueID: require('svgo-unique-id')}],
-          //         },
-          //       },
-          //     },
-          //   ],
-          // },
+          {
+            test: /\.svg$/,
+            include: [require('path').resolve(`${__dirname}/src`)],
+            use: [
+              {
+                loader: require.resolve('react-svg-loader'),
+                options: {
+                  jsx: false,
+                  svgo: {
+                    plugins: [{uniqueID: require('svgo-unique-id')}],
+                  },
+                },
+              },
+            ],
+          },
 
           // "url" loader works like "file" loader except that it embeds assets
           // smaller than specified limit in bytes as data URLs to avoid requests.

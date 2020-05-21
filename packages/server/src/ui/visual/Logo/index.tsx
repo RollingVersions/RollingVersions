@@ -6,16 +6,13 @@ export default function Logo({
   dark,
   ...props
 }: Omit<
-  React.ImgHTMLAttributes<HTMLImageElement>,
-  'width' | 'height' | 'src'
-> & {dark?: boolean}) {
-  return (
-    <img
-      alt="Rolling Versions"
-      {...props}
-      width="180px"
-      height="47px"
-      src={dark ? WordmarkDark : Wordmark}
-    />
-  );
+  React.SVGProps<SVGElement>,
+  'width' | 'height' | 'viewBox' | 'xmlns'
+> & {
+  dark?: boolean;
+}) {
+  if (dark) {
+    return <WordmarkDark {...props} />;
+  }
+  return <Wordmark {...props} />;
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import Logo from '../Logo';
-import installIcon from '../HeroBar/install-icon.svg';
+import InstallIcon from '../HeroBar/install-icon.svg';
 
 export interface NavBarProps {
   children?: React.ReactNode;
@@ -16,7 +16,9 @@ export default function AppNavBar({children}: NavBarProps) {
       {React.Children.map(children, (child) => {
         return (
           <>
-            <img src={installIcon} className="w-auto h-4 mx-4" />
+            <div className="mx-4">
+              <InstallIcon className="w-auto h-4" />
+            </div>
             {child}
           </>
         );
