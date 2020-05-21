@@ -14,6 +14,7 @@ import {
 import {getClientForEvent} from '../../getClient';
 import upsertCommits from '../procedures/upsertCommits';
 import getPackageManifests from '../procedures/getPackageManifests';
+import log from '../../logger';
 
 export default async function onCreate(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadCreate>,
@@ -49,7 +50,9 @@ export default async function onCreate(
         gitRef.target,
       );
       if (!headCommit) {
-        throw new Error('Cannot find id for head commit');
+        throw new Error(
+          `Cannot find id for head commit ${gitRef.target} on branch ${gitRef.name}`,
+        );
       }
       await writeBranch(
         db,
@@ -85,7 +88,9 @@ export default async function onCreate(
         gitRef.target,
       );
       if (!headCommit) {
-        throw new Error('Cannot find id for head commit');
+        throw new Error(
+          `Cannot find id for head commit ${gitRef.target} on tag ${gitRef.name}`,
+        );
       }
       await upsertTag(db, gitRepositoryId, {
         graphql_id: gitRef.graphql_id,
