@@ -18,7 +18,7 @@ export function Details({children}: {children: React.ReactNode}) {
 
 export function InlineCode({children}: {children: React.ReactNode}) {
   return (
-    <code className="font-mono text-base bg-gray-200 text-gray-900 ">
+    <code className="font-mono text-base bg-gray-200 text-gray-900 p-1 -my-1">
       {children}
     </code>
   );
@@ -26,10 +26,8 @@ export function InlineCode({children}: {children: React.ReactNode}) {
 
 export function CodeBlock({children}: {children: React.ReactNode}) {
   return (
-    <pre className="bg-gray-200 py-4 block overflow-x-auto">
-      <code className=" container mx-auto font-mono text-base text-gray-900 ml-2">
-        {children}
-      </code>
+    <pre className="bg-gray-200 py-4 px-2 block overflow-x-auto">
+      <code className="font-mono text-base text-gray-900">{children}</code>
     </pre>
   );
 }

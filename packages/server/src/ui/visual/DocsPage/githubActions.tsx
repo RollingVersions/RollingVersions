@@ -7,8 +7,8 @@ export default function GithubActions() {
     <>
       <Instruction>GitHub Actions</Instruction>
       <Details>
-        Create a new file called
-        <InlineCode> .github/workflows/rollingversions.yml</InlineCode>. In it,
+        Create a new file called{' '}
+        <InlineCode>.github/workflows/rollingversions.yml</InlineCode>. In it,
         put:
       </Details>
       <GithubActionsCodeBlock />
@@ -36,7 +36,7 @@ export default function GithubActions() {
       </Details>
       <CodeBlock>
         {
-          '[![Rolling Versions](https://img.shields.io/badge/Rolling%20Versions-Enabled-brightgreen)](https://staging.rollingversions.com/YOUR_GITHUB_LOGIN/YOUR_REPOSITORY_NAME)'
+          '[![Rolling Versions](https://img.shields.io/badge/Rolling%20Versions-Enabled-brightgreen)](https://rollingversions.com/YOUR_GITHUB_LOGIN/YOUR_REPOSITORY_NAME)'
         }
       </CodeBlock>
 
