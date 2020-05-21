@@ -1,18 +1,8 @@
 import React from 'react';
-import installIcon from './install-icon.svg';
-import background from './background-image.svg';
+import InstallIcon from './install-icon.svg';
+// tslint:disable-next-line:no-implicit-dependencies
+import background from '!url-loader!./background-image.svg';
 
-export function InstallIcon({className}: {className: string}) {
-  return (
-    <img
-      aria-hidden={true}
-      width="49"
-      height="75"
-      className={className}
-      src={installIcon}
-    />
-  );
-}
 export function InstallButton({size = 'sm'}: {size?: 'sm' | 'lg'}) {
   return (
     <a
@@ -23,7 +13,10 @@ export function InstallButton({size = 'sm'}: {size?: 'sm' | 'lg'}) {
     >
       INSTALL
       <div className={size === 'lg' ? 'w-3' : 'w-2'} />
-      <InstallIcon className={size === 'lg' ? 'h-8 w-auto' : 'h-6 w-auto'} />
+      <InstallIcon
+        aria-hidden={true}
+        className={size === 'lg' ? 'h-8 w-auto' : 'h-6 w-auto'}
+      />
     </a>
   );
 }

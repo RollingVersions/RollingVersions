@@ -33,18 +33,13 @@ export default function ContactMethod({
   contactDescription: string;
   contactLink: string;
   contactAddress: string;
-  contactIcon: string;
+  contactIcon: React.ReactNode;
 }) {
   return (
     <div>
       <ContactDescription>{contactDescription}</ContactDescription>
       <ContactLink href={contactLink}>
-        <img
-          className="h-12 w-12"
-          src={contactIcon}
-          alt={contactDescription + ' Icon'}
-        />{' '}
-        {contactAddress}
+        {contactIcon} {contactAddress}
       </ContactLink>
     </div>
   );

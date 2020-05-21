@@ -24,14 +24,13 @@ function SelectorButton({
   children: string;
   isSelected: boolean;
   onClick: () => void;
-  svgIcon?: any;
+  svgIcon: React.ReactNode;
 }) {
-  console.dir(svgIcon);
   return (
     <button
-      className={`btn h-56 w-56 ${
+      className={`flex flex-col items-center h-56 w-56 ${
         isSelected
-          ? 'bg-gray-400 border-4 '
+          ? 'bg-gray-300 border-4 '
           : 'bg-transparent hover:bg-gray-100 border hover:border-orange-300 '
       } font-poppins text-4xl py-2 px-4 border-orange-500 focus:outline-none focus:shadow-orange`}
       onClick={() => onClick()}
@@ -39,14 +38,12 @@ function SelectorButton({
       {/* <div className="flex justify-end">
         <Radio isSelected={isSelected} />
       </div> */}
-      <div className="flex flex-wrap justify-center">
-        {!svgIcon ? null : (
-          <div className="h-12 w-12">
-            <svg className="fill-current text-gray-900">{CircleCIicon}</svg>
-          </div>
-        )}
-        <p>{children}</p>
+      <div className="flex items-center justify-center flex-grow h-0">
+        <div className="h-12 w-12">{svgIcon}</div>
       </div>
+      <p className="flex items-center justify-center flex-grow h-0">
+        {children}
+      </p>
     </button>
   );
 }
@@ -62,23 +59,41 @@ export default function Selector({
 }) {
   return (
     <>
-      <Instruction>Select Continuous Integration Service</Instruction>
+      <Instruction className="mt-16">
+        Select Continuous Integration Service
+      </Instruction>
 
-      <div className="grid grid-cols-2 col-gap-12">
-        <SelectorButton
-          isSelected={selected === 'github-actions'}
-          onClick={() => setSelected('github-actions')}
-          svgIcon={GithubActionsIcon}
-        >
-          Github Actions
-        </SelectorButton>
-        <SelectorButton
-          isSelected={selected === 'circle-ci'}
-          onClick={() => setSelected('circle-ci')}
-          svgIcon={CircleCIicon}
-        >
-          Circle CI
-        </SelectorButton>
+      <div className="my-16 flex justify-center">
+        <div className="grid grid-cols-2 col-gap-12">
+          <SelectorButton
+            isSelected={selected === 'github-actions'}
+            onClick={() => setSelected('github-actions')}
+            svgIcon={
+              <GithubActionsIcon
+                className={`fill-current ${
+                  selected === 'github-actions'
+                    ? `text-orange-500`
+                    : `text-gray-700`
+                }`}
+              />
+            }
+          >
+            Github Actions
+          </SelectorButton>
+          <SelectorButton
+            isSelected={selected === 'circle-ci'}
+            onClick={() => setSelected('circle-ci')}
+            svgIcon={
+              <CircleCIicon
+                className={`fill-current ${
+                  selected === 'circle-ci' ? `text-orange-500` : `text-gray-900`
+                }`}
+              />
+            }
+          >
+            Circle CI
+          </SelectorButton>
+        </div>
       </div>
     </>
   );

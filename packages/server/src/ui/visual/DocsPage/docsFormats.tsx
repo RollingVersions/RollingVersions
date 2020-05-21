@@ -3,8 +3,14 @@ import React from 'react';
 export function Heading({children}: {children: string}) {
   return <h2 className="font-poppins text-4xl">{children}</h2>;
 }
-export function Instruction({children}: {children: string}) {
-  return <h2 className="font-sans text-3xl">{children}</h2>;
+export function Instruction({
+  children,
+  className,
+}: {
+  children: string;
+  className?: string;
+}) {
+  return <h2 className={`font-sans text-3xl ${className}`}>{children}</h2>;
 }
 export function Details({children}: {children: React.ReactNode}) {
   return <p className="font-sans text-xl">{children}</p>;
