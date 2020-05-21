@@ -64,7 +64,19 @@ module.exports = {
         'monospace',
       ],
     },
+
+    listStyleType: {
+      none: 'none',
+      decimal: 'decimal',
+      square: 'square',
+    },
+
+    boxShadow: {
+      orange: '0 0 0 6px hsl(30, 100%, 50%, 20%)',
+      gray: '0 0 0 6px hsl(218, 23%, 23%, 20%)',
+    },
   },
+
   variants: {},
   plugins: [],
 };
