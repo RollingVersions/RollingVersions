@@ -1,4 +1,5 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import {Instruction} from './docsFormats';
 import GithubActionsIcon from '../../icons/githubactions.svg';
 import CircleCIicon from '../../icons/circleci.svg';
@@ -18,22 +19,25 @@ import CircleCIicon from '../../icons/circleci.svg';
 function SelectorButton({
   children,
   isSelected,
-  onClick,
+  to,
   svgIcon,
 }: {
   children: string;
   isSelected: boolean;
-  onClick: () => void;
+  to: string;
   svgIcon: React.ReactNode;
 }) {
   return (
-    <button
+    <Link
       className={`flex flex-col items-center h-56 w-56 ${
         isSelected
           ? 'bg-gray-300 border-4 '
           : 'bg-transparent hover:bg-gray-100 border hover:border-orange-300 '
       } font-poppins text-4xl py-2 px-4 border-orange-500 focus:outline-none focus:shadow-orange`}
-      onClick={() => onClick()}
+      to={to}
+      onMouseUp={(e) => {
+        e.currentTarget.blur();
+      }}
     >
       {/* <div className="flex justify-end">
         <Radio isSelected={isSelected} />
@@ -41,10 +45,8 @@ function SelectorButton({
       <div className="flex items-center justify-center flex-grow h-0">
         <div className="h-12 w-12">{svgIcon}</div>
       </div>
-      <p className="flex items-center justify-center flex-grow h-0">
-        {children}
-      </p>
-    </button>
+      <p className="text-center flex-grow h-0">{children}</p>
+    </Link>
   );
 }
 
@@ -52,10 +54,10 @@ export type CIservice = 'github-actions' | 'circle-ci';
 
 export default function Selector({
   selected,
-  setSelected,
+  links,
 }: {
   selected: CIservice | null;
-  setSelected: (value: CIservice) => void;
+  links: {[key in CIservice]: string};
 }) {
   return (
     <>
@@ -67,7 +69,7 @@ export default function Selector({
         <div className="grid grid-cols-2 col-gap-12">
           <SelectorButton
             isSelected={selected === 'github-actions'}
-            onClick={() => setSelected('github-actions')}
+            to={links['github-actions']}
             svgIcon={
               <GithubActionsIcon
                 className={`fill-current ${
@@ -78,11 +80,11 @@ export default function Selector({
               />
             }
           >
-            Github Actions
+            GitHub Actions
           </SelectorButton>
           <SelectorButton
             isSelected={selected === 'circle-ci'}
-            onClick={() => setSelected('circle-ci')}
+            to={links['circle-ci']}
             svgIcon={
               <CircleCIicon
                 className={`fill-current ${

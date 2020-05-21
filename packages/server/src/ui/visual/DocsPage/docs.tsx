@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {InstallButton} from '../HeroBar';
 import {Heading, Instruction, Details} from './docsFormats';
 import GithubActions from './githubActions';
@@ -6,9 +6,13 @@ import CircleCI from './circleCI';
 import MonoRepos from './monoRepos';
 import Selector, {CIservice} from './selector';
 
-export default function Docs() {
-  const [selected, setSelected] = useState<CIservice | null>(null);
-
+export default function Docs({
+  selected,
+  links,
+}: {
+  selected: CIservice | null;
+  links: {[key in CIservice]: string};
+}) {
   return (
     <>
       <div className="grid gap-4 md:gap-8">
@@ -21,10 +25,7 @@ export default function Docs() {
           actions workflows if you use them for releases.
         </Details>
         <InstallButton />
-        <Selector
-          selected={selected}
-          setSelected={(value: CIservice) => setSelected(value)}
-        />
+        <Selector selected={selected} links={links} />
         {selected === 'github-actions' ? (
           <GithubActions />
         ) : selected === 'circle-ci' ? (
