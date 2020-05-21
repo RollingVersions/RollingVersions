@@ -1,18 +1,12 @@
 import React from 'react';
 import {CodeBlock, CodeLine, CodePrefix} from './docsFormats';
 
-//  TODO - lines like
-// 'npx rollingversions publish --github-token ${{ secrets.GITHUB_TOKEN }}'
-// are throwing a lint error ERROR: (no-invalid-template-strings) /Users/dee/Documents/GitHub/RollingVersions/packages/server/src/ui/visual/DocsPage/githubActionsCodeBlock.tsx[106, 55]: Interpolation will only work for template strings
-// not sure how else to format to insist this is just a string
-
 export default function GithubActionsCodeBlock() {
   return (
     <CodeBlock>
       <CodeLine>
         <CodePrefix>name: </CodePrefix>Release
       </CodeLine>
-
       {'\n'}
       <CodeLine>
         <CodePrefix>on:</CodePrefix>
@@ -62,7 +56,7 @@ export default function GithubActionsCodeBlock() {
       </CodeLine>
       <CodeLine indent={4}>
         <CodePrefix>node-version: </CodePrefix>
-        {'${{ matrix.node-version }}'}
+        {`\${{ matrix.node-version }}`}
       </CodeLine>
       <CodeLine indent={2}>
         <CodePrefix>- run: </CodePrefix>npm install
@@ -84,10 +78,10 @@ export default function GithubActionsCodeBlock() {
       <CodeLine indent={2}>
         <CodePrefix>steps:</CodePrefix>
       </CodeLine>
-      <CodeLine indent={3}>
+      <CodeLine indent={2}>
         <CodePrefix>- uses: </CodePrefix>actions/checkout@v2
       </CodeLine>
-      <CodeLine indent={3}>
+      <CodeLine indent={2}>
         <CodePrefix>- uses: </CodePrefix>actions/setup-node@v1
       </CodeLine>
       <CodeLine indent={3}>
@@ -96,20 +90,16 @@ export default function GithubActionsCodeBlock() {
       <CodeLine indent={4}>
         <CodePrefix>node-version: </CodePrefix>12.x
       </CodeLine>
-      <CodeLine indent={3}>
+      <CodeLine indent={2}>
         <CodePrefix>- run: </CodePrefix>npm install
       </CodeLine>
-      <CodeLine indent={3}>
+      <CodeLine indent={2}>
         <CodePrefix>- run: </CodePrefix>
-        {
-          'echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc'
-        }
+        {`echo "//registry.npmjs.org/:_authToken=\${{ secrets.NPM_TOKEN }}" > ~/.npmrc`}
       </CodeLine>
-      <CodeLine indent={3}>
+      <CodeLine indent={2}>
         <CodePrefix>- run: </CodePrefix>
-        {
-          'npx rollingversions publish --github-token ${{ secrets.GITHUB_TOKEN }}'
-        }
+        {`npx rollingversions publish --github-token \${{ secrets.GITHUB_TOKEN }}`}
       </CodeLine>
     </CodeBlock>
   );
