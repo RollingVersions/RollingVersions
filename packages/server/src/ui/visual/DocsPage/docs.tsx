@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {InstallButton} from '../HeroBar';
 import {Heading, Instruction, Details} from './docsFormats';
 import GithubActions from './githubActions';
