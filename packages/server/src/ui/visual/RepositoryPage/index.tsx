@@ -4,7 +4,7 @@ import changesToMarkdown from 'rollingversions/lib/utils/changesToMarkdown';
 import GitHubMarkdownAsync from '../GitHubMarkdown/async';
 import {RepoResponse} from '../../../types';
 import Alert from '../Alert';
-import {InstallIcon} from '../HeroBar';
+import InstallIcon from '../HeroBar/install-icon.svg';
 
 function PackageName({children}: {children: React.ReactNode}) {
   return (
