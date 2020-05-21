@@ -4,7 +4,7 @@ import {
   upsertTag,
   getAllTags as getAllTagsPg,
 } from '../../services/postgres';
-import {GitHubClient, getAllRefCommits} from '../../services/github';
+import {GitHubClient, getCommitHistory} from '../../services/github';
 import {Repository} from 'rollingversions/lib/types';
 import {getAllTags as getAllTagsGh} from 'rollingversions/lib/services/github';
 import upsertCommits from './upsertCommits';
@@ -34,10 +34,7 @@ export default async function getAllTags(
               client,
               repo.id,
               repo,
-              getAllRefCommits(client, repo, {
-                type: 'tag',
-                name: tag.name,
-              }),
+              getCommitHistory(client, tag.commitGraphId),
             );
             headCommitId = await getCommitIdFromSha(db, repo.id, tag.commitSha);
           }

@@ -90,8 +90,20 @@ query GetRef($owner: String!, $name: String!, $qualifiedName: String!) {
       id
       name
       target {
-        __typename # Commit
-        oid
+        __typename
+        ... on Commit {
+          id
+          oid
+        }
+        ... on Tag {
+          target {
+            __typename
+            ... on Commit {
+              id
+              oid
+            }
+          }
+        }
       }
     }
   }
@@ -106,7 +118,7 @@ query GetAllRefCommits(
   repository(owner: $owner, name: $name) {
     ref(qualifiedName: $qualifiedName) {
       target {
-        __typename # Commit
+        __typename # N.B. this won't always be Commit on Tags, but is always Commit on Branch
         oid
         ... on Commit {
           id
@@ -119,6 +131,23 @@ query GetAllRefCommits(
               ...CommitDetail
             }
           }
+        }
+      }
+    }
+  }
+}
+query GetAllCommitHistory($commitID: ID!, $pageSize: Int!, $after: String) {
+  node(id: $commitID) {
+    __typename
+    ... on Commit {
+      id
+      history(first: $pageSize, after: $after) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          ...CommitDetail
         }
       }
     }
