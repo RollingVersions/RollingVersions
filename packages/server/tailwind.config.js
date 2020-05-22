@@ -1,4 +1,4 @@
-const {colors} = require('tailwindcss/defaultTheme');
+const {colors, screens} = require('tailwindcss/defaultTheme');
 
 module.exports = {
   theme: {
@@ -78,6 +78,7 @@ module.exports = {
 
     screens: {
       xs: '500px',
+      ...screens,
     },
   },
 
