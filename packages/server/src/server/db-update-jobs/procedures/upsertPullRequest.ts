@@ -33,10 +33,15 @@ export default async function upsertPullRequest(
   }
   const existingPr = await getPullRequestCommentID(db, repositoryId, pr.id);
   if (existingPr) {
-    await updatePullRequest(db, repositoryId, {
+    const {change_set_submitted_at_git_commit_sha} =
+      (await updatePullRequest(db, repositoryId, {
+        ...pr,
+      })) || {};
+    return {
       ...pr,
-    });
-    return {...pr, commentID: existingPr.commentID};
+      submittedAtCommitSha: change_set_submitted_at_git_commit_sha,
+      commentID: existingPr.commentID,
+    };
   } else {
     // by reading (and writing) state to the actual pull request itself (via a comment)
     // we can ensure that RollingVersions state is persisted even if Rolling Versions is
@@ -134,6 +139,10 @@ export default async function upsertPullRequest(
       }
       throw ex;
     }
-    return {...pr, commentID};
+    return {
+      ...pr,
+      submittedAtCommitSha: state?.submittedAtCommitSha,
+      commentID,
+    };
   }
 }

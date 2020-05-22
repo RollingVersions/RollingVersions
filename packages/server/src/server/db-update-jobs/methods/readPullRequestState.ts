@@ -22,7 +22,6 @@ import getPackageManifests from '../procedures/getPackageManifests';
 import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
-import log from '../../logger';
 import readRepository from '../procedures/readRepository';
 
 interface PullRequestPackage {
@@ -37,7 +36,6 @@ export default async function readPullRequestState(
   client: GitHubClient,
   pullRequest: Pick<PullRequest, 'repo' | 'number'>,
 ) {
-  let start = Date.now();
   const repo =
     (await readRepository(db, pullRequest.repo)) ||
     (await addRepository(db, client, pullRequest.repo, {
@@ -45,15 +43,10 @@ export default async function readPullRequestState(
       refreshTags: false,
     }));
 
-  log({
-    event_type: 'add_repository',
-    message: 'Ran add repository',
-    event_status: 'ok',
-    duration: Date.now() - start,
-  });
-  start = Date.now();
-
-  const [{id, is_closed, is_merged, commentID}, head] = await Promise.all([
+  const [
+    {id, is_closed, is_merged, commentID, submittedAtCommitSha},
+    head,
+  ] = await Promise.all([
     upsertPullRequest(db, client, repo.id, repo, pullRequest.number),
     upsertCommits(
       db,
@@ -63,29 +56,13 @@ export default async function readPullRequestState(
       getAllPullRequestCommits(client, repo, pullRequest.number),
     ),
   ] as const);
-  log({
-    event_type: 'upsert_pull_request',
-    message: 'Ran upsert pull request',
-    event_status: 'ok',
-    duration: Date.now() - start,
-  });
-
-  start = Date.now();
 
   const [changes, packages] = await Promise.all([
     getChangesForPullRequest(db, id),
-    getPackages(db, client, repo, head).then((packages) =>
+    getPackageManifestsForPr(db, client, repo, head).then((packages) =>
       addPackageVersions(packages, repo.tags),
     ),
   ]);
-
-  log({
-    event_type: 'get_changes_and_manifests',
-    message: 'Got change sets and package manifets',
-    event_status: 'ok',
-    duration: Date.now() - start,
-  });
-  start = Date.now();
 
   const changeSets = new Map<string, ChangeSet<{id: number; weight: number}>>();
   for (const change of changes) {
@@ -119,57 +96,49 @@ export default async function readPullRequestState(
       dependencies: {required: [], optional: [], development: []},
     },
   ]);
-  try {
-    return {
-      id,
-      repo,
-      headSha: head?.commit_sha || null,
-      commentID,
-      is_closed,
-      is_merged,
-      packages: new Map<string, PullRequestPackage>(
-        await Promise.all(
-          [...packages, ...missingPackages].map(
-            async ([packageName, metadata]): Promise<
-              [string, PullRequestPackage]
-            > => {
-              const releasedCommits = new Set(
-                metadata.manifests
-                  .map(({versionTag}) => {
-                    if (!versionTag) return undefined;
-                    return repo.tags.find((t2) => t2.name === versionTag?.name);
-                  })
-                  .filter(isTruthy)
-                  .map((versionTag) => versionTag.target_git_commit_id),
-              );
+  return {
+    id,
+    repo,
+    headSha: head?.commit_sha || null,
+    submittedAtCommitSha,
+    commentID,
+    is_closed,
+    is_merged,
+    packages: new Map<string, PullRequestPackage>(
+      await Promise.all(
+        [...packages, ...missingPackages].map(
+          async ([packageName, metadata]): Promise<
+            [string, PullRequestPackage]
+          > => {
+            const releasedCommits = new Set(
+              metadata.manifests
+                .map(({versionTag}) => {
+                  if (!versionTag) return undefined;
+                  return repo.tags.find((t2) => t2.name === versionTag?.name);
+                })
+                .filter(isTruthy)
+                .map((versionTag) => versionTag.target_git_commit_id),
+            );
 
-              return [
-                packageName,
-                {
-                  ...metadata,
-                  changeSet: changeSets.get(packageName) || getEmptyChangeSet(),
-                  released: await isPullRequestReleased(db, {
-                    releasedCommitIDs: releasedCommits,
-                    pullRequestID: id,
-                  }),
-                },
-              ];
-            },
-          ),
+            return [
+              packageName,
+              {
+                ...metadata,
+                changeSet: changeSets.get(packageName) || getEmptyChangeSet(),
+                released: await isPullRequestReleased(db, {
+                  releasedCommitIDs: releasedCommits,
+                  pullRequestID: id,
+                }),
+              },
+            ];
+          },
         ),
       ),
-    };
-  } finally {
-    log({
-      event_type: 'get_registry_version',
-      message: 'Got registry versions',
-      event_status: 'ok',
-      duration: Date.now() - start,
-    });
-  }
+    ),
+  };
 }
 
-async function getPackages(
+async function getPackageManifestsForPr(
   db: Connection,
   client: GitHubClient,
   repo: {
