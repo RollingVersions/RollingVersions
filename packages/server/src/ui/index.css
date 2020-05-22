@@ -44,9 +44,6 @@ body,
 .markdown a:hover {
   @apply underline;
 }
-.markdown a:focus {
-  @apply outline-none shadow-orange;
-}
 /* Paragraph */
 .markdown p {
   @apply mb-4;
