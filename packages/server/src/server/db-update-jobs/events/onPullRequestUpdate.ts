@@ -1,9 +1,6 @@
 import WebhooksApi from '@octokit/webhooks';
 import {db} from '../../services/postgres';
 import {getClientForEvent} from '../../getClient';
-import upsertPullRequest from '../procedures/upsertPullRequest';
-import upsertCommits from '../procedures/upsertCommits';
-import {getAllPullRequestCommits} from '../../services/github';
 import {updateStatus} from 'rollingversions/lib/services/github';
 import {APP_URL} from '../../environment';
 import {
