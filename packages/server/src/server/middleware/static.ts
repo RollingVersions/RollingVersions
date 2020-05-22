@@ -32,6 +32,16 @@ const getHtml = () => {
 
 const htmlCache = process.env.NODE_ENV !== 'production' ? null : getHtml();
 
+staticMiddleware.get('/help/:help_page', async (_req, res, _next) => {
+  const html = htmlCache || getHtml();
+  res.send(
+    html(
+      '',
+      // you can insert variables here via: `<script></script>`
+    ),
+  );
+});
+
 staticMiddleware.get(
   `/:owner/:repo`,
   requiresAuth(),

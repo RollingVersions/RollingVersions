@@ -3,6 +3,7 @@ import React from 'react';
 import {render} from 'react-dom';
 import {BrowserRouter, Switch, Route} from 'react-router-dom';
 import Home from './pages/Home';
+import Docs from './pages/Docs';
 import Contact from './pages/Contact';
 import PullChangeLog from './pages/PullChangeLog';
 import Repository from './pages/Repository';
@@ -12,6 +13,9 @@ render(
     <Switch>
       <Route path="/" exact>
         <Home />
+      </Route>
+      <Route path="/help" exact={false}>
+        <Docs />
       </Route>
       <Route path="/contact" exact>
         <Contact />
