@@ -8,7 +8,7 @@ export interface NavBarProps {
 export default function NavBar({children}: NavBarProps) {
   return (
     <nav className="container mx-auto flex flex-col items-center justify-between lg:flex-row lg:items-end pb-6 pt-16">
-      <Logo className="w-auto h-40" />
+      <Logo className="w-auto h-40 max-w-full" />
 
       <div className="text-xl mt-12">
         {React.Children.map(children, (child, index) => {

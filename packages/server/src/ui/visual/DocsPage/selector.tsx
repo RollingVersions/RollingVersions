@@ -66,7 +66,7 @@ export default function Selector({
       </Instruction>
 
       <div className="my-16 flex justify-center">
-        <div className="grid grid-cols-2 col-gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <SelectorButton
             isSelected={selected === 'github-actions'}
             to={links['github-actions']}
