@@ -17,11 +17,11 @@ function SelectorButton({
 }) {
   return (
     <Link
-      className={`flex flex-col items-center h-56 w-56 ${
+      className={`flex flex-col items-center h-48 w-48 md:h-56 md:w-56 ${
         isSelected
           ? 'bg-gray-300 border-4 '
           : 'bg-transparent hover:bg-gray-100 border hover:border-orange-300 '
-      } font-poppins text-4xl py-2 px-4 border-orange-500 focus:outline-none focus:shadow-orange`}
+      } font-poppins text-3xl md:text-4xl py-2 px-4 border-orange-500 focus:outline-none focus:shadow-orange`}
       to={to}
       onMouseUp={(e) => {
         e.currentTarget.blur();
@@ -51,7 +51,7 @@ export default function Selector({
       </Instruction>
 
       <div className="my-8 flex justify-center">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 xs:grid-cols-2 gap-12">
           <SelectorButton
             isSelected={selected === 'github-actions'}
             to={links['github-actions']}
