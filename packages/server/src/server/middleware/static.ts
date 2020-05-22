@@ -32,7 +32,7 @@ const getHtml = () => {
 
 const htmlCache = process.env.NODE_ENV !== 'production' ? null : getHtml();
 
-staticMiddleware.get('/help', async (_req, res, _next) => {
+staticMiddleware.get('/help/:help_page', async (_req, res, _next) => {
   const html = htmlCache || getHtml();
   res.send(
     html(
