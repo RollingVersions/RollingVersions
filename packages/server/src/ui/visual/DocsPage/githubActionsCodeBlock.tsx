@@ -90,16 +90,26 @@ export default function GithubActionsCodeBlock() {
       <CodeLine indent={4}>
         <CodePrefix>node-version: </CodePrefix>12.x
       </CodeLine>
+      <CodeLine indent={4}>
+        <CodePrefix>registry-url: </CodePrefix>'https://registry.npmjs.org'
+      </CodeLine>
       <CodeLine indent={2}>
         <CodePrefix>- run: </CodePrefix>npm install
       </CodeLine>
       <CodeLine indent={2}>
         <CodePrefix>- run: </CodePrefix>
-        {`echo "//registry.npmjs.org/:_authToken=\${{ secrets.NPM_TOKEN }}" > ~/.npmrc`}
+        npx rollingversions publish
       </CodeLine>
-      <CodeLine indent={2}>
-        <CodePrefix>- run: </CodePrefix>
-        {`npx rollingversions publish --github-token \${{ secrets.GITHUB_TOKEN }}`}
+      <CodeLine indent={3}>
+        <CodePrefix>env: </CodePrefix>
+      </CodeLine>
+      <CodeLine indent={4}>
+        <CodePrefix>GITHUB_TOKEN: </CodePrefix>
+        {`\${{ secrets.GITHUB_TOKEN }}`}
+      </CodeLine>
+      <CodeLine indent={4}>
+        <CodePrefix>NODE_AUTH_TOKEN: </CodePrefix>
+        {`\${{ secrets.NPM_TOKEN }}`}
       </CodeLine>
     </CodeBlock>
   );
