@@ -7,7 +7,7 @@ export function InstallButton({size = 'sm'}: {size?: 'sm' | 'lg'}) {
   return (
     <a
       href="https://github.com/apps/rollingversions/installations/new"
-      className={`flex items-center justify-center bg-black text-white italic font-poppins font-black ${
+      className={`flex items-center justify-center bg-black text-white italic font-poppins font-black focus:outline-none focus:shadow-gray ${
         size === 'lg' ? `h-20 flex-grow text-4xl` : `h-12 w-40 text-2xl`
       }`}
     >
