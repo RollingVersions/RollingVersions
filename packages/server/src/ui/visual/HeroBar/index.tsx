@@ -3,11 +3,17 @@ import InstallIcon from './install-icon.svg';
 // tslint:disable-next-line:no-implicit-dependencies
 import background from '!url-loader!./background-image.svg';
 
-export function InstallButton({size = 'sm'}: {size?: 'sm' | 'lg'}) {
+export function InstallButton({
+  size = 'sm',
+  shadow = 'gray',
+}: {
+  size?: 'sm' | 'lg';
+  shadow?: 'gray' | 'orange' | 'white';
+}) {
   return (
     <a
       href="https://github.com/apps/rollingversions/installations/new"
-      className={`flex items-center justify-center bg-black text-white italic font-poppins font-black focus:outline-none focus:shadow-gray ${
+      className={`flex items-center justify-center bg-black text-white italic font-poppins font-black focus:outline-none focus:shadow-${shadow} ${
         size === 'lg' ? `h-20 flex-grow text-4xl` : `h-12 w-40 text-2xl`
       }`}
     >
@@ -66,7 +72,7 @@ export function HeroBarFooter() {
       }}
     >
       <div className="container mx-auto flex flex-grow items-center">
-        <InstallButton size="lg" />
+        <InstallButton size="lg" shadow="white" />
       </div>
     </div>
   );
