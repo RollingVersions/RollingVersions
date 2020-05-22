@@ -10,7 +10,10 @@ export interface NavBarProps {
 export default function AppNavBar({children}: NavBarProps) {
   return (
     <nav className="flex flex-shrink-0 items-center text-2xl px-10 bg-white h-16 sticky top-0 z-50 overflow-x-auto">
-      <Link className="flex-shrink-0" to="/">
+      <Link
+        className="flex-shrink-0 focus:outline-none focus:shadow-orange"
+        to="/"
+      >
         <Logo className="w-auto h-8" />
       </Link>
       {React.Children.map(children, (child) => {
@@ -36,7 +39,10 @@ export function AppNavBarLink({children, to}: AppNavBarLinkProps) {
     return <span className="font-popins flex-shrink-0">{children}</span>;
   }
   return (
-    <Link to={to} className="font-popins flex-shrink-0">
+    <Link
+      to={to}
+      className="font-popins flex-shrink-0 focus:outline-none focus:shadow-orange"
+    >
       {children}
     </Link>
   );
