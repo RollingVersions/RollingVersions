@@ -7,7 +7,10 @@ export interface NavBarLinkProps {
 }
 export default function NavBarLink({children, to}: NavBarLinkProps) {
   return (
-    <Link to={to} className="font-heading italic text-orange-500">
+    <Link
+      to={to}
+      className="font-heading italic text-orange-500 focus:outline-none focus:shadow-orange"
+    >
       {children}
     </Link>
   );
