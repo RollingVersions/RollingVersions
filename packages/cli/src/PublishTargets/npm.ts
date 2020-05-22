@@ -149,7 +149,7 @@ export async function prepublish(
 ): Promise<PrePublishResult> {
   const [auth, packument] = await Promise.all([
     getProfile(),
-    getPackument(pkg.packageName, true),
+    getPackument(pkg.packageName),
   ] as const);
 
   if (!auth.authenticated) {

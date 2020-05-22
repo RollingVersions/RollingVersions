@@ -1,22 +1,77 @@
 import {resolve, dirname} from 'path';
-import {packument} from 'pacote';
 import {gt, prerelease} from 'semver';
 import {spawnBuffered} from '../../utils/spawn';
-const readConfig = require('libnpmconfig').read;
-const profile = require('npm-profile');
-const org = require('libnpmorg');
 
 // Could use libnpmpublish to publish, but probably best to just use CLI
 
+function tryJsonParse(str: string) {
+  try {
+    return JSON.parse(str);
+  } catch (ex) {
+    return null;
+  }
+}
+function npmError(err: {code: string; summary: string; detail: string}) {
+  const e: any = new Error(err.summary);
+  e.code = err.code;
+  e.summary = err.summary;
+  e.detail = err.detail;
+  return e;
+}
+async function parseNPM(result: Promise<Buffer>) {
+  return result.then(
+    (buffer) => {
+      try {
+        return {
+          ok: true as const,
+          value: JSON.parse(buffer.toString('utf8')),
+        };
+      } catch (ex) {
+        return {
+          ok: false as const,
+          code: 'JSONPARSEFAIL' as const,
+          summary: 'Unable to parse the response from npm as JSON',
+          detail: buffer.toString('utf8'),
+        };
+      }
+    },
+    (ex) => {
+      if (ex.stdout) {
+        const parsed = tryJsonParse(ex.stdout.toString('utf8'));
+        if (parsed?.error) {
+          const {error} = parsed;
+          const code: unknown = error.code;
+          const summary: string = error.summary;
+          const detail: string = error.detail;
+          switch (code) {
+            case 'E404':
+            case 'ENEEDAUTH':
+              return {
+                ok: false as const,
+                code,
+                summary,
+                detail,
+              };
+          }
+          if (summary) {
+            throw npmError(error);
+          }
+        }
+      }
+      throw ex;
+    },
+  );
+}
 export async function getOrgRoster(
-  name: string,
+  orgName: string,
 ): Promise<Record<string, 'admin' | 'owner' | 'developer'>> {
-  const config = {
-    ...readConfig().toJSON(),
-    cache: null,
-  };
-  const roster = await org.ls(name, config);
-  return roster;
+  const result = await parseNPM(
+    spawnBuffered('npm', ['org', 'ls', orgName, '--json'], {}),
+  );
+  if (!result.ok) {
+    throw npmError(result);
+  }
+  return result.value;
 }
 export async function getProfile(): Promise<
   | {
@@ -30,17 +85,18 @@ export async function getProfile(): Promise<
   | {authenticated: false; message: string}
 > {
   try {
-    const config = {
-      ...readConfig().toJSON(),
-      cache: null,
-    };
-    const p = await profile.get(config);
+    const result = await parseNPM(
+      spawnBuffered('npm', ['profile', 'get', '--json'], {}),
+    );
+    if (!result.ok) return {authenticated: false, message: result.summary};
     return {
       authenticated: true,
       profile: {
-        name: p.name,
-        email: p.email,
-        tfaOnPublish: p.tfa && p.tfa.mode !== 'auth-only',
+        name: result.value.name,
+        email: result.value.email,
+        tfaOnPublish: !!(
+          result.value.tfa && result.value.tfa.mode !== 'auth-only'
+        ),
       },
     };
   } catch (ex) {
@@ -50,74 +106,55 @@ export async function getProfile(): Promise<
 
 export async function getPackument(
   packageName: string,
-  fullMetadata: true,
 ): Promise<{
   versions: Set<string>;
   maintainers: {name: string; email?: string}[];
-} | null>;
-export async function getPackument(
-  packageName: string,
-  fullMetadata?: boolean,
-): Promise<{
-  versions: Set<string>;
-  maintainers?: {name: string; email?: string}[];
-} | null>;
-export async function getPackument(
-  packageName: string,
-  fullMetadata: boolean = false,
-): Promise<{
-  versions: Set<string>;
-  maintainers?: {name: string; email?: string}[];
 } | null> {
-  const config = {
-    ...readConfig().toJSON(),
-    cache: null,
-    fullMetadata,
-  };
-  try {
-    const pk = await packument(packageName, config);
-    if (!pk) return null;
-
-    if (fullMetadata) {
-      return {
-        maintainers: pk.maintainers || [],
-        versions: new Set(Object.keys(pk.versions)),
-      };
-    } else {
-      return {
-        versions: new Set(Object.keys(pk.versions)),
-      };
-    }
-  } catch (ex) {
-    if (ex.statusCode === 404) {
+  const result = await parseNPM(
+    spawnBuffered('npm', ['view', packageName, '--json'], {}),
+  );
+  if (!result.ok) {
+    if (result.code === 'E404') {
       return null;
     }
-    throw ex;
+    throw npmError(result);
   }
+  const p = result.value;
+  return {
+    versions: new Set(p.versions),
+    maintainers: (p.maintainers || []).map((m: string) => {
+      const [username, ...emailish] = m.split(' ');
+      return {
+        name: username,
+        email:
+          emailish
+            .join(' ')
+            .trim()
+            .replace(/^\<(.*)\>$/, '$1')
+            .trim() || undefined,
+      };
+    }),
+  };
 }
 
 export async function getNpmVersion(packageName: string) {
-  const config = {
-    ...readConfig().toJSON(),
-    cache: null,
-  };
-  try {
-    const pkg = await packument(packageName, config);
-    const latest = pkg['dist-tags'].latest;
-    return Object.values(pkg.versions)
-      .map((v) => v.version)
-      .reduce((a, b) => {
-        if (!prerelease(b) && gt(b, a)) {
-          return b;
-        }
-        return a;
-      }, latest);
-  } catch (ex) {
-    if (ex.statusCode === 404) {
+  const result = await parseNPM(
+    spawnBuffered('npm', ['view', packageName, '--json'], {}),
+  );
+  if (!result.ok) {
+    if (result.code === 'E404') {
       return null;
     }
-    throw ex;
+    throw npmError(result);
   }
+  const p = result.value;
+
+  return (p.versions as string[]).reduce<string>((a, b) => {
+    if (!prerelease(b) && gt(b, a)) {
+      return b;
+    }
+    return a;
+  }, p['dist-tags'].latest);
 }
 
 export async function publish(
