@@ -259,14 +259,18 @@ export async function updatePullRequest(
     is_merged: boolean;
     is_closed: boolean;
   },
-) {
-  await db.query(
+): Promise<
+  undefined | {change_set_submitted_at_git_commit_sha: string | null}
+> {
+  const results = await db.query(
     sql`
       UPDATE pull_requests
       SET title=${pr.title}, is_merged=${pr.is_merged}, is_closed=${pr.is_closed}
       WHERE git_repository_id=${git_repository_id} AND id=${pr.id}
+      RETURNING change_set_submitted_at_git_commit_sha;
     `,
   );
+  return results[0];
 }
 export async function updatePullRequestCommentID(
   db: Connection,
