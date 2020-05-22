@@ -1,4 +1,4 @@
-const {colors} = require('tailwindcss/defaultTheme');
+const {colors, screens} = require('tailwindcss/defaultTheme');
 
 module.exports = {
   theme: {
@@ -74,6 +74,11 @@ module.exports = {
     boxShadow: {
       orange: '0 0 0 6px hsl(30, 100%, 50%, 20%)',
       gray: '0 0 0 6px hsl(218, 23%, 23%, 20%)',
+    },
+
+    screens: {
+      xs: '500px',
+      ...screens,
     },
   },
 

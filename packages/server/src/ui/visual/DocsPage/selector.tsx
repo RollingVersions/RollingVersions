@@ -4,18 +4,6 @@ import {Instruction} from './docsFormats';
 import GithubActionsIcon from '../../icons/githubactions.svg';
 import CircleCIicon from '../../icons/circleci.svg';
 
-// function Radio({isSelected}: {isSelected: boolean}) {
-//   return (
-//     <div className="flex justify-center items-center border border-solid border-gray-800 border-6 rounded-full h-12 w-12">
-//       {!isSelected ? null : (
-//         <div className="bg-orange-500 border rounded-full h-8 w-8"></div>
-//       )}
-//     </div>
-//   );
-// }
-
-// TODO This looks horrible! I have been trying to get rid of blue outline when focussed/active but haven't succeeded.  I've tried ' outline-none focus:shadow-outline' and the outline is more shadowy but there all the time.
-
 function SelectorButton({
   children,
   isSelected,
@@ -29,19 +17,16 @@ function SelectorButton({
 }) {
   return (
     <Link
-      className={`flex flex-col items-center h-56 w-56 ${
+      className={`flex flex-col items-center h-48 w-48 md:h-56 md:w-56 ${
         isSelected
           ? 'bg-gray-300 border-4 '
           : 'bg-transparent hover:bg-gray-100 border hover:border-orange-300 '
-      } font-poppins text-4xl py-2 px-4 border-orange-500 focus:outline-none focus:shadow-orange`}
+      } font-poppins text-3xl md:text-4xl py-2 px-4 border-orange-500 focus:outline-none focus:shadow-orange`}
       to={to}
       onMouseUp={(e) => {
         e.currentTarget.blur();
       }}
     >
-      {/* <div className="flex justify-end">
-        <Radio isSelected={isSelected} />
-      </div> */}
       <div className="flex items-center justify-center flex-grow h-0">
         <div className="h-12 w-12">{svgIcon}</div>
       </div>
@@ -65,8 +50,8 @@ export default function Selector({
         Select Continuous Integration Service
       </Instruction>
 
-      <div className="my-16 flex justify-center">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+      <div className="my-8 flex justify-center">
+        <div className="grid grid-cols-1 xs:grid-cols-2 gap-12">
           <SelectorButton
             isSelected={selected === 'github-actions'}
             to={links['github-actions']}
