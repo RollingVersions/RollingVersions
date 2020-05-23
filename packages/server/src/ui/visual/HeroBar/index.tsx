@@ -5,15 +5,15 @@ import background from '!url-loader!./background-image.svg';
 
 export function InstallButton({
   size = 'sm',
-  shadow = 'gray',
+  shadow = 'shadow-gray',
 }: {
   size?: 'sm' | 'lg';
-  shadow?: 'gray' | 'orange' | 'white';
+  shadow?: 'shadow-gray' | 'shadow-orange' | 'shadow-white';
 }) {
   return (
     <a
       href="https://github.com/apps/rollingversions/installations/new"
-      className={`flex items-center justify-center bg-black text-white italic font-poppins font-black focus:outline-none focus:shadow-${shadow} ${
+      className={`flex items-center justify-center bg-black text-white italic font-poppins font-black focus:outline-none focus:${shadow} ${
         size === 'lg' ? `h-20 flex-grow text-4xl` : `h-12 w-40 text-2xl`
       }`}
     >
@@ -72,7 +72,7 @@ export function HeroBarFooter() {
       }}
     >
       <div className="container mx-auto flex flex-grow items-center">
-        <InstallButton size="lg" shadow="white" />
+        <InstallButton size="lg" shadow="shadow-white" />
       </div>
     </div>
   );
