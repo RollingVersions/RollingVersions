@@ -28,7 +28,17 @@ switch (COMMAND) {
       .addParam(param.string(['-r', '--repo'], 'repoSlug'))
       .addParam(param.string(['-g', '--github-token'], 'githubToken'))
       .addParam(param.string(['-b', '--deploy-branch'], 'deployBranch'))
-      .addParam(param.string(['--canary'], 'canary'));
+      .addParam(
+        param.parsedString(['--canary'], 'canary', (value) => {
+          if (!value) {
+            return {
+              valid: false,
+              reason: `When using the "--canary" flag, you *must* provide a build number as the parameter.`,
+            };
+          }
+          return {valid: true, value};
+        }),
+      );
     const parserResult = parse(publishParams, PARAMS);
     if (!parserResult.valid) {
       console.error(parserResult.reason);
@@ -132,7 +142,7 @@ switch (COMMAND) {
           }
         },
         onPublishGitHubRelease({pkg, dryRun, canary}) {
-          if (canary) {
+          if (canary !== null) {
             console.warn(
               `not publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
                 'GitHub Release',

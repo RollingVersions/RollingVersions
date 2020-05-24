@@ -47,7 +47,7 @@ async function withNpmVersion<T>(
         const version = packageVersions.get(key);
         if (version) {
           obj[key] = `${versionPrefix(obj[key], {
-            canary: !!config.canary,
+            canary: config.canary !== null,
           })}${version}`;
         }
       }
@@ -212,7 +212,7 @@ export async function prepublish(
   await withNpmVersion(config, pkg, newVersion, packageVersions, async () => {
     await npmPublish(config.dirname, pkg.path, {
       dryRun: true,
-      canary: config.canary,
+      canary: config.canary !== null,
     });
   });
 
@@ -228,7 +228,7 @@ export async function publish(
   await withNpmVersion(config, pkg, newVersion, packageVersions, async () => {
     await npmPublish(config.dirname, pkg.path, {
       dryRun: config.dryRun,
-      canary: config.canary,
+      canary: config.canary !== null,
     });
   });
 }

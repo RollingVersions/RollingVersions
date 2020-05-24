@@ -73,7 +73,7 @@ export async function createGitHubRelease(
   const headSha = await getHeadSha(dirname);
   if (dryRun) {
     logger.onPublishedGitHubRelease?.({pkg, tagName, dryRun});
-  } else if (!canary) {
+  } else if (canary === null) {
     const response = (
       await client.rest.repos.createRelease({
         draft: false,
