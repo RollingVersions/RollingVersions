@@ -110,25 +110,27 @@ export default async function readPullRequestState(
           async ([packageName, metadata]): Promise<
             [string, PullRequestPackage]
           > => {
-            const releasedCommits = new Set(
-              metadata.manifests
-                .map(({versionTag}) => {
-                  if (!versionTag) return undefined;
-                  return repo.tags.find((t2) => t2.name === versionTag?.name);
-                })
-                .filter(isTruthy)
-                .map((versionTag) => versionTag.target_git_commit_id),
-            );
-
             return [
               packageName,
               {
                 ...metadata,
                 changeSet: changeSets.get(packageName) || getEmptyChangeSet(),
-                released: await isPullRequestReleased(db, {
-                  releasedCommitIDs: releasedCommits,
-                  pullRequestID: id,
-                }),
+                released:
+                  is_merged &&
+                  (await isPullRequestReleased(db, {
+                    releasedCommitIDs: new Set(
+                      metadata.manifests
+                        .map(({versionTag}) => {
+                          if (!versionTag) return undefined;
+                          return repo.tags.find(
+                            (t2) => t2.name === versionTag?.name,
+                          );
+                        })
+                        .filter(isTruthy)
+                        .map((versionTag) => versionTag.target_git_commit_id),
+                    ),
+                    pullRequestID: id,
+                  })),
               },
             ];
           },
