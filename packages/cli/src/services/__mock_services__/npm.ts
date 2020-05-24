@@ -13,10 +13,13 @@ export const getProfile: typeof real.getProfile = async () => {
     : {authenticated: false, message: 'You are not authenticated'};
 };
 
-export const getPackument: typeof real.getPackument = async (
+export const getVersions: typeof real.getVersions = async (
   packageName: string,
 ) => {
-  return npmPackages.get(packageName) || null;
+  return npmPackages.get(packageName)?.versions || null;
+};
+export const getOwners: typeof real.getOwners = async (packageName: string) => {
+  return npmPackages.get(packageName)?.maintainers || null;
 };
 
 export const getNpmVersion: typeof real.getNpmVersion = async (packageName) => {
