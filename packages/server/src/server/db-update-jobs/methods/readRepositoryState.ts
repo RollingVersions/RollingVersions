@@ -1,9 +1,5 @@
 import {Repository} from 'rollingversions/lib/types';
-import {
-  Connection,
-  getCommitIdFromSha,
-  getAllUnreleasedChanges,
-} from '../../services/postgres';
+import {Connection, getAllUnreleasedChanges} from '../../services/postgres';
 import {GitHubClient} from '../../services/github';
 import addRepository from '../procedures/addRepository';
 import getPackageManifests from '../procedures/getPackageManifests';
