@@ -1,0 +1,1 @@
+CREATE INDEX change_log_entries_package_name ON change_log_entries (package_name);

@@ -707,21 +707,28 @@ export async function isPullRequestReleased(
 ): Promise<boolean> {
   if (!releasedCommitIDs.size) return false;
   const released = await db.query(sql`
-    WITH RECURSIVE
-      released_commits AS (
-        SELECT c.id
-        FROM git_commits c
-        WHERE c.id = ANY(${[...releasedCommitIDs]})
-        UNION
-        SELECT c.id
-        FROM git_commits c
+      WITH RECURSIVE released_commits AS (
+      SELECT
+        c.id, cpr.pull_request_id
+      FROM
+        git_commits c
+        LEFT OUTER JOIN git_commit_pull_requests cpr ON (cpr.git_commit_id = c.id)
+      WHERE
+        c.id = ANY(${[...releasedCommitIDs]})
+      UNION
+      SELECT
+        c.id, cpr.pull_request_id
+      FROM
+        git_commits c
         INNER JOIN git_commit_parents cp ON (cp.parent_git_commit_id = c.id)
         INNER JOIN released_commits ON (cp.child_git_commit_id = released_commits.id)
-      )
-    SELECT DISTINCT cp.pull_request_id
-    FROM released_commits c
-    INNER JOIN git_commit_pull_requests cp ON (cp.git_commit_id = c.id)
-    WHERE cp.pull_request_id = ${pullRequestID}
+        LEFT OUTER JOIN git_commit_pull_requests cpr ON (cpr.git_commit_id = c.id)
+    ) SELECT DISTINCT
+      c.pull_request_id
+    FROM
+      released_commits c
+    WHERE
+      c.pull_request_id = ${pullRequestID}
   `);
   return released.length !== 0;
 }
