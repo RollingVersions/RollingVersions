@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import chalk from 'chalk';
+import {parse, startChain, param} from 'parameter-reducers';
 import printHelp from './commands/help';
 import publish, {PublishResultKind} from './commands/publish';
 import changesToMarkdown from './utils/changesToMarkdown';
@@ -15,68 +16,39 @@ const CI_ENV = require('env-ci')();
 const DIRNAME = process.cwd();
 
 const COMMAND = process.argv[2];
+const PARAMS = process.argv.slice(3);
 
-if (process.argv.includes('-h') || process.argv.includes('--help')) {
-  printHelp();
-  process.exit(0);
-}
+const helpParams = startChain().addParam(param.flag(['-h', '--help'], 'help'));
 
 switch (COMMAND) {
   case 'publish': {
-    let dryRun = false;
-    let supressErrors = false;
-    let repoSlug: string | undefined;
-    let githubToken: string | undefined;
-    let deployBranch: string | undefined;
-
-    for (let i = 3; i < process.argv.length; i++) {
-      switch (process.argv[i]) {
-        case '-d':
-        case '--dry-run':
-          if (dryRun) {
-            console.error('You cannot specify --dry-run multiple times');
-            process.exit(1);
-          }
-          dryRun = true;
-          break;
-        case '--supress-errors':
-          if (supressErrors) {
-            console.error('You cannot specify --supress-errors multiple times');
-            process.exit(1);
-          }
-          supressErrors = true;
-          break;
-        case '-r':
-        case '--repo':
-          if (repoSlug) {
-            console.error('You cannot specify --repo multiple times');
-            process.exit(1);
-          }
-          repoSlug = process.argv[++i];
-          break;
-        case '-g':
-        case '--github-token':
-          if (githubToken) {
-            console.error('You cannot specify --github-token multiple times');
-            process.exit(1);
-          }
-          githubToken = process.argv[++i];
-          break;
-        case '-b':
-        case '--deploy-branch':
-          if (deployBranch) {
-            console.error('You cannot specify --deploy-branch multiple times');
-            process.exit(1);
-          }
-          deployBranch = process.argv[++i];
-          break;
-      }
+    const publishParams = helpParams
+      .addParam(param.flag(['-d', '--dry-run'], 'dryRun'))
+      .addParam(param.flag(['--supress-errors'], 'supressErrors'))
+      .addParam(param.string(['-r', '--repo'], 'repoSlug'))
+      .addParam(param.string(['-g', '--github-token'], 'githubToken'))
+      .addParam(param.string(['-b', '--deploy-branch'], 'deployBranch'));
+    const parserResult = parse(publishParams, PARAMS);
+    if (!parserResult.valid) {
+      console.error(parserResult.reason);
+      process.exit(1);
     }
-
-    if (!repoSlug) repoSlug = CI_ENV.slug || process.env.GITHUB_REPOSITORY; // GITHUB_REPOSITORY for GitHub Actions
-    if (!githubToken) {
-      githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    if (parserResult.parsed.help) {
+      printHelp();
+      process.exit(0);
     }
+    if (parserResult.rest.length) {
+      console.error(`Unrecognized parameter "${parserResult.rest[0]}"`);
+      process.exit(1);
+    }
+    const {
+      dryRun = false,
+      supressErrors = false,
+      // env.CI does not support GitHub actions, which uses GITHUB_REPOSITORY
+      repoSlug = CI_ENV.slug || process.env.GITHUB_REPOSITORY,
+      githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
+      deployBranch,
+    } = parserResult.parsed;
 
     if (!githubToken) {
       console.error(
