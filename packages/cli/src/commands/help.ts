@@ -14,6 +14,8 @@ export default function printHelp() {
                                 git tags/releases. You can alternatively
                                 just set the GITHUB_TOKEN enviornment variable.
  -b --deploy-branch  branch     The branch to deploy from. This will default
-                                to your default branch on GitHub.`);
+                                to your default branch on GitHub.
+    --canary         build_no   Create a canary release with the provided build
+                                number.`);
   console.warn(``);
 }

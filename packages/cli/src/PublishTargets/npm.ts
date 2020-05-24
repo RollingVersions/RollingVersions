@@ -20,6 +20,17 @@ const stringifyPackage = require('stringify-package');
 const detectIndent = require('detect-indent');
 const detectNewline = require('detect-newline').graceful;
 
+function versionPrefix(oldVersion: string, {canary}: {canary: boolean}) {
+  if (canary) return '';
+  switch (oldVersion[0]) {
+    case '^':
+    case '~':
+      return oldVersion[0];
+    default:
+      return '';
+  }
+}
+
 async function withNpmVersion<T>(
   config: PublishConfig,
   pkg: PackageManifest,
@@ -35,9 +46,9 @@ async function withNpmVersion<T>(
       for (const key of Object.keys(obj)) {
         const version = packageVersions.get(key);
         if (version) {
-          obj[key] = `${
-            obj[key][0] === '^' ? '^' : obj[key][0] === '~' ? '~' : ''
-          }${version}`;
+          obj[key] = `${versionPrefix(obj[key], {
+            canary: config.canary !== null,
+          })}${version}`;
         }
       }
     }
@@ -199,7 +210,10 @@ export async function prepublish(
   }
 
   await withNpmVersion(config, pkg, newVersion, packageVersions, async () => {
-    await npmPublish(config.dirname, pkg.path, true);
+    await npmPublish(config.dirname, pkg.path, {
+      dryRun: true,
+      canary: config.canary !== null,
+    });
   });
 
   return {ok: true};
@@ -212,6 +226,9 @@ export async function publish(
   packageVersions: Map<string, string | null>,
 ) {
   await withNpmVersion(config, pkg, newVersion, packageVersions, async () => {
-    await npmPublish(config.dirname, pkg.path, config.dryRun);
+    await npmPublish(config.dirname, pkg.path, {
+      dryRun: config.dryRun,
+      canary: config.canary !== null,
+    });
   });
 }

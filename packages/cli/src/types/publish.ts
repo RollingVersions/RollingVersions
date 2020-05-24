@@ -12,6 +12,7 @@ export interface PublishConfig {
   accessToken: string;
   deployBranch: string | null;
   logger: PublishEventHandlers;
+  canary: string | null;
 }
 
 export interface PublishEvents {
@@ -24,6 +25,7 @@ export interface PublishEvents {
     pkg: NewVersionToBePublished;
     tagName: string;
     dryRun: boolean;
+    canary: string | null;
   };
   onPublishedGitHubRelease: {
     pkg: NewVersionToBePublished;

@@ -64,14 +64,16 @@ export async function checkGitHubReleaseStatus(
 }
 
 export async function createGitHubRelease(
-  {owner, name: repo, dirname, dryRun, logger}: PublishConfig,
+  {owner, name: repo, dirname, dryRun, canary, logger}: PublishConfig,
   client: GitHubClient,
   pkg: NewVersionToBePublished,
   tagName: string,
 ) {
-  logger.onPublishGitHubRelease?.({pkg, tagName, dryRun});
+  logger.onPublishGitHubRelease?.({pkg, tagName, dryRun, canary});
   const headSha = await getHeadSha(dirname);
-  if (!dryRun) {
+  if (dryRun) {
+    logger.onPublishedGitHubRelease?.({pkg, tagName, dryRun});
+  } else if (canary === null) {
     const response = (
       await client.rest.repos.createRelease({
         draft: false,
@@ -86,7 +88,5 @@ export async function createGitHubRelease(
       })
     ).data;
     logger.onPublishedGitHubRelease?.({pkg, tagName, dryRun, response});
-  } else {
-    logger.onPublishedGitHubRelease?.({pkg, tagName, dryRun});
   }
 }
