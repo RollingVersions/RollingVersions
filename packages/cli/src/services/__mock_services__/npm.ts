@@ -36,7 +36,7 @@ export const getNpmVersion: typeof real.getNpmVersion = async (packageName) => {
 export const publish: typeof real.publish = async (
   repoDirname,
   path,
-  dryRun,
+  options,
 ) => {
   const pkg = JSON.parse(await readRepoFile(repoDirname, path, 'utf8'));
   if (!valid(pkg.version)) {
@@ -44,7 +44,7 @@ export const publish: typeof real.publish = async (
   }
   const packument = npmPackages.get(pkg.name);
   if (!packument) {
-    if (!dryRun) {
+    if (!options.dryRun) {
       npmPackages.set(pkg.name, {
         maintainers: npmProfile
           ? [{name: npmProfile.name, email: npmProfile.email}]
@@ -55,6 +55,6 @@ export const publish: typeof real.publish = async (
   } else if (packument.versions.has(pkg.version)) {
     throw new Error(`${pkg.version} is already published.`);
   } else {
-    if (!dryRun) packument.versions.add(pkg.version);
+    if (!options.dryRun) packument.versions.add(pkg.version);
   }
 };

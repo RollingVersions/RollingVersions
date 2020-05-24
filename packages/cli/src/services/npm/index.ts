@@ -177,9 +177,17 @@ export async function getNpmVersion(packageName: string) {
 export async function publish(
   repoDirname: string,
   path: string,
-  dryRun: boolean = false,
+  {dryRun, canary}: {dryRun: boolean; canary: string | null},
 ) {
-  await spawnBuffered('npm', ['publish', ...(dryRun ? ['--dry-run'] : [])], {
-    cwd: dirname(resolve(repoDirname, path)),
-  });
+  await spawnBuffered(
+    'npm',
+    [
+      'publish',
+      ...(canary ? ['--tag', 'canary'] : []),
+      ...(dryRun ? ['--dry-run'] : []),
+    ],
+    {
+      cwd: dirname(resolve(repoDirname, path)),
+    },
+  );
 }

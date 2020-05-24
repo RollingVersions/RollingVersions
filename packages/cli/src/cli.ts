@@ -27,7 +27,8 @@ switch (COMMAND) {
       .addParam(param.flag(['--supress-errors'], 'supressErrors'))
       .addParam(param.string(['-r', '--repo'], 'repoSlug'))
       .addParam(param.string(['-g', '--github-token'], 'githubToken'))
-      .addParam(param.string(['-b', '--deploy-branch'], 'deployBranch'));
+      .addParam(param.string(['-b', '--deploy-branch'], 'deployBranch'))
+      .addParam(param.string(['--canary'], 'canary'));
     const parserResult = parse(publishParams, PARAMS);
     if (!parserResult.valid) {
       console.error(parserResult.reason);
@@ -48,6 +49,7 @@ switch (COMMAND) {
       repoSlug = CI_ENV.slug || process.env.GITHUB_REPOSITORY,
       githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
       deployBranch,
+      canary,
     } = parserResult.parsed;
 
     if (!githubToken) {
@@ -78,6 +80,7 @@ switch (COMMAND) {
       accessToken: githubToken,
       deployBranch: deployBranch || null,
       dryRun,
+      canary: canary || null,
       logger: {
         onValidatedPackages({packages}) {
           const hasUpdates = packages.some(
@@ -128,7 +131,14 @@ switch (COMMAND) {
             console.warn(``);
           }
         },
-        onPublishGitHubRelease({pkg, dryRun}) {
+        onPublishGitHubRelease({pkg, dryRun, canary}) {
+          if (canary) {
+            console.warn(
+              `not publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
+                'GitHub Release',
+              )} in ${chalk.red(`canary mode`)}`,
+            );
+          }
           console.warn(
             `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
               'GitHub Release',

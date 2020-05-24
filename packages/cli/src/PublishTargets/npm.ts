@@ -199,7 +199,10 @@ export async function prepublish(
   }
 
   await withNpmVersion(config, pkg, newVersion, packageVersions, async () => {
-    await npmPublish(config.dirname, pkg.path, true);
+    await npmPublish(config.dirname, pkg.path, {
+      dryRun: true,
+      canary: config.canary,
+    });
   });
 
   return {ok: true};
@@ -212,6 +215,9 @@ export async function publish(
   packageVersions: Map<string, string | null>,
 ) {
   await withNpmVersion(config, pkg, newVersion, packageVersions, async () => {
-    await npmPublish(config.dirname, pkg.path, config.dryRun);
+    await npmPublish(config.dirname, pkg.path, {
+      dryRun: config.dryRun,
+      canary: config.canary,
+    });
   });
 }
