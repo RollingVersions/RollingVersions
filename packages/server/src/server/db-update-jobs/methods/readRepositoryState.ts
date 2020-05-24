@@ -54,7 +54,9 @@ export default async function readRepositoryState(
   });
   start = Date.now();
 
-  const commitIDs = new Map<string, Promise<number | null>>();
+  const commitIDs = new Map<string, number | Promise<number | null>>(
+    repo.tags.map((tag) => [tag.commitSha, tag.target_git_commit_id]),
+  );
   return await Promise.all(
     [...packages].map(
       async ([packageName, {manifests, dependencies}]): Promise<
