@@ -18,13 +18,16 @@ function npmError(err: {code: string; summary: string; detail: string}) {
   e.detail = err.detail;
   return e;
 }
-async function parseNPM(result: Promise<Buffer>) {
+async function parseNPM<T = any>(
+  result: Promise<Buffer>,
+  parseSuccess: (str: string) => T = (v) => JSON.parse(v),
+) {
   return result.then(
     (buffer) => {
       try {
         return {
           ok: true as const,
-          value: JSON.parse(buffer.toString('utf8')),
+          value: parseSuccess(buffer.toString('utf8')),
         };
       } catch (ex) {
         return {
@@ -104,12 +107,9 @@ export async function getProfile(): Promise<
   }
 }
 
-export async function getPackument(
+export async function getVersions(
   packageName: string,
-): Promise<{
-  versions: Set<string>;
-  maintainers: {name: string; email?: string}[];
-} | null> {
+): Promise<Set<string> | null> {
   const result = await parseNPM(
     spawnBuffered('npm', ['view', packageName, '--json'], {}),
   );
@@ -120,21 +120,38 @@ export async function getPackument(
     throw npmError(result);
   }
   const p = result.value;
-  return {
-    versions: new Set(p.versions),
-    maintainers: (p.maintainers || []).map((m: string) => {
-      const [username, ...emailish] = m.split(' ');
-      return {
-        name: username,
-        email:
-          emailish
-            .join(' ')
-            .trim()
-            .replace(/^\<(.*)\>$/, '$1')
-            .trim() || undefined,
-      };
-    }),
-  };
+  return new Set(p.versions);
+}
+
+export async function getOwners(
+  packageName: string,
+): Promise<{name: string; email?: string}[] | null> {
+  const result = await parseNPM(
+    spawnBuffered('npm', ['owner', 'ls', packageName, '--json'], {}),
+    (str) =>
+      str
+        .split('\n')
+        .filter(Boolean)
+        .map((m: string) => {
+          const [username, ...emailish] = m.split(' ');
+          return {
+            name: username,
+            email:
+              emailish
+                .join(' ')
+                .trim()
+                .replace(/^\<(.*)\>$/, '$1')
+                .trim() || undefined,
+          };
+        }),
+  );
+  if (!result.ok) {
+    if (result.code === 'E404') {
+      return null;
+    }
+    throw npmError(result);
+  }
+  return result.value;
 }
 
 export async function getNpmVersion(packageName: string) {

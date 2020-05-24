@@ -1,6 +1,7 @@
 import {
   getProfile,
-  getPackument,
+  getOwners,
+  getVersions,
   getOrgRoster,
   getNpmVersion,
   publish as npmPublish,
@@ -147,9 +148,10 @@ export async function prepublish(
   newVersion: string,
   packageVersions: Map<string, string | null>,
 ): Promise<PrePublishResult> {
-  const [auth, packument] = await Promise.all([
+  const [auth, owners, versions] = await Promise.all([
     getProfile(),
-    getPackument(pkg.packageName),
+    getOwners(pkg.packageName),
+    getVersions(pkg.packageName),
   ] as const);
 
   if (!auth.authenticated) {
@@ -169,7 +171,7 @@ export async function prepublish(
     };
   }
 
-  if (!packument) {
+  if (!owners || !versions) {
     const orgName = pkg.packageName.split('/')[0].substr(1);
     if (pkg.packageName[0] === '@' && profile.name !== orgName) {
       const orgRoster = await getOrgRoster(orgName);
@@ -181,14 +183,14 @@ export async function prepublish(
       }
     }
   } else {
-    if (!packument.maintainers.some((m) => m.name === profile.name)) {
+    if (!owners.some((m) => m.name === profile.name)) {
       return {
         ok: false,
         reason: `The user @${profile.name} is not listed as a maintainer of ${pkg.packageName} on npm`,
       };
     }
 
-    if (packument.versions.has(newVersion)) {
+    if (versions.has(newVersion)) {
       return {
         ok: false,
         reason: `${pkg.packageName} already has a version ${newVersion} on npm`,
