@@ -127,7 +127,7 @@ export async function getOwners(
   packageName: string,
 ): Promise<{name: string; email?: string}[] | null> {
   const result = await parseNPM(
-    spawnBuffered('npm', ['view', packageName, '--json'], {}),
+    spawnBuffered('npm', ['owner', 'ls', packageName, '--json'], {}),
     (str) =>
       str
         .split('\n')
