@@ -138,14 +138,15 @@ switch (COMMAND) {
                 'GitHub Release',
               )} in ${chalk.red(`canary mode`)}`,
             );
+          } else {
+            console.warn(
+              `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
+                'GitHub Release',
+              )} @ ${chalk.yellow(pkg.newVersion)}${
+                dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
+              }`,
+            );
           }
-          console.warn(
-            `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
-              'GitHub Release',
-            )} @ ${chalk.yellow(pkg.newVersion)}${
-              dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
-            }`,
-          );
         },
         onPublishTargetRelease({pkg, pkgManifest, dryRun}) {
           console.warn(
