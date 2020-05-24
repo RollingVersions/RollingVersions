@@ -20,6 +20,17 @@ const stringifyPackage = require('stringify-package');
 const detectIndent = require('detect-indent');
 const detectNewline = require('detect-newline').graceful;
 
+function versionPrefix(oldVersion: string, {canary}: {canary: boolean}) {
+  if (canary) return '';
+  switch (oldVersion[0]) {
+    case '^':
+    case '~':
+      return oldVersion[0];
+    default:
+      return '';
+  }
+}
+
 async function withNpmVersion<T>(
   config: PublishConfig,
   pkg: PackageManifest,
@@ -35,9 +46,9 @@ async function withNpmVersion<T>(
       for (const key of Object.keys(obj)) {
         const version = packageVersions.get(key);
         if (version) {
-          obj[key] = `${
-            obj[key][0] === '^' ? '^' : obj[key][0] === '~' ? '~' : ''
-          }${version}`;
+          obj[key] = `${versionPrefix(obj[key], {
+            canary: !!config.canary,
+          })}${version}`;
         }
       }
     }
