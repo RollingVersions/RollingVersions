@@ -18,11 +18,30 @@ export default async function getAllTags(
   {loadFromGitHub}: {loadFromGitHub: boolean},
 ) {
   if (loadFromGitHub) {
-    const gitTags = await getAllTagsGh(client, repo);
+    const [pgTagsByGraphID, gitTags] = await Promise.all([
+      getAllTagsPg(db, repo.id).then(
+        (pgTags) => new Map(pgTags.map((tag) => [tag.graphql_id, tag])),
+      ),
+      getAllTagsGh(client, repo),
+    ]);
 
     return (
       await Promise.all(
         gitTags.map(async (tag) => {
+          const pgTag = pgTagsByGraphID.get(tag.graphql_id);
+          if (
+            pgTag &&
+            pgTag.commit_sha === tag.commitSha &&
+            pgTag.name === tag.name
+          ) {
+            return {
+              id: pgTag.id,
+              graphql_id: pgTag.graphql_id,
+              name: pgTag.name,
+              target_git_commit_id: pgTag.target_git_commit_id,
+              commitSha: pgTag.commit_sha,
+            };
+          }
           let headCommitId = await getCommitIdFromSha(
             db,
             repo.id,
@@ -39,7 +58,6 @@ export default async function getAllTags(
             headCommitId = await getCommitIdFromSha(db, repo.id, tag.commitSha);
           }
           if (headCommitId) {
-            // TODO(perf): this bumps id unnecessarily
             return {
               commitSha: tag.commitSha,
               ...(await upsertTag(db, repo.id, {

@@ -1,0 +1,1 @@
+CREATE INDEX change_log_entries_sort_order ON change_log_entries (sort_order_weight, pull_request_id);
