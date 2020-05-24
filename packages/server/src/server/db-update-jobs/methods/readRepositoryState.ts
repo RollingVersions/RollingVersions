@@ -1,9 +1,5 @@
 import {Repository} from 'rollingversions/lib/types';
-import {
-  Connection,
-  getCommitIdFromSha,
-  getAllUnreleasedChanges,
-} from '../../services/postgres';
+import {Connection, getAllUnreleasedChanges} from '../../services/postgres';
 import {GitHubClient} from '../../services/github';
 import addRepository from '../procedures/addRepository';
 import getPackageManifests from '../procedures/getPackageManifests';
@@ -54,7 +50,9 @@ export default async function readRepositoryState(
   });
   start = Date.now();
 
-  const commitIDs = new Map<string, Promise<number | null>>();
+  const commitIDs = new Map<string, number>(
+    repo.tags.map((tag) => [tag.commitSha, tag.target_git_commit_id]),
+  );
   return await Promise.all(
     [...packages].map(
       async ([packageName, {manifests, dependencies}]): Promise<
@@ -79,17 +77,9 @@ export default async function readRepositoryState(
         const releasedShas = new Set(
           manifests.map((m) => m.versionTag?.commitSha).filter(isTruthy),
         );
-        const releasedIDs = (
-          await Promise.all(
-            [...releasedShas].map(async (sha) => {
-              const cached = commitIDs.get(sha);
-              if (cached) return cached;
-              const result = getCommitIdFromSha(db, repo.id, sha);
-              commitIDs.set(sha, result);
-              return result;
-            }),
-          )
-        ).filter(isTruthy);
+        const releasedIDs = [...releasedShas]
+          .map((sha) => commitIDs.get(sha))
+          .filter(isTruthy);
         const changeSet = getEmptyChangeSet<{
           id: number;
           weight: number;
