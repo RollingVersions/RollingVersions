@@ -166,12 +166,16 @@ export async function getNpmVersion(packageName: string) {
   }
   const p = result.value;
 
-  return (p.versions as string[]).reduce<string>((a, b) => {
-    if (!prerelease(b) && gt(b, a)) {
+  const versions = (p.versions as string[]).filter((v) => !prerelease(v));
+
+  if (!versions.length) return null;
+
+  return versions.reduce((a, b) => {
+    if (gt(b, a)) {
       return b;
     }
     return a;
-  }, p['dist-tags'].latest);
+  });
 }
 
 export async function publish(
