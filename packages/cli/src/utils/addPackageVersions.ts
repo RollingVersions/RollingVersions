@@ -1,4 +1,3 @@
-import {prerelease} from 'semver';
 import {
   PackageManifest,
   PackageDependencies,
@@ -43,13 +42,7 @@ export default async function addPackageVersions(
               manifests: await Promise.all(
                 manifests.map(
                   async (manifest): Promise<PackageManifestWithVersion> => {
-                    const registryVersionRaw = await getRegistryVersion(
-                      manifest,
-                    );
-                    const registryVersion =
-                      registryVersionRaw && !prerelease(registryVersionRaw)
-                        ? registryVersionRaw
-                        : null;
+                    const registryVersion = await getRegistryVersion(manifest);
                     return {
                       ...manifest,
                       registryVersion,
