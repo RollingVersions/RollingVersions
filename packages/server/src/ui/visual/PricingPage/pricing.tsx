@@ -44,7 +44,7 @@ export default function Pricing() {
               optionName="Hobby"
               benefits={[
                 'Individual projects',
-                'Working with a friend',
+                'Up to two users',
                 'Easy set-up',
                 'Fully hosted',
                 'Unlimited repositories',
@@ -68,8 +68,8 @@ export default function Pricing() {
               optionName="Enterprise"
               benefits={[
                 'Unlimited users',
-                'Self-hosted',
                 'Integrates with github enterprise',
+                'Self-hosted',
                 'Unlimited repositories',
                 'Tailored support',
               ]}
