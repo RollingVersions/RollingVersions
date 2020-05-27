@@ -11,11 +11,11 @@ function OptionBox({
 }) {
   return (
     <div
-      className={`mx-3 w-64 border-orange-500  bg-white font-poppins font-normal text-3xl text-gray-900 ${className ||
+      className={`border-orange-500 p-2 sm:p-3 xl:p-4 bg-white font-poppins font-normal text-2xl lg:text-3xl text-gray-900 ${className ||
         ''}`}
     >
-      <p className="text-center">{optionName}</p>
-      <ul className="font-sans text-xl list-square ml-6">
+      <p className="text-center py-2 sm:py-3 xl:p-4">{optionName}</p>
+      <ul className="font-sans text-base sm:text-lg md:text-base lg:text-xl list-square ml-6 pb-2 sm:pb-3 xl:p-4">
         {benefits.map((benefit) => (
           <li>{benefit}</li>
         ))}
@@ -27,20 +27,20 @@ function OptionBox({
 export default function Pricing() {
   return (
     <div>
-      <div className="bg-gray-200 mx-12">
-        <div className="w-screen h-auto">
+      <div className="bg-gray-200 sm:mx-8 lg:mx-12 xl:mx-32">
+        <div className="h-auto">
           <div
-            className="bg-gray-900 h-64 -mx-12"
+            className="bg-gray-900 h-64 sm:-mx-8 lg:-mx-12 xl:-mx-32"
             style={{
               clipPath: 'polygon(0 0, 100% 0, 100% 80%, 0 100%)',
             }}
           ></div>
           <div
-            className="flex justify-center pt-12"
-            style={{position: 'relative', marginTop: '-220px'}}
+            className="mx-4 sm:mx-8 lg:mx-12 xl:mx-32 grid grid-cols-1 md:grid-cols-3 gap-4 xl:gap-12"
+            style={{position: 'relative', marginTop: '-200px'}}
           >
             <OptionBox
-              className="mt-12 border"
+              className="mx-4 md:mx-0 md:my-12 border"
               optionName="Hobby"
               benefits={[
                 'Individual projects',
@@ -64,7 +64,7 @@ export default function Pricing() {
               ]}
             />
             <OptionBox
-              className="mt-12 border"
+              className="mx-4 md:mx-0 md:my-12 border"
               optionName="Enterprise"
               benefits={[
                 'Unlimited users',
@@ -76,13 +76,12 @@ export default function Pricing() {
             />
           </div>
         </div>
-        <div className="flex justify-center py-12">
-          <p className="font-sans text-xl">
-            We love open source and plan to keep Rolling versions{' '}
-            <span className="italic text-orange-500">forever free </span>
-            to Open Source projects
-          </p>
-        </div>
+
+        <p className="font-sans text-xl lg:text-2xl text-center py-12">
+          We love open source and plan to keep Rolling versions{' '}
+          <span className="italic text-orange-500">forever free </span>
+          to Open Source projects
+        </p>
       </div>
     </div>
   );
