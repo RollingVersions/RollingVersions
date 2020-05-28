@@ -8,7 +8,7 @@ function Description({children}: {children: string}) {
 }
 export default function MarketingContent() {
   return (
-    <div className="container mx-auto">
+    <div className="container px-1 xs:px-0 mx-auto">
       <div className="max-w-4xl grid grid-cols-1 gap-8 xs:gap-10">
         <section>
           <Heading>Submit a Pull Request</Heading>

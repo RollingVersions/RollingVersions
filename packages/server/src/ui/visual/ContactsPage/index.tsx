@@ -8,7 +8,7 @@ export default function ContactsPage() {
       <HeroBar>
         <p>We are here to help.</p>
       </HeroBar>
-      <div className="py-8 xs:py-16 container mx-auto">
+      <div className="py-8 xs:py-16 container px-1 xs:px-0  mx-auto">
         <Contacts />
       </div>
       <HeroBarFooter />
