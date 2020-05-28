@@ -29,8 +29,8 @@ export default function HeroBar({
 }) {
   return (
     <>
-      <div className="bg-orange-500 py-12 block md:hidden">
-        <div className="container mx-auto grid grid-cols-1 gap-6 font-poppins font-normal text-3xl text-white italic">
+      <div className="bg-orange-500 py-8 xs:py-10 sm:py-12 block md:hidden">
+        <div className="container mx-auto grid grid-cols-1 gap-4 xs:gap-6 font-poppins font-normal text-2xl xs:text-3xl text-white italic">
           {children}
         </div>
       </div>
