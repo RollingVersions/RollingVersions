@@ -59,7 +59,7 @@ export default function Pricing() {
           </div>
         </div>
 
-        <p className="font-sans text-xl lg:text-2xl text-center py-12">
+        <p className="font-sans text-xl lg:text-2xl text-center py-12 px-1">
           We love open source and plan to keep Rolling versions{' '}
           <span className="italic text-orange-500">forever free </span>
           to Open Source projects
