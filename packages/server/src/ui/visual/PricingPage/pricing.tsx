@@ -14,7 +14,10 @@ function OptionBox({
       className={`border-orange-500 p-2 sm:p-3 xl:p-4 bg-white font-poppins font-normal text-2xl lg:text-3xl text-gray-900 ${className ||
         ''}`}
     >
-      <p className="text-center py-2 sm:py-3 xl:p-4">{optionName}</p>
+      <h2 className="text-center pt-2 sm:pt-3 xl:pt-4">{optionName}</h2>
+      <p className="text-center font-sans pb-2 sm:pb-3 xl:pb-4 text-xl lg:text-2xl text-orange-500 italic">
+        Free in Beta
+      </p>
       <ul className="font-sans text-base sm:text-lg md:text-base lg:text-xl list-square ml-6 pb-2 sm:pb-3 xl:p-4">
         {benefits.map((benefit) => (
           <li>{benefit}</li>
@@ -36,9 +39,9 @@ export default function Pricing() {
               clipPath: 'polygon(0 0, 100% 0, 100% 80%, 0 100%)',
             }}
           >
-            <p className="font-poppins font-normal text-orange-500 text-4xl lg:text-5xl py-6 lg:py-4 text-center">
+            <h1 className="font-poppins font-normal text-orange-500 text-4xl lg:text-5xl py-6 lg:py-4 text-center">
               Pricing
-            </p>
+            </h1>
           </div>
           <div
             className="mx-4 sm:mx-8 lg:mx-12 xl:mx-32 grid grid-cols-1 md:grid-cols-3 gap-4 xl:gap-12"
