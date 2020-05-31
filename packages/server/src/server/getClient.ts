@@ -32,7 +32,7 @@ function addLogging(options: GitHubOptions): GitHubOptions {
         });
       } else {
         log({
-          event_status: 'error',
+          event_status: 'ok',
           event_type: 'graphql_batch_response',
           message: `GraphQL Batch Response`,
           query: req.query,
