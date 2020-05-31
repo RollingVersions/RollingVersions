@@ -1,4 +1,4 @@
-import GitHubClient, {auth} from '@github-graph/api';
+import GitHubClient, {auth, Options as GitHubOptions} from '@github-graph/api';
 import {Repository} from 'rollingversions/lib/types';
 import paginateBatched from 'rollingversions/lib/services/github/paginateBatched';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
@@ -6,7 +6,7 @@ import * as queries from './github-graph';
 import retry from 'then-retry';
 
 export {GitHubClient};
-export {auth};
+export {auth, GitHubOptions};
 
 export async function getRepository(client: GitHubClient, repo: Repository) {
   const repository = (await queries.getRepository(client, repo)).repository;

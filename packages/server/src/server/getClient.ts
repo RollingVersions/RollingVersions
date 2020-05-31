@@ -1,10 +1,61 @@
-import {GitHubClient, auth} from './services/github';
+import {GitHubClient, auth, GitHubOptions} from './services/github';
 import {Repository} from 'rollingversions/lib/types';
 import {APP_ID, PRIVATE_KEY} from './environment';
 import isObject from '../utils/isObject';
 import withCache from '../utils/withCache';
 import log from './logger';
 
+function addLogging(options: GitHubOptions): GitHubOptions {
+  const starts = new WeakMap<
+    {
+      query: string;
+      variables: any;
+    },
+    number
+  >();
+  return {
+    ...options,
+    onBatchRequest(req) {
+      starts.set(req, Date.now());
+    },
+    onBatchResponse(req, res) {
+      const duration = Date.now() - (starts.get(req) || 0);
+      if (res.data?.errors?.length) {
+        log({
+          event_status: 'error',
+          event_type: 'graphql_batch_error',
+          message: `GraphQL Batch Error: ${res.data.errors[0]?.message}`,
+          query: req.query,
+          variables: req.variables,
+          errors: res.data.errors,
+          duration,
+        });
+      } else {
+        log({
+          event_status: 'error',
+          event_type: 'graphql_batch_response',
+          message: `GraphQL Batch Response`,
+          query: req.query,
+          variables: req.variables,
+          errors: res.data.errors,
+          duration,
+        });
+      }
+    },
+    onResponse({query, variables}, {errors}) {
+      if (errors?.length) {
+        log({
+          event_status: 'error',
+          event_type: 'graphql_error',
+          message: `GraphQL Error: ${errors[0].message}`,
+          query,
+          variables,
+          errors,
+        });
+      }
+    },
+  };
+}
 export function getClientForEvent(event: {
   readonly id: string;
   readonly name: string;
@@ -22,25 +73,15 @@ export function getClientForEvent(event: {
   }
 }
 export default function getClient(installationId?: number) {
-  return new GitHubClient({
-    auth: auth.createAppAuth({
-      id: APP_ID,
-      privateKey: PRIVATE_KEY,
-      installationId,
+  return new GitHubClient(
+    addLogging({
+      auth: auth.createAppAuth({
+        id: APP_ID,
+        privateKey: PRIVATE_KEY,
+        installationId,
+      }),
     }),
-    onResponse({query, variables}, {errors}) {
-      if (errors?.length) {
-        log({
-          event_status: 'error',
-          event_type: 'graphql_error',
-          message: `GraphQL Error: ${errors[0].message}`,
-          query,
-          variables,
-          errors,
-        });
-      }
-    },
-  });
+  );
 }
 
 export const getClientForRepo = withCache(
@@ -64,19 +105,9 @@ export const getClientForRepo = withCache(
 );
 
 export function getClientForToken(token: string) {
-  return new GitHubClient({
-    auth: auth.createTokenAuth(token),
-    onResponse({query, variables}, {errors}) {
-      if (errors?.length) {
-        log({
-          event_status: 'error',
-          event_type: 'graphql_error',
-          message: `GraphQL Error: ${errors[0].message}`,
-          query,
-          variables,
-          errors,
-        });
-      }
-    },
-  });
+  return new GitHubClient(
+    addLogging({
+      auth: auth.createTokenAuth(token),
+    }),
+  );
 }
