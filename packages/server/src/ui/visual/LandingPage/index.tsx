@@ -9,7 +9,7 @@ export default function LandingPage() {
         <p>Add change sets to pull requests</p>
         <p>Automatically release with change logs</p>
       </HeroBar>
-      <div className="py-16">
+      <div className="py-8 xs:py-16">
         <MarketingContent />
       </div>
       <HeroBarFooter />

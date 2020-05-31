@@ -15,7 +15,7 @@ export default function DocsPage({
       <HeroBar>
         <p>Docs</p>
       </HeroBar>
-      <div className="py-16 container mx-auto">
+      <div className="py-8 xs:py-16 container px-1 xs:px-0 mx-auto">
         <Docs selected={selected} links={links} />
       </div>
       <HeroBarFooter />

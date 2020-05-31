@@ -1,15 +1,15 @@
 import React from 'react';
 
 function Heading({children}: {children: string}) {
-  return <h2 className="font-poppins text-4xl">{children}</h2>;
+  return <h2 className="font-poppins text-3xl xs:text-4xl">{children}</h2>;
 }
 function Description({children}: {children: string}) {
-  return <p className="font-sans text-2xl">{children}</p>;
+  return <p className="font-sans text-xl xs:text-2xl">{children}</p>;
 }
 export default function MarketingContent() {
   return (
-    <div className="container mx-auto">
-      <div className="max-w-4xl grid grid-cols-1 gap-10">
+    <div className="container px-1 xs:px-0 mx-auto">
+      <div className="max-w-4xl grid grid-cols-1 gap-8 xs:gap-10">
         <section>
           <Heading>Submit a Pull Request</Heading>
           <Description>
