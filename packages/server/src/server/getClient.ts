@@ -3,6 +3,7 @@ import {Repository} from 'rollingversions/lib/types';
 import {APP_ID, PRIVATE_KEY} from './environment';
 import isObject from '../utils/isObject';
 import withCache from '../utils/withCache';
+import log from './logger';
 
 export function getClientForEvent(event: {
   readonly id: string;
@@ -27,6 +28,18 @@ export default function getClient(installationId?: number) {
       privateKey: PRIVATE_KEY,
       installationId,
     }),
+    onResponse({query, variables}, {errors}) {
+      if (errors?.length) {
+        log({
+          event_status: 'error',
+          event_type: 'graphql_error',
+          message: `GraphQL Error: ${errors[0].message}`,
+          query,
+          variables,
+          errors,
+        });
+      }
+    },
   });
 }
 
@@ -53,5 +66,17 @@ export const getClientForRepo = withCache(
 export function getClientForToken(token: string) {
   return new GitHubClient({
     auth: auth.createTokenAuth(token),
+    onResponse({query, variables}, {errors}) {
+      if (errors?.length) {
+        log({
+          event_status: 'error',
+          event_type: 'graphql_error',
+          message: `GraphQL Error: ${errors[0].message}`,
+          query,
+          variables,
+          errors,
+        });
+      }
+    },
   });
 }

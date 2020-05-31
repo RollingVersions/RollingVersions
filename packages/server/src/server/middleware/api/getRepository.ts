@@ -1,4 +1,4 @@
-import {getBranch, GitHubClient} from 'rollingversions/lib/services/github';
+import {getBranch} from 'rollingversions/lib/services/github';
 import {
   isPackageStatus,
   PackageStatus,
@@ -10,6 +10,7 @@ import {Repository} from 'rollingversions/lib/types';
 import {RepoResponse} from '../../../types';
 import readRepositoryState from '../../db-update-jobs/methods/readRepositoryState';
 import {db} from '../../services/postgres';
+import {GitHubClient} from '../../services/github';
 
 export default async function getRepository(
   client: GitHubClient,
