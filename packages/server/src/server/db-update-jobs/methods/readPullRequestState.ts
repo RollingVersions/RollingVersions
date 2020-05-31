@@ -43,19 +43,20 @@ export default async function readPullRequestState(
       refreshTags: false,
     }));
 
-  const [
-    {id, is_closed, is_merged, commentID, submittedAtCommitSha},
-    head,
-  ] = await Promise.all([
-    upsertPullRequest(db, client, repo.id, repo, pullRequest.number),
-    upsertCommits(
-      db,
-      client,
-      repo.id,
-      repo,
-      getAllPullRequestCommits(client, repo, pullRequest.number),
-    ),
-  ] as const);
+  const {
+    id,
+    is_closed,
+    is_merged,
+    commentID,
+    submittedAtCommitSha,
+  } = await upsertPullRequest(db, client, repo.id, repo, pullRequest.number);
+  const head = await upsertCommits(
+    db,
+    client,
+    repo.id,
+    repo,
+    getAllPullRequestCommits(client, repo, pullRequest.number),
+  );
 
   const [changes, packages] = await Promise.all([
     getChangesForPullRequest(db, id),
