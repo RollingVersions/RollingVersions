@@ -4,6 +4,8 @@ interface LogEvent {
   message: string;
   [key: string]: any;
 }
-export default function log(event: LogEvent) {
-  console.info(JSON.stringify({...event, app: 'rollingversions'}));
+export default function log({message, ...event}: LogEvent) {
+  console.info(
+    JSON.stringify({...event, log: message, app: 'rollingversions'}),
+  );
 }
