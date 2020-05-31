@@ -64,7 +64,7 @@ if (process.env.NODE_ENV !== 'production') {
         method: req.method,
         url: req.url,
         status_code: res.statusCode,
-        response_time: responseTimeMs,
+        duration: responseTimeMs,
         total_time: totalTimeMs,
       });
     });

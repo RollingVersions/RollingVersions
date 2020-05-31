@@ -1254,16 +1254,16 @@
     postcss "7.0.27"
     purgecss "^2.1.0"
 
-"@github-graph/api@^1.2.2":
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/@github-graph/api/-/api-1.2.2.tgz#36db341cd84b25a1184f52feb23ac29bc0c9cd62"
-  integrity sha512-8VNkxTABfYcxif4PGj7QLlWS79+tg03uty5D08VSb8DL7MKDBLOeNDujYyJyrR601y4k5MgU1TBbeDJ6e9fQ+g==
+"@github-graph/api@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@github-graph/api/-/api-2.0.0.tgz#b992018331c5a99913ddd0526ce960616fe10840"
+  integrity sha512-S4rWb0Y9N6f7SINYtsIgu3/DPUOLgIZe1ResQO52ZJiPEiDl1sWFijprlYVVGgvE89JFWv2pRULLeKjDRoU/hw==
   dependencies:
     "@octokit/auth" "^2.0.0"
     "@octokit/request" "^5.3.2"
     "@octokit/rest" "^17.1.0"
     graphql "^14.6.0"
-    graphql-merge-unmerge "^3.0.0"
+    graphql-merge-unmerge "^4.0.0"
     graphql-tag "^2.10.3"
     universal-user-agent "^5.0.0"
 
@@ -7081,10 +7081,10 @@ graceful-fs@^4.1.11, graceful-fs@^4.1.15, graceful-fs@^4.1.2, graceful-fs@^4.1.6
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.2.3.tgz#4a12ff1b60376ef09862c2093edd908328be8423"
   integrity sha512-a30VEBm4PEdx1dRB7MFK7BejejvCvBronbLjht+sHuGYj8PHs7M/5Z+rt5lw551vZ7yfTCj4Vuyy3mSJytDWRQ==
 
-graphql-merge-unmerge@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/graphql-merge-unmerge/-/graphql-merge-unmerge-3.0.0.tgz#14ff83bbe5a3e7c21a2cea0342a1a3e5dfca2981"
-  integrity sha512-v9jHy0txChHMRJraMsNW8hu9w683otzTPsT9dSKZFcmiriQQwlq9SGtZk9TeX2MlH2kbHHnHjZVusgYJKokDjA==
+graphql-merge-unmerge@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/graphql-merge-unmerge/-/graphql-merge-unmerge-4.0.0.tgz#75665fba3824a8afe3ecff17bd28ad35d2439e97"
+  integrity sha512-nyr/15MZqRVg4fGlx399M5CNTvz5B/Lbwpk8caW8S6/T2mCg5zRvkWkyCyOyPqlVw4lsvkQ6Xq5YGxVUJnGyYA==
   dependencies:
     generate-alphabetic-name "^1.0.0"
     graphql "^14.6.0"

@@ -1,6 +1,5 @@
 import {PullRequestState, Repository} from 'rollingversions/lib/types';
 import {
-  GitHubClient,
   readComments,
   writeComment,
   updateStatus,
@@ -12,7 +11,7 @@ import {
   getUrlForChangeLog,
 } from '../../../utils/Rendering';
 import {APP_URL} from '../../environment';
-import {PullRequestDetail} from '../../services/github';
+import {GitHubClient, PullRequestDetail} from '../../services/github';
 
 async function getCommentState(
   client: GitHubClient,

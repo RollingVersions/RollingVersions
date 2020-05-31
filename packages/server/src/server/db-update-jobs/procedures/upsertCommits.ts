@@ -17,6 +17,7 @@ export default async function upsertCommits(
   allCommits: AsyncGenerator<GitHubCommit[], void, unknown>,
   {forceFullScan}: {forceFullScan?: boolean} = {},
 ) {
+  const seenPullRequests = new Set<number>();
   const missingParents = new Set<string>();
   const newCommits = [];
   let headCommit;
@@ -47,6 +48,14 @@ export default async function upsertCommits(
     );
     let lastAssociatedPRInserted = 0;
     if (exisingCommits.length) {
+      await addMissingPullRequests(
+        db,
+        client,
+        repositoryId,
+        repo,
+        exisingCommits.flatMap((c) => c.associatedPullRequests),
+        seenPullRequests,
+      );
       lastAssociatedPRInserted = await addAssociatedPullRequests(
         db,
         repositoryId,
@@ -71,21 +80,42 @@ export default async function upsertCommits(
   }
 
   newCommits.reverse();
+  await addMissingPullRequests(
+    db,
+    client,
+    repositoryId,
+    repo,
+    newCommits.flatMap((c) => c.associatedPullRequests),
+    seenPullRequests,
+  );
 
-  const seenPullRequests = new Set<number>();
+  await upsertCommitsPg(db, repositoryId, newCommits);
+
+  return headCommit;
+}
+
+async function addMissingPullRequests(
+  db: Connection,
+  client: GitHubClient,
+  repositoryId: number,
+  repo: Repository,
+  pullRequests: {
+    id: number;
+    graphql_id: string;
+  }[],
+  seenPullRequests: Set<number>,
+) {
   const newPullRequests = await filterOutExisingPullRequestIDs(
     db,
     repositoryId,
-    newCommits
-      .flatMap((c) => c.associatedPullRequests)
-      .filter(({id}) => {
-        if (seenPullRequests.has(id)) {
-          return false;
-        } else {
-          seenPullRequests.add(id);
-          return true;
-        }
-      }),
+    pullRequests.filter(({id}) => {
+      if (seenPullRequests.has(id)) {
+        return false;
+      } else {
+        seenPullRequests.add(id);
+        return true;
+      }
+    }),
   );
 
   await Promise.all(
@@ -93,8 +123,4 @@ export default async function upsertCommits(
       await upsertPullRequest(db, client, repositoryId, repo, p.graphql_id);
     }),
   );
-
-  await upsertCommitsPg(db, repositoryId, newCommits);
-
-  return headCommit;
 }
