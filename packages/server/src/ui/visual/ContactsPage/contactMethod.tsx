@@ -17,7 +17,7 @@ function ContactLink({
   return (
     <a
       href={href}
-      className="font-sans text-gray-900 text-lg xs:text-2xl sm:text-3xl md:text-4xl flex items-center"
+      className="font-sans text-gray-900 text-lg xs:text-2xl sm:text-3xl md:text-4xl flex items-center focus:outline-none focus:shadow-orange"
     >
       {children}
     </a>

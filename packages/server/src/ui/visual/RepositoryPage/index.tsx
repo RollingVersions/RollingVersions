@@ -71,7 +71,7 @@ export function ReleaseButton() {
   return (
     <button
       type="submit"
-      className="flex items-center justify-center bg-black text-white italic font-poppins font-black h-12 px-8 text-2xl"
+      className="flex items-center justify-center bg-black text-white italic font-poppins font-black h-12 px-8 text-2xl focus:outline-none focus:shadow-gray"
     >
       Release via GitHub
       <div className="w-2" />

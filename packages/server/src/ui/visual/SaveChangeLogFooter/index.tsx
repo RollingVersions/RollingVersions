@@ -32,7 +32,7 @@ function SaveButton({
     <button
       type="button"
       disabled={disabled}
-      className={`flex items-center justify-center bg-black text-white italic font-poppins font-medium h-16 w-auto px-6 text-4xl rounded shadow-lg ${
+      className={`flex items-center justify-center bg-black text-white italic font-poppins font-medium h-16 w-auto px-6 text-4xl rounded shadow-lg focus:outline-none focus:shadow-gray ${
         disabled ? ` opacity-50` : ``
       }`}
       onClick={async () => {
