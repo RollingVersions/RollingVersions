@@ -198,7 +198,8 @@ export async function* getAllFiles(
           getContents: async () => {
             const file = await retry(() =>
               gh.getFile(client, {
-                ...repo,
+                owner: repo.owner,
+                name: repo.name,
                 oid,
               }),
             );
