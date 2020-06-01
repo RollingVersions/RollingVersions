@@ -46,7 +46,6 @@ query GetViewer {
   viewer {
     __typename
     login
-    email
   }
 }
 

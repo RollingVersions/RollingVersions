@@ -11,20 +11,18 @@ export {Permission};
 
 const permisisonInfoMap = new WeakMap<
   Request,
-  {permission: Permission; login: string; email: string | null}
+  {permission: Permission; login: string}
 >();
 export function getPermission(req: Request) {
   return permisisonInfoMap.get(req)?.permission || 'none';
 }
 export interface User {
   login: string;
-  email: string | null;
 }
 export function getUser(req: Request): User {
   const pi = permisisonInfoMap.get(req) || repoPermisisonInfoMap.get(req);
   return {
     login: pi?.login || 'unknown',
-    email: pi?.email || null,
   };
 }
 export default function checkPermissions(allowedPermissions: Permission[]) {
