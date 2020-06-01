@@ -10,28 +10,65 @@ import isTruthy from '../../ts-utils/isTruthy';
 
 export {GitHubClient, auth};
 
+async function pullRequest<T>(
+  promise: Promise<
+    {repository?: null | {pullRequest?: null | T}} | null | undefined
+  >,
+): Promise<T | null> {
+  return promise.then(
+    (result) => {
+      return result?.repository?.pullRequest || null;
+    },
+    (ex) => {
+      try {
+        if (
+          ex &&
+          ex.errors &&
+          Array.isArray(ex.errors) &&
+          ex.errors.some(
+            (e: any) =>
+              e &&
+              e.type === 'NOT_FOUND' &&
+              Array.isArray(e.path) &&
+              e.path.length === 2 &&
+              e.path[0] === 'repository' &&
+              e.path[0] === 'pullRequest',
+          )
+        ) {
+          return null;
+        }
+      } catch {
+        // fallthrough
+      }
+      throw ex;
+    },
+  );
+}
+
 export const getPullRequestHeadSha = withRetry(
   async (client: GitHubClient, pr: Pick<PullRequest, 'repo' | 'number'>) => {
     return (
-      await gh.getPullRequestHeadSha(client, {
-        owner: pr.repo.owner,
-        name: pr.repo.name,
-        number: pr.number,
-      })
-    ).repository?.pullRequest?.headRef?.target.oid;
+      await pullRequest(
+        gh.getPullRequestHeadSha(client, {
+          owner: pr.repo.owner,
+          name: pr.repo.name,
+          number: pr.number,
+        }),
+      )
+    )?.headRef?.target.oid;
   },
 );
 
 export const getPullRequestStatus = withRetry(
   async (client: GitHubClient, pr: Pick<PullRequest, 'repo' | 'number'>) => {
     return (
-      (
-        await gh.getPullRequestStatus(client, {
+      (await pullRequest(
+        gh.getPullRequestStatus(client, {
           owner: pr.repo.owner,
           name: pr.repo.name,
           number: pr.number,
-        })
-      ).repository?.pullRequest || undefined
+        }),
+      )) || undefined
     );
   },
 );
@@ -44,12 +81,14 @@ export const getPullRequestAuthor = withRetry(
   async (client: GitHubClient, pr: Pick<PullRequest, 'repo' | 'number'>) => {
     return (
       (
-        await gh.getPullRequestAuthor(client, {
-          owner: pr.repo.owner,
-          name: pr.repo.name,
-          number: pr.number,
-        })
-      ).repository?.pullRequest?.author || null
+        await pullRequest(
+          gh.getPullRequestAuthor(client, {
+            owner: pr.repo.owner,
+            name: pr.repo.name,
+            number: pr.number,
+          }),
+        )
+      )?.author || null
     );
   },
 );
@@ -163,11 +202,13 @@ export async function* getAllFiles(
       ? (await gh.getCommitFileNames(client, {id: commitGraphQLId})).node
       : (pullRequestOrRepo.repo
           ? (
-              await gh.getPullRequestFileNames(client, {
-                ...pullRequestOrRepo.repo,
-                number: pullRequestOrRepo.number,
-              })
-            ).repository?.pullRequest?.headRef
+              await pullRequest(
+                gh.getPullRequestFileNames(client, {
+                  ...pullRequestOrRepo.repo,
+                  number: pullRequestOrRepo.number,
+                }),
+              )
+            )?.headRef
           : (await gh.getRepoFileNames(client, pullRequestOrRepo)).repository
               ?.defaultBranchRef
         )?.target,
@@ -238,17 +279,19 @@ export async function* readComments(
   for await (const comment of paginate(
     (after) =>
       retry(() =>
-        gh.getPullRequestComments(client, {
-          ...pr.repo,
-          number: pr.number,
-          after,
-          first: pageSize,
-        }),
+        pullRequest(
+          gh.getPullRequestComments(client, {
+            ...pr.repo,
+            number: pr.number,
+            after,
+            first: pageSize,
+          }),
+        ),
       ),
-    (page) => page?.repository?.pullRequest?.comments?.nodes || [],
+    (page) => page?.comments?.nodes || [],
     (page): string | undefined =>
-      (page?.repository?.pullRequest?.comments?.pageInfo?.hasNextPage &&
-        page?.repository?.pullRequest?.comments?.pageInfo?.endCursor) ||
+      (page?.comments?.pageInfo?.hasNextPage &&
+        page?.comments?.pageInfo?.endCursor) ||
       undefined,
   )) {
     if (comment?.databaseId) {
