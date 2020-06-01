@@ -47,7 +47,6 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
           message: `${permissionInfo.login} does not have access to ${pullRequest.repo.owner}/${pullRequest.repo.name}#${pullRequest.number}`,
           reason: permissionInfo.reason,
           login: permissionInfo.login,
-          email: permissionInfo.email,
           repo_owner: pullRequest.repo.owner,
           repo_name: pullRequest.repo.name,
           pull_number: pullRequest.number,
@@ -68,7 +67,7 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
 
 const repoPermisisonInfoMap = new WeakMap<
   Request,
-  {permission: Permission; login: string; email: string | null}
+  {permission: Permission; login: string}
 >();
 export function getRepoPermission(req: Request) {
   return repoPermisisonInfoMap.get(req)?.permission || 'none';
@@ -87,7 +86,6 @@ export function checkRepoPermissions(allowedPermissions: Permission[]) {
           message: `${permissionInfo.login} does not have access to ${repo.owner}/${repo.name}`,
           reason: permissionInfo.reason,
           login: permissionInfo.login,
-          email: permissionInfo.email,
           repo_owner: repo.owner,
           repo_name: repo.name,
         });
