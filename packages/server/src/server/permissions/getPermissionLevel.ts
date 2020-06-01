@@ -125,12 +125,11 @@ export default async function getPermissionLevel(
 ): Promise<{
   permission: Permission;
   login: string;
-  email: string | null;
   reason?: string;
 }> {
   const viewerPromise = getViewer(userAuth);
   const [
-    {login, email, __typename: viewerTypeName},
+    {login, __typename: viewerTypeName},
     viewerPermission,
     isPublic,
     author,
@@ -143,13 +142,12 @@ export default async function getPermissionLevel(
     getClientForRepo(pr.repo)
       .then((repoClient) => gh.getPullRequestStatus(repoClient, pr))
       .catch(async (ex) => {
-        const {login, email} = await viewerPromise;
+        const {login} = await viewerPromise;
         log({
           event_status: 'warn',
           event_type: 'failed_to_get_pull_request',
           message: ex.stack,
           login,
-          email,
           repo_owner: pr.repo.owner,
           repo_name: pr.repo.name,
           pull_number: pr.number,
@@ -159,7 +157,7 @@ export default async function getPermissionLevel(
   ] as const);
 
   if (!pullRequestStatus) {
-    return {permission: 'none', login, email};
+    return {permission: 'none', login};
   }
 
   const viewerIsAuthor =
@@ -167,17 +165,17 @@ export default async function getPermissionLevel(
   const isPrOpen = !(pullRequestStatus.closed || pullRequestStatus.merged);
 
   if (viewerPermission === 'edit') {
-    return {permission: 'edit', login, email};
+    return {permission: 'edit', login};
   }
 
   if (isPublic || viewerPermission === 'view') {
     if (viewerIsAuthor && isPrOpen) {
-      return {permission: 'edit', login, email};
+      return {permission: 'edit', login};
     }
-    return {permission: 'view', login, email};
+    return {permission: 'view', login};
   }
 
-  return {permission: 'none', login, email};
+  return {permission: 'none', login};
 }
 
 export async function getRepoPermissionLevel(
@@ -186,22 +184,21 @@ export async function getRepoPermissionLevel(
 ): Promise<{
   permission: Permission;
   login: string;
-  email: string | null;
   reason?: string;
 }> {
-  const [{login, email}, viewerPermission, isPublic] = await Promise.all([
+  const [{login}, viewerPermission, isPublic] = await Promise.all([
     getViewer(userAuth),
     checkViewerPermissions(userAuth, repo),
     getRepositoryIsPublic(repo),
   ] as const);
 
   if (viewerPermission === 'edit') {
-    return {permission: 'edit', login, email};
+    return {permission: 'edit', login};
   }
 
   if (isPublic || viewerPermission === 'view') {
-    return {permission: 'view', login, email};
+    return {permission: 'view', login};
   }
 
-  return {permission: 'none', login, email};
+  return {permission: 'none', login};
 }
