@@ -1,4 +1,7 @@
-import GitHubClient, {auth, Options as GitHubOptions} from '@github-graph/api';
+import GitHubClient, {
+  auth,
+  OptionsWithAuth as GitHubOptions,
+} from '@github-graph/api';
 import {Repository} from 'rollingversions/lib/types';
 import paginateBatched from 'rollingversions/lib/services/github/paginateBatched';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';

@@ -18,7 +18,7 @@
     "postbuild": "rimraf lib/**/{__tests__,__mock_services__}"
   },
   "dependencies": {
-    "@github-graph/api": "^2.0.0",
+    "@github-graph/api": "^2.2.0",
     "@types/semver": "^7.1.0",
     "assert-never": "^1.2.0",
     "chalk": "^3.0.0",

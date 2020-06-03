@@ -5,7 +5,12 @@ import isObject from '../utils/isObject';
 import withCache from '../utils/withCache';
 import log from './logger';
 
-function addLogging(options: GitHubOptions): GitHubOptions {
+function addLogging(
+  options: Omit<
+    GitHubOptions,
+    'rateLimitOptions' | 'onBatchRequest' | 'onBatchResponse' | 'onResponse'
+  >,
+): GitHubOptions {
   const starts = new WeakMap<
     {
       query: string;
@@ -15,6 +20,10 @@ function addLogging(options: GitHubOptions): GitHubOptions {
   >();
   return {
     ...options,
+    rateLimitOptions: {
+      maxSize: 300,
+      interval: 2000,
+    },
     onBatchRequest(req) {
       starts.set(req, Date.now());
     },
