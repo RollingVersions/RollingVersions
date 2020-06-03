@@ -1263,10 +1263,10 @@
     postcss "7.0.27"
     purgecss "^2.1.0"
 
-"@github-graph/api@^2.2.0":
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/@github-graph/api/-/api-2.2.0.tgz#cf673736f0fefe02f3d49cfe835a8ed3f04de7b1"
-  integrity sha512-grfHQES/a7xwt7O6WAc8pwSuOoXKSRScstegV6Tg8Gj7LL34mJ7zVAEYWTMVBaw4gd/5X2zdESirkhRmaq0RoA==
+"@github-graph/api@^2.2.1":
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/@github-graph/api/-/api-2.2.1.tgz#13b07587a8d0c6128c6d7e3c41bc12ad996a11fb"
+  integrity sha512-pdVF09SDLePrBCKSOdVPsV0Bb9l1GxHwjiD+skNH7vC6cki3dcPq/oA73zQc1xC6t0HT+125BwS2fEvdBkUY4A==
   dependencies:
     "@authentication/rate-limit" "^0.0.7"
     "@octokit/auth" "^2.0.0"
