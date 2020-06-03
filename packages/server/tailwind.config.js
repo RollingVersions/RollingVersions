@@ -84,7 +84,8 @@ module.exports = {
 
     container: {
       center: true,
-      padding: '3vw',
+      padding: '5vw',
+      screens: {xl: screens.xl},
     },
   },
 
