@@ -17,6 +17,11 @@ export default async function upsertCommits(
   allCommits: AsyncGenerator<GitHubCommit[], void, unknown>,
   {forceFullScan}: {forceFullScan?: boolean} = {},
 ) {
+  function isMatchingRepositoryID(commit: {
+    repositoryId: number | null;
+  }): boolean {
+    return commit.repositoryId === repositoryId;
+  }
   const seenPullRequests = new Set<number>();
   const missingParents = new Set<string>();
   const newCommits = [];
@@ -53,14 +58,16 @@ export default async function upsertCommits(
         client,
         repositoryId,
         repo,
-        exisingCommits.flatMap((c) => c.associatedPullRequests),
+        exisingCommits.flatMap((c) =>
+          c.associatedPullRequests.filter(isMatchingRepositoryID),
+        ),
         seenPullRequests,
       );
       lastAssociatedPRInserted = await addAssociatedPullRequests(
         db,
         repositoryId,
         exisingCommits.flatMap((c) =>
-          c.associatedPullRequests.map((pr) => ({
+          c.associatedPullRequests.filter(isMatchingRepositoryID).map((pr) => ({
             commit_sha: c.commit_sha,
             pull_request_id: pr.id,
           })),
@@ -85,7 +92,9 @@ export default async function upsertCommits(
     client,
     repositoryId,
     repo,
-    newCommits.flatMap((c) => c.associatedPullRequests),
+    newCommits.flatMap((c) =>
+      c.associatedPullRequests.filter(isMatchingRepositoryID),
+    ),
     seenPullRequests,
   );
 
