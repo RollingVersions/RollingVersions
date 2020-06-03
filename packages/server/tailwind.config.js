@@ -81,6 +81,11 @@ module.exports = {
       xs: '500px',
       ...screens,
     },
+
+    container: {
+      center: true,
+      padding: '3vw',
+    },
   },
 
   variants: {},
