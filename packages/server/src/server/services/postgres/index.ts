@@ -92,7 +92,7 @@ export async function upsertCommits(
     graphql_id: string;
     commit_sha: string;
     parents: string[];
-    associatedPullRequests: {id: number}[];
+    associatedPullRequests: {id: number; repositoryId: number | null}[];
   }[],
 ) {
   const existingCommits = new Set<string>(
@@ -171,13 +171,15 @@ export async function upsertCommits(
       `);
     }
     const associatedPullRequests = commits.flatMap((c) =>
-      c.associatedPullRequests.map((p) => {
-        const git_commit_id = commitIDs.get(c.commit_sha);
-        if (!git_commit_id) {
-          throw new Error(`Could not find the commit ${c.commit_sha}`);
-        }
-        return {git_commit_id, pull_request_id: p.id};
-      }),
+      c.associatedPullRequests
+        .filter((p) => p.repositoryId === git_repository_id)
+        .map((p) => {
+          const git_commit_id = commitIDs.get(c.commit_sha);
+          if (!git_commit_id) {
+            throw new Error(`Could not find the commit ${c.commit_sha}`);
+          }
+          return {git_commit_id, pull_request_id: p.id};
+        }),
     );
     if (associatedPullRequests.length) {
       // N.B. this can fail if the pull request records have not yet been created

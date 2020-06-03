@@ -214,14 +214,24 @@ export type GitHubCommit = {
   graphql_id: string;
   commit_sha: string;
   parents: string[];
-  associatedPullRequests: {id: number; graphql_id: string}[];
+  associatedPullRequests: {
+    id: number;
+    graphql_id: string;
+    repositoryId: number | null;
+  }[];
 };
 function formatCommit(result: {
   id: string;
   oid: string;
   parents: {nodes: null | ({oid: string} | null)[]};
   associatedPullRequests: null | {
-    nodes: null | (null | {databaseId: number | null; id: string})[];
+    nodes:
+      | null
+      | (null | {
+          databaseId: number | null;
+          id: string;
+          repository: {databaseId: number | null};
+        })[];
   };
 }): GitHubCommit {
   return {
@@ -237,7 +247,11 @@ function formatCommit(result: {
               `Expected pull request ${p.id} to have a databaseId`,
             );
           }
-          return {id: p.databaseId, graphql_id: p.id};
+          return {
+            id: p.databaseId,
+            graphql_id: p.id,
+            repositoryId: p.repository.databaseId,
+          };
         })
         .filter(isTruthy) || [],
   };

@@ -233,6 +233,9 @@ fragment CommitDetail on Commit {
     nodes {
       id
       databaseId
+      repository {
+        databaseId
+      }
     }
   }
 }
