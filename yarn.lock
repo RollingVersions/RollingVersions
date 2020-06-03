@@ -91,6 +91,15 @@
     "@types/express" "^4.0.39"
     oauth "^0.9.15"
 
+"@authentication/rate-limit@^0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@authentication/rate-limit/-/rate-limit-0.0.7.tgz#a152f7a7d7c7be23907c5215d83bde8a582d72ee"
+  integrity sha512-uonLdxfQjqJMWTnoFcSMDlkt5tmfPYKVQU26hcDeIiwSQw2p7XU1gpnbxNDUyEPDgYEBeMKLInhD+6HnVdvvYQ==
+  dependencies:
+    "@authentication/lock-by-id" "^0.0.2"
+    "@types/ms" "^0.7.30"
+    ms "^2.1.1"
+
 "@authentication/raw-cookie@^0.0.2":
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@authentication/raw-cookie/-/raw-cookie-0.0.2.tgz#e521fd6672a5e89073fe631b64cbb625bd9c14b9"
@@ -1254,11 +1263,12 @@
     postcss "7.0.27"
     purgecss "^2.1.0"
 
-"@github-graph/api@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@github-graph/api/-/api-2.0.0.tgz#b992018331c5a99913ddd0526ce960616fe10840"
-  integrity sha512-S4rWb0Y9N6f7SINYtsIgu3/DPUOLgIZe1ResQO52ZJiPEiDl1sWFijprlYVVGgvE89JFWv2pRULLeKjDRoU/hw==
+"@github-graph/api@^2.2.1":
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/@github-graph/api/-/api-2.2.1.tgz#13b07587a8d0c6128c6d7e3c41bc12ad996a11fb"
+  integrity sha512-pdVF09SDLePrBCKSOdVPsV0Bb9l1GxHwjiD+skNH7vC6cki3dcPq/oA73zQc1xC6t0HT+125BwS2fEvdBkUY4A==
   dependencies:
+    "@authentication/rate-limit" "^0.0.7"
     "@octokit/auth" "^2.0.0"
     "@octokit/request" "^5.3.2"
     "@octokit/rest" "^17.1.0"
@@ -2401,6 +2411,11 @@
   integrity sha512-warrzirh5dlTMaETytBTKR886pRXwr+SMZD87ZE13gLMR8Pzz69SiYFkvoDaii78qGP1iyBIUYz5GiXyryO//A==
   dependencies:
     "@types/express" "*"
+
+"@types/ms@^0.7.30":
+  version "0.7.31"
+  resolved "https://registry.yarnpkg.com/@types/ms/-/ms-0.7.31.tgz#31b7ca6407128a3d2bbc27fe2d21b345397f6197"
+  integrity sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==
 
 "@types/node-fetch@2.5.5":
   version "2.5.5"
