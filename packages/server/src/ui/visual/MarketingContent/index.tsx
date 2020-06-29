@@ -13,38 +13,38 @@ export default function MarketingContent() {
         <section>
           <Heading>Submit a Pull Request</Heading>
           <Description>
-            When your developers submit a pull request, Rolling Versions asks
-            them to describe the changes.
+            When you submit a pull request, Rolling Versions asks you to
+            describe the changes.
           </Description>
         </section>
         <section>
           <Heading>Add a Change Set</Heading>
           <Description>
-            Use our simple UI to list the changes in plain language that will be
-            understood by the users of your library.
+            List your changes. You don't need to memorise CLI parameters or some
+            magic structure. You just enter the changes into our UI.
           </Description>
         </section>
         <section>
-          <Heading>Preview the Changes</Heading>
+          <Heading>Preview your Changes</Heading>
           <Description>
-            Review the change set and which versions will be published as part
-            of the pull request.
+            Review the changes to be published as part of your pull request. You
+            can check that Rolling Versions has chosen the version you expected.
           </Description>
         </section>
         <section>
           <Heading>Publish in CI</Heading>
           <Description>
-            Automate the release as part of your CI setup so that every release
-            is properly tested.
+            Automate the relesase as part of your CI setup so that every release
+            is properly tested and published without delay.
           </Description>
         </section>
         <section>
           <Heading>Change Log</Heading>
           <Description>
-            When the new version is published, the Rolling Versions CLI
-            automatically creates a beautiful change log in GitHub and selects
-            the correct new version number so that your users know what they're
-            getting when they upgrade.
+            When your new version is published, Rolling Versions automatically
+            creates a beautiful change log in GitHub and selects the correct new
+            version number so that your users know what they're getting when
+            they upgrade.
           </Description>
         </section>
       </div>

@@ -21,9 +21,11 @@ export function InstallButton({
       href="https://github.com/apps/rollingversions/installations/new"
       className={`flex items-center justify-center bg-black text-white italic font-poppins font-black focus:outline-none ${
         shadowClasses[shadow]
-      } ${size === 'lg' ? `h-20 flex-grow text-4xl` : `h-12 w-40 text-2xl`}`}
+      } ${
+        size === 'lg' ? `h-20 flex-grow text-4xl` : `h-12 px-6 w-auto text-2xl`
+      }`}
     >
-      INSTALL
+      Install GitHub App
       <div className={size === 'lg' ? 'w-3' : 'w-2'} />
       <InstallIcon
         aria-hidden={true}
