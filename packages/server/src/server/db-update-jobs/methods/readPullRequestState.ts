@@ -23,7 +23,7 @@ import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import readRepository from '../procedures/readRepository';
-import log, {withLogging} from '../../logger';
+import {withLogging} from '../../logger';
 
 interface PullRequestPackage {
   manifests: PackageManifestWithVersion[];
