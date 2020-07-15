@@ -24,6 +24,7 @@ import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import readRepository from '../procedures/readRepository';
 import {withLogging} from '../../logger';
+import {getRegistryVersion} from '../../PublishTargets';
 
 interface PullRequestPackage {
   manifests: PackageManifestWithVersion[];
@@ -95,7 +96,7 @@ export default async function readPullRequestState(
       successMessage: 'Got package manifests for pr',
       failure: 'failed_get_package_manifests_for_pr',
     }).then((packages) =>
-      withLogging(addPackageVersions(packages, repo.tags), {
+      withLogging(addPackageVersions(packages, repo.tags, getRegistryVersion), {
         success: 'got_package_versions',
         successMessage: 'Got package versions',
         failure: 'failed_get_package_versions',
