@@ -23,6 +23,7 @@ import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import readRepository from '../procedures/readRepository';
+import {withLogging} from '../../logger';
 
 interface PullRequestPackage {
   manifests: PackageManifestWithVersion[];
@@ -37,11 +38,22 @@ export default async function readPullRequestState(
   pullRequest: Pick<PullRequest, 'repo' | 'number'>,
 ) {
   const repo =
-    (await readRepository(db, pullRequest.repo)) ||
-    (await addRepository(db, client, pullRequest.repo, {
-      refreshPRs: false,
-      refreshTags: false,
-    }));
+    (await withLogging(readRepository(db, pullRequest.repo), {
+      success: 'read_repository',
+      successMessage: 'Read repository from db',
+      failure: 'failed_read_repository',
+    })) ||
+    (await withLogging(
+      addRepository(db, client, pullRequest.repo, {
+        refreshPRs: false,
+        refreshTags: false,
+      }),
+      {
+        success: 'added_repository',
+        successMessage: 'Added repository',
+        failure: 'failed_add_repository',
+      },
+    ));
 
   const {
     id,
@@ -49,19 +61,45 @@ export default async function readPullRequestState(
     is_merged,
     commentID,
     submittedAtCommitSha,
-  } = await upsertPullRequest(db, client, repo.id, repo, pullRequest.number);
-  const head = await upsertCommits(
-    db,
-    client,
-    repo.id,
-    repo,
-    getAllPullRequestCommits(client, repo, pullRequest.number),
+  } = await withLogging(
+    upsertPullRequest(db, client, repo.id, repo, pullRequest.number),
+    {
+      success: 'upserted_pr',
+      successMessage: 'Upserted pull request',
+      failure: 'failed_upsert_pr',
+    },
+  );
+  const head = await withLogging(
+    upsertCommits(
+      db,
+      client,
+      repo.id,
+      repo,
+      getAllPullRequestCommits(client, repo, pullRequest.number),
+    ),
+    {
+      success: 'upserted_pr_commits',
+      successMessage: 'Upserted pull request commits',
+      failure: 'failed_upsert_pr_commits',
+    },
   );
 
   const [changes, packages] = await Promise.all([
-    getChangesForPullRequest(db, id),
-    getPackageManifestsForPr(db, client, repo, head).then((packages) =>
-      addPackageVersions(packages, repo.tags),
+    withLogging(getChangesForPullRequest(db, id), {
+      success: 'got_changes_for_pr',
+      successMessage: 'Got changes for pull request',
+      failure: 'failed_get_changes',
+    }),
+    withLogging(getPackageManifestsForPr(db, client, repo, head), {
+      success: 'got_package_manifests_for_pr',
+      successMessage: 'Got package manifests for pr',
+      failure: 'failed_get_package_manifests_for_pr',
+    }).then((packages) =>
+      withLogging(addPackageVersions(packages, repo.tags), {
+        success: 'got_package_versions',
+        successMessage: 'Got package versions',
+        failure: 'failed_get_package_versions',
+      }),
     ),
   ]);
 
