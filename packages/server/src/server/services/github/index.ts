@@ -288,7 +288,11 @@ export async function getPullRequestFromNumber(
   prNumber: number,
 ): Promise<PullRequestDetail | null> {
   const result = (
-    await queries.getPullRequestFromNumber(client, {...repo, number: prNumber})
+    await queries.getPullRequestFromNumber(client, {
+      owner: repo.owner,
+      name: repo.name,
+      number: prNumber,
+    })
   ).repository?.pullRequest;
   if (!result) return null;
   if (!result.databaseId) {
