@@ -39,3 +39,12 @@ export async function withLogging<T>(
   }
   return result;
 }
+
+export function withLoggingFn<TArgs extends any[], TResult>(
+  fn: (...args: TArgs) => Promise<TResult>,
+  logging: {success: string; successMessage: string; failure: string},
+): (...args: TArgs) => Promise<TResult> {
+  return async (...args) => {
+    return withLogging(fn(...args), logging);
+  };
+}

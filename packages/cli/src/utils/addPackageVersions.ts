@@ -3,7 +3,7 @@ import {
   PackageDependencies,
   PackageManifestWithVersion,
 } from '../types';
-import {getRegistryVersion} from '../PublishTargets';
+import {getRegistryVersion as GetRegistryVersionType} from '../PublishTargets';
 import getVersionTag from './getVersionTag';
 
 export default async function addPackageVersions(
@@ -15,6 +15,7 @@ export default async function addPackageVersions(
     }
   >,
   allTags: {commitSha: string; name: string}[],
+  getRegistryVersion: typeof GetRegistryVersionType,
 ): Promise<
   Map<
     string,

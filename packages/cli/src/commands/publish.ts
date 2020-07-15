@@ -17,7 +17,11 @@ import getPackageStatuses, {
 import sortPackages from '../utils/sortPackages';
 import {checkGitHubReleaseStatus} from '../PublishTargets/github';
 import getNewTagName from '../utils/getNewTagName';
-import {prepublish, publish as publishTarget} from '../PublishTargets';
+import {
+  prepublish,
+  publish as publishTarget,
+  getRegistryVersion,
+} from '../PublishTargets';
 import notFn from '../ts-utils/notFn';
 import arrayEvery from '../ts-utils/arrayEvery';
 import orFn from '../ts-utils/orFn';
@@ -81,6 +85,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   const packageManifests = await addPackageVersions(
     packageManifestsWithoutVersions,
     allTags,
+    getRegistryVersion,
   );
 
   const getAllCommitsCached = splitAsyncGenerator(

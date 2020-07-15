@@ -13,6 +13,7 @@ import {
 } from 'rollingversions/lib/utils/Versioning';
 import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
+import {getRegistryVersion} from '../../PublishTargets';
 
 export default async function readRepositoryState(
   db: Connection,
@@ -40,7 +41,9 @@ export default async function readRepositoryState(
     client,
     repo,
     repo.head,
-  ).then((packages) => addPackageVersions(packages, repo.tags));
+  ).then((packages) =>
+    addPackageVersions(packages, repo.tags, getRegistryVersion),
+  );
 
   log({
     event_type: 'get_manifests',

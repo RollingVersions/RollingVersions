@@ -7,6 +7,7 @@ import {
 import {getAllFiles} from '../../services/git';
 import {getAllTags} from '../../services/github';
 import addPackageVersions from '../addPackageVersions';
+import {getRegistryVersion} from '../../PublishTargets';
 
 test('getUnreleasedPackages', async () => {
   const {dirname, repo, newPullRequest, newCommit} = createRepository({
@@ -49,6 +50,7 @@ test('getUnreleasedPackages', async () => {
   const packageManifests = await addPackageVersions(
     packageManifestsWithoutVersions,
     allTags,
+    getRegistryVersion,
   );
 
   // the only package that does not have a release on or after this PR is package-b
