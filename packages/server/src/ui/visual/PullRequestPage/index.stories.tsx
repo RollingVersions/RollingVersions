@@ -19,7 +19,7 @@ function packageManifest(
   return {
     path: 'fake-path',
     publishTarget: PublishTarget.npm,
-    publishConfigAccess: 'public',
+    targetConfig: {publishConfigAccess: 'public'},
     notToBePublished: false,
     registryVersion: null,
     versionTag: null,

@@ -38,8 +38,8 @@ export default async function getPackageManifests(
         path: pi.file_path,
         publishTarget: pi.publish_target,
         packageName: pi.package_name,
-        publishConfigAccess: pi.publish_access,
         notToBePublished: pi.not_to_be_published,
+        targetConfig: pi.target_config,
       };
       const record = result.get(pi.package_name);
       if (record) {
@@ -76,8 +76,8 @@ export default async function getPackageManifests(
         file_path: pi.path,
         publish_target: pi.publishTarget,
         package_name: pi.packageName,
-        publish_access: pi.publishConfigAccess,
         not_to_be_published: pi.notToBePublished,
+        target_config: pi.targetConfig,
       })),
     ),
     [...packages].flatMap(([packageName, {dependencies}]) =>

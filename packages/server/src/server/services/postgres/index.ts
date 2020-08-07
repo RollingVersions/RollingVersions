@@ -557,8 +557,8 @@ export async function getPackageManifests(
         file_path: string;
         publish_target: PublishTarget;
         package_name: string;
-        publish_access: 'restricted' | 'public';
         not_to_be_published: boolean;
+        target_config: any;
       }[],
       {
         package_name: string;
@@ -567,7 +567,7 @@ export async function getPackageManifests(
       }[],
     ] = await Promise.all([
       tx.query(sql`
-        SELECT file_path, publish_target, package_name, publish_access, not_to_be_published
+        SELECT file_path, publish_target, package_name, target_config, not_to_be_published
         FROM package_manifest_records
         WHERE git_commit_id=${git_commit_id}
       `),
@@ -589,8 +589,8 @@ export async function writePackageManifest(
     file_path: string;
     publish_target: PublishTarget;
     package_name: string;
-    publish_access: 'restricted' | 'public';
     not_to_be_published: boolean;
+    target_config: any;
   }[],
   dependencies: {
     package_name: string;
@@ -602,11 +602,15 @@ export async function writePackageManifest(
     await db.tx(async (tx) => {
       if (packages.length) {
         await tx.query(sql`
-          INSERT INTO package_manifest_records (git_commit_id, file_path, publish_target, package_name, publish_access, not_to_be_published)
+          INSERT INTO package_manifest_records (git_commit_id, file_path, publish_target, package_name, publish_access, not_to_be_published, target_config)
           VALUES ${sql.join(
             packages.map(
               (p) =>
-                sql`(${git_commit_id}, ${p.file_path}, ${p.publish_target}, ${p.package_name}, ${p.publish_access}, ${p.not_to_be_published})`,
+                sql`(${git_commit_id}, ${p.file_path}, ${p.publish_target}, ${
+                  p.package_name
+                }, ${p.target_config.publishConfigAccess || 'unknown'}, ${
+                  p.not_to_be_published
+                }, ${p.target_config})`,
             ),
             ',',
           )}

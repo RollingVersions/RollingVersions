@@ -15,7 +15,7 @@ export const Default = () => {
             notToBePublished: true,
             versionTag: null,
             registryVersion: null,
-            publishConfigAccess: 'public',
+            targetConfig: {publishConfigAccess: 'public'},
           },
         ]}
       />
@@ -26,7 +26,7 @@ export const Default = () => {
             notToBePublished: false,
             versionTag: null,
             registryVersion: null,
-            publishConfigAccess: 'public',
+            targetConfig: {publishConfigAccess: 'public'},
           },
         ]}
       />
@@ -37,7 +37,7 @@ export const Default = () => {
             notToBePublished: false,
             versionTag: null,
             registryVersion: null,
-            publishConfigAccess: 'restricted',
+            targetConfig: {publishConfigAccess: 'restricted'},
           },
         ]}
       />
@@ -52,7 +52,7 @@ export const Default = () => {
               version: '1.0.0',
             },
             registryVersion: '1.0.0',
-            publishConfigAccess: 'public',
+            targetConfig: {publishConfigAccess: 'public'},
           },
         ]}
       />
@@ -67,7 +67,7 @@ export const Default = () => {
               version: '1.0.0',
             },
             registryVersion: '1.0.0',
-            publishConfigAccess: 'restricted',
+            targetConfig: {publishConfigAccess: 'restricted'},
           },
         ]}
       />

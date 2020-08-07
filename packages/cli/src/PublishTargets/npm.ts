@@ -82,6 +82,22 @@ export async function getRegistryVersion(pkg: PackageManifest) {
   return await getNpmVersion(pkg.packageName);
 }
 
+function getConfigValue(
+  name: string,
+  config: {
+    [key: string]: unknown;
+  },
+) {
+  if (config[`@rollingversions/${name}`] !== undefined) {
+    return config[`@rollingversions/${name}`];
+  } else if (
+    isObject(config['@rollingversions']) &&
+    config['@rollingversions'][name] !== undefined
+  ) {
+    return config['@rollingversions'][name];
+  }
+  return undefined;
+}
 /**
  * Parses the JSON and returns all the package info except
  * the version tag.
@@ -89,68 +105,63 @@ export async function getRegistryVersion(pkg: PackageManifest) {
 export async function getPackageManifest(
   path: string,
   content: string,
-): Promise<PackageManifest | null> {
-  let result: unknown;
+): Promise<{
+  manifest: Omit<PackageManifest, 'versionTag'>;
+  dependencies: PackageDependencies;
+} | null> {
+  let pkgData: unknown;
   try {
-    result = JSON.parse(content);
+    pkgData = JSON.parse(content);
   } catch (ex) {
     // ignore
   }
 
-  if (isObject(result) && typeof result.name === 'string') {
-    if (result['@rollingversions/ignore']) {
+  if (isObject(pkgData) && typeof pkgData.name === 'string') {
+    const pkgName = pkgData.name;
+    if (getConfigValue('ignore', pkgData)) {
       return null;
     }
-    if (
-      isObject(result['@rollingversions']) &&
-      result['@rollingversions'].ignore
-    ) {
-      return null;
-    }
+
+    const required = [
+      ...(isObject(pkgData) && isObject(pkgData.dependencies)
+        ? Object.keys(pkgData.dependencies)
+        : []),
+      ...(isObject(pkgData) && isObject(pkgData.peerDependencies)
+        ? Object.keys(pkgData.peerDependencies)
+        : []),
+    ];
+
+    const optional =
+      isObject(pkgData) && isObject(pkgData.optionalDependencies)
+        ? Object.keys(pkgData.optionalDependencies)
+        : [];
+
+    const development =
+      isObject(pkgData) && isObject(pkgData.devDependencies)
+        ? Object.keys(pkgData.devDependencies)
+        : [];
+
     return {
-      publishTarget: PublishTarget.npm,
-      packageName: result.name,
-      path,
-      publishConfigAccess:
-        result.name[0] === '@'
-          ? isObject(result.publishConfig) &&
-            result.publishConfig.access === 'public'
-            ? 'public'
-            : 'restricted'
-          : 'public',
-      notToBePublished: result.private === true,
+      manifest: {
+        publishTarget: PublishTarget.npm,
+        packageName: pkgName,
+        path,
+        notToBePublished: pkgData.private === true,
+        targetConfig: {
+          publishConfigAccess:
+            pkgName[0] === '@'
+              ? isObject(pkgData.publishConfig) &&
+                pkgData.publishConfig.access === 'public'
+                ? 'public'
+                : 'restricted'
+              : 'public',
+        },
+      },
+      dependencies: {required, optional, development},
     };
   } else {
     return null;
   }
-}
-
-export async function getDependencies(
-  _path: string,
-  content: string,
-): Promise<PackageDependencies> {
-  const pkgData: unknown = JSON.parse(content);
-
-  const required = [
-    ...(isObject(pkgData) && isObject(pkgData.dependencies)
-      ? Object.keys(pkgData.dependencies)
-      : []),
-    ...(isObject(pkgData) && isObject(pkgData.peerDependencies)
-      ? Object.keys(pkgData.peerDependencies)
-      : []),
-  ];
-
-  const optional =
-    isObject(pkgData) && isObject(pkgData.optionalDependencies)
-      ? Object.keys(pkgData.optionalDependencies)
-      : [];
-
-  const development =
-    isObject(pkgData) && isObject(pkgData.devDependencies)
-      ? Object.keys(pkgData.devDependencies)
-      : [];
-
-  return {required, optional, development};
 }
 
 export async function prepublish(

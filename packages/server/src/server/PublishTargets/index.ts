@@ -4,6 +4,7 @@ import {PackageManifest} from 'rollingversions/lib/types';
 
 const targets = {
   [PublishTarget.npm]: npm,
+  [PublishTarget.custom_script]: {getRegistryVersion: async () => null},
 };
 
 export async function getRegistryVersion(pkg: PackageManifest) {

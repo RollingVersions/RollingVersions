@@ -19,7 +19,7 @@ export const Default = () => {
             notToBePublished: false,
             versionTag: null,
             registryVersion: null,
-            publishConfigAccess: 'public',
+            targetConfig: {publishConfigAccess: 'public'},
           },
         ]}
         changes={changes}

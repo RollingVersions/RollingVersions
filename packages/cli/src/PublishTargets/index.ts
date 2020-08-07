@@ -16,9 +16,11 @@ import getNewTagName from '../utils/getNewTagName';
 
 import * as github from './github';
 import * as npm from './npm';
+import * as custom_script from './custom_script';
 
 const targets = {
   [PublishTarget.npm]: npm,
+  [PublishTarget.custom_script]: custom_script,
 };
 
 export function pathMayContainPackage(filename: string): boolean {
@@ -39,10 +41,7 @@ export async function getPackageManifests(
       Object.values(targets)
         .filter((p) => p.pathMayContainPackage(filename))
         .map(async (p) => {
-          const manifest = await p.getPackageManifest(filename, content);
-          if (!manifest) return manifest;
-          const dependencies = await p.getDependencies(filename, content);
-          return {manifest, dependencies};
+          return await p.getPackageManifest(filename, content);
         }),
     )
   ).filter(isTruthy);
