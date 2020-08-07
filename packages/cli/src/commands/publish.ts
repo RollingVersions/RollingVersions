@@ -205,6 +205,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   }
 
   for (const pkg of packageStatuses) {
+    console.info(pkg);
     if (pkg.status === PackageStatus.NewVersionToBePublished) {
       await publishTarget(config, pkg, {
         packageVersions,
