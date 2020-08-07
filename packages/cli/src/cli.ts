@@ -199,6 +199,7 @@ switch (COMMAND) {
               console.error(
                 `Pre-release steps failed for ${pkg.packageName}@${pkg.newVersion}:`,
               );
+              console.error(reasons);
               console.error(``);
               if (reasons.length === 1) {
                 console.error(`  ${reasons[0]}`);
