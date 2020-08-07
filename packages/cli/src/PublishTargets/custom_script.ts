@@ -1,3 +1,4 @@
+import {dirname, resolve} from 'path';
 import * as toml from 'toml';
 import {
   PackageManifest,
@@ -45,7 +46,10 @@ export function pathMayContainPackage(filename: string): boolean {
 export async function getRegistryVersion($pkg: PackageManifest) {
   const pkg = $pkg as PackageManifest<PublishTarget.custom_script>;
   if (!pkg.targetConfig.version) return null;
-  const result = await execBuffered(pkg.targetConfig.version);
+  const result = await execBuffered(pkg.targetConfig.version, {
+    // TODO: get correct dirname
+    cwd: dirname($pkg.path),
+  });
   return result.getResult('utf8').trim();
 }
 
@@ -177,7 +181,10 @@ export async function prepublish(
   const env = getEnv(config, newVersion, packageVersions);
 
   if (pkg.targetConfig.prepublish) {
-    const result = await execBuffered(pkg.targetConfig.prepublish, {env});
+    const result = await execBuffered(pkg.targetConfig.prepublish, {
+      env,
+      cwd: dirname(resolve(config.dirname, pkg.path)),
+    });
     if (result.status) {
       return {ok: false, reason: result.stderr.toString('utf8')};
     }
@@ -206,6 +213,7 @@ export async function publish(
   } else {
     const result = await execBuffered(pkg.targetConfig.publish, {
       env,
+      cwd: dirname(resolve(config.dirname, pkg.path)),
       debug: true,
     });
     // getResult throws if the command failed
