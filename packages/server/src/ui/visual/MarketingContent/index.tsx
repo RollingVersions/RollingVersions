@@ -34,7 +34,7 @@ export default function MarketingContent() {
         <section>
           <Heading>Publish in CI</Heading>
           <Description>
-            Automate the relesase as part of your CI setup so that every release
+            Automate the release as part of your CI setup so that every release
             is properly tested and published without delay.
           </Description>
         </section>
