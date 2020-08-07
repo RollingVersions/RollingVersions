@@ -141,6 +141,10 @@ export default async function publish(config: PublishConfig): Promise<Result> {
 
   const packageStatuses = sortResult.packages;
 
+  console.info(
+    packageStatuses.map((s) => [s.status, s.packageName, s.newVersion]),
+  );
+
   config.logger.onValidatedPackages?.({
     packages: packageStatuses,
     dryRun: config.dryRun,
