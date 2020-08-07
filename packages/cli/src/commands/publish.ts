@@ -141,10 +141,6 @@ export default async function publish(config: PublishConfig): Promise<Result> {
 
   const packageStatuses = sortResult.packages;
 
-  console.info(
-    packageStatuses.map((s) => [s.status, s.packageName, s.newVersion]),
-  );
-
   config.logger.onValidatedPackages?.({
     packages: packageStatuses,
     dryRun: config.dryRun,
@@ -205,7 +201,6 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   }
 
   for (const pkg of packageStatuses) {
-    console.info(pkg);
     if (pkg.status === PackageStatus.NewVersionToBePublished) {
       await publishTarget(config, pkg, {
         packageVersions,
