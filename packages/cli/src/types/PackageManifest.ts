@@ -68,7 +68,6 @@ const PackageManifestWithVersionCodecCurrent = compressedObjectCodec<
     path: t.string,
     publishTarget: publishTargetCodec,
     packageName: t.string,
-    publishConfigAccess: PublishConfigAccessCodec,
     notToBePublished: t.boolean,
     registryVersion: t.union([t.null, t.string]),
     versionTag: t.union([t.null, VersionTagCodec]),
@@ -139,7 +138,6 @@ const PackageManifestCodecCurrent = compressedObjectCodec<PackageManifest>()(
     path: t.string,
     publishTarget: publishTargetCodec,
     packageName: t.string,
-    publishConfigAccess: PublishConfigAccessCodec,
     notToBePublished: t.boolean,
     // tslint:disable-next-line: deprecation
     targetConfig: t.any,
