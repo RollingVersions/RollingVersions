@@ -4,8 +4,8 @@ type Permission = 'none' | 'view' | 'edit';
 
 export default Permission;
 
-export const PermissionCodec = t.union([
-  t.literal('none'),
-  t.literal('view'),
-  t.literal('edit'),
-]);
+export const PermissionCodec = t.Union(
+  t.Literal('none'),
+  t.Literal('view'),
+  t.Literal('edit'),
+);

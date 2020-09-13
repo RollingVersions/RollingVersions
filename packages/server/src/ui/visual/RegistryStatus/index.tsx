@@ -7,16 +7,14 @@ import {
 export interface RegistryStatusProps {
   packageManifest: Pick<
     PackageManifestWithVersion,
-    | 'publishTarget'
-    | 'notToBePublished'
-    | 'versionTag'
-    | 'registryVersion'
-    | 'targetConfig'
+    'notToBePublished' | 'versionTag' | 'registryVersion' | 'targetConfig'
   >[];
 }
 
 export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
-  const publishTarget = packageManifest.map((p) => p.publishTarget).join(', ');
+  const publishTarget = packageManifest
+    .map((p) => p.targetConfig.type)
+    .join(', ');
   if (packageManifest.every((p) => p.notToBePublished)) {
     return (
       <p>
@@ -31,9 +29,8 @@ export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
         .filter((p) => !p.notToBePublished)
         .map(
           (p, i): React.ReactElement => {
-            switch (p.publishTarget) {
+            switch (p.targetConfig.type) {
               case PublishTarget.npm: {
-                const pk = p as PackageManifestWithVersion<PublishTarget.npm>;
                 if (p.versionTag || p.registryVersion) {
                   if (p.registryVersion) {
                     return (
@@ -51,7 +48,7 @@ export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
                     );
                   }
                 }
-                if (pk.targetConfig.publishConfigAccess === 'restricted') {
+                if (p.targetConfig.publishConfigAccess === 'restricted') {
                   return (
                     <React.Fragment key={i}>
                       <p>
@@ -76,14 +73,11 @@ export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
                 );
               }
               case PublishTarget.custom_script: {
-                const pk = p as PackageManifestWithVersion<
-                  PublishTarget.custom_script
-                >;
                 return (
                   <p key={i}>
                     This package wil be published via a custom script:
                     <pre>
-                      <code>{pk.targetConfig.publish}</code>
+                      <code>{p.targetConfig.publish}</code>
                     </pre>
                   </p>
                 );

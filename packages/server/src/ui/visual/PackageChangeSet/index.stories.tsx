@@ -15,11 +15,13 @@ export const Default = () => {
         packageName="@databases/pg"
         packageManifest={[
           {
-            publishTarget: PublishTarget.npm,
             notToBePublished: false,
             versionTag: null,
             registryVersion: null,
-            targetConfig: {publishConfigAccess: 'public'},
+            targetConfig: {
+              type: PublishTarget.npm,
+              publishConfigAccess: 'public',
+            },
           },
         ]}
         changes={changes}

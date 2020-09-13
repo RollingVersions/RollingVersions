@@ -9,5 +9,5 @@ const targets = {
 
 export async function getRegistryVersion(pkg: PackageManifest) {
   if (pkg.notToBePublished) return null;
-  return await targets[pkg.publishTarget].getRegistryVersion(pkg);
+  return await targets[pkg.targetConfig.type].getRegistryVersion(pkg);
 }

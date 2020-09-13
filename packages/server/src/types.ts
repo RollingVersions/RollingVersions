@@ -1,7 +1,6 @@
-import ValidationCodec, {
+import {
   t,
   compressedObjectCodec,
-  versionSymbol,
   map,
 } from 'rollingversions/lib/utils/ValidationCodec';
 import {
@@ -10,11 +9,8 @@ import {
 } from 'rollingversions/lib/types/PullRequestState';
 import Permission, {PermissionCodec} from './server/permissions/Permission';
 import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
-import {
-  PackageManifestWithVersion,
-  PackageDependencies,
-} from 'rollingversions/lib/types';
-import {PackageManifestWithVersionCodec} from 'rollingversions/lib/types/PackageManifest';
+import {PackageDependencies} from 'rollingversions/lib/types';
+import {PackageManifestWithVersion} from 'rollingversions/lib/types/PackageManifest';
 import {PackageDependenciesCodec} from 'rollingversions/lib/types/PackageDependencies';
 
 export interface RepoResponse {
@@ -32,17 +28,17 @@ export interface PullRequestPackage {
 export type PullRequestPackages = Map<string, PullRequestPackage>;
 
 const PullRequestPackagesCodec = map(
-  t.string,
-  compressedObjectCodec<PullRequestPackage>()(
+  t.String,
+  compressedObjectCodec(
     1,
     'PullRequestPackage',
     {
-      manifests: t.array(PackageManifestWithVersionCodec),
+      manifests: t.Array(PackageManifestWithVersion),
       dependencies: PackageDependenciesCodec,
       changeSet: ChangeSetCodec,
-      released: t.boolean,
+      released: t.Boolean,
     },
-    [versionSymbol, 'manifests', 'dependencies', 'changeSet', 'released'],
+    ['manifests', 'dependencies', 'changeSet', 'released'],
   ),
 );
 
@@ -54,19 +50,17 @@ export interface PullRequestResponse {
   packages: PullRequestPackages;
 }
 
-export const PullRequestResponseCodec = new ValidationCodec(
-  compressedObjectCodec<PullRequestResponse>()(
-    2,
-    'PullRequestResponse',
-    {
-      headSha: t.union([t.null, t.string]),
-      permission: PermissionCodec,
-      closed: t.boolean,
-      merged: t.boolean,
-      packages: PullRequestPackagesCodec,
-    },
-    [versionSymbol, 'headSha', 'permission', 'closed', 'merged', 'packages'],
-  ),
+export const PullRequestResponse: t.Codec<PullRequestResponse> = compressedObjectCodec(
+  2,
+  'PullRequestResponse',
+  {
+    headSha: t.Union(t.Null, t.String),
+    permission: PermissionCodec,
+    closed: t.Boolean,
+    merged: t.Boolean,
+    packages: PullRequestPackagesCodec,
+  },
+  ['headSha', 'permission', 'closed', 'merged', 'packages'],
 );
 
 export interface UpdatePullRequestBody {
@@ -74,24 +68,22 @@ export interface UpdatePullRequestBody {
   updates: {packageName: string; changes: ChangeSet}[];
 }
 
-export const UpdatePullRequestBodyCodec = new ValidationCodec(
-  compressedObjectCodec<UpdatePullRequestBody>()(
-    1,
-    'UpdatePullRequestBody',
-    {
-      headSha: t.union([t.string, t.null]),
-      updates: t.array(
-        compressedObjectCodec<{packageName: string; changes: ChangeSet}>()(
-          1,
-          'Updates',
-          {
-            packageName: t.string,
-            changes: ChangeSetCodec,
-          },
-          [versionSymbol, 'packageName', 'changes'],
-        ),
+export const UpdatePullRequestBody: t.Codec<UpdatePullRequestBody> = compressedObjectCodec(
+  1,
+  'UpdatePullRequestBody',
+  {
+    headSha: t.Union(t.String, t.Null),
+    updates: t.Array(
+      compressedObjectCodec(
+        1,
+        'Updates',
+        {
+          packageName: t.String,
+          changes: ChangeSetCodec,
+        },
+        ['packageName', 'changes'],
       ),
-    },
-    [versionSymbol, 'headSha', 'updates'],
-  ),
+    ),
+  },
+  ['headSha', 'updates'],
 );

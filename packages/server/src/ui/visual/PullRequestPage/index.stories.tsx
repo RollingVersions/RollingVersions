@@ -18,8 +18,7 @@ function packageManifest(
 ): PackageManifestWithVersion {
   return {
     path: 'fake-path',
-    publishTarget: PublishTarget.npm,
-    targetConfig: {publishConfigAccess: 'public'},
+    targetConfig: {type: PublishTarget.npm, publishConfigAccess: 'public'},
     notToBePublished: false,
     registryVersion: null,
     versionTag: null,

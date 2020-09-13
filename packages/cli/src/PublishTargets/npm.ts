@@ -143,11 +143,11 @@ export async function getPackageManifest(
 
     return {
       manifest: {
-        publishTarget: PublishTarget.npm,
         packageName: pkgName,
         path,
         notToBePublished: pkgData.private === true,
         targetConfig: {
+          type: PublishTarget.npm,
           publishConfigAccess:
             pkgName[0] === '@'
               ? isObject(pkgData.publishConfig) &&

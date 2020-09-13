@@ -1,6 +1,7 @@
 import connect, {sql, Connection} from '@databases/pg';
 import {ChangeType} from 'rollingversions/lib/types/PullRequestState';
 import {PublishTarget} from 'rollingversions/lib/types';
+import {PublishTargetConfig} from 'rollingversions/lib/types/PublishTarget';
 
 export {Connection};
 export const db = connect();
@@ -587,10 +588,9 @@ export async function writePackageManifest(
   git_commit_id: number,
   packages: {
     file_path: string;
-    publish_target: PublishTarget;
     package_name: string;
     not_to_be_published: boolean;
-    target_config: any;
+    target_config: PublishTargetConfig;
   }[],
   dependencies: {
     package_name: string;
@@ -606,11 +606,14 @@ export async function writePackageManifest(
           VALUES ${sql.join(
             packages.map(
               (p) =>
-                sql`(${git_commit_id}, ${p.file_path}, ${p.publish_target}, ${
-                  p.package_name
-                }, ${p.target_config.publishConfigAccess || 'unknown'}, ${
-                  p.not_to_be_published
-                }, ${p.target_config})`,
+                sql`(${git_commit_id}, ${p.file_path}, ${
+                  p.target_config.type
+                }, ${p.package_name}, ${
+                  // TODO: remove this field from the database?
+                  p.target_config.type === PublishTarget.npm
+                    ? p.target_config.publishConfigAccess
+                    : 'unknown'
+                }, ${p.not_to_be_published}, ${p.target_config})`,
             ),
             ',',
           )}

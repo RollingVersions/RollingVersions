@@ -1,8 +1,7 @@
-// tslint:disable-next-line: no-implicit-dependencies
 import {Router} from 'express';
 import {requiresAuth, getGitHubAccessToken} from './auth';
 import {getClientForRepo, getClientForToken} from '../getClient';
-import {PullRequestResponseCodec} from '../../types';
+import {PullRequestResponse} from '../../types';
 import validateParams, {
   parseParams,
   validateRepoParams,
@@ -78,7 +77,7 @@ appMiddleware.get(
         getPermission(req),
       );
 
-      res.json(PullRequestResponseCodec.encode(response));
+      res.json(PullRequestResponse.serialize(response));
     } catch (ex) {
       next(ex);
     }

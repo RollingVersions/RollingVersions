@@ -1,22 +1,20 @@
-import {
-  t,
-  compressedObjectCodec,
-  versionSymbol,
-} from '../utils/ValidationCodec';
+import {t, compressedObjectCodec} from '../utils/ValidationCodec';
 
-export default interface VersionTag {
+interface VersionTag {
   commitSha: string;
   name: string;
   version: string;
 }
 
-export const VersionTagCodec = compressedObjectCodec<VersionTag>()(
+const VersionTag: t.Codec<VersionTag> = compressedObjectCodec(
   1,
   'VersionTag',
   {
-    commitSha: t.string,
-    name: t.string,
-    version: t.string,
+    commitSha: t.String,
+    name: t.String,
+    version: t.String,
   },
-  [versionSymbol, 'commitSha', 'name', 'version'],
+  ['commitSha', 'name', 'version'],
 );
+
+export default VersionTag;

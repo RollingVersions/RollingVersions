@@ -43,12 +43,14 @@ export function pathMayContainPackage(filename: string): boolean {
   return filenames.some((f) => filename === f || filename.endsWith(`/${f}`));
 }
 
-export async function getRegistryVersion($pkg: PackageManifest) {
-  const pkg = $pkg as PackageManifest<PublishTarget.custom_script>;
+export async function getRegistryVersion(pkg: PackageManifest) {
+  if (pkg.targetConfig.type !== PublishTarget.custom_script) {
+    throw new Error('Expected custom script target config');
+  }
   if (!pkg.targetConfig.version) return null;
   const result = await execBuffered(pkg.targetConfig.version, {
     // TODO: get correct dirname
-    cwd: dirname($pkg.path),
+    cwd: dirname(pkg.path),
   });
   return result.getResult('utf8').trim();
 }
@@ -121,11 +123,11 @@ export async function getPackageManifest(
 
     return {
       manifest: {
-        publishTarget: PublishTarget.custom_script,
         packageName: result.name,
         path,
         notToBePublished: false,
         targetConfig: {
+          type: PublishTarget.custom_script,
           version: result.scripts.version,
           prepublish: result.scripts.prepublish,
           publish_dry_run: result.scripts.publish_dry_run,
@@ -173,11 +175,13 @@ function getEnv(
 
 export async function prepublish(
   config: PublishConfig,
-  $pkg: PackageManifest,
+  pkg: PackageManifest,
   newVersion: string,
   packageVersions: Map<string, string | null>,
 ): Promise<PrePublishResult> {
-  const pkg = $pkg as PackageManifest<PublishTarget.custom_script>;
+  if (pkg.targetConfig.type !== PublishTarget.custom_script) {
+    throw new Error('Expected custom script target config');
+  }
   const env = getEnv(config, newVersion, packageVersions);
 
   if (pkg.targetConfig.prepublish) {
@@ -195,11 +199,13 @@ export async function prepublish(
 
 export async function publish(
   config: PublishConfig,
-  $pkg: PackageManifest,
+  pkg: PackageManifest,
   newVersion: string,
   packageVersions: Map<string, string | null>,
 ) {
-  const pkg = $pkg as PackageManifest<PublishTarget.custom_script>;
+  if (pkg.targetConfig.type !== PublishTarget.custom_script) {
+    throw new Error('Expected custom script target config');
+  }
   const env = getEnv(config, newVersion, packageVersions);
   if (config.dryRun) {
     if (pkg.targetConfig.publish_dry_run) {

@@ -162,7 +162,7 @@ switch (COMMAND) {
           console.warn(
             `publishing ${chalk.yellow(
               pkgManifest.packageName,
-            )} to ${chalk.blue(pkgManifest.publishTarget)} @ ${chalk.yellow(
+            )} to ${chalk.blue(pkgManifest.targetConfig.type)} @ ${chalk.yellow(
               pkg.newVersion,
             )}${dryRun ? ` ${chalk.red(`(dry run)`)}` : ''}`,
           );

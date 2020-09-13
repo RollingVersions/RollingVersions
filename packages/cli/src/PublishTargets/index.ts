@@ -49,7 +49,7 @@ export async function getPackageManifests(
 
 export async function getRegistryVersion(pkg: PackageManifest) {
   if (pkg.notToBePublished) return null;
-  return await targets[pkg.publishTarget].getRegistryVersion(pkg);
+  return await targets[pkg.targetConfig.type].getRegistryVersion(pkg);
 }
 
 export async function prepublish(
@@ -61,7 +61,7 @@ export async function prepublish(
     pkg.manifests
       .filter((pi) => !pi.notToBePublished)
       .map((pi) =>
-        targets[pi.publishTarget].prepublish(
+        targets[pi.targetConfig.type].prepublish(
           config,
           pi,
           pkg.newVersion,
@@ -91,7 +91,7 @@ export async function publish(
         pkgManifest,
         dryRun: config.dryRun,
       });
-      await targets[pkgManifest.publishTarget].publish(
+      await targets[pkgManifest.targetConfig.type].publish(
         config,
         pkgManifest,
         pkg.newVersion,

@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  PullRequestResponse,
-  PullRequestResponseCodec,
-  UpdatePullRequestBody,
-  UpdatePullRequestBodyCodec,
-} from '../../types';
+import {PullRequestResponse, UpdatePullRequestBody} from '../../types';
 
 export default function usePullRequest({
   owner,
@@ -33,11 +28,11 @@ export default function usePullRequest({
         }
         return res.json();
       })
-      .then((data) => PullRequestResponseCodec.decode(data))
+      .then((data) => PullRequestResponse.safeParse(data))
       .then((data) => {
         if (cancelled) return;
-        if (data.valid) setPullRequest(data.value);
-        else setError(data.reason);
+        if (data.success) setPullRequest(data.value);
+        else setError(data.message);
       })
       .catch((ex) => {
         if (cancelled) return;
@@ -58,7 +53,7 @@ export default function usePullRequest({
         try {
           const res = await fetch(path, {
             method: 'POST',
-            body: JSON.stringify(UpdatePullRequestBodyCodec.encode(body)),
+            body: JSON.stringify(UpdatePullRequestBody.serialize(body)),
             headers: {'Content-Type': 'application/json'},
           });
           if (!res.ok) {
