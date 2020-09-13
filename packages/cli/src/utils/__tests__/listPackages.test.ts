@@ -19,9 +19,9 @@ test('listPackages - single npm package', async () => {
             "notToBePublished": false,
             "packageName": "example-package",
             "path": "package.json",
-            "publishTarget": "npm",
             "targetConfig": Object {
               "publishConfigAccess": "public",
+              "type": "npm",
             },
           },
         ],
@@ -60,9 +60,9 @@ test('listPackages - multiple npm packages', async () => {
             "notToBePublished": false,
             "packageName": "@root-package/a",
             "path": "package.json",
-            "publishTarget": "npm",
             "targetConfig": Object {
               "publishConfigAccess": "restricted",
+              "type": "npm",
             },
           },
         ],
@@ -78,9 +78,9 @@ test('listPackages - multiple npm packages', async () => {
             "notToBePublished": false,
             "packageName": "@root-package/b",
             "path": "package.json",
-            "publishTarget": "npm",
             "targetConfig": Object {
               "publishConfigAccess": "restricted",
+              "type": "npm",
             },
           },
         ],

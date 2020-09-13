@@ -28,8 +28,8 @@ export function compressedObjectCodec<
     throw new Error(`Duplicate keys detected`);
   }
   return t
-    .Tuple([t.Literal(version), ...keys.map((k) => props[k])] as any)
-    .parse({
+    .Tuple(...([t.Literal(version), ...keys.map((k) => props[k])] as any))
+    .withParser({
       name,
       test: t.Object(props),
       parse([_version, ...values]: any) {
@@ -41,7 +41,7 @@ export function compressedObjectCodec<
       },
       serialize: deprecated
         ? undefined
-        : (obj: any) => ({
+        : (obj: any): any => ({
             success: true,
             value: [version, ...keys.map((k) => obj[k])],
           }),
@@ -59,6 +59,17 @@ export function map<
     parse(entries) {
       return {success: true, value: new Map(entries)};
     },
+    test: t.InstanceOf(Map).withConstraint((m: Map<unknown, unknown>) => {
+      try {
+        for (const [k, v] of m) {
+          key.assert(k);
+          value.assert(v);
+        }
+        return true;
+      } catch (ex) {
+        return ex.message;
+      }
+    }),
     serialize(map) {
       if (!(map instanceof Map)) {
         return {success: false, message: 'Expected a Map'};
