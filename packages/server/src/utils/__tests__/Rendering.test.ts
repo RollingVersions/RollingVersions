@@ -14,8 +14,7 @@ function mockPackage(input: {
   return {
     manifests: input.manifests.map((manifest) => ({
       path: `${manifest.packageName}/package.json`,
-      publishTarget: PublishTarget.npm,
-      publishConfigAccess: 'public',
+      targetConfig: {type: PublishTarget.npm, publishConfigAccess: 'public'},
       notToBePublished: true,
       registryVersion: null,
       versionTag: null,

@@ -36,10 +36,9 @@ export default async function getPackageManifests(
     for (const pi of packageManifests) {
       const manifest: PackageManifest = {
         path: pi.file_path,
-        publishTarget: pi.publish_target,
         packageName: pi.package_name,
-        publishConfigAccess: pi.publish_access,
         notToBePublished: pi.not_to_be_published,
+        targetConfig: {type: pi.publish_target, ...pi.target_config},
       };
       const record = result.get(pi.package_name);
       if (record) {
@@ -74,10 +73,9 @@ export default async function getPackageManifests(
     [...packages.values()].flatMap((p) =>
       p.manifests.map((pi) => ({
         file_path: pi.path,
-        publish_target: pi.publishTarget,
         package_name: pi.packageName,
-        publish_access: pi.publishConfigAccess,
         not_to_be_published: pi.notToBePublished,
+        target_config: pi.targetConfig,
       })),
     ),
     [...packages].flatMap(([packageName, {dependencies}]) =>

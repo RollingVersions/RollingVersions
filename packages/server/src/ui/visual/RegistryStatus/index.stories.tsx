@@ -11,40 +11,45 @@ export const Default = () => {
       <RegistryStatus
         packageManifest={[
           {
-            publishTarget: PublishTarget.npm,
             notToBePublished: true,
             versionTag: null,
             registryVersion: null,
-            publishConfigAccess: 'public',
+            targetConfig: {
+              type: PublishTarget.npm,
+              publishConfigAccess: 'public',
+            },
           },
         ]}
       />
       <RegistryStatus
         packageManifest={[
           {
-            publishTarget: PublishTarget.npm,
             notToBePublished: false,
             versionTag: null,
             registryVersion: null,
-            publishConfigAccess: 'public',
+            targetConfig: {
+              type: PublishTarget.npm,
+              publishConfigAccess: 'public',
+            },
           },
         ]}
       />
       <RegistryStatus
         packageManifest={[
           {
-            publishTarget: PublishTarget.npm,
             notToBePublished: false,
             versionTag: null,
             registryVersion: null,
-            publishConfigAccess: 'restricted',
+            targetConfig: {
+              type: PublishTarget.npm,
+              publishConfigAccess: 'restricted',
+            },
           },
         ]}
       />
       <RegistryStatus
         packageManifest={[
           {
-            publishTarget: PublishTarget.npm,
             notToBePublished: false,
             versionTag: {
               commitSha: 'skdjfdskj',
@@ -52,14 +57,16 @@ export const Default = () => {
               version: '1.0.0',
             },
             registryVersion: '1.0.0',
-            publishConfigAccess: 'public',
+            targetConfig: {
+              type: PublishTarget.npm,
+              publishConfigAccess: 'public',
+            },
           },
         ]}
       />
       <RegistryStatus
         packageManifest={[
           {
-            publishTarget: PublishTarget.npm,
             notToBePublished: false,
             versionTag: {
               commitSha: 'skdjfdskj',
@@ -67,7 +74,10 @@ export const Default = () => {
               version: '1.0.0',
             },
             registryVersion: '1.0.0',
-            publishConfigAccess: 'restricted',
+            targetConfig: {
+              type: PublishTarget.npm,
+              publishConfigAccess: 'restricted',
+            },
           },
         ]}
       />

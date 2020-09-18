@@ -1,8 +1,4 @@
-import {
-  t,
-  compressedObjectCodec,
-  versionSymbol,
-} from '../utils/ValidationCodec';
+import {t, compressedObjectCodec} from '../utils/ValidationCodec';
 
 export default interface PackageDependencies {
   required: string[];
@@ -10,15 +6,13 @@ export default interface PackageDependencies {
   development: string[];
 }
 
-export const PackageDependenciesCodec = compressedObjectCodec<
-  PackageDependencies
->()(
+export const PackageDependenciesCodec: t.Codec<PackageDependencies> = compressedObjectCodec(
   1,
   'PackageDependencies',
   {
-    required: t.array(t.string),
-    optional: t.array(t.string),
-    development: t.array(t.string),
+    required: t.Array(t.String),
+    optional: t.Array(t.String),
+    development: t.Array(t.String),
   },
-  [versionSymbol, 'required', 'optional', 'development'],
+  ['required', 'optional', 'development'],
 );

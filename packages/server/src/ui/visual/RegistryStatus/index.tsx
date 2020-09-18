@@ -1,19 +1,20 @@
 import React from 'react';
-import {PackageManifestWithVersion} from 'rollingversions/lib/types';
+import {
+  PackageManifestWithVersion,
+  PublishTarget,
+} from 'rollingversions/lib/types';
 
 export interface RegistryStatusProps {
   packageManifest: Pick<
     PackageManifestWithVersion,
-    | 'publishTarget'
-    | 'notToBePublished'
-    | 'versionTag'
-    | 'registryVersion'
-    | 'publishConfigAccess'
+    'notToBePublished' | 'versionTag' | 'registryVersion' | 'targetConfig'
   >[];
 }
 
 export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
-  const publishTarget = packageManifest.map((p) => p.publishTarget).join(', ');
+  const publishTarget = packageManifest
+    .map((p) => p.targetConfig.type)
+    .join(', ');
   if (packageManifest.every((p) => p.notToBePublished)) {
     return (
       <p>
@@ -26,48 +27,64 @@ export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
     <>
       {packageManifest
         .filter((p) => !p.notToBePublished)
-        .map((p, i) => {
-          if (p.versionTag || p.registryVersion) {
-            if (p.registryVersion) {
-              return (
-                <p key={i}>
-                  This package is published <strong>publicly</strong> on the{' '}
-                  {publishTarget} registry.
-                </p>
-              );
-            } else {
-              return (
-                <p key={i}>
-                  This package is published <strong>privately</strong> on the{' '}
-                  {publishTarget} registry.
-                </p>
-              );
+        .map(
+          (p, i): React.ReactElement => {
+            switch (p.targetConfig.type) {
+              case PublishTarget.npm: {
+                if (p.versionTag || p.registryVersion) {
+                  if (p.registryVersion) {
+                    return (
+                      <p key={i}>
+                        This package is published <strong>publicly</strong> on
+                        the {publishTarget} registry.
+                      </p>
+                    );
+                  } else {
+                    return (
+                      <p key={i}>
+                        This package is published <strong>privately</strong> on
+                        the {publishTarget} registry.
+                      </p>
+                    );
+                  }
+                }
+                if (p.targetConfig.publishConfigAccess === 'restricted') {
+                  return (
+                    <React.Fragment key={i}>
+                      <p>
+                        This package wil be published <strong>privately</strong>{' '}
+                        on the {publishTarget} registry.
+                      </p>
+                      <p>
+                        If you prefer to publish it publicly, you can add the
+                        following to your package.json:
+                        <pre>
+                          <code>{'"publishConfig": {"access": "public"}'}</code>
+                        </pre>
+                      </p>
+                    </React.Fragment>
+                  );
+                }
+                return (
+                  <p key={i}>
+                    This package wil be published <strong>publicly</strong> on
+                    the {publishTarget} registry.
+                  </p>
+                );
+              }
+              case PublishTarget.custom_script: {
+                return (
+                  <p key={i}>
+                    This package wil be published via a custom script:
+                    <pre>
+                      <code>{p.targetConfig.publish}</code>
+                    </pre>
+                  </p>
+                );
+              }
             }
-          }
-          if (p.publishConfigAccess === 'restricted') {
-            return (
-              <React.Fragment key={i}>
-                <p>
-                  This package wil be published <strong>privately</strong> on
-                  the {publishTarget} registry.
-                </p>
-                <p>
-                  If you prefer to publish it publicly, you can add the
-                  following to your package.json:
-                  <pre>
-                    <code>{'"publishConfig": {"access": "public"}'}</code>
-                  </pre>
-                </p>
-              </React.Fragment>
-            );
-          }
-          return (
-            <p key={i}>
-              This package wil be published <strong>publicly</strong> on the{' '}
-              {publishTarget} registry.
-            </p>
-          );
-        })}
+          },
+        )}
     </>
   );
 }

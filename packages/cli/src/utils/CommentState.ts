@@ -1,9 +1,7 @@
 import PullRequestState, {
   PullRequestStateCodec,
 } from '../types/PullRequestState';
-import ValidationCodec from './ValidationCodec';
 
-const codec = new ValidationCodec(PullRequestStateCodec);
 const stateRegex = /<!-- """[a-zA-Z ]+ State Start""" (.*) """[a-zA-Z ]+ State End""" -->/;
 export function readState(body?: string): PullRequestState | undefined {
   if (!body) return undefined;
@@ -12,14 +10,8 @@ export function readState(body?: string): PullRequestState | undefined {
 
   if (!match) return undefined;
 
-  const data = codec.decode(JSON.parse(match[1]));
-
-  if (!data.valid) {
-    // TODO: return the ValidationResult instead of throwing an error
-    throw new Error(data.reason);
-  }
-
-  return data.value;
+  // TODO: return the ValidationResult instead of throwing an error
+  return PullRequestStateCodec.parse(JSON.parse(match[1]));
 }
 
 export function writeState(body: string, state: PullRequestState | undefined) {
@@ -28,7 +20,7 @@ export function writeState(body: string, state: PullRequestState | undefined) {
   return (
     src +
     `\n\n<!-- """RollingVersions State Start""" ${JSON.stringify(
-      codec.encode(state),
+      PullRequestStateCodec.serialize(state),
     )
       .replace(/\>/g, '\\u003e')
       .replace(/\</g, '\\u0060')} """RollingVersions State End""" -->`
