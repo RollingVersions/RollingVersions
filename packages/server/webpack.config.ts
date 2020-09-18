@@ -121,7 +121,7 @@ const config: webpack.Configuration = {
             // it's runtime that would otherwise processed through "file" loader.
             // Also exclude `html` and `json` extensions so they get processed
             // Exclude .ejs as it is the template used by HtmlWebpackPlugin
-            exclude: [/\.html$/, /\.js$/, /\.json$/, /\.ejs$/],
+            exclude: [/\.html$/, /\.js$/, /\.mjs$/, /\.json$/, /\.ejs$/],
             loader: require.resolve('file-loader'),
             options: {
               name: 'static/media/[name].[hash:8].[ext]',
