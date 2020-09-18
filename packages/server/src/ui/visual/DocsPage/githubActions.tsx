@@ -23,7 +23,8 @@ export default function GithubActions() {
         your release.
       </Details>
       <Details>
-        Go to your repositories <InlineCode>Settings</InlineCode> >{' '}
+        Go to your repositories <InlineCode>Settings</InlineCode>
+        {' > '}
         <InlineCode>Secrets</InlineCode> and add an{' '}
         <InlineCode>NPM_TOKEN</InlineCode> with permission to publish all the
         packages in this repository. You don't need to worry about the{' '}
