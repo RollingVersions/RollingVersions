@@ -44,7 +44,8 @@ export default function RepositoryPage(
             return (
               <React.Fragment key={pkg.packageName}>
                 <PackageName>
-                  {pkg.packageName} ({pkg.currentVersion || 'unreleased'} ->{' '}
+                  {pkg.packageName} ({pkg.currentVersion || 'unreleased'}
+                  {' -> '}
                   {pkg.newVersion})
                 </PackageName>
                 <GitHubMarkdownAsync>
