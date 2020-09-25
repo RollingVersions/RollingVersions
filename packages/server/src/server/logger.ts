@@ -32,10 +32,7 @@ const winLogger = winston.createLogger({
   levels: winston.config.syslog.levels,
   transports: [transport],
   defaultMeta: {
-    program: 'rollingversions-server',
-    host: APP_URL,
     environment: ENVIRONMENT,
-    node_version: process.version,
   },
 });
 
@@ -75,7 +72,10 @@ class Logger {
   ) {
     const txid = context.txid || cuid();
     const txids = [...this._txids, txid];
-    return new Logger(this._win.child({...context, txid, txids}), txids);
+    return new Logger(
+      this._win.child({...context, txid: txids.join(':')}),
+      txids,
+    );
   }
   public withTimer() {
     return new Logger(this._win, this._txids, Date.now());
