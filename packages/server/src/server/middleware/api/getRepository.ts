@@ -11,14 +11,16 @@ import {RepoResponse} from '../../../types';
 import readRepositoryState from '../../db-update-jobs/methods/readRepositoryState';
 import {db} from '../../services/postgres';
 import {GitHubClient} from '../../services/github';
+import {Logger} from '../../logger';
 
 export default async function getRepository(
   client: GitHubClient,
   repo: Repository,
+  logger: Logger,
 ): Promise<RepoResponse> {
   const [branch, unsortedPackageStatuses] = await Promise.all([
     getBranch(client, repo),
-    readRepositoryState(db, client, repo),
+    readRepositoryState(db, client, repo, logger),
   ] as const);
 
   const isSuccessPackageStatus = orFn(

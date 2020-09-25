@@ -13,6 +13,8 @@ interface Secrets {
   GITHUB_CLIENT_SECRET: string;
   SECURE_KEY: string;
   DATABASE_URL: string;
+  APEX_LOGS_URL: string;
+  APEX_LOGS_AUTH_TOKEN: string;
 }
 export default function secrets(data: {staging: Secrets; production: Secrets}) {
   return [

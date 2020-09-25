@@ -8,6 +8,7 @@ import {
 import {GitHubClient, GitHubCommit} from '../../services/github';
 import upsertPullRequest from './upsertPullRequest';
 import {Repository} from 'rollingversions/lib/types';
+import {Logger} from '../../logger';
 
 export default async function upsertCommits(
   db: Connection,
@@ -15,7 +16,8 @@ export default async function upsertCommits(
   repositoryId: number,
   repo: Repository,
   allCommits: AsyncGenerator<GitHubCommit[], void, unknown>,
-  {forceFullScan}: {forceFullScan?: boolean} = {},
+  {forceFullScan}: {forceFullScan: boolean},
+  logger: Logger,
 ) {
   function isMatchingRepositoryID(commit: {
     repositoryId: number | null;
@@ -62,6 +64,7 @@ export default async function upsertCommits(
           c.associatedPullRequests.filter(isMatchingRepositoryID),
         ),
         seenPullRequests,
+        logger,
       );
       lastAssociatedPRInserted = await addAssociatedPullRequests(
         db,
@@ -96,6 +99,7 @@ export default async function upsertCommits(
       c.associatedPullRequests.filter(isMatchingRepositoryID),
     ),
     seenPullRequests,
+    logger,
   );
 
   await upsertCommitsPg(db, repositoryId, newCommits);
@@ -113,6 +117,7 @@ async function addMissingPullRequests(
     graphql_id: string;
   }[],
   seenPullRequests: Set<number>,
+  logger: Logger,
 ) {
   const newPullRequests = await filterOutExisingPullRequestIDs(
     db,
@@ -129,7 +134,14 @@ async function addMissingPullRequests(
 
   await Promise.all(
     newPullRequests.map(async (p) => {
-      await upsertPullRequest(db, client, repositoryId, repo, p.graphql_id);
+      await upsertPullRequest(
+        db,
+        client,
+        repositoryId,
+        repo,
+        p.graphql_id,
+        logger,
+      );
     }),
   );
 }

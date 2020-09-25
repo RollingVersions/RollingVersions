@@ -14,9 +14,11 @@ import {
 import {getClientForEvent} from '../../getClient';
 import upsertCommits from '../procedures/upsertCommits';
 import getPackageManifests from '../procedures/getPackageManifests';
+import {Logger} from '../../logger';
 
 export default async function onCreate(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadCreate>,
+  logger: Logger,
 ) {
   const client = getClientForEvent(e);
 
@@ -37,6 +39,8 @@ export default async function onCreate(
         gitRepositoryId,
         repo,
         getAllRefCommits(client, repo, ref),
+        {forceFullScan: false},
+        logger,
       );
 
       const gitRef = await getRef(client, repo, ref);
@@ -63,7 +67,7 @@ export default async function onCreate(
         },
         dbBranch?.target_git_commit_id || null,
       );
-      await getPackageManifests(db, client, repo, headCommit);
+      await getPackageManifests(db, client, repo, headCommit, logger);
       break;
     }
     case 'tag': {
@@ -80,6 +84,8 @@ export default async function onCreate(
         gitRepositoryId,
         repo,
         getCommitHistory(client, gitRef.targetGraphID),
+        {forceFullScan: false},
+        logger,
       );
       const headCommit = await getCommitFromSha(
         db,

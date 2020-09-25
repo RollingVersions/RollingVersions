@@ -3,7 +3,7 @@ import {Repository} from 'rollingversions/lib/types';
 import {APP_ID, PRIVATE_KEY} from './environment';
 import isObject from '../utils/isObject';
 import withCache from '../utils/withCache';
-import log from './logger';
+import logger, {Logger} from './logger';
 
 function addLogging(
   options: Omit<
@@ -16,7 +16,7 @@ function addLogging(
       query: string;
       variables: any;
     },
-    number
+    Logger
   >();
   return {
     ...options,
@@ -25,38 +25,31 @@ function addLogging(
       interval: 2000,
     },
     onBatchRequest(req) {
-      starts.set(req, Date.now());
+      starts.set(req, logger.withTimer());
     },
     onBatchResponse(req, res) {
-      const duration = Date.now() - (starts.get(req) || 0);
+      const timer = starts.get(req) || logger;
       if (res.data?.errors?.length) {
-        log({
-          event_status: 'error',
-          event_type: 'graphql_batch_error',
-          message: `GraphQL Batch Error: ${res.data.errors[0]?.message}`,
-          query: req.query,
-          variables: req.variables,
-          errors: res.data.errors,
-          duration,
-        });
+        timer.error(
+          'graphql_batch_error',
+          `GraphQL Batch Error: ${res.data.errors[0]?.message}`,
+          {
+            query: req.query,
+            variables: req.variables,
+            errors: res.data.errors,
+          },
+        );
       } else {
-        log({
-          event_status: 'ok',
-          event_type: 'graphql_batch_response',
-          message: `GraphQL Batch Response`,
+        timer.info('graphql_batch_response', `GraphQL Batch Response`, {
           query: req.query,
           variables: req.variables,
           errors: res.data.errors,
-          duration,
         });
       }
     },
     onResponse({query, variables}, {errors}) {
       if (errors?.length) {
-        log({
-          event_status: 'error',
-          event_type: 'graphql_error',
-          message: `GraphQL Error: ${errors[0].message}`,
+        logger.error('graphql_error', `GraphQL Error: ${errors[0].message}`, {
           query,
           variables,
           errors,

@@ -17,6 +17,7 @@ import {
 import {APP_URL} from '../../environment';
 import {updateStatus} from 'rollingversions/lib/services/github';
 import {ChangeTypes} from 'rollingversions/lib/types/PullRequestState';
+import {Logger} from '../../logger';
 
 export default async function writePullRequestState(
   db: Connection,
@@ -24,11 +25,12 @@ export default async function writePullRequestState(
   pullRequest: Pick<PullRequest, 'repo' | 'number'>,
   headSha: string | null,
   changes: {packageName: string; changes: ChangeSet}[],
+  logger: Logger,
 ) {
   const changesByPackage = new Map(
     changes.map((c) => [c.packageName, c.changes]),
   );
-  const pr = await readPullRequestState(db, client, pullRequest);
+  const pr = await readPullRequestState(db, client, pullRequest, logger);
   const packages = new Map(
     [...pr.packages].map(([packageName, metadata]): [
       string,

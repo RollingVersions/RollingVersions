@@ -5,7 +5,7 @@ import getPermissionLevel, {
   getRepoPermissionLevel,
 } from '../../permissions/getPermissionLevel';
 import {parseParams, parseRepoParams} from './validateParams';
-import log from '../../logger';
+import {expressLogger} from '../../logger';
 
 export {Permission};
 
@@ -30,27 +30,38 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
     try {
       const userAuth = getGitHubAccessToken(req, res);
       const pullRequest = parseParams(req);
-      const start = Date.now();
-      const permissionInfo = await getPermissionLevel(pullRequest, userAuth);
-      log({
-        event_type: 'loaded_permission_level',
-        event_status: 'ok',
-        message: 'Loaded permission level',
-        ...permissionInfo,
-        duraiton: Date.now() - start,
+
+      const logger = expressLogger(req, res);
+      const timer = logger.withTimer();
+      const permissionInfo = await getPermissionLevel(
+        pullRequest,
+        userAuth,
+        logger,
+      );
+      timer.info('loaded_permission_level', 'Loaded permission level', {
+        allowed_permissions: allowedPermissions,
+        permission: permissionInfo.permission,
+        reason: permissionInfo.reason,
+        login: permissionInfo.login,
+        repo_owner: pullRequest.repo.owner,
+        repo_name: pullRequest.repo.name,
+        pull_number: pullRequest.number,
       });
       permisisonInfoMap.set(req, permissionInfo);
       if (!allowedPermissions.includes(permissionInfo.permission)) {
-        log({
-          event_status: 'warn',
-          event_type: 'permission_denied',
-          message: `${permissionInfo.login} does not have access to ${pullRequest.repo.owner}/${pullRequest.repo.name}#${pullRequest.number}`,
-          reason: permissionInfo.reason,
-          login: permissionInfo.login,
-          repo_owner: pullRequest.repo.owner,
-          repo_name: pullRequest.repo.name,
-          pull_number: pullRequest.number,
-        });
+        logger.warning(
+          'permission_denied',
+          `${permissionInfo.login} does not have access to ${pullRequest.repo.owner}/${pullRequest.repo.name}#${pullRequest.number}`,
+          {
+            allowed_permissions: allowedPermissions,
+            permission: permissionInfo.permission,
+            reason: permissionInfo.reason,
+            login: permissionInfo.login,
+            repo_owner: pullRequest.repo.owner,
+            repo_name: pullRequest.repo.name,
+            pull_number: pullRequest.number,
+          },
+        );
         res
           .status(404)
           .send(
@@ -77,18 +88,35 @@ export function checkRepoPermissions(allowedPermissions: Permission[]) {
     try {
       const userAuth = getGitHubAccessToken(req, res);
       const repo = parseRepoParams(req);
-      const permissionInfo = await getRepoPermissionLevel(repo, userAuth);
+      const logger = expressLogger(req, res);
+      const timer = logger.withTimer();
+      const permissionInfo = await getRepoPermissionLevel(
+        repo,
+        userAuth,
+        logger,
+      );
+      timer.info('loaded_permission_level', 'Loaded permission level', {
+        allowed_permissions: allowedPermissions,
+        permission: permissionInfo.permission,
+        reason: permissionInfo.reason,
+        login: permissionInfo.login,
+        repo_owner: repo.owner,
+        repo_name: repo.name,
+      });
       repoPermisisonInfoMap.set(req, permissionInfo);
       if (!allowedPermissions.includes(permissionInfo.permission)) {
-        log({
-          event_status: 'warn',
-          event_type: 'permission_denied',
-          message: `${permissionInfo.login} does not have access to ${repo.owner}/${repo.name}`,
-          reason: permissionInfo.reason,
-          login: permissionInfo.login,
-          repo_owner: repo.owner,
-          repo_name: repo.name,
-        });
+        logger.warning(
+          'permission_denied',
+          `${permissionInfo.login} does not have access to ${repo.owner}/${repo.name}`,
+          {
+            allowed_permissions: allowedPermissions,
+            permission: permissionInfo.permission,
+            reason: permissionInfo.reason,
+            login: permissionInfo.login,
+            repo_owner: repo.owner,
+            repo_name: repo.name,
+          },
+        );
         res
           .status(404)
           .send(

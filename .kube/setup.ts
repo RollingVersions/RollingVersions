@@ -28,6 +28,8 @@ export default [
       APP_ID: '50319',
       APP_URL: 'https://staging.rollingversions.com',
       BASE_URL: 'https://staging.rollingversions.com',
+      ENVIRONMENT: 'staging',
+      APEX_LOGS_PROJECT_ID: 'rolling_versions',
     },
   }),
   createConfigMap({
@@ -37,6 +39,8 @@ export default [
       APP_ID: '50318',
       APP_URL: 'https://rollingversions.com',
       BASE_URL: 'https://rollingversions.com',
+      ENVIRONMENT: 'production',
+      APEX_LOGS_PROJECT_ID: 'rolling_versions',
     },
   }),
 ];

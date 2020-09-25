@@ -23,7 +23,7 @@ import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import readRepository from '../procedures/readRepository';
-import {withLogging} from '../../logger';
+import {Logger} from '../../logger';
 import {getRegistryVersion} from '../../PublishTargets';
 
 interface PullRequestPackage {
@@ -37,18 +37,25 @@ export default async function readPullRequestState(
   db: Connection,
   client: GitHubClient,
   pullRequest: Pick<PullRequest, 'repo' | 'number'>,
+  logger: Logger,
 ) {
   const repo =
-    (await withLogging(readRepository(db, pullRequest.repo), {
+    (await logger.withLogging(readRepository(db, pullRequest.repo), {
       success: 'read_repository',
       successMessage: 'Read repository from db',
       failure: 'failed_read_repository',
     })) ||
-    (await withLogging(
-      addRepository(db, client, pullRequest.repo, {
-        refreshPRs: false,
-        refreshTags: false,
-      }),
+    (await logger.withLogging(
+      addRepository(
+        db,
+        client,
+        pullRequest.repo,
+        {
+          refreshPRs: false,
+          refreshTags: false,
+        },
+        logger,
+      ),
       {
         success: 'added_repository',
         successMessage: 'Added repository',
@@ -62,21 +69,23 @@ export default async function readPullRequestState(
     is_merged,
     commentID,
     submittedAtCommitSha,
-  } = await withLogging(
-    upsertPullRequest(db, client, repo.id, repo, pullRequest.number),
+  } = await logger.withLogging(
+    upsertPullRequest(db, client, repo.id, repo, pullRequest.number, logger),
     {
       success: 'upserted_pr',
       successMessage: 'Upserted pull request',
       failure: 'failed_upsert_pr',
     },
   );
-  const head = await withLogging(
+  const head = await logger.withLogging(
     upsertCommits(
       db,
       client,
       repo.id,
       repo,
       getAllPullRequestCommits(client, repo, pullRequest.number),
+      {forceFullScan: false},
+      logger,
     ),
     {
       success: 'upserted_pr_commits',
@@ -86,22 +95,32 @@ export default async function readPullRequestState(
   );
 
   const [changes, packages] = await Promise.all([
-    withLogging(getChangesForPullRequest(db, id), {
+    logger.withLogging(getChangesForPullRequest(db, id), {
       success: 'got_changes_for_pr',
       successMessage: 'Got changes for pull request',
       failure: 'failed_get_changes',
     }),
-    withLogging(getPackageManifestsForPr(db, client, repo, head), {
-      success: 'got_package_manifests_for_pr',
-      successMessage: 'Got package manifests for pr',
-      failure: 'failed_get_package_manifests_for_pr',
-    }).then((packages) =>
-      withLogging(addPackageVersions(packages, repo.tags, getRegistryVersion), {
-        success: 'got_package_versions',
-        successMessage: 'Got package versions',
-        failure: 'failed_get_package_versions',
-      }),
-    ),
+    logger
+      .withLogging(
+        getPackageManifestsForPr(db, client, repo, head || null, logger),
+        {
+          success: 'got_package_manifests_for_pr',
+          successMessage: 'Got package manifests for pr',
+          failure: 'failed_get_package_manifests_for_pr',
+        },
+      )
+      .then((packages) =>
+        logger.withLogging(
+          addPackageVersions(packages, repo.tags, (pkg) =>
+            getRegistryVersion(pkg, logger),
+          ),
+          {
+            success: 'got_package_versions',
+            successMessage: 'Got package versions',
+            failure: 'failed_get_package_versions',
+          },
+        ),
+      ),
   ]);
 
   const changeSets = new Map<string, ChangeSet<{id: number; weight: number}>>();
@@ -190,21 +209,28 @@ async function getPackageManifestsForPr(
     name: string;
     head: {id: number; graphql_id: string} | undefined | null;
   },
-  head?: GitHubCommit,
+  head: GitHubCommit | null,
+  logger: Logger,
 ) {
   if (head) {
     // TODO: only use this head if the PR is open
     // (once we are able to display changes on packages that no longer exist)
     const id = await getCommitIdFromSha(db, repo.id, head.commit_sha);
     if (id) {
-      return getPackageManifests(db, client, repo, {
-        id,
-        graphql_id: head.graphql_id,
-      });
+      return getPackageManifests(
+        db,
+        client,
+        repo,
+        {
+          id,
+          graphql_id: head.graphql_id,
+        },
+        logger,
+      );
     }
   }
   if (repo.head) {
-    return getPackageManifests(db, client, repo, repo.head);
+    return getPackageManifests(db, client, repo, repo.head, logger);
   }
   // TODO: report this error to users
   throw new Error('Could not find package manifests for this pull request');

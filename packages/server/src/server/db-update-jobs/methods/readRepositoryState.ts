@@ -6,7 +6,7 @@ import getPackageManifests from '../procedures/getPackageManifests';
 import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
-import log from '../../logger';
+import {Logger} from '../../logger';
 import {
   getCurrentVerion,
   getNewVersion,
@@ -19,39 +19,38 @@ export default async function readRepositoryState(
   db: Connection,
   client: GitHubClient,
   repository: Repository,
+  logger: Logger,
 ) {
-  let start = Date.now();
-  const repo = await addRepository(db, client, repository, {
-    refreshPRs: false,
-    refreshTags: true,
-    refreshPrAssociations: true,
-  });
+  const addRepositoryTimer = logger.withTimer();
+  const repo = await addRepository(
+    db,
+    client,
+    repository,
+    {
+      refreshPRs: false,
+      refreshTags: true,
+      refreshPrAssociations: true,
+    },
+    logger,
+  );
 
-  log({
-    event_type: 'add_repository',
-    message: 'Ran add repository',
-    event_status: 'ok',
-    duration: Date.now() - start,
-  });
+  addRepositoryTimer.info('add_repository', 'Ran add repository');
 
-  start = Date.now();
+  const getPackageManifestsTimer = logger.withTimer();
 
   const packages = await getPackageManifests(
     db,
     client,
     repo,
     repo.head,
+    logger,
   ).then((packages) =>
-    addPackageVersions(packages, repo.tags, getRegistryVersion),
+    addPackageVersions(packages, repo.tags, (pkg) =>
+      getRegistryVersion(pkg, logger),
+    ),
   );
 
-  log({
-    event_type: 'get_manifests',
-    message: 'Got package manifets',
-    event_status: 'ok',
-    duration: Date.now() - start,
-  });
-  start = Date.now();
+  getPackageManifestsTimer.info('get_manifests', 'Got package manifets');
 
   const commitIDs = new Map<string, number>(
     repo.tags.map((tag) => [tag.commitSha, tag.target_git_commit_id]),
