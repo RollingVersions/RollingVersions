@@ -1,6 +1,6 @@
 import * as winston from 'winston';
 import cuid from 'cuid';
-import {APEX_LOGS_CONFIG, APP_URL, ENVIRONMENT} from './environment';
+import {APEX_LOGS_CONFIG, ENVIRONMENT} from './environment';
 import {Request, Response, NextFunction} from 'express';
 import onFinished from 'on-finished';
 import onHeaders from 'on-headers';
