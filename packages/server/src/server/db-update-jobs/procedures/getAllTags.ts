@@ -9,13 +9,14 @@ import {Repository} from 'rollingversions/lib/types';
 import {getAllTags as getAllTagsGh} from 'rollingversions/lib/services/github';
 import upsertCommits from './upsertCommits';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
-import log from '../../logger';
+import {Logger} from '../../logger';
 
 export default async function getAllTags(
   db: Connection,
   client: GitHubClient,
   repo: Repository & {id: number},
   {loadFromGitHub}: {loadFromGitHub: boolean},
+  logger: Logger,
 ) {
   if (loadFromGitHub) {
     const [pgTagsByGraphID, gitTags] = await Promise.all([
@@ -54,6 +55,8 @@ export default async function getAllTags(
               repo.id,
               repo,
               getCommitHistory(client, tag.commitGraphId),
+              {forceFullScan: false},
+              logger,
             );
             headCommitId = await getCommitIdFromSha(db, repo.id, tag.commitSha);
           }
@@ -67,14 +70,15 @@ export default async function getAllTags(
               })),
             };
           } else {
-            log({
-              event_status: 'error',
-              event_type: 'missing_tag_head',
-              message: `Missing git tag head for ${tag.name}`,
-              repo_owner: repo.owner,
-              repo_name: repo.name,
-              ...tag,
-            });
+            logger.error(
+              'missing_tag_head',
+              `Missing git tag head for ${tag.name}`,
+              {
+                repo_owner: repo.owner,
+                repo_name: repo.name,
+                ...tag,
+              },
+            );
           }
           return undefined;
         }),

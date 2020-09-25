@@ -2,9 +2,11 @@ import WebhooksApi from '@octokit/webhooks';
 import {updatePullRequest, db} from '../../services/postgres';
 import addRepository from '../procedures/addRepository';
 import {getClientForEvent} from '../../getClient';
+import {Logger} from '../../logger';
 
 export default async function onPullRequestClosed(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadPullRequest>,
+  logger: Logger,
 ) {
   const git_repository_id = e.payload.repository.id;
   await updatePullRequest(db, git_repository_id, {
@@ -22,5 +24,6 @@ export default async function onPullRequestClosed(
       name: e.payload.repository.name,
     },
     {refreshTags: true, refreshPRs: false, refreshPrAssociations: true},
+    logger,
   );
 }

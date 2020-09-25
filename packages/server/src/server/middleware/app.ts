@@ -16,6 +16,7 @@ import validateBody, {getBody} from './utils/validateBody';
 import updatePullRequest from './api/updatePullRequest';
 import getPullRequest from './api/getPullRequest';
 import getRepository from './api/getRepository';
+import {expressLogger} from '../logger';
 
 const appMiddleware = Router();
 
@@ -28,7 +29,11 @@ appMiddleware.get(
     try {
       const repo = parseRepoParams(req);
       const client = await getClientForRepo(repo);
-      const response = await getRepository(client, repo);
+      const response = await getRepository(
+        client,
+        repo,
+        expressLogger(req, res),
+      );
       res.json(response);
     } catch (ex) {
       next(ex);
@@ -75,6 +80,7 @@ appMiddleware.get(
         getUser(req),
         pullRequest,
         getPermission(req),
+        expressLogger(req, res),
       );
 
       res.json(PullRequestResponse.serialize(response));
@@ -96,7 +102,13 @@ appMiddleware.post(
       const client = await getClientForRepo(pullRequest.repo);
       const body = getBody(req);
 
-      await updatePullRequest(client, getUser(req), pullRequest, body);
+      await updatePullRequest(
+        client,
+        getUser(req),
+        pullRequest,
+        body,
+        expressLogger(req, res),
+      );
 
       res.status(200).send('ok');
     } catch (ex) {

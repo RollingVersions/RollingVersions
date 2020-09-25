@@ -16,8 +16,8 @@ import {
 } from '../../services/github';
 import upsertCommits from './upsertCommits';
 import upsertPullRequest from './upsertPullRequest';
-import log from '../../logger';
 import getAllTags from './getAllTags';
+import {Logger} from '../../logger';
 
 export default async function addRepository(
   db: Connection,
@@ -34,6 +34,7 @@ export default async function addRepository(
     refreshPrAssociations?: boolean;
     forceRefreshAllPrAssociations?: boolean;
   },
+  logger: Logger,
 ) {
   const [repository, defaultBranch] = await Promise.all([
     getRepository(client, repo),
@@ -56,7 +57,7 @@ export default async function addRepository(
   const dbBranch = await getBranch(db, repository.id, defaultBranch.name);
 
   if (refreshPRs) {
-    const startReadingPullRequests = Date.now();
+    const timer = logger.withTimer();
     // TODO(perf): avoid reading all IDs once the initial first pass is complete
     for await (const pullRequestIDs of getRepositoryPullRequestIDs(
       client,
@@ -78,16 +79,12 @@ export default async function addRepository(
               name: repository.name,
             },
             graphql_id,
+            logger,
           ),
         ),
       );
     }
-    log({
-      event_type: 'read_pull_requests',
-      message: 'Read all pull request IDs',
-      event_status: 'ok',
-      duration: Date.now() - startReadingPullRequests,
-    });
+    timer.info('read_pull_requests', 'Read all pull request IDs');
   }
 
   let commitID = await getCommitIdFromSha(
@@ -102,7 +99,8 @@ export default async function addRepository(
       repository.id,
       {owner: repository.owner, name: repository.name},
       getAllDefaultBranchCommits(client, repo),
-      {forceFullScan: forceRefreshAllPrAssociations},
+      {forceFullScan: forceRefreshAllPrAssociations === true},
+      logger,
     );
 
     commitID = await getCommitIdFromSha(
@@ -126,9 +124,13 @@ export default async function addRepository(
     dbBranch?.target_git_commit_id || null,
   );
 
-  const tags = await getAllTags(db, client, repository, {
-    loadFromGitHub: refreshTags,
-  });
+  const tags = await getAllTags(
+    db,
+    client,
+    repository,
+    {loadFromGitHub: refreshTags},
+    logger,
+  );
 
   return {
     ...repository,

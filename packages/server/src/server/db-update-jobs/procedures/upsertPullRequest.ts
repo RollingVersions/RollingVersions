@@ -13,7 +13,7 @@ import {
 } from '../../services/github';
 import getPullRequestStateFromComment from './getPullRequestStateFromComment';
 import {ChangeTypes} from 'rollingversions/lib/types/PullRequestState';
-import log from '../../logger';
+import {Logger} from '../../logger';
 import {deleteComment, readComments} from 'rollingversions/lib/services/github';
 import {COMMENT_GUID} from '../../../utils/Rendering';
 
@@ -23,6 +23,7 @@ export default async function upsertPullRequest(
   repositoryId: number,
   repo: {owner: string; name: string},
   pullRequestId: string | number,
+  logger: Logger,
 ) {
   const pr =
     typeof pullRequestId === 'string'
@@ -98,40 +99,46 @@ export default async function upsertPullRequest(
             comment.body.includes(COMMENT_GUID)
           ) {
             // we have a duplicate comment
-            log({
-              event_status: 'warn',
-              event_type: 'deleting_duplicate_comment',
-              message: `Deleting duplicate comment`,
-              repo_owner: repo.owner,
-              repo_name: repo.name,
-              pull_number: pr.number,
-            });
+            logger.warning(
+              'deleting_duplicate_comment',
+              `Deleting duplicate comment`,
+              {
+                repo_owner: repo.owner,
+                repo_name: repo.name,
+                pull_number: pr.number,
+                comment_id_to_keep: dbPr.commentID,
+                comment_id_to_delete: comment.commentID,
+              },
+            );
+            const timer = logger.withTimer();
             deleteComment(
               client,
               {number: pr.number, repo},
               comment.commentID,
             ).then(
               () => {
-                log({
-                  event_status: 'warn',
-                  event_type: 'deleted_duplicate_comment',
-                  message: `Deleted duplicate comment`,
-                  repo_owner: repo.owner,
-                  repo_name: repo.name,
-                  pull_number: pr.number,
-                });
+                timer.warning(
+                  'deleted_duplicate_comment',
+                  `Deleted duplicate comment`,
+                  {
+                    repo_owner: repo.owner,
+                    repo_name: repo.name,
+                    pull_number: pr.number,
+                  },
+                );
               },
               (ex) => {
-                log({
-                  event_status: 'error',
-                  event_type: 'delete_comment_failed',
-                  message: `Unable to delete comment:\n\n${ex.stack ||
+                timer.error(
+                  'delete_comment_failed',
+                  `Unable to delete comment:\n\n${ex.stack ||
                     ex.message ||
                     ex}`,
-                  repo_owner: repo.owner,
-                  repo_name: repo.name,
-                  pull_number: pr.number,
-                });
+                  {
+                    repo_owner: repo.owner,
+                    repo_name: repo.name,
+                    pull_number: pr.number,
+                  },
+                );
               },
             );
           }

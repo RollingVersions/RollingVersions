@@ -1,4 +1,4 @@
-import log from '../../logger';
+import {Logger} from '../../logger';
 import {ChangeTypes} from 'rollingversions/lib/types/PullRequestState';
 import {PullRequest} from 'rollingversions/lib/types';
 import {User} from '../utils/checkPermissions';
@@ -12,11 +12,9 @@ export default async function updatePullRequest(
   user: User,
   pullRequest: Pick<PullRequest, 'repo' | 'number'>,
   body: UpdatePullRequestBody,
+  logger: Logger,
 ) {
-  log({
-    event_status: 'ok',
-    event_type: 'submitted_change_set',
-    message: `Submitted change set`,
+  logger.info('submitted_change_set', `Submitted change set`, {
     changes_count: body.updates
       .map((u) =>
         ChangeTypes.map((ct) => u.changes[ct].length).reduce(
@@ -37,5 +35,6 @@ export default async function updatePullRequest(
     pullRequest,
     body.headSha,
     body.updates,
+    logger,
   );
 }

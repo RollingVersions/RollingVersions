@@ -7,13 +7,14 @@ import {GitHubClient} from '../../services/github';
 import listPackages from 'rollingversions/lib/utils/listPackages';
 import {getAllFiles} from 'rollingversions/lib/services/github';
 import {PackageManifest, PackageDependencies} from 'rollingversions/lib/types';
-import log from '../../logger';
+import {Logger} from '../../logger';
 
 export default async function getPackageManifests(
   db: Connection,
   client: GitHubClient,
   repo: {owner: string; name: string},
   commit: {id: number; graphql_id: string},
+  logger: Logger,
 ): Promise<
   Map<
     string,
@@ -88,11 +89,7 @@ export default async function getPackageManifests(
       ),
     ),
   ).catch((ex) => {
-    log({
-      event_type: 'error_writing_package_manifests',
-      event_status: 'error',
-      message: ex.stack,
-    });
+    logger.error('error_writing_package_manifests', ex.stack);
   });
 
   return packages;

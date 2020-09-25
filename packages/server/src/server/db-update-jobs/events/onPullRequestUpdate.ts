@@ -8,9 +8,11 @@ import {
   getShortDescription,
 } from '../../../utils/Rendering';
 import readPullRequestState from '../methods/readPullRequestState';
+import {Logger} from '../../logger';
 
 export default async function onPullRequestUpdate(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadPullRequest>,
+  logger: Logger,
 ) {
   const client = getClientForEvent(e);
   const repo = {
@@ -18,10 +20,15 @@ export default async function onPullRequestUpdate(
     name: e.payload.repository.name,
   };
 
-  const pullRequest = await readPullRequestState(db, client, {
-    repo,
-    number: e.payload.number,
-  });
+  const pullRequest = await readPullRequestState(
+    db,
+    client,
+    {
+      repo,
+      number: e.payload.number,
+    },
+    logger,
+  );
 
   if (pullRequest.headSha) {
     const pr = {

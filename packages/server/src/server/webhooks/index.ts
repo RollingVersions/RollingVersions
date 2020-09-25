@@ -1,6 +1,6 @@
-import WebhooksApi from '@octokit/webhooks';
+import WebhooksApi, {WebhookEvent} from '@octokit/webhooks';
 import {WEBHOOK_SECRET} from '../environment';
-import log from '../logger';
+import logger, {Logger} from '../logger';
 import onPullRequestClosed from '../db-update-jobs/events/onPullRequestClosed';
 import onInstallationRepositoriesAdded from '../db-update-jobs/events/onInstallationRepositoriesAdded';
 import onInstallation from '../db-update-jobs/events/onInstallation';
@@ -12,135 +12,134 @@ import onPush from '../db-update-jobs/events/onPush';
 const webhooks = new WebhooksApi({secret: WEBHOOK_SECRET});
 
 async function withLog(
-  fn: () => Promise<void>,
-  {
-    event_type,
-    message,
-    ...otherPrams
-  }: {event_type: string; message: string; [key: string]: any},
+  event: WebhookEvent<unknown>,
+  {message, ...otherParams}: {message: string; [key: string]: any},
+  fn: (logger: Logger) => Promise<void>,
 ) {
-  log({
-    ...otherPrams,
-    event_status: 'ok',
-    event_type: `${event_type}:received`,
-    message: `${message} Received`,
+  const txLogger = logger.withTransaction({
+    txid: event.id,
+    event_name: event.name,
+    ...otherParams,
   });
+  txLogger.info(`${event.name}:received`, `${message} Received`);
+  const timer = txLogger.withTimer();
   try {
-    await fn();
-    log({
-      ...otherPrams,
-      event_status: 'ok',
-      event_type: `${event_type}:handled`,
-      message: `${message} Handled`,
-    });
+    await fn(txLogger);
+    timer.info(`${event.name}:handled`, `${message} Handled`);
   } catch (ex) {
-    log({
-      ...otherPrams,
-      ...ex,
-      event_status: 'error',
-      event_type: `${event_type}:errored`,
-      message: `${ex.stack || ex.message || ex}`,
-    });
+    timer.error(
+      `${event.name}:errored`,
+      `${ex.stack || ex.message || ex}`,
+      typeof ex === 'object' && ex !== null ? {...ex} : {},
+    );
   }
 }
 
 webhooks.on('installation_repositories.added', async (e) => {
-  await withLog(() => onInstallationRepositoriesAdded(e), {
-    event_type: 'installation_repositories.added',
-    message: 'Added Repositories',
-    event_id: e.id,
-    repo_owner: e.payload.sender.login,
-    count: e.payload.repositories_added.length,
-  });
+  await withLog(
+    e,
+    {
+      message: 'Repository installation added',
+      repo_owner: e.payload.sender.login,
+      count: e.payload.repositories_added.length,
+    },
+    (logger) => onInstallationRepositoriesAdded(e, logger),
+  );
 });
 
 webhooks.on('installation.created', async (e) => {
-  await withLog(() => onInstallation(e), {
-    event_type: 'installation.created',
-    message: 'New Installation',
-    event_id: e.id,
-    repo_owner: e.payload.sender.login,
-    count: e.payload.repositories.length,
-  });
+  await withLog(
+    e,
+    {
+      message: 'New Installation',
+      repo_owner: e.payload.sender.login,
+      count: e.payload.repositories.length,
+    },
+    (logger) => onInstallation(e, logger),
+  );
 });
 
 webhooks.on('create', async (e) => {
-  await withLog(() => onCreate(e), {
-    event_type: 'create',
-    message: 'Branch or tag created',
-    event_id: e.id,
-    repo_id: e.payload.repository.id,
-    repo_owner: e.payload.repository.owner.login,
-    repo_name: e.payload.repository.name,
-    ref_type: e.payload.ref_type,
-    ref_name: e.payload.ref,
-  });
+  await withLog(
+    e,
+    {
+      message: 'Branch or tag created',
+      repo_id: e.payload.repository.id,
+      repo_owner: e.payload.repository.owner.login,
+      repo_name: e.payload.repository.name,
+      ref_type: e.payload.ref_type,
+      ref_name: e.payload.ref,
+    },
+    (logger) => onCreate(e, logger),
+  );
 });
 webhooks.on('delete', async (e) => {
-  await withLog(() => onDelete(e), {
-    event_type: 'delete',
-    message: 'Branch or tag deleted',
-    event_id: e.id,
-    repo_id: e.payload.repository.id,
-    repo_owner: e.payload.repository.owner.login,
-    repo_name: e.payload.repository.name,
-    ref_type: e.payload.ref_type,
-    ref_name: e.payload.ref,
-  });
+  await withLog(
+    e,
+    {
+      message: 'Branch or tag deleted',
+      repo_id: e.payload.repository.id,
+      repo_owner: e.payload.repository.owner.login,
+      repo_name: e.payload.repository.name,
+      ref_type: e.payload.ref_type,
+      ref_name: e.payload.ref,
+    },
+    () => onDelete(e),
+  );
 });
 
-webhooks.on(
-  'pull_request.opened',
-  onPullRequest('pull_request.opened', 'Pull Request Opened'),
-);
-webhooks.on(
-  'pull_request.edited',
-  onPullRequest('pull_request.edited', 'Pull Request Edited'),
-);
+webhooks.on('pull_request.opened', onPullRequest('Pull Request Opened'));
+webhooks.on('pull_request.edited', onPullRequest('Pull Request Edited'));
 webhooks.on(
   'pull_request.synchronize',
-  onPullRequest('pull_request.synchronize', 'Pull Request Synchronize'),
+  onPullRequest('Pull Request Synchronized'),
 );
 
-function onPullRequest(event_type: string, message: string) {
+function onPullRequest(message: string) {
   return async (
     e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadPullRequest>,
   ) => {
-    await withLog(() => onPullRequestUpdate(e), {
-      event_type,
-      message,
-      event_id: e.id,
+    await withLog(
+      e,
+      {
+        message,
+        repo_id: e.payload.repository.id,
+        repo_owner: e.payload.repository.owner.login,
+        repo_name: e.payload.repository.name,
+        pull_number: e.payload.pull_request.number,
+        pull_id: e.payload.pull_request.id,
+      },
+      (logger) => onPullRequestUpdate(e, logger),
+    );
+  };
+}
+
+webhooks.on('pull_request.closed', async (e) => {
+  await withLog(
+    e,
+    {
+      message: 'Pull Request Closed',
       repo_id: e.payload.repository.id,
       repo_owner: e.payload.repository.owner.login,
       repo_name: e.payload.repository.name,
       pull_number: e.payload.pull_request.number,
       pull_id: e.payload.pull_request.id,
-    });
-  };
-}
-
-webhooks.on('pull_request.closed', async (e) => {
-  await withLog(() => onPullRequestClosed(e), {
-    event_type: 'pull_request.closed',
-    message: 'Pull Request Closed',
-    event_id: e.id,
-    repo_id: e.payload.repository.id,
-    repo_owner: e.payload.repository.owner.login,
-    repo_name: e.payload.repository.name,
-    pull_number: e.payload.pull_request.number,
-    pull_id: e.payload.pull_request.id,
-  });
+    },
+    (logger) => onPullRequestClosed(e, logger),
+  );
 });
 
 webhooks.on('push', async (e) => {
-  await withLog(() => onPush(e), {
-    event_type: 'push',
-    message: 'Repository Push',
-    event_id: e.id,
-    repo_id: e.payload.repository.id,
-    repo_owner: e.payload.repository.owner.login,
-    repo_name: e.payload.repository.name,
-  });
+  await withLog(
+    e,
+    {
+      message: 'Repository Push',
+      repo_id: e.payload.repository.id,
+      repo_owner: e.payload.repository.owner.login,
+      repo_name: e.payload.repository.name,
+    },
+    (logger) => onPush(e, logger),
+  );
 });
 
 export default webhooks;
