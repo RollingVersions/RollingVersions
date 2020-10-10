@@ -1,0 +1,1 @@
+INSERT INTO publish_targets (id) VALUES ('custom_script');

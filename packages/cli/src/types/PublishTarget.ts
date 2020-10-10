@@ -3,6 +3,7 @@ import PublishConfigAccess, {
   PublishConfigAccessCodec,
 } from './PublishConfigAccess';
 
+// N.B. this enum **must** be kept in sync with the publish_targets table in the database
 enum PublishTarget {
   npm = 'npm',
   custom_script = 'custom_script',
