@@ -27,6 +27,7 @@ export interface CustomScriptTargetConfig {
   prepublish?: string;
   publish_dry_run?: string;
   publish: string;
+  tag_format?: string;
 }
 export const CustomScriptTargetConfig: t.Codec<CustomScriptTargetConfig> = t
   .Object({
@@ -38,6 +39,7 @@ export const CustomScriptTargetConfig: t.Codec<CustomScriptTargetConfig> = t
       version: t.String,
       prepublish: t.String,
       publish_dry_run: t.String,
+      tag_format: t.String,
     }),
   );
 

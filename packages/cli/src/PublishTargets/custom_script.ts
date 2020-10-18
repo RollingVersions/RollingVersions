@@ -9,6 +9,7 @@ import {
 } from '../types';
 import isObject from '../ts-utils/isObject';
 import {execBuffered} from 'modern-spawn';
+import parseVersionTagTemplate from '../utils/parseVersionTagTemplate';
 
 const MANIFEST_NAME = 'rolling-package';
 // TODO: better error messages
@@ -117,10 +118,26 @@ export async function getPackageManifest(
       )
     ) {
       throw new Error(
-        'Expected "publish"."dependencies" to be undefined or an array of strings',
+        'Expected "dependencies" to be undefined or an array of strings',
       );
     }
 
+    if (
+      result.tag_format !== undefined &&
+      typeof result.tag_format !== 'string'
+    ) {
+      throw new Error('Expected "tag_format" to be undefined or a string');
+    }
+    if (result.tag_format) {
+      const {variables} = parseVersionTagTemplate(result.tag_format);
+      for (const expected of ['MARJOR', 'MINOR', 'PATCH']) {
+        if (!variables.includes(expected)) {
+          throw new Error(
+            'Expected "tag_format" to contain placeholders for "{{ MAJOR }}", "{{ MINOR }}" and "{{ PATCH }}"',
+          );
+        }
+      }
+    }
     return {
       manifest: {
         packageName: result.name,
@@ -132,6 +149,7 @@ export async function getPackageManifest(
           prepublish: result.scripts.prepublish,
           publish_dry_run: result.scripts.publish_dry_run,
           publish: result.scripts.publish,
+          tag_format: result.tag_format,
         },
       },
       dependencies: {
