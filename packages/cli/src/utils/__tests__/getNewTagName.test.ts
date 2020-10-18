@@ -26,5 +26,5 @@ test('getNewTagName', () => {
       ],
       dependencies: {required: [], optional: [], development: []},
     }),
-  ).toMatchInlineSnapshot(`"1//0//0"`);
+  ).toMatchInlineSnapshot(`"1/0/0"`);
 });
