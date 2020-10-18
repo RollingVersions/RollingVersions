@@ -4,7 +4,7 @@ import webhooks from './webhooks';
 import authMiddleware from './middleware/auth';
 import staticMiddleware from './middleware/static';
 import appMiddleware from './middleware/app';
-import {expressMiddlewareLogger} from './logger';
+import {errorLoggingMiddlware, expressMiddlewareLogger} from './logger';
 
 const app = express();
 type EventSource = typeof EventSource;
@@ -43,5 +43,7 @@ app.use(json());
 app.use(appMiddleware);
 // https://github.com/Mottie/github-reserved-names/blob/master/oddballs.json has the names that are available to use
 app.use(staticMiddleware);
+
+app.use(errorLoggingMiddlware());
 
 export default app.listen(process.env.PORT || 3000);
