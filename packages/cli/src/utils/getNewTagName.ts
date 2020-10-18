@@ -1,7 +1,9 @@
+import {PublishTarget} from '../types';
 import {
   SuccessPackageStatus,
   NewVersionToBePublished,
 } from './getPackageStatuses';
+import parseVersionTagTemplate from './parseVersionTagTemplate';
 
 /**
  * If you start with RollingVersions from scratch, we always use the tag format:
@@ -60,6 +62,22 @@ export default function getNewTagName(
   allPackages: readonly SuccessPackageStatus[],
   pkg: NewVersionToBePublished,
 ) {
+  const tagFormat = pkg.manifests
+    .map(
+      (m) =>
+        m.targetConfig.type === PublishTarget.custom_script &&
+        m.targetConfig.tag_format,
+    )
+    .find((m) => m);
+  if (tagFormat) {
+    const [MAJOR, MINOR, PATCH] = pkg.newVersion.split('.');
+    return parseVersionTagTemplate(tagFormat).applyTemplate({
+      PACKAGE_NAME: pkg.packageName,
+      MAJOR,
+      MINOR,
+      PATCH,
+    });
+  }
   const start = isSinglePackageWithDirectVersion(allPackages)
     ? ``
     : `${pkg.packageName}@`;

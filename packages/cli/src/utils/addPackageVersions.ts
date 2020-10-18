@@ -2,6 +2,7 @@ import {
   PackageManifest,
   PackageDependencies,
   PackageManifestWithVersion,
+  PublishTarget,
 } from '../types';
 import {getRegistryVersion as GetRegistryVersionType} from '../PublishTargets';
 import getVersionTag from './getVersionTag';
@@ -37,6 +38,13 @@ export default async function addPackageVersions(
             },
           ]
         > => {
+          const tagFormat = manifests
+            .map(
+              (m) =>
+                m.targetConfig.type === PublishTarget.custom_script &&
+                m.targetConfig.tag_format,
+            )
+            .find((m) => m);
           return [
             packageName,
             {
@@ -51,7 +59,10 @@ export default async function addPackageVersions(
                         allTags,
                         packageName,
                         registryVersion,
-                        {isMonoRepo: packages.size > 1},
+                        {
+                          repoHasMultiplePackages: packages.size > 1,
+                          tagFormat: tagFormat || null,
+                        },
                       ),
                     };
                   },

@@ -1,15 +1,32 @@
 import {valid, prerelease, gt} from 'semver';
 import isTruthy from '../ts-utils/isTruthy';
+import parseVersionTagTemplate from './parseVersionTagTemplate';
 
 export default function getVersionTag<Tag extends {readonly name: string}>(
   allTags: readonly Tag[],
   packageName: string,
   registryVersion: string | null,
-  {isMonoRepo}: {isMonoRepo: boolean},
+  {
+    repoHasMultiplePackages,
+    tagFormat,
+  }: {repoHasMultiplePackages: boolean; tagFormat: string | null},
 ): (Tag & {version: string}) | null {
+  const format = tagFormat && parseVersionTagTemplate(tagFormat);
   const tags = allTags
     .map((tag) => {
-      if (!isMonoRepo && valid(tag.name.replace(/^v/, ''))) {
+      if (format) {
+        const parsed = format.parse(tag.name, packageName);
+        if (parsed) {
+          return {
+            ...tag,
+            version: `${parsed.MAJOR || 0}.${parsed.MINOR ||
+              0}.${parsed.PATCH || 0}`,
+          };
+        } else {
+          return null;
+        }
+      }
+      if (!repoHasMultiplePackages && valid(tag.name.replace(/^v/, ''))) {
         return {
           ...tag,
           version: tag.name.replace(/^v/, ''),
