@@ -120,7 +120,6 @@ export default function parseVersionTagTemplate(str: string) {
       //     }
       //   }, values[variable]);
       // });
-      printer.push(() => plainString);
     } else {
       inVariables = true;
       printer.push(() => part);
