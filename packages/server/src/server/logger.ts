@@ -170,3 +170,11 @@ export function expressMiddlewareLogger() {
     next();
   };
 }
+
+export function errorLoggingMiddlware() {
+  return (err: Error, req: Request, res: Response, next: NextFunction) => {
+    const logger = expressLogger(req, res);
+    logger.error('response_error', `${err?.stack || err?.message || err}`);
+    next(err);
+  };
+}

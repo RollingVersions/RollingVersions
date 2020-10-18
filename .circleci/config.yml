@@ -131,7 +131,8 @@ commands:
 
   push:
     steps:
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.13
       - run:
           name: Build Docker
           command: docker build -t $DOCKERHUB_USERNAME/rollingversions:$CIRCLE_SHA1 .

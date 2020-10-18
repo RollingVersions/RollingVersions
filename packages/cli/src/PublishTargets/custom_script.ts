@@ -130,7 +130,7 @@ export async function getPackageManifest(
     }
     if (result.tag_format) {
       const {variables} = parseVersionTagTemplate(result.tag_format);
-      for (const expected of ['MARJOR', 'MINOR', 'PATCH']) {
+      for (const expected of ['MAJOR', 'MINOR', 'PATCH']) {
         if (!variables.includes(expected)) {
           throw new Error(
             'Expected "tag_format" to contain placeholders for "{{ MAJOR }}", "{{ MINOR }}" and "{{ PATCH }}"',
