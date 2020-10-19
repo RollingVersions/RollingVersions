@@ -1,3 +1,5 @@
+import assert from 'assert';
+
 export interface Version {
   PACKAGE_NAME: string;
   MAJOR: string;
@@ -31,12 +33,54 @@ export default function parseVersionTagTemplate(str: string) {
       if (split.length !== 2) {
         throw new Error(`Mismatched parentheses: ${str}`);
       }
-      const [variable, plainString] = split;
+      const [placeholder, plainString] = split;
+
+      const [variable, ...filters] = placeholder
+        .split('|')
+        .map((str) => str.trim());
+
       if (!isValidVariable(variable)) {
         throw new Error(`${variable} is not a valid variable: ${str}`);
       }
+      for (const filter of filters) {
+        const [filterName, ...params] = filter
+          .split(' ')
+          .filter((v) => v.trim());
+        switch (filterName) {
+          case 'pad-number':
+            assert(
+              params.length === 1,
+              `The ${filterName} filter requires a value for the required length: ${str}`,
+            );
+            assert(
+              /^[0-9]+$/.test(params[0]),
+              `The parameter for the ${filterName} fitler must be an integer: ${str}`,
+            );
+            break;
+          default:
+            throw new Error(
+              `Unrecognized filter in version format, "${filter}" in: ${str}`,
+            );
+        }
+      }
+
       variables.push(variable);
-      printer.push((version) => version[variable]);
+
+      printer.push((version) => {
+        return filters.reduce<string>((value, filter): string => {
+          const [filterName, ...params] = filter
+            .split(' ')
+            .filter((v) => v.trim());
+          switch (filterName) {
+            case 'pad-number':
+              return value.padStart(parseInt(params[0], 10), '0');
+            default:
+              throw new Error(
+                `Unrecognized filter in version format, "${filter}" in: ${str}`,
+              );
+          }
+        }, version[variable]);
+      });
       parser.push((str, packageName) => {
         switch (variable) {
           case 'PACKAGE_NAME':
@@ -64,62 +108,6 @@ export default function parseVersionTagTemplate(str: string) {
           ? {rest: str.substring(plainString.length), parsed: {}}
           : null,
       );
-      // TODO: support some basic "filters"
-      // const [placeholder, plainString] = split;
-      // const [variable, ...filters] = placeholder
-      //   .split('|')
-      //   .map((str) => str.trim());
-      // variables.push(variable);
-      // for (const filter of filters) {
-      //   const [filterName, ...params] = filter.split(' ');
-      //   switch (filterName) {
-      //     case 'pascal-case':
-      //     case 'camel-case':
-      //       assert(
-      //         params.length === 0,
-      //         `The ${filterName} filter does not accept any parameters: ${str}`,
-      //       );
-      //       break;
-      //     case 'pad-start':
-      //     case 'pad-end':
-      //       assert(
-      //         params.length > 0 && params.length < 3,
-      //         `The ${filterName} filter requires between 1 and 2 parameters: ${str}`,
-      //       );
-      //       assert(
-      //         /^[0-9]+$/.test(params[0]),
-      //         `The first parameter for the ${filterName} fitler must be an integer: ${str}`,
-      //       );
-      //       break;
-      //     default:
-      //       throw new Error(
-      //         `Unrecognized filter in type generation config, "${filter}" in: ${str}`,
-      //       );
-      //   }
-      // }
-
-      // result.push((values) => {
-      //   if (!(variable in values)) {
-      //     throw new Error(`Unrecognized variable ${variable} in ${str}`);
-      //   }
-      //   return filters.reduce<string>((value, filter): string => {
-      //     const [filterName, ...params] = filter.split(' ');
-      //     switch (filterName) {
-      //       case 'pascal-case':
-      //         return camelcase(value, {locale: 'en-US', pascalCase: true});
-      //       case 'camel-case':
-      //         return camelcase(value, {locale: 'en-US'});
-      //       case 'pad-start':
-      //         return value.padStart(parseInt(params[0], 10), params[1]);
-      //       case 'pad-end':
-      //         return value.padEnd(parseInt(params[0], 10), params[1]);
-      //       default:
-      //         throw new Error(
-      //           `Unrecognized filter in type generation config, "${filter}" in: ${str}`,
-      //         );
-      //     }
-      //   }, values[variable]);
-      // });
     } else {
       inVariables = true;
       printer.push(() => part);
