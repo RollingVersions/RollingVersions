@@ -19,8 +19,10 @@ export default function getVersionTag<Tag extends {readonly name: string}>(
         if (parsed) {
           return {
             ...tag,
-            version: `${parsed.MAJOR || 0}.${parsed.MINOR ||
-              0}.${parsed.PATCH || 0}`,
+            version: `${parseInt(parsed.MAJOR || '0', 10)}.${parseInt(
+              parsed.MINOR || '0',
+              10,
+            )}.${parseInt(parsed.PATCH || '0', 10)}`,
           };
         } else {
           return null;

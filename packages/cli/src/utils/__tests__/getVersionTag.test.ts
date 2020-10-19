@@ -88,6 +88,24 @@ test('Custom tag format', () => {
       "version": "5.4.0",
     }
   `);
+
+  expect(
+    getVersionTag(
+      [{name: 'before-0-4-5-after'}, {name: 'before-0-04-006-after'}],
+      'my-package',
+      null,
+      {
+        repoHasMultiplePackages: true,
+        tagFormat:
+          'before-{{ PATCH | pad-number 2 }}-{{ MINOR | pad-number 2 }}-{{ MAJOR | pad-number 3 }}-after',
+      },
+    ),
+  ).toMatchInlineSnapshot(`
+    Object {
+      "name": "before-0-04-006-after",
+      "version": "6.4.0",
+    }
+  `);
 });
 
 // import {valid, prerelease, gt} from 'semver';
