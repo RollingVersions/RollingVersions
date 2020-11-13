@@ -7,7 +7,7 @@ export default async function onDelete(
   const gitRepositoryId = e.payload.repository.id;
 
   if (e.payload.ref_type === 'branch') {
-    await deleteBranch(db, gitRepositoryId, e.payload.ref);
+    await deleteBranch(gitRepositoryId, e.payload.ref, db);
   } else {
     await deleteTag(db, gitRepositoryId, e.payload.ref);
   }

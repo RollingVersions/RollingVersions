@@ -1,19 +1,11 @@
-import DbGitBranches from '@rollingversions/db-schema/git_branches';
-// import DatabaseSchema from '@rollingversions/db-schema';
-import connect, {sql, Queryable} from '@databases/pg';
-// import createTyped from '@databases/pg-typed';
 import {ChangeType} from 'rollingversions/lib/types/PullRequestState';
 import {PublishTarget} from 'rollingversions/lib/types';
 import {PublishTargetConfig} from 'rollingversions/lib/types/PublishTarget';
+import db, {sql, Queryable} from './connection';
 
-export {Queryable};
-export const db = connect({
-  bigIntMode: 'number',
-});
+export {db, Queryable};
 
-// const {git_repositories} = createTyped<DatabaseSchema>({
-//   defaultConnection: db,
-// });
+export {getBranch, writeBranch, deleteBranch} from './Branch';
 
 export async function getRepository(
   db: Queryable,
@@ -435,64 +427,6 @@ export async function getAllTags(
     FROM git_tags gt
     INNER JOIN git_commits gc ON (gt.target_git_commit_id = gc.id)
     WHERE gt.git_repository_id = ${git_repository_id}
-  `);
-}
-
-export async function getBranch(
-  db: Queryable,
-  git_repository_id: number,
-  branchName: string,
-): Promise<{name: string; target_git_commit_id: number} | undefined> {
-  const result: Pick<
-    DbGitBranches,
-    'name' | 'target_git_commit_id'
-  >[] = await db.query(sql`
-    SELECT name, target_git_commit_id
-    FROM git_branches
-    WHERE git_repository_id=${git_repository_id} AND name=${branchName}
-  `);
-  if (result.length > 1) {
-    throw new Error(
-      'Found multiple git branches with the same name in the same repository',
-    );
-  }
-  if (result.length === 1) {
-    return result[0];
-  } else {
-    return undefined;
-  }
-}
-
-export async function writeBranch(
-  db: Queryable,
-  git_repository_id: number,
-  branch: {graphql_id: string; name: string; target_git_commit_id: number},
-  oldTargetGitCommitID: number | null,
-): Promise<void> {
-  if (oldTargetGitCommitID !== null) {
-    await db.query(sql`
-      UPDATE git_branches
-      SET target_git_commit_id=${branch.target_git_commit_id}
-      WHERE git_repository_id=${git_repository_id}
-      AND name=${branch.name}
-      AND target_git_commit_id=${oldTargetGitCommitID}
-    `);
-  } else {
-    await db.query(sql`
-      INSERT INTO git_branches (graphql_id, git_repository_id, name, target_git_commit_id)
-      VALUES (${branch.graphql_id}, ${git_repository_id}, ${branch.name}, ${branch.target_git_commit_id})
-      ON CONFLICT (git_repository_id, name) DO NOTHING
-    `);
-  }
-}
-export async function deleteBranch(
-  db: Queryable,
-  git_repository_id: number,
-  branchName: string,
-): Promise<void> {
-  await db.query(sql`
-    DELETE FROM git_branches
-    WHERE git_repository_id=${git_repository_id} AND name=${branchName}
   `);
 }
 
