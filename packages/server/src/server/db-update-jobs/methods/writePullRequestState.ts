@@ -1,6 +1,6 @@
 import retry from 'then-retry';
 import {
-  Connection,
+  Queryable,
   updatePullRequestCommentID,
   updateChangeLogEntries,
 } from '../../services/postgres';
@@ -20,7 +20,7 @@ import {ChangeTypes} from 'rollingversions/lib/types/PullRequestState';
 import {Logger} from '../../logger';
 
 export default async function writePullRequestState(
-  db: Connection,
+  db: Queryable,
   client: GitHubClient,
   pullRequest: Pick<PullRequest, 'repo' | 'number'>,
   headSha: string | null,

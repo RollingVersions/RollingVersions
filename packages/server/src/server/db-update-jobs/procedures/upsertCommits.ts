@@ -1,5 +1,5 @@
 import {
-  Connection,
+  Queryable,
   upsertCommits as upsertCommitsPg,
   filterOutExisingPullRequestIDs,
   filterToExistingCommitShas,
@@ -11,7 +11,7 @@ import {Repository} from 'rollingversions/lib/types';
 import {Logger} from '../../logger';
 
 export default async function upsertCommits(
-  db: Connection,
+  db: Queryable,
   client: GitHubClient,
   repositoryId: number,
   repo: Repository,
@@ -108,7 +108,7 @@ export default async function upsertCommits(
 }
 
 async function addMissingPullRequests(
-  db: Connection,
+  db: Queryable,
   client: GitHubClient,
   repositoryId: number,
   repo: Repository,

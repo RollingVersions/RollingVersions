@@ -5,7 +5,7 @@ import {
   PackageManifestWithVersion,
 } from 'rollingversions/lib/types';
 import {
-  Connection,
+  Queryable,
   getChangesForPullRequest,
   getCommitIdFromSha,
   isPullRequestReleased,
@@ -34,7 +34,7 @@ interface PullRequestPackage {
 }
 
 export default async function readPullRequestState(
-  db: Connection,
+  db: Queryable,
   client: GitHubClient,
   pullRequest: Pick<PullRequest, 'repo' | 'number'>,
   logger: Logger,
@@ -200,7 +200,7 @@ export default async function readPullRequestState(
 }
 
 async function getPackageManifestsForPr(
-  db: Connection,
+  db: Queryable,
   client: GitHubClient,
   repo: {
     id: number;

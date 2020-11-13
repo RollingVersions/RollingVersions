@@ -1,5 +1,5 @@
 import {Repository} from 'rollingversions/lib/types';
-import {Connection, getAllUnreleasedChanges} from '../../services/postgres';
+import {Queryable, getAllUnreleasedChanges} from '../../services/postgres';
 import {GitHubClient} from '../../services/github';
 import addRepository from '../procedures/addRepository';
 import getPackageManifests from '../procedures/getPackageManifests';
@@ -16,7 +16,7 @@ import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses'
 import {getRegistryVersion} from '../../PublishTargets';
 
 export default async function readRepositoryState(
-  db: Connection,
+  db: Queryable,
   client: GitHubClient,
   repository: Repository,
   logger: Logger,

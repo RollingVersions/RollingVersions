@@ -35,9 +35,9 @@ console.log('Starting');
       } else {
         console.log(`applying ${migrationName}`);
         await db.tx(async (tx) => {
-          await tx.query([
+          await tx.query(
             sql.file(`${__dirname}/../db-migrations/${migrationName}`),
-          ]);
+          );
           await tx.query(
             sql`INSERT INTO db_migrations_applied (migration_name) VALUES (${migrationName})`,
           );

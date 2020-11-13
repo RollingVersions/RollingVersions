@@ -1,5 +1,5 @@
 import {
-  Connection,
+  Queryable,
   getPullRequestCommentID,
   insertPullRequest,
   updatePullRequest,
@@ -18,7 +18,7 @@ import {deleteComment, readComments} from 'rollingversions/lib/services/github';
 import {COMMENT_GUID} from '../../../utils/Rendering';
 
 export default async function upsertPullRequest(
-  db: Connection,
+  db: Queryable,
   client: GitHubClient,
   repositoryId: number,
   repo: {owner: string; name: string},

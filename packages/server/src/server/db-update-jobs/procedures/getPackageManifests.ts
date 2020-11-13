@@ -1,5 +1,5 @@
 import {
-  Connection,
+  Queryable,
   getPackageManifests as getPackageManifestsPg,
   writePackageManifest,
 } from '../../services/postgres';
@@ -10,7 +10,7 @@ import {PackageManifest, PackageDependencies} from 'rollingversions/lib/types';
 import {Logger} from '../../logger';
 
 export default async function getPackageManifests(
-  db: Connection,
+  db: Queryable,
   client: GitHubClient,
   repo: {owner: string; name: string},
   commit: {id: number; graphql_id: string},

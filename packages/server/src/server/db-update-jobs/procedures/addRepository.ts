@@ -1,6 +1,6 @@
 import {Repository} from 'rollingversions/lib/types';
 import {
-  Connection,
+  Queryable,
   upsertRepository,
   getCommitIdFromSha,
   getBranch,
@@ -20,7 +20,7 @@ import getAllTags from './getAllTags';
 import {Logger} from '../../logger';
 
 export default async function addRepository(
-  db: Connection,
+  db: Queryable,
   client: GitHubClient,
   repo: Repository,
   {
