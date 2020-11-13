@@ -1,4 +1,7 @@
+import DbGitBranches from '@rollingversions/db-schema/git_branches';
+// import DatabaseSchema from '@rollingversions/db-schema';
 import connect, {sql, Queryable} from '@databases/pg';
+// import createTyped from '@databases/pg-typed';
 import {ChangeType} from 'rollingversions/lib/types/PullRequestState';
 import {PublishTarget} from 'rollingversions/lib/types';
 import {PublishTargetConfig} from 'rollingversions/lib/types/PublishTarget';
@@ -7,6 +10,10 @@ export {Queryable};
 export const db = connect({
   bigIntMode: 'number',
 });
+
+// const {git_repositories} = createTyped<DatabaseSchema>({
+//   defaultConnection: db,
+// });
 
 export async function getRepository(
   db: Queryable,
@@ -436,7 +443,10 @@ export async function getBranch(
   git_repository_id: number,
   branchName: string,
 ): Promise<{name: string; target_git_commit_id: number} | undefined> {
-  const result = await db.query(sql`
+  const result: Pick<
+    DbGitBranches,
+    'name' | 'target_git_commit_id'
+  >[] = await db.query(sql`
     SELECT name, target_git_commit_id
     FROM git_branches
     WHERE git_repository_id=${git_repository_id} AND name=${branchName}
