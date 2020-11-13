@@ -4,7 +4,9 @@ import {PublishTarget} from 'rollingversions/lib/types';
 import {PublishTargetConfig} from 'rollingversions/lib/types/PublishTarget';
 
 export {Queryable};
-export const db = connect();
+export const db = connect({
+  bigIntMode: 'number',
+});
 
 export async function getRepository(
   db: Queryable,
