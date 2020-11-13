@@ -3,7 +3,6 @@ import {
   Queryable,
   upsertRepository,
   getCommitIdFromSha,
-  getBranch,
   writeBranch,
   filterOutExisingPullRequestIDs,
 } from '../../services/postgres';
@@ -54,7 +53,6 @@ export default async function addRepository(
     ...repository,
     default_branch_name: defaultBranch.name,
   });
-  const dbBranch = await getBranch(db, repository.id, defaultBranch.name);
 
   if (refreshPRs) {
     const timer = logger.withTimer();
@@ -114,14 +112,13 @@ export default async function addRepository(
   }
 
   await writeBranch(
-    db,
     repository.id,
     {
       graphql_id: defaultBranch.graphql_id,
       name: defaultBranch.name,
       target_git_commit_id: commitID,
     },
-    dbBranch?.target_git_commit_id || null,
+    db,
   );
 
   const tags = await getAllTags(

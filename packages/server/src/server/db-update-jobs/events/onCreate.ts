@@ -2,7 +2,6 @@ import WebhooksApi from '@octokit/webhooks';
 import {
   db,
   writeBranch,
-  getBranch,
   upsertTag,
   getCommitFromSha,
 } from '../../services/postgres';
@@ -31,7 +30,6 @@ export default async function onCreate(
   switch (e.payload.ref_type) {
     case 'branch': {
       const ref = {type: 'head' as const, name: e.payload.ref};
-      const dbBranch = await getBranch(db, gitRepositoryId, ref.name);
 
       await upsertCommits(
         db,
@@ -58,14 +56,13 @@ export default async function onCreate(
         );
       }
       await writeBranch(
-        db,
         gitRepositoryId,
         {
           graphql_id: gitRef.graphql_id,
           name: gitRef.name,
           target_git_commit_id: headCommit.id,
         },
-        dbBranch?.target_git_commit_id || null,
+        db,
       );
       await getPackageManifests(db, client, repo, headCommit, logger);
       break;
