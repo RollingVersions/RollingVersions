@@ -6,7 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "yarn wsrun -e --stages build",
+    "database:introspect": "pg-test run pg-schema",
+    "build": "yarn wsrun -m -e --stages build",
     "typecheck": "yarn workspace rollingversions build && yarn workspace @rollingversions/server typecheck",
     "dev": "yarn build && concurrently -n build,run \"yarn wsrun -e --exclude @rollingversions/server build --watch --preserveWatchOutput\" \"yarn workspace @rollingversions/server dev\"",
     "start": "yarn workspace @rollingversions/server start",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@databases/pg": "^3.1.0",
+    "@databases/pg-schema-cli": "^3.0.0",
     "@databases/pg-test": "^3.0.0",
     "@forbeslindesay/tsconfig": "^2.0.0",
     "@types/jest": "^24.0.21",
@@ -42,6 +44,10 @@
         "node",
         "scripts/db-migrate"
       ]
+    },
+    "types": {
+      "directory": "packages/db-schema",
+      "tableTypeName": "Db{{ TABLE_NAME | singular | pascal-case }}"
     }
   },
   "jest": {
