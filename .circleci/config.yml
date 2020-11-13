@@ -47,7 +47,7 @@ workflows:
 jobs:
   unit-tests:
     docker:
-      - image: circleci/node:12
+      - image: circleci/node:14
     steps:
       - setup
       - build
@@ -55,7 +55,7 @@ jobs:
 
   deploy-staging:
     docker:
-      - image: circleci/node:12
+      - image: circleci/node:14
     steps:
       - setup
       - npm_auth
@@ -80,7 +80,7 @@ jobs:
 
   deploy-production:
     docker:
-      - image: circleci/node:12
+      - image: circleci/node:14
     steps:
       - setup
       - npm_auth
