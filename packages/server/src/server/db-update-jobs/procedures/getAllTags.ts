@@ -1,5 +1,5 @@
 import {
-  Connection,
+  Queryable,
   getCommitIdFromSha,
   upsertTag,
   getAllTags as getAllTagsPg,
@@ -12,7 +12,7 @@ import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import {Logger} from '../../logger';
 
 export default async function getAllTags(
-  db: Connection,
+  db: Queryable,
   client: GitHubClient,
   repo: Repository & {id: number},
   {loadFromGitHub}: {loadFromGitHub: boolean},

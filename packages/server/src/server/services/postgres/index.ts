@@ -1,13 +1,13 @@
-import connect, {sql, Connection} from '@databases/pg';
+import connect, {sql, Queryable} from '@databases/pg';
 import {ChangeType} from 'rollingversions/lib/types/PullRequestState';
 import {PublishTarget} from 'rollingversions/lib/types';
 import {PublishTargetConfig} from 'rollingversions/lib/types/PublishTarget';
 
-export {Connection};
+export {Queryable};
 export const db = connect();
 
 export async function getRepository(
-  db: Connection,
+  db: Queryable,
   repo: {
     owner: string;
     name: string;
@@ -33,7 +33,7 @@ export async function getRepository(
 }
 
 export async function upsertRepository(
-  db: Connection,
+  db: Queryable,
   repo: {
     id: number;
     graphql_id: string;
@@ -51,7 +51,7 @@ export async function upsertRepository(
 }
 
 export async function filterOutExisingPullRequestIDs<T extends {id: number}>(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   pullRequests: readonly T[],
 ) {
@@ -69,7 +69,7 @@ export async function filterOutExisingPullRequestIDs<T extends {id: number}>(
   return pullRequests.filter(({id}) => !existingPullRequestIDs.has(id));
 }
 export async function filterToExistingCommitShas(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   commit_shas: readonly string[],
 ) {
@@ -87,7 +87,7 @@ export async function filterToExistingCommitShas(
 }
 
 export async function upsertCommits(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   commits: {
     graphql_id: string;
@@ -199,7 +199,7 @@ export async function upsertCommits(
 }
 
 export async function addAssociatedPullRequests(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   associations: {commit_sha: string; pull_request_id: number}[],
 ) {
@@ -220,7 +220,7 @@ export async function addAssociatedPullRequests(
 }
 
 export async function getPullRequestCommentID(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   pullRequestId: number,
 ): Promise<{commentID: number | null} | null> {
@@ -234,7 +234,7 @@ export async function getPullRequestCommentID(
 }
 
 export async function insertPullRequest(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   pr: {
     id: number;
@@ -254,7 +254,7 @@ export async function insertPullRequest(
   );
 }
 export async function updatePullRequest(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   pr: {
     id: number;
@@ -276,7 +276,7 @@ export async function updatePullRequest(
   return results[0];
 }
 export async function updatePullRequestCommentID(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   pr: {
     id: number;
@@ -292,7 +292,7 @@ export async function updatePullRequestCommentID(
   );
 }
 export async function setPullRequestSubmittedAtSha(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   prId: number,
   change_set_submitted_at_git_commit_sha: string | null,
@@ -307,7 +307,7 @@ export async function setPullRequestSubmittedAtSha(
 }
 
 export async function getCommitFromSha(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   commit_sha: string,
 ): Promise<null | {id: number; graphql_id: string}> {
@@ -327,7 +327,7 @@ export async function getCommitFromSha(
   return results[0];
 }
 export async function getCommitIdFromSha(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   commit_sha: string,
 ) {
@@ -348,7 +348,7 @@ export async function getCommitIdFromSha(
 }
 
 export async function insertChangeLogEntries(
-  db: Connection,
+  db: Queryable,
   pull_request_id: number,
   entries: {
     sort_order_weight: number;
@@ -372,7 +372,7 @@ export async function insertChangeLogEntries(
 }
 
 export async function updateChangeLogEntries(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   pull_request_id: number,
   change_set_submitted_at_git_commit_sha: string | null,
@@ -410,7 +410,7 @@ export async function updateChangeLogEntries(
   });
 }
 export async function getAllTags(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
 ): Promise<
   {
@@ -430,7 +430,7 @@ export async function getAllTags(
 }
 
 export async function getBranch(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   branchName: string,
 ): Promise<{name: string; target_git_commit_id: number} | undefined> {
@@ -452,7 +452,7 @@ export async function getBranch(
 }
 
 export async function writeBranch(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   branch: {graphql_id: string; name: string; target_git_commit_id: number},
   oldTargetGitCommitID: number | null,
@@ -474,7 +474,7 @@ export async function writeBranch(
   }
 }
 export async function deleteBranch(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   branchName: string,
 ): Promise<void> {
@@ -485,7 +485,7 @@ export async function deleteBranch(
 }
 
 export async function upsertTag(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   tag: {graphql_id: string; name: string; target_git_commit_id: number},
 ): Promise<{
@@ -508,7 +508,7 @@ export async function upsertTag(
 }
 
 export async function deleteTag(
-  db: Connection,
+  db: Queryable,
   git_repository_id: number,
   tagName: string,
 ): Promise<void> {
@@ -519,7 +519,7 @@ export async function deleteTag(
 }
 
 export async function getChangesForPullRequest(
-  db: Connection,
+  db: Queryable,
   pullRequsetID: number,
 ): Promise<
   {
@@ -540,7 +540,7 @@ export async function getChangesForPullRequest(
 }
 
 export async function getPackageManifests(
-  db: Connection,
+  db: Queryable,
   git_commit_id: number,
 ) {
   return await db.tx(async (tx) => {
@@ -584,7 +584,7 @@ export async function getPackageManifests(
 
 const parallelUpdateError = new Error('Aborting due to parallel updates');
 export async function writePackageManifest(
-  db: Connection,
+  db: Queryable,
   git_commit_id: number,
   packages: {
     file_path: string;
@@ -653,7 +653,7 @@ export async function writePackageManifest(
 }
 
 export async function getAllUnreleasedChanges(
-  db: Connection,
+  db: Queryable,
   {
     headCommitID,
     lastReleaseCommitIDs,
@@ -708,7 +708,7 @@ export async function getAllUnreleasedChanges(
 }
 
 export async function isPullRequestReleased(
-  db: Connection,
+  db: Queryable,
   {
     releasedCommitIDs,
     pullRequestID,

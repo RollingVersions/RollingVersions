@@ -1,7 +1,7 @@
 import {Repository} from 'rollingversions/lib/types';
-import {Connection, getRepository, getAllTags} from '../../services/postgres';
+import {Queryable, getRepository, getAllTags} from '../../services/postgres';
 
-export default async function readRepository(db: Connection, repo: Repository) {
+export default async function readRepository(db: Queryable, repo: Repository) {
   const repository = await getRepository(db, repo);
 
   if (!repository) {
