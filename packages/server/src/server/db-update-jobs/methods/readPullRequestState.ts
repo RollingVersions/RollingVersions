@@ -18,13 +18,13 @@ import {
 import addRepository from '../procedures/addRepository';
 import upsertPullRequest from '../procedures/upsertPullRequest';
 import upsertCommits from '../procedures/upsertCommits';
-import getPackageManifests from '../procedures/getPackageManifests';
 import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import readRepository from '../procedures/readRepository';
 import {Logger} from '../../logger';
 import {getRegistryVersion} from '../../PublishTargets';
+import {getPackageManifests} from '../../models/PackageManifests';
 
 interface PullRequestPackage {
   manifests: PackageManifestWithVersion[];
@@ -204,10 +204,7 @@ async function getPackageManifestsForPr(
   client: GitHubClient,
   repo: {
     id: number;
-    graphql_id: string;
-    owner: string;
-    name: string;
-    head: {id: number; graphql_id: string} | undefined | null;
+    head: {id: number} | undefined | null;
   },
   head: GitHubCommit | null,
   logger: Logger,
@@ -217,20 +214,11 @@ async function getPackageManifestsForPr(
     // (once we are able to display changes on packages that no longer exist)
     const id = await getCommitIdFromSha(db, repo.id, head.commit_sha);
     if (id) {
-      return getPackageManifests(
-        db,
-        client,
-        repo,
-        {
-          id,
-          graphql_id: head.graphql_id,
-        },
-        logger,
-      );
+      return getPackageManifests(db, client, id, logger);
     }
   }
   if (repo.head) {
-    return getPackageManifests(db, client, repo, repo.head, logger);
+    return getPackageManifests(db, client, repo.head.id, logger);
   }
   // TODO: report this error to users
   throw new Error('Could not find package manifests for this pull request');

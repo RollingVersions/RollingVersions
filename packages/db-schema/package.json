@@ -2,5 +2,8 @@
   "name": "@rollingversions/db-schema",
   "private": true,
   "@rollingversions/ignore": true,
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "dependencies": {
+    "rollingversions": "*"
+  }
 }
