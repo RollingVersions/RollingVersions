@@ -12,7 +12,6 @@ import {
 } from '../../services/github';
 import {getClientForEvent} from '../../getClient';
 import upsertCommits from '../procedures/upsertCommits';
-import getPackageManifests from '../procedures/getPackageManifests';
 import {Logger} from '../../logger';
 
 export default async function onCreate(
@@ -64,7 +63,6 @@ export default async function onCreate(
         },
         db,
       );
-      await getPackageManifests(db, client, repo, headCommit, logger);
       break;
     }
     case 'tag': {

@@ -47,7 +47,11 @@
     },
     "types": {
       "directory": "packages/db-schema",
-      "tableTypeName": "Db{{ TABLE_NAME | singular | pascal-case }}"
+      "tableTypeName": "Db{{ TABLE_NAME | singular | pascal-case }}",
+      "columnTypeOverrides": {
+        "change_log_entry_kinds.id": "import('rollingversions/lib/types/PullRequestState').ChangeType",
+        "package_dependency_records_kinds.id": "'required' | 'optional' | 'development'"
+      }
     }
   },
   "jest": {

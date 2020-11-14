@@ -8,8 +8,20 @@ const db = connect({
 });
 export default db;
 
-const {git_branches} = createTyped<DatabaseSchema>({
+const {
+  git_branches,
+  git_commits,
+  git_repositories,
+  package_dependency_records,
+  package_manifest_records,
+} = createTyped<DatabaseSchema>({
   defaultConnection: db,
 });
 
-export {git_branches};
+export {
+  git_branches,
+  git_commits,
+  git_repositories,
+  package_dependency_records,
+  package_manifest_records,
+};

@@ -2,7 +2,6 @@ import {Repository} from 'rollingversions/lib/types';
 import {Queryable, getAllUnreleasedChanges} from '../../services/postgres';
 import {GitHubClient} from '../../services/github';
 import addRepository from '../procedures/addRepository';
-import getPackageManifests from '../procedures/getPackageManifests';
 import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
@@ -14,6 +13,7 @@ import {
 import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
 import {getRegistryVersion} from '../../PublishTargets';
+import {getPackageManifests} from '../../models/PackageManifests';
 
 export default async function readRepositoryState(
   db: Queryable,
@@ -41,8 +41,7 @@ export default async function readRepositoryState(
   const packages = await getPackageManifests(
     db,
     client,
-    repo,
-    repo.head,
+    repo.head.id,
     logger,
   ).then((packages) =>
     addPackageVersions(packages, repo.tags, (pkg) =>
