@@ -35,9 +35,9 @@ export function getVersionShift(
   //       return 'no new release';
   //   }
   // }
-  return `(${getCurrentVerion(currentVersion) ||
-    'unreleased'} → ${getNewVersion(currentVersion, changes) ||
-    'no new release'})`;
+  return `(${getCurrentVerion(currentVersion) || 'unreleased'} → ${
+    getNewVersion(currentVersion, changes) || 'no new release'
+  })`;
 }
 
 export function getUrlForChangeLog(

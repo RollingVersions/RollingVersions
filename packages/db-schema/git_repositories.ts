@@ -9,25 +9,25 @@
 // tslint:disable
 
 interface DbGitRepository {
-  default_branch_name: string
-  graphql_id: string
+  default_branch_name: string;
+  graphql_id: string;
   /**
    * The databaseId from GitHub
    */
-  id: number & {readonly __brand?: 'git_repositories_id'}
-  name: string
-  owner: string
+  id: number & {readonly __brand?: 'git_repositories_id'};
+  name: string;
+  owner: string;
 }
 export default DbGitRepository;
 
 interface GitRepositories_InsertParameters {
-  default_branch_name: string
-  graphql_id: string
+  default_branch_name: string;
+  graphql_id: string;
   /**
    * The databaseId from GitHub
    */
-  id: number & {readonly __brand?: 'git_repositories_id'}
-  name: string
-  owner: string
+  id: number & {readonly __brand?: 'git_repositories_id'};
+  name: string;
+  owner: string;
 }
-export type {GitRepositories_InsertParameters}
+export type {GitRepositories_InsertParameters};

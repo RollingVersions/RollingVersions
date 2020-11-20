@@ -8,33 +8,33 @@
 // eslint:disable
 // tslint:disable
 
-import DbChangeLogEntryKind from './change_log_entry_kinds'
-import DbPullRequest from './pull_requests'
+import DbChangeLogEntryKind from './change_log_entry_kinds';
+import DbPullRequest from './pull_requests';
 
 interface DbChangeLogEntry {
-  body: string
+  body: string;
   /**
    * @default nextval('change_log_entries_id_seq'::regclass)
    */
-  id: number & {readonly __brand?: 'change_log_entries_id'}
-  kind: DbChangeLogEntryKind['id']
-  package_name: string
-  pull_request_id: DbPullRequest['id']
-  sort_order_weight: number
-  title: string
+  id: number & {readonly __brand?: 'change_log_entries_id'};
+  kind: DbChangeLogEntryKind['id'];
+  package_name: string;
+  pull_request_id: DbPullRequest['id'];
+  sort_order_weight: number;
+  title: string;
 }
 export default DbChangeLogEntry;
 
 interface ChangeLogEntries_InsertParameters {
-  body: string
+  body: string;
   /**
    * @default nextval('change_log_entries_id_seq'::regclass)
    */
-  id?: number & {readonly __brand?: 'change_log_entries_id'}
-  kind: DbChangeLogEntryKind['id']
-  package_name: string
-  pull_request_id: DbPullRequest['id']
-  sort_order_weight: number
-  title: string
+  id?: number & {readonly __brand?: 'change_log_entries_id'};
+  kind: DbChangeLogEntryKind['id'];
+  package_name: string;
+  pull_request_id: DbPullRequest['id'];
+  sort_order_weight: number;
+  title: string;
 }
-export type {ChangeLogEntries_InsertParameters}
+export type {ChangeLogEntries_InsertParameters};

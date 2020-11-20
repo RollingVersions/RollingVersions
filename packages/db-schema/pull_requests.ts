@@ -8,48 +8,48 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitRepository from './git_repositories'
+import DbGitRepository from './git_repositories';
 
 interface DbPullRequest {
-  change_set_submitted_at_git_commit_sha: (string) | null
-  comment_id: (number) | null
-  git_repository_id: DbGitRepository['id']
-  graphql_id: string
+  change_set_submitted_at_git_commit_sha: string | null;
+  comment_id: number | null;
+  git_repository_id: DbGitRepository['id'];
+  graphql_id: string;
   /**
    * The databaseId from GitHub
    */
-  id: number & {readonly __brand?: 'pull_requests_id'}
+  id: number & {readonly __brand?: 'pull_requests_id'};
   /**
    * @default false
    */
-  is_closed: boolean
+  is_closed: boolean;
   /**
    * @default false
    */
-  is_merged: boolean
-  pr_number: number
-  title: string
+  is_merged: boolean;
+  pr_number: number;
+  title: string;
 }
 export default DbPullRequest;
 
 interface PullRequests_InsertParameters {
-  change_set_submitted_at_git_commit_sha?: (string) | null
-  comment_id?: (number) | null
-  git_repository_id: DbGitRepository['id']
-  graphql_id: string
+  change_set_submitted_at_git_commit_sha?: string | null;
+  comment_id?: number | null;
+  git_repository_id: DbGitRepository['id'];
+  graphql_id: string;
   /**
    * The databaseId from GitHub
    */
-  id: number & {readonly __brand?: 'pull_requests_id'}
+  id: number & {readonly __brand?: 'pull_requests_id'};
   /**
    * @default false
    */
-  is_closed?: boolean
+  is_closed?: boolean;
   /**
    * @default false
    */
-  is_merged?: boolean
-  pr_number: number
-  title: string
+  is_merged?: boolean;
+  pr_number: number;
+  title: string;
 }
-export type {PullRequests_InsertParameters}
+export type {PullRequests_InsertParameters};

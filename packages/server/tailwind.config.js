@@ -6,7 +6,7 @@ module.exports = {
       colors: {
         orange: {
           ...colors.orange,
-          '500': 'hsl(30, 100%, 50%)',
+          500: 'hsl(30, 100%, 50%)',
         },
         gray: {
           100: 'hsl(204 45% 98%)',

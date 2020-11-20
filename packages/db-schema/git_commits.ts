@@ -8,38 +8,38 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitRepository from './git_repositories'
+import DbGitRepository from './git_repositories';
 
 interface DbGitCommit {
-  commit_sha: string
-  git_repository_id: DbGitRepository['id']
-  graphql_id: string
+  commit_sha: string;
+  git_repository_id: DbGitRepository['id'];
+  graphql_id: string;
   /**
    * Have we fetched the package_manifest_records for this commit
-   * 
+   *
    * @default false
    */
-  has_package_manifests: boolean
+  has_package_manifests: boolean;
   /**
    * @default nextval('git_commits_id_seq'::regclass)
    */
-  id: number & {readonly __brand?: 'git_commits_id'}
+  id: number & {readonly __brand?: 'git_commits_id'};
 }
 export default DbGitCommit;
 
 interface GitCommits_InsertParameters {
-  commit_sha: string
-  git_repository_id: DbGitRepository['id']
-  graphql_id: string
+  commit_sha: string;
+  git_repository_id: DbGitRepository['id'];
+  graphql_id: string;
   /**
    * Have we fetched the package_manifest_records for this commit
-   * 
+   *
    * @default false
    */
-  has_package_manifests?: boolean
+  has_package_manifests?: boolean;
   /**
    * @default nextval('git_commits_id_seq'::regclass)
    */
-  id?: number & {readonly __brand?: 'git_commits_id'}
+  id?: number & {readonly __brand?: 'git_commits_id'};
 }
-export type {GitCommits_InsertParameters}
+export type {GitCommits_InsertParameters};

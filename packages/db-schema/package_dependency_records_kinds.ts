@@ -9,11 +9,11 @@
 // tslint:disable
 
 interface DbPackageDependencyRecordsKind {
-  id: 'required' | 'optional' | 'development'
+  id: 'required' | 'optional' | 'development';
 }
 export default DbPackageDependencyRecordsKind;
 
 interface PackageDependencyRecordsKinds_InsertParameters {
-  id: 'required' | 'optional' | 'development'
+  id: 'required' | 'optional' | 'development';
 }
-export type {PackageDependencyRecordsKinds_InsertParameters}
+export type {PackageDependencyRecordsKinds_InsertParameters};

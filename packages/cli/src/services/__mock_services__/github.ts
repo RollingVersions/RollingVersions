@@ -52,7 +52,7 @@ export const getAllTags: typeof real.getAllTags = async (_client, repo) => {
     .reduce((a, b) => [...a, ...b], []);
 };
 
-export const getAllFiles: typeof real.getAllFiles = async function*(
+export const getAllFiles: typeof real.getAllFiles = async function* (
   _client,
   pr,
 ) {
@@ -65,7 +65,7 @@ export const getAllFiles: typeof real.getAllFiles = async function*(
   }
 };
 
-export const readComments: typeof real.readComments = async function*(
+export const readComments: typeof real.readComments = async function* (
   _client,
   pr,
 ) {
@@ -129,7 +129,7 @@ export const updateStatus: typeof real.updateStatus = async (
   };
 };
 
-export const getAllCommits: typeof real.getAllCommits = async function*(
+export const getAllCommits: typeof real.getAllCommits = async function* (
   _client,
   repo,
 ) {

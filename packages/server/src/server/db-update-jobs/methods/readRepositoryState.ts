@@ -56,9 +56,10 @@ export default async function readRepositoryState(
   );
   return await Promise.all(
     [...packages].map(
-      async ([packageName, {manifests, dependencies}]): Promise<
-        PackageStatusDetail
-      > => {
+      async ([
+        packageName,
+        {manifests, dependencies},
+      ]): Promise<PackageStatusDetail> => {
         const currentVersion = getCurrentVerion(manifests);
         const currentTag = currentVersion
           ? manifests.find(

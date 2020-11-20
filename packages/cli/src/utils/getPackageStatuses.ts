@@ -103,9 +103,10 @@ export default async function getPackageStatuses(
 
   const packages = await Promise.all(
     [...pkgManifests.entries()].map(
-      async ([packageName, {manifests, dependencies}]): Promise<
-        PackageStatusDetail
-      > => {
+      async ([
+        packageName,
+        {manifests, dependencies},
+      ]): Promise<PackageStatusDetail> => {
         const currentVersion = getCurrentVerion(manifests);
         const currentTag = currentVersion
           ? manifests.find(

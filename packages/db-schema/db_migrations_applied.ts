@@ -9,11 +9,15 @@
 // tslint:disable
 
 interface DbDbMigrationsApplied {
-  migration_name: string & {readonly __brand?: 'db_migrations_applied_migration_name'}
+  migration_name: string & {
+    readonly __brand?: 'db_migrations_applied_migration_name';
+  };
 }
 export default DbDbMigrationsApplied;
 
 interface DbMigrationsApplied_InsertParameters {
-  migration_name: string & {readonly __brand?: 'db_migrations_applied_migration_name'}
+  migration_name: string & {
+    readonly __brand?: 'db_migrations_applied_migration_name';
+  };
 }
-export type {DbMigrationsApplied_InsertParameters}
+export type {DbMigrationsApplied_InsertParameters};

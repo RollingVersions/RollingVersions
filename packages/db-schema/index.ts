@@ -8,35 +8,85 @@
 // eslint:disable
 // tslint:disable
 
-import DbChangeLogEntry, {ChangeLogEntries_InsertParameters} from './change_log_entries'
-import DbChangeLogEntryKind, {ChangeLogEntryKinds_InsertParameters} from './change_log_entry_kinds'
-import DbDbMigrationsApplied, {DbMigrationsApplied_InsertParameters} from './db_migrations_applied'
-import DbGitBranch, {GitBranches_InsertParameters} from './git_branches'
-import DbGitCommitParent, {GitCommitParents_InsertParameters} from './git_commit_parents'
-import DbGitCommitPullRequest, {GitCommitPullRequests_InsertParameters} from './git_commit_pull_requests'
-import DbGitCommit, {GitCommits_InsertParameters} from './git_commits'
-import DbGitRepository, {GitRepositories_InsertParameters} from './git_repositories'
-import DbGitTag, {GitTags_InsertParameters} from './git_tags'
-import DbPackageDependencyRecord, {PackageDependencyRecords_InsertParameters} from './package_dependency_records'
-import DbPackageDependencyRecordsKind, {PackageDependencyRecordsKinds_InsertParameters} from './package_dependency_records_kinds'
-import DbPackageManifestRecord, {PackageManifestRecords_InsertParameters} from './package_manifest_records'
-import DbPublishTarget, {PublishTargets_InsertParameters} from './publish_targets'
-import DbPullRequest, {PullRequests_InsertParameters} from './pull_requests'
+import DbChangeLogEntry, {
+  ChangeLogEntries_InsertParameters,
+} from './change_log_entries';
+import DbChangeLogEntryKind, {
+  ChangeLogEntryKinds_InsertParameters,
+} from './change_log_entry_kinds';
+import DbDbMigrationsApplied, {
+  DbMigrationsApplied_InsertParameters,
+} from './db_migrations_applied';
+import DbGitBranch, {GitBranches_InsertParameters} from './git_branches';
+import DbGitCommitParent, {
+  GitCommitParents_InsertParameters,
+} from './git_commit_parents';
+import DbGitCommitPullRequest, {
+  GitCommitPullRequests_InsertParameters,
+} from './git_commit_pull_requests';
+import DbGitCommit, {GitCommits_InsertParameters} from './git_commits';
+import DbGitRepository, {
+  GitRepositories_InsertParameters,
+} from './git_repositories';
+import DbGitTag, {GitTags_InsertParameters} from './git_tags';
+import DbPackageDependencyRecord, {
+  PackageDependencyRecords_InsertParameters,
+} from './package_dependency_records';
+import DbPackageDependencyRecordsKind, {
+  PackageDependencyRecordsKinds_InsertParameters,
+} from './package_dependency_records_kinds';
+import DbPackageManifestRecord, {
+  PackageManifestRecords_InsertParameters,
+} from './package_manifest_records';
+import DbPublishTarget, {
+  PublishTargets_InsertParameters,
+} from './publish_targets';
+import DbPullRequest, {PullRequests_InsertParameters} from './pull_requests';
 
 interface DatabaseSchema {
-  change_log_entries: {record: DbChangeLogEntry, insert: ChangeLogEntries_InsertParameters};
-  change_log_entry_kinds: {record: DbChangeLogEntryKind, insert: ChangeLogEntryKinds_InsertParameters};
-  db_migrations_applied: {record: DbDbMigrationsApplied, insert: DbMigrationsApplied_InsertParameters};
-  git_branches: {record: DbGitBranch, insert: GitBranches_InsertParameters};
-  git_commit_parents: {record: DbGitCommitParent, insert: GitCommitParents_InsertParameters};
-  git_commit_pull_requests: {record: DbGitCommitPullRequest, insert: GitCommitPullRequests_InsertParameters};
-  git_commits: {record: DbGitCommit, insert: GitCommits_InsertParameters};
-  git_repositories: {record: DbGitRepository, insert: GitRepositories_InsertParameters};
-  git_tags: {record: DbGitTag, insert: GitTags_InsertParameters};
-  package_dependency_records: {record: DbPackageDependencyRecord, insert: PackageDependencyRecords_InsertParameters};
-  package_dependency_records_kinds: {record: DbPackageDependencyRecordsKind, insert: PackageDependencyRecordsKinds_InsertParameters};
-  package_manifest_records: {record: DbPackageManifestRecord, insert: PackageManifestRecords_InsertParameters};
-  publish_targets: {record: DbPublishTarget, insert: PublishTargets_InsertParameters};
-  pull_requests: {record: DbPullRequest, insert: PullRequests_InsertParameters};
+  change_log_entries: {
+    record: DbChangeLogEntry;
+    insert: ChangeLogEntries_InsertParameters;
+  };
+  change_log_entry_kinds: {
+    record: DbChangeLogEntryKind;
+    insert: ChangeLogEntryKinds_InsertParameters;
+  };
+  db_migrations_applied: {
+    record: DbDbMigrationsApplied;
+    insert: DbMigrationsApplied_InsertParameters;
+  };
+  git_branches: {record: DbGitBranch; insert: GitBranches_InsertParameters};
+  git_commit_parents: {
+    record: DbGitCommitParent;
+    insert: GitCommitParents_InsertParameters;
+  };
+  git_commit_pull_requests: {
+    record: DbGitCommitPullRequest;
+    insert: GitCommitPullRequests_InsertParameters;
+  };
+  git_commits: {record: DbGitCommit; insert: GitCommits_InsertParameters};
+  git_repositories: {
+    record: DbGitRepository;
+    insert: GitRepositories_InsertParameters;
+  };
+  git_tags: {record: DbGitTag; insert: GitTags_InsertParameters};
+  package_dependency_records: {
+    record: DbPackageDependencyRecord;
+    insert: PackageDependencyRecords_InsertParameters;
+  };
+  package_dependency_records_kinds: {
+    record: DbPackageDependencyRecordsKind;
+    insert: PackageDependencyRecordsKinds_InsertParameters;
+  };
+  package_manifest_records: {
+    record: DbPackageManifestRecord;
+    insert: PackageManifestRecords_InsertParameters;
+  };
+  publish_targets: {
+    record: DbPublishTarget;
+    insert: PublishTargets_InsertParameters;
+  };
+  pull_requests: {record: DbPullRequest; insert: PullRequests_InsertParameters};
 }
 export default DatabaseSchema;
