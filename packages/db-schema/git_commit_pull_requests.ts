@@ -8,16 +8,20 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitCommit from './git_commits'
+import DbGitCommit from './git_commits';
 
 interface DbGitCommitPullRequest {
-  git_commit_id: DbGitCommit['id']
-  pull_request_id: number & {readonly __brand?: 'git_commit_pull_requests_pull_request_id'}
+  git_commit_id: DbGitCommit['id'];
+  pull_request_id: number & {
+    readonly __brand?: 'git_commit_pull_requests_pull_request_id';
+  };
 }
 export default DbGitCommitPullRequest;
 
 interface GitCommitPullRequests_InsertParameters {
-  git_commit_id: DbGitCommit['id']
-  pull_request_id: number & {readonly __brand?: 'git_commit_pull_requests_pull_request_id'}
+  git_commit_id: DbGitCommit['id'];
+  pull_request_id: number & {
+    readonly __brand?: 'git_commit_pull_requests_pull_request_id';
+  };
 }
-export type {GitCommitPullRequests_InsertParameters}
+export type {GitCommitPullRequests_InsertParameters};

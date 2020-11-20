@@ -8,29 +8,29 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitCommit from './git_commits'
-import DbGitRepository from './git_repositories'
+import DbGitCommit from './git_commits';
+import DbGitRepository from './git_repositories';
 
 interface DbGitBranch {
-  git_repository_id: DbGitRepository['id']
-  graphql_id: string
+  git_repository_id: DbGitRepository['id'];
+  graphql_id: string;
   /**
    * @default nextval('git_branches_id_seq'::regclass)
    */
-  id: number & {readonly __brand?: 'git_branches_id'}
-  name: string
-  target_git_commit_id: DbGitCommit['id']
+  id: number & {readonly __brand?: 'git_branches_id'};
+  name: string;
+  target_git_commit_id: DbGitCommit['id'];
 }
 export default DbGitBranch;
 
 interface GitBranches_InsertParameters {
-  git_repository_id: DbGitRepository['id']
-  graphql_id: string
+  git_repository_id: DbGitRepository['id'];
+  graphql_id: string;
   /**
    * @default nextval('git_branches_id_seq'::regclass)
    */
-  id?: number & {readonly __brand?: 'git_branches_id'}
-  name: string
-  target_git_commit_id: DbGitCommit['id']
+  id?: number & {readonly __brand?: 'git_branches_id'};
+  name: string;
+  target_git_commit_id: DbGitCommit['id'];
 }
-export type {GitBranches_InsertParameters}
+export type {GitBranches_InsertParameters};

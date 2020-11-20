@@ -5,9 +5,7 @@ import addRepository from '../procedures/addRepository';
 import {Logger} from '../../logger';
 
 export default async function onInstallationRepositoriesAdded(
-  e: WebhooksApi.WebhookEvent<
-    WebhooksApi.WebhookPayloadInstallationRepositories
-  >,
+  e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadInstallationRepositories>,
   logger: Logger,
 ) {
   const client = getClientForEvent(e);

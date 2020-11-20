@@ -9,11 +9,11 @@
 // tslint:disable
 
 interface DbPublishTarget {
-  id: string & {readonly __brand?: 'publish_targets_id'}
+  id: string & {readonly __brand?: 'publish_targets_id'};
 }
 export default DbPublishTarget;
 
 interface PublishTargets_InsertParameters {
-  id: string & {readonly __brand?: 'publish_targets_id'}
+  id: string & {readonly __brand?: 'publish_targets_id'};
 }
-export type {PublishTargets_InsertParameters}
+export type {PublishTargets_InsertParameters};

@@ -8,29 +8,29 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitCommit from './git_commits'
-import DbGitRepository from './git_repositories'
+import DbGitCommit from './git_commits';
+import DbGitRepository from './git_repositories';
 
 interface DbGitTag {
-  git_repository_id: DbGitRepository['id']
-  graphql_id: string
+  git_repository_id: DbGitRepository['id'];
+  graphql_id: string;
   /**
    * @default nextval('git_tags_id_seq'::regclass)
    */
-  id: number & {readonly __brand?: 'git_tags_id'}
-  name: string
-  target_git_commit_id: DbGitCommit['id']
+  id: number & {readonly __brand?: 'git_tags_id'};
+  name: string;
+  target_git_commit_id: DbGitCommit['id'];
 }
 export default DbGitTag;
 
 interface GitTags_InsertParameters {
-  git_repository_id: DbGitRepository['id']
-  graphql_id: string
+  git_repository_id: DbGitRepository['id'];
+  graphql_id: string;
   /**
    * @default nextval('git_tags_id_seq'::regclass)
    */
-  id?: number & {readonly __brand?: 'git_tags_id'}
-  name: string
-  target_git_commit_id: DbGitCommit['id']
+  id?: number & {readonly __brand?: 'git_tags_id'};
+  name: string;
+  target_git_commit_id: DbGitCommit['id'];
 }
-export type {GitTags_InsertParameters}
+export type {GitTags_InsertParameters};

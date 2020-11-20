@@ -8,29 +8,29 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitCommit from './git_commits'
-import DbPackageDependencyRecordsKind from './package_dependency_records_kinds'
+import DbGitCommit from './git_commits';
+import DbPackageDependencyRecordsKind from './package_dependency_records_kinds';
 
 interface DbPackageDependencyRecord {
-  dependency_name: string
-  git_commit_id: DbGitCommit['id']
+  dependency_name: string;
+  git_commit_id: DbGitCommit['id'];
   /**
    * @default nextval('package_dependency_records_id_seq'::regclass)
    */
-  id: number & {readonly __brand?: 'package_dependency_records_id'}
-  kind: DbPackageDependencyRecordsKind['id']
-  package_name: string
+  id: number & {readonly __brand?: 'package_dependency_records_id'};
+  kind: DbPackageDependencyRecordsKind['id'];
+  package_name: string;
 }
 export default DbPackageDependencyRecord;
 
 interface PackageDependencyRecords_InsertParameters {
-  dependency_name: string
-  git_commit_id: DbGitCommit['id']
+  dependency_name: string;
+  git_commit_id: DbGitCommit['id'];
   /**
    * @default nextval('package_dependency_records_id_seq'::regclass)
    */
-  id?: number & {readonly __brand?: 'package_dependency_records_id'}
-  kind: DbPackageDependencyRecordsKind['id']
-  package_name: string
+  id?: number & {readonly __brand?: 'package_dependency_records_id'};
+  kind: DbPackageDependencyRecordsKind['id'];
+  package_name: string;
 }
-export type {PackageDependencyRecords_InsertParameters}
+export type {PackageDependencyRecords_InsertParameters};

@@ -9,11 +9,11 @@
 // tslint:disable
 
 interface DbChangeLogEntryKind {
-  id: import('rollingversions/lib/types/PullRequestState').ChangeType
+  id: import('rollingversions/lib/types/PullRequestState').ChangeType;
 }
 export default DbChangeLogEntryKind;
 
 interface ChangeLogEntryKinds_InsertParameters {
-  id: import('rollingversions/lib/types/PullRequestState').ChangeType
+  id: import('rollingversions/lib/types/PullRequestState').ChangeType;
 }
-export type {ChangeLogEntryKinds_InsertParameters}
+export type {ChangeLogEntryKinds_InsertParameters};

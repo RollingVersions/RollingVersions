@@ -8,16 +8,16 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitCommit from './git_commits'
+import DbGitCommit from './git_commits';
 
 interface DbGitCommitParent {
-  child_git_commit_id: DbGitCommit['id']
-  parent_git_commit_id: DbGitCommit['id']
+  child_git_commit_id: DbGitCommit['id'];
+  parent_git_commit_id: DbGitCommit['id'];
 }
 export default DbGitCommitParent;
 
 interface GitCommitParents_InsertParameters {
-  child_git_commit_id: DbGitCommit['id']
-  parent_git_commit_id: DbGitCommit['id']
+  child_git_commit_id: DbGitCommit['id'];
+  parent_git_commit_id: DbGitCommit['id'];
 }
-export type {GitCommitParents_InsertParameters}
+export type {GitCommitParents_InsertParameters};

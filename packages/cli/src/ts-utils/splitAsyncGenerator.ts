@@ -9,7 +9,7 @@ export default function splitAsyncGenerator<T, TReturn>(
     received.push(next);
     return await next;
   }
-  return async function*(): AsyncGenerator<T, TReturn, undefined> {
+  return async function* (): AsyncGenerator<T, TReturn, undefined> {
     let i = 0;
     let next = await getNext(i++);
     while (!next.done) {

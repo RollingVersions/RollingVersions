@@ -9,8 +9,9 @@ export default function Alert({
 }) {
   return (
     <p
-      className={`px-6 py-4 md:px-10 md:py-6 text-red-900 bg-red-200 rounded-lg border border-red-300 ${className ||
-        ''}`}
+      className={`px-6 py-4 md:px-10 md:py-6 text-red-900 bg-red-200 rounded-lg border border-red-300 ${
+        className || ''
+      }`}
     >
       {children}
     </p>

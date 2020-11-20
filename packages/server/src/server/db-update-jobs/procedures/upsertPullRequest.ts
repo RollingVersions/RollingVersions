@@ -130,9 +130,9 @@ export default async function upsertPullRequest(
               (ex) => {
                 timer.error(
                   'delete_comment_failed',
-                  `Unable to delete comment:\n\n${ex.stack ||
-                    ex.message ||
-                    ex}`,
+                  `Unable to delete comment:\n\n${
+                    ex.stack || ex.message || ex
+                  }`,
                   {
                     repo_owner: repo.owner,
                     repo_name: repo.name,
