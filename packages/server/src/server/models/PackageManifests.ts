@@ -17,57 +17,61 @@ import {
   package_dependency_records,
   package_manifest_records,
 } from '../services/postgres/connection';
+import dedupeByKey from '../../utils/dedupeByKey';
 
-// TODO: dedupe requests
+export type PackageManifests = Map<
+  string,
+  {
+    manifests: PackageManifest[];
+    dependencies: PackageDependencies;
+  }
+>;
+
+const dedupe = dedupeByKey<DbGitCommit['id'], PackageManifests>();
+
 export async function getPackageManifests(
   db: Queryable,
   client: GitHubClient,
   commitID: DbGitCommit['id'],
   logger: Logger,
-): Promise<
-  Map<
-    string,
-    {
-      manifests: PackageManifest[];
-      dependencies: PackageDependencies;
+): Promise<PackageManifests> {
+  return dedupe(commitID, async () => {
+    const commit = await git_commits(db).selectOne({id: commitID});
+    if (!commit) {
+      // unable to find the commit, assume no packages
+      logger.warning(
+        'missing_commit_packages',
+        `Unable to load packages for commit ${commitID} because it does not exist in the database.`,
+      );
+      return new Map();
     }
-  >
-> {
-  const commit = await git_commits(db).selectOne({id: commitID});
-  if (!commit) {
-    // unable to find the commit, assume no packages
-    logger.warning(
-      'missing_commit_packages',
-      `Unable to load packages for commit ${commitID} because it does not exist in the database.`,
+
+    if (commit.has_package_manifests) {
+      return await getPackageManifestsFromPostgres(db, commit);
+    }
+
+    const repo = (await git_repositories(db).selectOne({
+      id: commit.git_repository_id,
+    }))!;
+
+    const packages = await listPackages(
+      getAllFiles(
+        client,
+        {owner: repo.owner, name: repo.name},
+        commit.graphql_id,
+      ),
     );
-    return new Map();
-  }
 
-  if (commit.has_package_manifests) {
-    return await getPackageManifestsFromPostgres(db, commit);
-  }
+    // No need to wait for this cache to be updated, we also
+    // want to ignore conflict errors that could happen from
+    // two processes writing package manifests at the same
+    // time.
+    writePackageManifestsToPostgres(db, commit, packages).catch((ex) => {
+      logger.error('error_writing_package_manifests', ex.stack);
+    });
 
-  const repo = (await git_repositories(db).selectOne({
-    id: commit.git_repository_id,
-  }))!;
-
-  const packages = await listPackages(
-    getAllFiles(
-      client,
-      {owner: repo.owner, name: repo.name},
-      commit.graphql_id,
-    ),
-  );
-
-  // No need to wait for this cache to be updated, we also
-  // want to ignore conflict errors that could happen from
-  // two processes writing package manifests at the same
-  // time.
-  writePackageManifestsToPostgres(db, commit, packages).catch((ex) => {
-    logger.error('error_writing_package_manifests', ex.stack);
+    return packages;
   });
-
-  return packages;
 }
 
 async function getPackageManifestsFromPostgres(
