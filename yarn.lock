@@ -1152,10 +1152,10 @@
     parameter-reducers "^2.0.0"
     type-assertions "^1.1.0"
 
-"@databases/pg-typed@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@databases/pg-typed/-/pg-typed-2.0.0.tgz#3b707762afc3358295dcdbbe5be80568214d86e3"
-  integrity sha512-7GS06VtmCRaMRjbDskbQzFjbdQ1oZ5c2jnVg/jHTT54Jpp3jemtltu+Lfaq81yN56Ogg8GTTft6wkhe1Mjv02w==
+"@databases/pg-typed@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@databases/pg-typed/-/pg-typed-2.1.0.tgz#6d3ead17abfbb58147c029f94702bb02215adbba"
+  integrity sha512-KpZkCZQzSEai09n00tf72CThiXerOb6yQhrkG1zQEyNgANtKZ/5/xrkGnjXzKdZyaq5zX3//t2VQrvxE5Uwp1Q==
   dependencies:
     tiny-invariant "^1.1.0"
 
@@ -1163,6 +1163,27 @@
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/@databases/pg/-/pg-3.1.0.tgz#88abbd0d3ab53baa0fe7349788a96321ef7b6297"
   integrity sha512-wTiAjIaCpvjwW57YShmRFS2R/l3uhylY39TYT6TdN3rxSRcQISMmpXsjmJRvH/QH9QqwPUl4v0WclCyW8ZmBFA==
+  dependencies:
+    "@babel/code-frame" "^7.0.0"
+    "@databases/escape-identifier" "^1.0.0"
+    "@databases/pg-config" "^2.0.0"
+    "@databases/pg-connection-string" "^1.0.0"
+    "@databases/pg-data-type-id" "^3.0.0"
+    "@databases/pg-errors" "^1.0.0"
+    "@databases/push-to-async-iterable" "^2.0.0"
+    "@databases/split-sql-query" "^1.0.0"
+    "@databases/sql" "^3.0.0"
+    "@types/cuid" "^1.3.1"
+    assert-never "^1.2.1"
+    cuid "^2.1.8"
+    pg "^8.4.2"
+    pg-cursor "^2.4.2"
+    throat "^5.0.0"
+
+"@databases/pg@^3.1.1":
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/@databases/pg/-/pg-3.1.1.tgz#03bf45794329fa790a536a3016ad29b7bd778928"
+  integrity sha512-UvRb3aKTMwu8kfsFjfUjGiRTYXcL6isTAmk7257SQ/r5CW3oxirc1tVZhY91rXWAvZ1DMdbvHhF8SKFvQ1GuWQ==
   dependencies:
     "@babel/code-frame" "^7.0.0"
     "@databases/escape-identifier" "^1.0.0"

@@ -36,7 +36,7 @@ export async function getPackageManifests(
   logger: Logger,
 ): Promise<PackageManifests> {
   return dedupe(commitID, async () => {
-    const commit = await git_commits(db).selectOne({id: commitID});
+    const commit = await git_commits(db).findOne({id: commitID});
     if (!commit) {
       // unable to find the commit, assume no packages
       logger.warning(
@@ -50,7 +50,7 @@ export async function getPackageManifests(
       return await getPackageManifestsFromPostgres(db, commit);
     }
 
-    const repo = (await git_repositories(db).selectOne({
+    const repo = (await git_repositories(db).findOne({
       id: commit.git_repository_id,
     }))!;
 
@@ -94,7 +94,7 @@ async function getPackageManifestsFromPostgres(
     }
   >();
   for (const pi of await package_manifest_records(db)
-    .select({
+    .find({
       git_commit_id: commit.id,
     })
     .all()) {
@@ -119,7 +119,7 @@ async function getPackageManifestsFromPostgres(
     }
   }
   for (const d of await package_dependency_records(db)
-    .select({
+    .find({
       git_commit_id: commit.id,
     })
     .all()) {
