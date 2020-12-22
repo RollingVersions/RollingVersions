@@ -8,7 +8,6 @@
   "homepage": "https://github.com/RollingVersions/RollingVersions",
   "bugs": "https://github.com/RollingVersions/RollingVersions/issues",
   "scripts": {
-    "prebuild": "github-graph src/server/services/github/github-graph.graphql",
     "build": "concurrently -n server,ui \"yarn build:server\" \"yarn build:ui\"",
     "build:ui": "NODE_ENV=production TS_NODE_PROJECT='tsconfig.webpack.json' webpack",
     "build:server": "tsc --build",
@@ -57,7 +56,6 @@
     "@babel/core": "^7.9.0",
     "@forbeslindesay/tsconfig": "^2.0.0",
     "@fullhuman/postcss-purgecss": "^2.1.0",
-    "@github-graph/cli": "^1.1.0",
     "@storybook/addon-a11y": "^5.3.18",
     "@storybook/addon-actions": "^5.3.18",
     "@storybook/addon-console": "^1.2.1",
