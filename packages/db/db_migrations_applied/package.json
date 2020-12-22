@@ -1,0 +1,4 @@
+{
+  "main": "../lib/__generated__/db_migrations_applied.js",
+  "types": "../lib/__generated__/db_migrations_applied.d.ts"
+}

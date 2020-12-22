@@ -4,14 +4,14 @@ import {PullRequest, Repository} from 'rollingversions/lib/types';
 const validRequests = new WeakSet<Request>();
 export default function validateParams() {
   return (req: Request, res: Response, next: (err?: any) => void) => {
-    const {owner, repo, pull_number} = req.params;
+    const {owner, repo, pr_number} = req.params;
     if (!owner) {
       res.status(400).send('Expected a owner parameter');
     } else if (!repo) {
       res.status(400).send('Expected a repo parameter');
-    } else if (!pull_number) {
-      res.status(400).send('Expected a pull_number parameter');
-    } else if (!/^\d+$/.test(pull_number) || pull_number.length > 6) {
+    } else if (!pr_number) {
+      res.status(400).send('Expected a pr_number parameter');
+    } else if (!/^\d+$/.test(pr_number) || pr_number.length > 6) {
       res.status(404).send('This is not a valid pull request number');
     } else {
       validRequests.add(req);
@@ -27,8 +27,8 @@ export function parseParams(
       'This request has not been passed through the validation middleware',
     );
   }
-  const {owner, repo, pull_number} = req.params;
-  return {repo: {owner, name: repo}, number: parseInt(pull_number, 10)};
+  const {owner, repo, pr_number} = req.params;
+  return {repo: {owner, name: repo}, number: parseInt(pr_number, 10)};
 }
 
 const validRepoRequests = new WeakSet<Request>();

@@ -23,7 +23,7 @@ render(
       <Route path="/:owner/:repo" exact>
         <Repository />
       </Route>
-      <Route path="/:owner/:repo/pull/:pull_number" exact>
+      <Route path="/:owner/:repo/pull/:pr_number" exact>
         <PullChangeLog />
       </Route>
     </Switch>

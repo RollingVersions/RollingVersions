@@ -8,11 +8,17 @@ export default function dedupeByKey<TKey, TResult>() {
     return await mapGetOrSet(
       cache,
       key,
-      async () => await fn(key),
-      (result) =>
-        result.then(
-          () => cache.delete(key),
-          () => cache.delete(key),
+      async (existingValue) =>
+        existingValue ??
+        fn(key).then(
+          (result) => {
+            cache.delete(key);
+            return result;
+          },
+          (error) => {
+            cache.delete(key);
+            throw error;
+          },
         ),
     );
   };

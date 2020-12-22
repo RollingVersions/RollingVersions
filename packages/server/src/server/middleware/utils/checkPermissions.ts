@@ -45,7 +45,7 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
         login: permissionInfo.login,
         repo_owner: pullRequest.repo.owner,
         repo_name: pullRequest.repo.name,
-        pull_number: pullRequest.number,
+        pr_number: pullRequest.number,
       });
       permisisonInfoMap.set(req, permissionInfo);
       if (!allowedPermissions.includes(permissionInfo.permission)) {
@@ -59,7 +59,7 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
             login: permissionInfo.login,
             repo_owner: pullRequest.repo.owner,
             repo_name: pullRequest.repo.name,
-            pull_number: pullRequest.number,
+            pr_number: pullRequest.number,
           },
         );
         res

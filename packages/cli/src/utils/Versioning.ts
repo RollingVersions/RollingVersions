@@ -15,7 +15,7 @@ export function getVersionBump(changes: ChangeSet) {
 }
 
 export function getCurrentVerion(
-  currentVersions: PackageManifestWithVersion[],
+  currentVersions: PackageManifestWithVersion<{version: string}>[],
 ) {
   const versionNumbers = currentVersions
     .map((v) => v.registryVersion || v.versionTag?.version)

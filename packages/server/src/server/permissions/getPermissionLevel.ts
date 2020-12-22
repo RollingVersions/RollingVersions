@@ -103,7 +103,7 @@ const getPullRequestAuthor = withCache(
       logger.warning('failed_to_get_pull_request', ex.stack, {
         repo_owner: pr.repo.owner,
         repo_name: pr.repo.name,
-        pull_number: pr.number,
+        pr_number: pr.number,
       });
       return {
         result: null,
@@ -142,7 +142,7 @@ export default async function getPermissionLevel(
         logger.warning('failed_to_get_pull_request', ex.stack, {
           repo_owner: pr.repo.owner,
           repo_name: pr.repo.name,
-          pull_number: pr.number,
+          pr_number: pr.number,
           login,
         });
         return null;

@@ -1,4 +1,3 @@
-import {getBranch} from 'rollingversions/lib/services/github';
 import {
   isPackageStatus,
   PackageStatus,
@@ -9,28 +8,28 @@ import sortPackages from 'rollingversions/lib/utils/sortPackages';
 import {Repository} from 'rollingversions/lib/types';
 import {RepoResponse} from '../../../types';
 import readRepositoryState from '../../db-update-jobs/methods/readRepositoryState';
-import {db} from '../../services/postgres';
-import {GitHubClient} from '../../services/github';
-import {Logger} from '../../logger';
+import {NonTransactionContext} from '../../ServerContext';
+import {getCommitByID} from '../../models/Commits';
 
 export default async function getRepository(
-  client: GitHubClient,
+  ctx: NonTransactionContext,
   repo: Repository,
-  logger: Logger,
-): Promise<RepoResponse> {
-  const [branch, unsortedPackageStatuses] = await Promise.all([
-    getBranch(client, repo),
-    readRepositoryState(db, client, repo, logger),
-  ] as const);
+): Promise<RepoResponse | null> {
+  const repoState = await readRepositoryState(ctx, repo);
+  if (!repoState) return null;
+
+  const {branch, packageStatuses: unsortedPackageStatuses} = repoState;
 
   const isSuccessPackageStatus = orFn(
     isPackageStatus(PackageStatus.NewVersionToBePublished),
     isPackageStatus(PackageStatus.NoUpdateRequired),
   );
 
+  const head = await getCommitByID(ctx, branch.target_git_commit_id);
+
   if (!arrayEvery(unsortedPackageStatuses, isSuccessPackageStatus)) {
     return {
-      headSha: branch?.headSha || null,
+      headSha: head?.commit_sha || null,
       packages: unsortedPackageStatuses,
       cycleDetected: null,
     };
@@ -40,14 +39,14 @@ export default async function getRepository(
 
   if (sortResult.circular) {
     return {
-      headSha: branch?.headSha || null,
+      headSha: head?.commit_sha || null,
       packages: unsortedPackageStatuses,
       cycleDetected: sortResult.packageNames,
     };
   }
 
   return {
-    headSha: branch?.headSha || null,
+    headSha: head?.commit_sha || null,
     packages: sortResult.packages,
     cycleDetected: null,
   };

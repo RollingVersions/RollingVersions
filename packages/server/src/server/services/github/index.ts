@@ -97,8 +97,7 @@ export async function getRef(
   }
   return {
     name: gitRef.name,
-    target: target.oid,
-    targetGraphID: target.id,
+    target: target,
     graphql_id: gitRef.id,
   };
 }
@@ -349,4 +348,35 @@ export interface PullRequestDetail {
   is_merged: boolean;
   is_closed: boolean;
   head_sha: string | undefined;
+}
+
+export async function getCommitByGraphID(
+  client: GitHubClient,
+  graphql_id: string,
+  {
+    nextPageToken,
+    pageSize = 100,
+  }: {
+    nextPageToken?: string;
+    pageSize?: number;
+  } = {},
+) {
+  const result = (
+    await queries.getCommitByGraphId(client, {
+      id: graphql_id,
+      pageSize,
+      after: nextPageToken,
+    })
+  ).node;
+  if (!result) return null;
+  if (result.__typename !== 'Commit') {
+    throw new Error(`Expected a Commit but got ${result.__typename}`);
+  }
+  return {
+    commits: result.history.nodes ?? [],
+    nextPageToken:
+      (result.history.pageInfo.hasNextPage &&
+        result.history.pageInfo.endCursor) ||
+      null,
+  };
 }

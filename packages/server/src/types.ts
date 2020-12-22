@@ -33,7 +33,11 @@ const PullRequestPackagesCodec = map(
     1,
     'PullRequestPackage',
     {
-      manifests: t.Array(PackageManifestWithVersion),
+      manifests: t.Array(
+        PackageManifestWithVersion(
+          t.Object({name: t.String, version: t.String}),
+        ),
+      ),
       dependencies: PackageDependenciesCodec,
       changeSet: ChangeSetCodec,
       released: t.Boolean,

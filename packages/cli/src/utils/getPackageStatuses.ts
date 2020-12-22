@@ -62,13 +62,15 @@ export function isPackageStatus<TStatus extends PackageStatus>(
     packageStatus.status === status;
 }
 
-export default async function getPackageStatuses(
+export default async function getPackageStatuses<
+  Tag extends {commitSha: string; name: string; version: string}
+>(
   client: GitHubClient,
   {owner, name}: Repository,
   pkgManifests: Map<
     string,
     {
-      manifests: PackageManifestWithVersion[];
+      manifests: PackageManifestWithVersion<Tag>[];
       dependencies: PackageDependencies;
     }
   >,

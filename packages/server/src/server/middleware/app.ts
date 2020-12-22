@@ -1,6 +1,6 @@
 import {Router} from 'express';
 import {requiresAuth, getGitHubAccessToken} from './auth';
-import {getClientForRepo, getClientForToken} from '../getClient';
+import {getClientForToken} from '../getClient';
 import {PullRequestResponse} from '../../types';
 import validateParams, {
   parseParams,
@@ -16,7 +16,7 @@ import validateBody, {getBody} from './utils/validateBody';
 import updatePullRequest from './api/updatePullRequest';
 import getPullRequest from './api/getPullRequest';
 import getRepository from './api/getRepository';
-import {expressLogger} from '../logger';
+import {createServerContextForRequest} from '../ServerContext';
 
 const appMiddleware = Router();
 
@@ -28,12 +28,16 @@ appMiddleware.get(
   async (req, res, next) => {
     try {
       const repo = parseRepoParams(req);
-      const client = await getClientForRepo(repo);
-      const response = await getRepository(
-        client,
+      const ctx = createServerContextForRequest(req, res, {
         repo,
-        expressLogger(req, res),
-      );
+        pr_number: null,
+        user: getUser(req),
+      });
+      const response = await getRepository(ctx, repo);
+      if (!response) {
+        next();
+        return;
+      }
       res.json(response);
     } catch (ex) {
       next(ex);
@@ -67,21 +71,28 @@ appMiddleware.post(
 );
 
 appMiddleware.get(
-  `/:owner/:repo/pull/:pull_number/json`,
+  `/:owner/:repo/pull/:pr_number/json`,
   requiresAuth({api: true}),
   validateParams(),
   checkPermissions(['view', 'edit']),
   async (req, res, next) => {
     try {
       const pullRequest = parseParams(req);
-      const client = await getClientForRepo(pullRequest.repo);
+      const ctx = createServerContextForRequest(req, res, {
+        repo: pullRequest.repo,
+        pr_number: pullRequest.number,
+        user: getUser(req),
+      });
       const response = await getPullRequest(
-        client,
-        getUser(req),
+        ctx,
         pullRequest,
         getPermission(req),
-        expressLogger(req, res),
       );
+
+      if (!response) {
+        next();
+        return;
+      }
 
       res.json(PullRequestResponse.serialize(response));
     } catch (ex) {
@@ -91,7 +102,7 @@ appMiddleware.get(
 );
 
 appMiddleware.post(
-  `/:owner/:repo/pull/:pull_number`,
+  `/:owner/:repo/pull/:pr_number`,
   requiresAuth({api: true}),
   validateParams(),
   checkPermissions(['edit']),
@@ -99,16 +110,18 @@ appMiddleware.post(
   async (req, res, next) => {
     try {
       const pullRequest = parseParams(req);
-      const client = await getClientForRepo(pullRequest.repo);
+      const ctx = createServerContextForRequest(req, res, {
+        repo: pullRequest.repo,
+        pr_number: pullRequest.number,
+        user: getUser(req),
+      });
       const body = getBody(req);
 
-      await updatePullRequest(
-        client,
-        getUser(req),
-        pullRequest,
-        body,
-        expressLogger(req, res),
-      );
+      const response = await updatePullRequest(ctx, pullRequest, body);
+      if (!response) {
+        next();
+        return;
+      }
 
       res.status(200).send('ok');
     } catch (ex) {

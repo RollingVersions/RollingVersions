@@ -1,7 +1,7 @@
 import {t, compressedObjectCodec} from '../utils/ValidationCodec';
 
 interface VersionTag {
-  commitSha: string;
+  commitSha: string | undefined;
   name: string;
   version: string;
 }
@@ -10,7 +10,7 @@ const VersionTag: t.Codec<VersionTag> = compressedObjectCodec(
   1,
   'VersionTag',
   {
-    commitSha: t.String,
+    commitSha: t.Union(t.String, t.Undefined),
     name: t.String,
     version: t.String,
   },

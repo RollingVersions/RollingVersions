@@ -1,0 +1,4 @@
+{
+  "main": "../lib/__generated__/git_tags.js",
+  "types": "../lib/__generated__/git_tags.d.ts"
+}

@@ -1,0 +1,4 @@
+{
+  "main": "../lib/__generated__/pull_requests.js",
+  "types": "../lib/__generated__/pull_requests.d.ts"
+}

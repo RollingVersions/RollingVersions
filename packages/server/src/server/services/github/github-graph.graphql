@@ -221,6 +221,24 @@ query GetAllPullRequestCommits(
   }
 }
 
+query GetCommitByGraphID($id: ID!, $pageSize: Int!, $after: String) {
+  node(id: $id) {
+    __typename
+    ... on Commit {
+      id
+      history(first: $pageSize, after: $after) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          ...CommitDetail
+        }
+      }
+    }
+  }
+}
+
 fragment CommitDetail on Commit {
   id
   oid

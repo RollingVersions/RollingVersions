@@ -1,0 +1,4 @@
+{
+  "main": "../lib/__generated__/package_dependency_records_kinds.js",
+  "types": "../lib/__generated__/package_dependency_records_kinds.d.ts"
+}

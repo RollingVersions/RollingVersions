@@ -1,0 +1,17 @@
+{
+  "name": "@rollingversions/github",
+  "private": true,
+  "@rollingversions/ignore": true,
+  "version": "0.0.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "codegen": "github-graph src/github-graph.graphql"
+  },
+  "dependencies": {
+    "@github-graph/api": "^2.2.1"
+  },
+  "devDependencies": {
+    "@github-graph/cli": "^1.1.0"
+  }
+}

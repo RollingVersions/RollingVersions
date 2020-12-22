@@ -52,7 +52,6 @@ export const Default = () => {
           {
             notToBePublished: false,
             versionTag: {
-              commitSha: 'skdjfdskj',
               name: 'my-package@1.0.0',
               version: '1.0.0',
             },
@@ -69,7 +68,6 @@ export const Default = () => {
           {
             notToBePublished: false,
             versionTag: {
-              commitSha: 'skdjfdskj',
               name: 'my-package@1.0.0',
               version: '1.0.0',
             },
