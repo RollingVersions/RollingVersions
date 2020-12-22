@@ -1,4 +1,7 @@
-import {GitHubClient, auth, GitHubOptions} from './services/github';
+import GitHubClient, {
+  auth,
+  OptionsWithAuth as GitHubOptions,
+} from '@github-graph/api';
 import {Repository} from 'rollingversions/lib/types';
 import {APP_ID, PRIVATE_KEY} from './environment';
 import isObject from '../utils/isObject';
