@@ -8,15 +8,11 @@
   "homepage": "https://github.com/RollingVersions/RollingVersions",
   "bugs": "https://github.com/RollingVersions/RollingVersions/issues",
   "scripts": {
-    "build": "concurrently -n server,ui \"yarn build:server\" \"yarn build:ui\"",
     "build:ui": "NODE_ENV=production TS_NODE_PROJECT='tsconfig.webpack.json' webpack",
-    "build:server": "tsc --build",
-    "pretypecheck": "yarn prebuild",
-    "typecheck": "tsc --build",
-    "postbuild": "rimraf lib/**/__tests__",
-    "dev": "concurrently -n server,ui \"yarn dev:server\" \"sleep 2 && yarn dev:ui\"",
+    "build:ts": "tsc --build",
+    "dev:ts": "yarn build:ts --watch --preserveWatchOutput",
     "dev:ui": "TS_NODE_PROJECT='tsconfig.webpack.json' webpack-dev-server -d --open",
-    "dev:server": "yarn build:server && concurrently -n build,run \"yarn build:server --watch --preserveWatchOutput\" \"nodemon\"",
+    "dev:server": "nodemon",
     "start": "node ./index.js",
     "storybook": "start-storybook"
   },
