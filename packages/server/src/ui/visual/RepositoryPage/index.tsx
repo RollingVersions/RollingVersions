@@ -1,10 +1,9 @@
 import React from 'react';
-import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import changesToMarkdown from 'rollingversions/lib/utils/changesToMarkdown';
 import GitHubMarkdownAsync from '../GitHubMarkdown/async';
-import {RepoResponse} from '../../../types';
 import Alert from '../Alert';
 import InstallIcon from '../HeroBar/install-icon.svg';
+import {ChangeSet} from 'rollingversions/lib/types';
 
 function PackageName({children}: {children: React.ReactNode}) {
   return (
@@ -13,58 +12,87 @@ function PackageName({children}: {children: React.ReactNode}) {
     </h2>
   );
 }
-export default function RepositoryPage(
-  repoState: RepoResponse & {releaseButton?: React.ReactNode},
-) {
+
+export interface RepositoryPageProps {
+  releaseButton?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+export default function RepositoryPage({
+  releaseButton,
+  children,
+}: RepositoryPageProps) {
   return (
     <div className="container mx-auto">
       <h1 className="flex align-center justify-between mb-2 mt-12">
         <span className="font-sans text-3xl text-gray-900 font-normal">
           Next Release
         </span>
-        {repoState.releaseButton}
+        {releaseButton}
       </h1>
-      {repoState.cycleDetected ? (
-        <Alert className="mb-4">
-          Cycle Detected: {repoState.cycleDetected.join(' -> ')}
-        </Alert>
-      ) : null}
-      {repoState.packages.map((pkg) => {
-        switch (pkg.status) {
-          case PackageStatus.MissingTag:
-            return (
-              <React.Fragment key={pkg.packageName}>
-                <PackageName>{pkg.packageName}</PackageName>
-                <Alert className="mb-4">
-                  Missing tag for {pkg.currentVersion}
-                </Alert>
-              </React.Fragment>
-            );
-          case PackageStatus.NewVersionToBePublished:
-            return (
-              <React.Fragment key={pkg.packageName}>
-                <PackageName>
-                  {pkg.packageName} ({pkg.currentVersion || 'unreleased'}
-                  {' -> '}
-                  {pkg.newVersion})
-                </PackageName>
-                <GitHubMarkdownAsync>
-                  {changesToMarkdown(pkg.changeSet, 3)}
-                </GitHubMarkdownAsync>
-              </React.Fragment>
-            );
-          case PackageStatus.NoUpdateRequired:
-            return (
-              <React.Fragment key={pkg.packageName}>
-                <PackageName>
-                  {pkg.packageName} ({pkg.currentVersion || 'unreleased'})
-                </PackageName>
-                <p className="mb-8">No updates merged</p>
-              </React.Fragment>
-            );
-        }
-      })}
+      {children}
     </div>
+  );
+}
+
+export function CycleWarning({cycle}: {cycle: readonly string[]}) {
+  return <Alert className="mb-4">Cycle Detected: {cycle.join(' -> ')}</Alert>;
+}
+
+export function PackageWithMissingTag({
+  packageName,
+  currentVersion,
+}: {
+  packageName: string;
+  currentVersion: string;
+}) {
+  return (
+    <React.Fragment key={packageName}>
+      <PackageName>{packageName}</PackageName>
+      <Alert className="mb-4">Missing tag for {currentVersion}</Alert>
+    </React.Fragment>
+  );
+}
+
+export function PackageWithChanges({
+  packageName,
+  currentVersion,
+  newVersion,
+  changeSet,
+}: {
+  packageName: string;
+  currentVersion: string | null;
+  newVersion: string;
+  changeSet: ChangeSet<{pr: number}>;
+}) {
+  return (
+    <React.Fragment key={packageName}>
+      <PackageName>
+        {packageName} ({currentVersion || 'unreleased'}
+        {' -> '}
+        {newVersion})
+      </PackageName>
+      <GitHubMarkdownAsync>
+        {changesToMarkdown(changeSet, 3)}
+      </GitHubMarkdownAsync>
+    </React.Fragment>
+  );
+}
+
+export function PackageWithNoChanges({
+  packageName,
+  currentVersion,
+}: {
+  packageName: string;
+  currentVersion: string | null;
+}) {
+  return (
+    <React.Fragment key={packageName}>
+      <PackageName>
+        {packageName} ({currentVersion || 'unreleased'})
+      </PackageName>
+      <p className="mb-8">No updates merged</p>
+    </React.Fragment>
   );
 }
 
