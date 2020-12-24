@@ -1,23 +1,15 @@
-import DbGitCommit from '@rollingversions/db-schema/git_commits';
-import {PackageManifestRecords_InsertParameters} from '@rollingversions/db-schema/package_manifest_records';
-import {PackageDependencyRecords_InsertParameters} from '@rollingversions/db-schema/package_dependency_records';
+import DbGitCommit from '@rollingversions/db/git_commits';
+import {PackageManifestRecords_InsertParameters} from '@rollingversions/db/package_manifest_records';
+import {PackageDependencyRecords_InsertParameters} from '@rollingversions/db/package_dependency_records';
 import listPackages from 'rollingversions/lib/utils/listPackages';
 import {getAllFiles} from 'rollingversions/lib/services/github';
-import {GitHubClient} from '../services/github';
 import {
   PackageManifest,
   PackageDependencies,
   PublishTarget,
 } from 'rollingversions/lib/types';
-import {Logger} from '../logger';
-import {
-  Queryable,
-  git_commits,
-  git_repositories,
-  package_dependency_records,
-  package_manifest_records,
-} from '../services/postgres/connection';
 import dedupeByKey from '../../utils/dedupeByKey';
+import ServerContext from '../ServerContext';
 
 export type PackageManifests = Map<
   string,
@@ -30,16 +22,14 @@ export type PackageManifests = Map<
 const dedupe = dedupeByKey<DbGitCommit['id'], PackageManifests>();
 
 export async function getPackageManifests(
-  db: Queryable,
-  client: GitHubClient,
+  ctx: ServerContext,
   commitID: DbGitCommit['id'],
-  logger: Logger,
 ): Promise<PackageManifests> {
   return dedupe(commitID, async () => {
-    const commit = await git_commits(db).findOne({id: commitID});
+    const commit = await ctx.git_commits.findOne({id: commitID});
     if (!commit) {
       // unable to find the commit, assume no packages
-      logger.warning(
+      ctx.warning(
         'missing_commit_packages',
         `Unable to load packages for commit ${commitID} because it does not exist in the database.`,
       );
@@ -47,16 +37,16 @@ export async function getPackageManifests(
     }
 
     if (commit.has_package_manifests) {
-      return await getPackageManifestsFromPostgres(db, commit);
+      return await getPackageManifestsFromPostgres(ctx, commit);
     }
 
-    const repo = (await git_repositories(db).findOne({
+    const repo = (await ctx.git_repositories.findOne({
       id: commit.git_repository_id,
     }))!;
 
     const packages = await listPackages(
       getAllFiles(
-        client,
+        await ctx.getGitHubClient(),
         {owner: repo.owner, name: repo.name},
         commit.graphql_id,
       ),
@@ -66,8 +56,8 @@ export async function getPackageManifests(
     // want to ignore conflict errors that could happen from
     // two processes writing package manifests at the same
     // time.
-    writePackageManifestsToPostgres(db, commit, packages).catch((ex) => {
-      logger.error('error_writing_package_manifests', ex.stack);
+    writePackageManifestsToPostgres(ctx, commit, packages).catch((ex) => {
+      ctx.error('error_writing_package_manifests', ex.stack);
     });
 
     return packages;
@@ -75,7 +65,7 @@ export async function getPackageManifests(
 }
 
 async function getPackageManifestsFromPostgres(
-  db: Queryable,
+  ctx: ServerContext,
   commit: DbGitCommit,
 ): Promise<
   Map<
@@ -93,7 +83,7 @@ async function getPackageManifestsFromPostgres(
       dependencies: PackageDependencies;
     }
   >();
-  for (const pi of await package_manifest_records(db)
+  for (const pi of await ctx.package_manifest_records
     .find({
       git_commit_id: commit.id,
     })
@@ -118,7 +108,7 @@ async function getPackageManifestsFromPostgres(
       });
     }
   }
-  for (const d of await package_dependency_records(db)
+  for (const d of await ctx.package_dependency_records
     .find({
       git_commit_id: commit.id,
     })
@@ -132,7 +122,7 @@ async function getPackageManifestsFromPostgres(
 }
 
 async function writePackageManifestsToPostgres(
-  db: Queryable,
+  ctx: ServerContext,
   commit: DbGitCommit,
   packages: Map<
     string,
@@ -142,7 +132,7 @@ async function writePackageManifestsToPostgres(
     }
   >,
 ): Promise<void> {
-  await db.tx(async (db) => {
+  await ctx.tx(async (ctx) => {
     const manifests = [...packages.values()].flatMap((p) =>
       p.manifests.map(
         (pkg): PackageManifestRecords_InsertParameters => ({
@@ -162,7 +152,7 @@ async function writePackageManifestsToPostgres(
       ),
     );
     if (manifests.length) {
-      await package_manifest_records(db).insertOrIgnore(...manifests);
+      await ctx.package_manifest_records.insertOrIgnore(...manifests);
     }
     const dependencies = [...packages].flatMap(
       ([packageName, {dependencies}]) =>
@@ -179,9 +169,9 @@ async function writePackageManifestsToPostgres(
         ),
     );
     if (dependencies.length) {
-      await package_dependency_records(db).insertOrIgnore(...dependencies);
+      await ctx.package_dependency_records.insertOrIgnore(...dependencies);
     }
-    await git_commits(db).update(
+    await ctx.git_commits.update(
       {id: commit.id, has_package_manifests: false},
       {has_package_manifests: true},
     );

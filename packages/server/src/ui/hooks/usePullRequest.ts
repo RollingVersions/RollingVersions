@@ -4,13 +4,13 @@ import {PullRequestResponse, UpdatePullRequestBody} from '../../types';
 export default function usePullRequest({
   owner,
   repo,
-  pull_number,
+  pr_number,
 }: {
   owner: string;
   repo: string;
-  pull_number: string | number;
+  pr_number: string | number;
 }) {
-  const path = `/${owner}/${repo}/pull/${pull_number}`;
+  const path = `/${owner}/${repo}/pull/${pr_number}`;
   const ref = React.useRef(path);
   ref.current = path;
   const [pullRequest, setPullRequest] = React.useState<

@@ -37,16 +37,24 @@ const winLogger = winston.createLogger({
 });
 
 export {Logger};
+
+const ErrorsToLog = new WeakMap<
+  object,
+  {code: string; message: string; context: {[key: string]: unknown}}
+>();
 class Logger {
   private readonly _win: winston.Logger;
+  private readonly _context: {[key: string]: unknown};
   private readonly _txids: readonly string[];
   private readonly _startTime: number | undefined;
   constructor(
     win: winston.Logger,
+    context: {[key: string]: unknown},
     txids: readonly string[],
     startTime?: number,
   ) {
     this._win = win;
+    this._context = context;
     this._txids = txids;
     this._startTime = startTime;
   }
@@ -65,7 +73,11 @@ class Logger {
   }
 
   public withContext(context: {[key: string]: unknown}) {
-    return new Logger(this._win.child(context), this._txids);
+    return new Logger(
+      this._win.child(context),
+      {...this._context, ...context},
+      this._txids,
+    );
   }
   public withTransaction(
     context: {txid?: string; [key: string]: unknown} = {},
@@ -73,12 +85,20 @@ class Logger {
     const txid = context.txid || cuid();
     const txids = [...this._txids, txid];
     return new Logger(
-      this._win.child({...context, txid: txids.join(':')}),
+      this._win.child({
+        ...context,
+        txid: txids.join(':'),
+      }),
+      {
+        ...this._context,
+        ...context,
+        txid: txids.join(':'),
+      },
       txids,
     );
   }
   public withTimer() {
-    return new Logger(this._win, this._txids, Date.now());
+    return new Logger(this._win, this._context, this._txids, Date.now());
   }
 
   public async withLogging<T>(
@@ -109,9 +129,39 @@ class Logger {
   public readonly crit = this._getMethod('crit');
   public readonly alert = this._getMethod('alert');
   public readonly emerg = this._getMethod('emerg');
+
+  public throw(
+    code: string,
+    message: string,
+    context?: {[key: string]: unknown},
+  ): never {
+    const err = Object.assign(new Error(message), {
+      ...this._context,
+      ...context,
+      code,
+    });
+    ErrorsToLog.set(err, {
+      code,
+      message,
+      context: {...this._context, ...context},
+    });
+    throw err;
+  }
 }
 
-const logger = new Logger(winLogger, []);
+export function getErrorContext(
+  err: any,
+):
+  | undefined
+  | {code: string; message: string; context: {[key: string]: unknown}} {
+  if (typeof err === 'object' && err) {
+    return ErrorsToLog.get(err);
+  } else {
+    return undefined;
+  }
+}
+
+const logger = new Logger(winLogger, {}, []);
 export default logger;
 
 const expressLoggerKey = '@rollingversions/logger';

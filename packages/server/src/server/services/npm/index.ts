@@ -1,11 +1,11 @@
 import {gt, prerelease} from 'semver';
-import {Logger} from '../../logger';
+import ServerContext from '../../ServerContext';
 const fetch: typeof window['fetch'] = require('make-fetch-happen');
 
 const baseURL = new URL('https://registry.npmjs.org');
 
-export async function getNpmVersion(packageName: string, logger: Logger) {
-  return await logger.withLogging(
+export async function getNpmVersion(ctx: ServerContext, packageName: string) {
+  return await ctx.withLogging(
     async () => {
       const url = new URL(`/${packageName}`, baseURL);
       if (url.origin !== baseURL.origin) {

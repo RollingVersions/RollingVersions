@@ -1,0 +1,4 @@
+{
+  "main": "../lib/__generated__/change_log_entry_kinds.js",
+  "types": "../lib/__generated__/change_log_entry_kinds.d.ts"
+}

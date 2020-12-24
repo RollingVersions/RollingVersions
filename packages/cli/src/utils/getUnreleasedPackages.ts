@@ -6,7 +6,10 @@ export default async function getUnreleasedPackages(
   pullRequest: Pick<PullRequest, 'repo' | 'number'> & {closed: boolean},
   packages: Map<
     string,
-    {changes: ChangeSet; manifests: PackageManifestWithVersion[]}
+    {
+      changes: ChangeSet;
+      manifests: PackageManifestWithVersion<{commitSha: string}>[];
+    }
   >,
 ) {
   if (!pullRequest.closed) {

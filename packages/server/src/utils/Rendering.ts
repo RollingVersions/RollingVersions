@@ -51,22 +51,26 @@ export function getUrlForChangeLog(
   return url;
 }
 
-export function getShortDescription(
-  pullRequest: PullRequest,
-  submittedAtCommitSha: string | null,
-  packages: Map<string, PullRequestPackage>,
-) {
-  if (submittedAtCommitSha === pullRequest.headSha) {
-    const packagesToRelease = [...packages].filter(
-      ([, {changeSet}]) => !isEmptyChangeSet(changeSet),
-    );
+export function getShortDescription({
+  headSha,
+  submittedAtCommitSha,
+  packagesToRelease,
+}: {
+  headSha: string;
+  submittedAtCommitSha: string | null;
+  packagesToRelease: string[];
+}) {
+  if (submittedAtCommitSha === headSha) {
     if (packagesToRelease.length === 0) {
       return 'no changes to release';
     }
     if (packagesToRelease.length === 1) {
-      return `releasing ${packagesToRelease[0][0]}`;
+      return `releasing ${packagesToRelease[0]}`;
     }
     return 'releasing multiple packages';
+  }
+  if (!submittedAtCommitSha) {
+    return 'please add a changelog';
   }
   return 'please update the changelog';
 }
@@ -87,7 +91,7 @@ export function renderCommentWithoutState(
 ) {
   const url = getUrlForChangeLog(pullRequest, rollingVersionsUrl);
   const outdated =
-    pullRequest.headSha === submittedAtCommitSha
+    !pullRequest.headSha || pullRequest.headSha === submittedAtCommitSha
       ? ``
       : `\n\n> **Change log has not been updated since latest commit** [Update Changelog](${url.href})`;
 

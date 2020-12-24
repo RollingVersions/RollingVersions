@@ -1,8 +1,11 @@
-import {getNpmVersion} from '../services/npm';
 import PackageManifest from 'rollingversions/lib/types/PackageManifest';
-import {Logger} from '../logger';
+import {getNpmVersion} from '../services/npm';
+import ServerContext from '../ServerContext';
 
-export async function getRegistryVersion(pkg: PackageManifest, logger: Logger) {
+export async function getRegistryVersion(
+  ctx: ServerContext,
+  pkg: PackageManifest,
+) {
   if (pkg.notToBePublished) return null;
-  return await getNpmVersion(pkg.packageName, logger);
+  return await getNpmVersion(ctx, pkg.packageName);
 }

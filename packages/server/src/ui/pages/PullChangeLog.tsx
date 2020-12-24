@@ -8,7 +8,7 @@ import AppNavBar, {AppNavBarLink} from '../visual/AppNavBar';
 interface Params {
   owner: string;
   repo: string;
-  pull_number: string;
+  pr_number: string;
 }
 
 export default function PullChangeLog() {
@@ -23,7 +23,7 @@ export default function PullChangeLog() {
         <AppNavBarLink to={`/${params.owner}/${params.repo}`}>
           {params.repo}
         </AppNavBarLink>
-        <AppNavBarLink>PR {params.pull_number}</AppNavBarLink>
+        <AppNavBarLink>PR {params.pr_number}</AppNavBarLink>
       </AppNavBar>
       {(() => {
         if (pr.error) {
@@ -50,7 +50,7 @@ export default function PullChangeLog() {
                 }))
               ) {
                 location.assign(
-                  `https://github.com/${params.owner}/${params.repo}/pull/${params.pull_number}`,
+                  `https://github.com/${params.owner}/${params.repo}/pull/${params.pr_number}`,
                 );
               } else {
                 setSaving(false);

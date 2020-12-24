@@ -7,7 +7,9 @@ import {
 import {getRegistryVersion as GetRegistryVersionType} from '../PublishTargets';
 import getVersionTag from './getVersionTag';
 
-export default async function addPackageVersions(
+export default async function addPackageVersions<
+  Tag extends {readonly name: string}
+>(
   packages: Map<
     string,
     {
@@ -15,13 +17,13 @@ export default async function addPackageVersions(
       dependencies: PackageDependencies;
     }
   >,
-  allTags: {commitSha: string; name: string}[],
+  allTags: Tag[],
   getRegistryVersion: typeof GetRegistryVersionType,
 ): Promise<
   Map<
     string,
     {
-      manifests: PackageManifestWithVersion[];
+      manifests: PackageManifestWithVersion<Tag & {version: string}>[];
       dependencies: PackageDependencies;
     }
   >
@@ -33,7 +35,7 @@ export default async function addPackageVersions(
           [
             string,
             {
-              manifests: PackageManifestWithVersion[];
+              manifests: PackageManifestWithVersion<Tag & {version: string}>[];
               dependencies: PackageDependencies;
             },
           ]
@@ -50,7 +52,11 @@ export default async function addPackageVersions(
             {
               manifests: await Promise.all(
                 manifests.map(
-                  async (manifest): Promise<PackageManifestWithVersion> => {
+                  async (
+                    manifest,
+                  ): Promise<
+                    PackageManifestWithVersion<Tag & {version: string}>
+                  > => {
                     const registryVersion = await getRegistryVersion(manifest);
                     return {
                       ...manifest,

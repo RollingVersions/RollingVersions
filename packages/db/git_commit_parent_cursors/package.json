@@ -1,0 +1,4 @@
+{
+  "main": "../lib/__generated__/git_commit_parent_cursors.js",
+  "types": "../lib/__generated__/git_commit_parent_cursors.d.ts"
+}

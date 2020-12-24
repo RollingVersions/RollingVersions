@@ -1,0 +1,177 @@
+query GetRepositoryByName($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    id
+    databaseId
+    isPrivate
+    defaultBranchRef {
+      name
+    }
+  }
+}
+
+query GetDefaultBranchName($id: ID!) {
+  node(id: $id) {
+    __typename
+    ... on Repository {
+      branch: defaultBranchRef {
+        name
+      }
+    }
+  }
+}
+
+query GetOpenPullRequests($repoID: ID!, $after: String) {
+  node(id: $repoID) {
+    __typename
+    ... on Repository {
+      pullRequests(first: 100, after: $after, states: [OPEN]) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+        }
+      }
+    }
+  }
+}
+
+query GetPullRequest($id: ID!) {
+  node(id: $id) {
+    __typename
+    ... on PullRequest {
+      databaseId
+      number
+      title
+      merged
+      closed
+      headRef {
+        target {
+          # __typename: Commit
+          id
+          oid
+        }
+      }
+    }
+  }
+}
+query GetPullRequestByNumber($repoID: String!, $pr_number: Int!) {
+  node(id: $repoID) {
+    __typename
+    ... on Repository {
+      pullRequest(number: $number) {
+        id
+        databaseId
+        title
+        merged
+        closed
+        headRef {
+          target {
+            # __typename: Commit
+            id
+            oid
+          }
+        }
+      }
+    }
+  }
+}
+
+query GetRefByQualifiedName($repoID: String!, $qualifiedName: String!) {
+  node(id: $repoID) {
+    __typename
+    ... on Repository {
+      ref(qualifiedName: $qualifiedName) {
+        id
+        name
+        target {
+          __typename
+          ... on Commit {
+            id
+            oid
+          }
+          ... on Tag {
+            target {
+              __typename
+              ... on Commit {
+                id
+                oid
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+query GetRefs($repoID: String!, $refPrefix: String!, $after: String) {
+  node(id: $repoID) {
+    __typename
+    ... on Repository {
+      refs(first: 100, after: $after, refPrefix: $refPrefix) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          name
+          target {
+            __typename
+            ... on Commit {
+              id
+              oid
+            }
+            ... on Tag {
+              target {
+                __typename
+                ... on Commit {
+                  id
+                  oid
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+query GetCommitHistory($id: ID!, $pageSize: Int!, $after: String) {
+  node(id: $id) {
+    __typename
+    ... on Commit {
+      history(first: $pageSize, after: $after) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          ...CommitDetail
+        }
+      }
+    }
+  }
+}
+
+fragment CommitDetail on Commit {
+  id
+  oid
+  parents(first: 100) {
+    nodes {
+      oid
+    }
+  }
+  associatedPullRequests(first: 100) {
+    nodes {
+      id
+      databaseId
+      repository {
+        databaseId
+      }
+    }
+  }
+}

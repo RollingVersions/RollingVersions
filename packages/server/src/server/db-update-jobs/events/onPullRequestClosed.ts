@@ -1,29 +1,14 @@
 import WebhooksApi from '@octokit/webhooks';
-import {updatePullRequest, db} from '../../services/postgres';
-import addRepository from '../procedures/addRepository';
-import {getClientForEvent} from '../../getClient';
-import {Logger} from '../../logger';
+import {NonTransactionContext} from '../../ServerContext';
+import {upsertRepositoryFromEvent} from '../../models/Repository';
+import {upsertPullRequestByGraphID} from '../../models/PullRequests';
 
 export default async function onPullRequestClosed(
+  ctx: NonTransactionContext,
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadPullRequest>,
-  logger: Logger,
 ) {
-  const git_repository_id = e.payload.repository.id;
-  await updatePullRequest(db, git_repository_id, {
-    id: e.payload.pull_request.id,
-    title: e.payload.pull_request.title,
-    is_closed: true,
-    is_merged: e.payload.pull_request.merged,
+  const repo = await upsertRepositoryFromEvent(ctx, e.payload.repository);
+  await upsertPullRequestByGraphID(ctx, repo, e.payload.pull_request.node_id, {
+    forceUpdate: true,
   });
-  const client = getClientForEvent(e);
-  await addRepository(
-    db,
-    client,
-    {
-      owner: e.payload.repository.owner.login,
-      name: e.payload.repository.name,
-    },
-    {refreshTags: true, refreshPRs: false, refreshPrAssociations: true},
-    logger,
-  );
 }

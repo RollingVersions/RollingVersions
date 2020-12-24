@@ -49,13 +49,13 @@ staticMiddleware.get(
   checkRepoPermissions(['view', 'edit']),
 );
 
-staticMiddleware.get(`/:owner/:repo/pulls/:pull_number`, (req, res) => {
+staticMiddleware.get(`/:owner/:repo/pulls/:pr_number`, (req, res) => {
   res.redirect(
-    `/${req.params.owner}/${req.params.repo}/pull/${req.params.pull_number}`,
+    `/${req.params.owner}/${req.params.repo}/pull/${req.params.pr_number}`,
   );
 });
 staticMiddleware.get(
-  `/:owner/:repo/pull/:pull_number`,
+  `/:owner/:repo/pull/:pr_number`,
   requiresAuth(),
   validateParams(),
   checkPermissions(['view', 'edit']),

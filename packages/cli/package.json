@@ -13,7 +13,7 @@
   "homepage": "https://github.com/RollingVersions/RollingVersions",
   "bugs": "https://github.com/RollingVersions/RollingVersions/issues",
   "scripts": {
-    "prebuild": "github-graph src/services/github/github-graph.graphql",
+    "codegen": "github-graph src/services/github/github-graph.graphql",
     "build": "tsc",
     "postbuild": "rimraf lib/**/{__tests__,__mock_services__}"
   },

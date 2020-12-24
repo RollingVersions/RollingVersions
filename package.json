@@ -6,22 +6,28 @@
     "packages/*"
   ],
   "scripts": {
-    "database:introspect": "pg-test run pg-schema",
-    "build": "yarn wsrun -m -e --stages build",
-    "typecheck": "yarn workspace rollingversions build && yarn workspace @rollingversions/server typecheck",
-    "dev": "yarn build && concurrently -n build,run \"yarn wsrun -e --exclude @rollingversions/server build --watch --preserveWatchOutput\" \"yarn workspace @rollingversions/server dev\"",
-    "start": "yarn workspace @rollingversions/server start",
-    "prestorybook": "yarn workspace rollingversions build",
-    "storybook": "yarn workspace @rollingversions/server storybook",
+    "db": "yarn workspace @rollingversions/db",
+    "github": "yarn workspace @rollingversions/github",
+    "server": "yarn workspace @rollingversions/server",
+    "cli": "yarn workspace rollingversions",
+    "database:introspect": "pg-test run pg-schema && node scripts/db-post-introspect",
+    "build": "yarn build:codegen && yarn build:ts && yarn build:ui && yarn build:cleanup",
+    "build:codegen": "yarn cli codegen && yarn github codegen",
+    "build:ts": "yarn server build:ts",
+    "build:ui": "yarn server build:ui",
+    "build:cleanup": "rimraf packages/*/lib/**/__tests__",
+    "typecheck": "yarn build:codegen && yarn build:ts",
+    "dev": "yarn typecheck && concurrently -n ts,server,ui \"yarn server dev:ts\" \"yarn server dev:server\" \"yarn server dev:ui\"",
+    "start": "yarn server start",
+    "storybook": "yarn typecheck && yarn server storybook",
     "lint": "tslint './packages/*/src/**/*.{ts,tsx}' -t verbose -p .",
     "prettier:write": "prettier --ignore-path .gitignore --write './**/*.{md,json,yaml,js,jsx,ts,tsx,graphql}'",
     "prettier:check": "prettier --ignore-path .gitignore --list-different './**/*.{md,json,yaml,js,jsx,ts,tsx,graphql}'",
-    "test": "jest",
-    "ci:test": "jest --silent --maxWorkers=2"
+    "test": "jest"
   },
   "devDependencies": {
     "@databases/pg": "^3.1.0",
-    "@databases/pg-schema-cli": "^3.0.0",
+    "@databases/pg-schema-cli": "^4.0.0",
     "@databases/pg-test": "^3.0.0",
     "@forbeslindesay/tsconfig": "^2.0.0",
     "@types/jest": "^24.0.21",
@@ -46,10 +52,11 @@
       ]
     },
     "types": {
-      "directory": "packages/db-schema",
+      "directory": "packages/db/src/__generated__",
       "tableTypeName": "Db{{ TABLE_NAME | singular | pascal-case }}",
       "columnTypeOverrides": {
         "change_log_entry_kinds.id": "import('rollingversions/lib/types/PullRequestState').ChangeType",
+        "git_commit_pull_requests.pull_request_id": "import('./pull_requests').default['id']",
         "package_dependency_records_kinds.id": "'required' | 'optional' | 'development'"
       }
     }

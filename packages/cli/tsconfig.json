@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "lib",
     "incremental": true,
+    "composite": true,
     "rootDir": "src",
     "tsBuildInfoFile": "lib/.tsbuildinfo",
     "esModuleInterop": true
