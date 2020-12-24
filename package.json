@@ -6,6 +6,7 @@
     "packages/*"
   ],
   "scripts": {
+    "change-set": "yarn workspace @rollingversions/change-set",
     "cli": "yarn workspace rollingversions",
     "db": "yarn workspace @rollingversions/db",
     "server": "yarn workspace @rollingversions/server",
