@@ -4,7 +4,13 @@ import {RepoResponse} from '../../types';
 import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import AppContainer from '../visual/AppContainer';
 import AppNavBar, {AppNavBarLink} from '../visual/AppNavBar';
-import RepositoryPage, {ReleaseButton} from '../visual/RepositoryPage';
+import RepositoryPage, {
+  CycleWarning,
+  PackageWithChanges,
+  PackageWithMissingTag,
+  PackageWithNoChanges,
+  ReleaseButton,
+} from '../visual/RepositoryPage';
 
 interface Params {
   owner: string;
@@ -78,7 +84,40 @@ export default function Repository() {
                 </form>
               ) : null
             }
-          />
+          >
+            {state.cycleDetected ? (
+              <CycleWarning cycle={state.cycleDetected} />
+            ) : null}
+            {state.packages.map((pkg) =>
+              pkg.status === PackageStatus.MissingTag ? (
+                <PackageWithMissingTag
+                  key={pkg.packageName}
+                  packageName={pkg.packageName}
+                  currentVersion={pkg.currentVersion}
+                />
+              ) : null,
+            )}
+            {state.packages.map((pkg) =>
+              pkg.status === PackageStatus.NewVersionToBePublished ? (
+                <PackageWithChanges
+                  key={pkg.packageName}
+                  packageName={pkg.packageName}
+                  currentVersion={pkg.currentVersion}
+                  newVersion={pkg.newVersion}
+                  changeSet={pkg.changeSet}
+                />
+              ) : null,
+            )}
+            {state.packages.map((pkg) =>
+              pkg.status === PackageStatus.NoUpdateRequired ? (
+                <PackageWithNoChanges
+                  key={pkg.packageName}
+                  packageName={pkg.packageName}
+                  currentVersion={pkg.currentVersion}
+                />
+              ) : null,
+            )}
+          </RepositoryPage>
         );
       })()}
     </AppContainer>

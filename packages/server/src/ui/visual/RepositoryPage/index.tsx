@@ -1,8 +1,6 @@
 import React from 'react';
-import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import changesToMarkdown from 'rollingversions/lib/utils/changesToMarkdown';
 import GitHubMarkdownAsync from '../GitHubMarkdown/async';
-import {RepoResponse} from '../../../types';
 import Alert from '../Alert';
 import InstallIcon from '../HeroBar/install-icon.svg';
 import {ChangeSet} from 'rollingversions/lib/types';
@@ -14,50 +12,25 @@ function PackageName({children}: {children: React.ReactNode}) {
     </h2>
   );
 }
-export default function RepositoryPage(
-  repoState: RepoResponse & {releaseButton?: React.ReactNode},
-) {
+
+export interface RepositoryPageProps {
+  releaseButton?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+export default function RepositoryPage({
+  releaseButton,
+  children,
+}: RepositoryPageProps) {
   return (
     <div className="container mx-auto">
       <h1 className="flex align-center justify-between mb-2 mt-12">
         <span className="font-sans text-3xl text-gray-900 font-normal">
           Next Release
         </span>
-        {repoState.releaseButton}
+        {releaseButton}
       </h1>
-      {repoState.cycleDetected ? (
-        <CycleWarning cycle={repoState.cycleDetected} />
-      ) : null}
-      {repoState.packages.map((pkg) => {
-        switch (pkg.status) {
-          case PackageStatus.MissingTag:
-            return (
-              <PackageWithMissingTag
-                key={pkg.packageName}
-                packageName={pkg.packageName}
-                currentVersion={pkg.currentVersion}
-              />
-            );
-          case PackageStatus.NewVersionToBePublished:
-            return (
-              <PackageWithChanges
-                key={pkg.packageName}
-                packageName={pkg.packageName}
-                currentVersion={pkg.currentVersion}
-                newVersion={pkg.newVersion}
-                changeSet={pkg.changeSet}
-              />
-            );
-          case PackageStatus.NoUpdateRequired:
-            return (
-              <PackageWithNoChanges
-                key={pkg.packageName}
-                packageName={pkg.packageName}
-                currentVersion={pkg.currentVersion}
-              />
-            );
-        }
-      })}
+      {children}
     </div>
   );
 }
