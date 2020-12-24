@@ -1,5 +1,5 @@
 import {
-  ChangeLogEntry,
+  ChangeSetEntry,
   ChangeSet,
   ChangeSetConfig,
   ChangeType,
@@ -11,7 +11,7 @@ import {
 } from './types';
 
 export type {
-  ChangeLogEntry,
+  ChangeSetEntry,
   ChangeSet,
   ChangeSetConfig,
   ChangeType,
@@ -40,6 +40,34 @@ export const DefaultChangeSetConfig = validateChangeSetConfig({
     ct('fix', 'PATCH', 'Bug Fixes'),
   ],
 });
+
+export function change<TContext = {}>(
+  type: ChangeType,
+  title: Markdown,
+  body: Markdown,
+  context: TContext,
+): ChangeSetEntry<TContext>;
+export function change(
+  type: ChangeType,
+  title: Markdown,
+  body?: Markdown,
+): ChangeSetEntry<{}>;
+export function change<TContext = {}>(
+  type: ChangeType,
+  title: Markdown,
+  body: Markdown = '',
+  context: TContext = {} as any,
+): ChangeSetEntry<TContext> {
+  return {type, title, body, ...context};
+}
+
+export function changeSet<TContext = {}>(...changes: ChangeSet<TContext>) {
+  return changes;
+}
+
+export function isEmptyChangeSet(changes: ChangeSet) {
+  return changes.length === 0;
+}
 
 export function validateChangeSetConfig(
   config: ChangeSetConfig,
@@ -185,7 +213,7 @@ export function changesToMarkdown<TContext = {}>(
   }: {
     changeTypes: readonly ChangeTypeConfig[];
     headingLevel: number;
-    renderContext?: (changeLogEntry: ChangeLogEntry<TContext>) => Markdown;
+    renderContext?: (changeLogEntry: ChangeSetEntry<TContext>) => Markdown;
   },
 ) {
   const headingPrefix = '#'.repeat(headingLevel);

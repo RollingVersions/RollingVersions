@@ -5,15 +5,15 @@ export type Markdown = string & {__brand?: 'Markdown'};
 
 export type VersionNumber = readonly VersionValue[];
 
-export interface ChangeLogEntryBase {
+export interface ChangeSetEntryBase {
   readonly type: ChangeType;
   readonly title: Markdown;
   readonly body: Markdown;
 }
 
-export type ChangeLogEntry<TContext = {}> = ChangeLogEntryBase & TContext;
+export type ChangeSetEntry<TContext = {}> = ChangeSetEntryBase & TContext;
 
-export type ChangeSet<TContext = {}> = readonly ChangeLogEntry<TContext>[];
+export type ChangeSet<TContext = {}> = readonly ChangeSetEntry<TContext>[];
 
 export interface ChangeTypeConfig {
   type: ChangeType;
