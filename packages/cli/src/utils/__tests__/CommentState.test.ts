@@ -1,5 +1,5 @@
+import {createEmptyChangeSet} from '../../types/ChangeSet';
 import {writeState, readState} from '../CommentState';
-import getEmptyChangeSet from '../getEmptyChangeSet';
 
 test('writeState', () => {
   expect(
@@ -42,7 +42,7 @@ test('readState', () => {
     readState(
       writeState('Comment', {
         submittedAtCommitSha: 'SHASHASHA',
-        packages: new Map([['fake package', getEmptyChangeSet()]]),
+        packages: new Map([['fake package', createEmptyChangeSet()]]),
       }).replace(/\n/g, '\r\n'),
     ),
   ).toMatchInlineSnapshot(`

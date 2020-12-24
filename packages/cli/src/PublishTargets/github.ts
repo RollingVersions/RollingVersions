@@ -1,6 +1,5 @@
 import {
   GitHubClient,
-  getAllTags,
   getRepositoryViewerPermissions,
   getBranch,
   getViewer,
@@ -8,8 +7,8 @@ import {
 import {getHeadSha} from '../services/git';
 import changesToMarkdown from '../utils/changesToMarkdown';
 
-import {PublishConfig} from '../types';
-import {NewVersionToBePublished} from '../utils/getPackageStatuses';
+import {PackageManifest, PublishConfig} from '../types';
+import Release from '../types/Release';
 
 export async function checkGitHubReleaseStatus(
   {
@@ -19,15 +18,14 @@ export async function checkGitHubReleaseStatus(
     deployBranch,
   }: Pick<PublishConfig, 'owner' | 'name' | 'dirname' | 'deployBranch'>,
   client: GitHubClient,
-): Promise<{ok: true; tags: string[]} | {ok: false; reason: string}> {
-  const [viewer, permission, branch, allTags] = await Promise.all([
+): Promise<{ok: true} | {ok: false; reason: string}> {
+  const [viewer, permission, branch] = await Promise.all([
     getViewer(client),
     getRepositoryViewerPermissions(client, {
       owner,
       name,
     }),
     getBranch(client, {owner, name}, deployBranch),
-    getAllTags(client, {owner, name}),
   ]);
   if (
     viewer?.login !== 'github-actions[bot]' &&
@@ -60,20 +58,21 @@ export async function checkGitHubReleaseStatus(
     };
   }
 
-  return {ok: true, tags: (allTags || []).map((t) => t.name)};
+  return {ok: true};
 }
 
 export async function createGitHubRelease(
   {owner, name: repo, dirname, dryRun, canary, logger}: PublishConfig,
+  pkg: PackageManifest,
+  release: Release,
   client: GitHubClient,
-  pkg: NewVersionToBePublished,
-  tagName: string,
 ) {
-  logger.onPublishGitHubRelease?.({pkg, tagName, dryRun, canary});
   const headSha = await getHeadSha(dirname);
   if (dryRun) {
-    logger.onPublishedGitHubRelease?.({pkg, tagName, dryRun});
-  } else if (canary === null) {
+    logger.onPublishGitHubRelease?.({pkg, release, dryRun, canary});
+    logger.onPublishedGitHubRelease?.({pkg, release, dryRun, canary});
+  } else if (release.tagName !== null) {
+    logger.onPublishGitHubRelease?.({pkg, release, dryRun, canary});
     const response = (
       await client.rest.repos.createRelease({
         draft: false,
@@ -81,12 +80,18 @@ export async function createGitHubRelease(
         owner,
         repo,
 
-        body: changesToMarkdown(pkg.changeSet, 2),
-        name: tagName,
-        tag_name: tagName,
+        body: changesToMarkdown(release.changeSet, 2),
+        name: release.tagName,
+        tag_name: release.tagName,
         target_commitish: headSha,
       })
     ).data;
-    logger.onPublishedGitHubRelease?.({pkg, tagName, dryRun, response});
+    logger.onPublishedGitHubRelease?.({
+      pkg,
+      release,
+      dryRun,
+      canary,
+      response,
+    });
   }
 }

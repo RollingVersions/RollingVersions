@@ -1,5 +1,5 @@
 import {ChangeSet} from '../types';
-import {ChangeTypes} from '../types/PullRequestState';
+import {ChangeTypes} from '../types/ChangeSet';
 
 export default function changesToMarkdown(
   changes: ChangeSet<{readonly pr?: number}>,

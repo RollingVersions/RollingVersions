@@ -1,8 +1,15 @@
 import PackageManifest from './PackageManifest';
-import {
-  PackageStatusDetail,
-  NewVersionToBePublished,
-} from '../utils/getPackageStatuses';
+import {PublishTargetConfig} from './PublishTarget';
+import Release from './Release';
+
+export interface PackageToRelease {
+  pkg: PackageManifest;
+  release: Release;
+}
+export interface PackageWithNoChanges {
+  pkg: PackageManifest;
+  version: string | null;
+}
 
 export interface PublishConfig {
   dryRun: boolean;
@@ -17,31 +24,35 @@ export interface PublishConfig {
 
 export interface PublishEvents {
   onValidatedPackages: {
-    packages: readonly PackageStatusDetail[];
+    packagesToRelease: readonly PackageToRelease[];
+    packagesWithNoChanges: readonly PackageWithNoChanges[];
     dryRun: boolean;
   };
 
   onPublishGitHubRelease: {
-    pkg: NewVersionToBePublished;
-    tagName: string;
+    pkg: PackageManifest;
+    release: Release;
     dryRun: boolean;
     canary: string | null;
   };
   onPublishedGitHubRelease: {
-    pkg: NewVersionToBePublished;
-    tagName: string;
+    pkg: PackageManifest;
+    release: Release;
     dryRun: boolean;
+    canary: string | null;
     response?: unknown;
   };
 
   onPublishTargetRelease: {
-    pkg: NewVersionToBePublished;
-    pkgManifest: PackageManifest;
+    pkg: PackageManifest;
+    target: PublishTargetConfig;
+    release: Release;
     dryRun: boolean;
   };
   onPublishedTargetRelease: {
-    pkg: NewVersionToBePublished;
-    pkgManifest: PackageManifest;
+    pkg: PackageManifest;
+    target: PublishTargetConfig;
+    release: Release;
     dryRun: boolean;
   };
 }

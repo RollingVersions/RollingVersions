@@ -3,25 +3,25 @@ import {
   compressedObjectCodec,
   map,
 } from 'rollingversions/lib/utils/ValidationCodec';
-import {
-  ChangeSet,
-  ChangeSetCodec,
-} from 'rollingversions/lib/types/PullRequestState';
+import {ChangeSet, ChangeSetCodec} from 'rollingversions/lib/types/ChangeSet';
 import Permission, {PermissionCodec} from './server/permissions/Permission';
-import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
-import {PackageDependencies} from 'rollingversions/lib/types';
-import {PackageManifestWithVersion} from 'rollingversions/lib/types/PackageManifest';
-import {PackageDependenciesCodec} from 'rollingversions/lib/types/PackageDependencies';
+import PackageManifest, {
+  PackageManifestCodec,
+} from 'rollingversions/lib/types/PackageManifest';
 
 export interface RepoResponse {
   headSha: string | null;
-  packages: readonly PackageStatusDetail[];
+  packages: readonly {
+    pkg: PackageManifest;
+    currentVersion: string | null;
+    changeSet: ChangeSet<{pr: number}>;
+  }[];
   cycleDetected: readonly string[] | null;
 }
 
 export interface PullRequestPackage {
-  manifests: PackageManifestWithVersion[];
-  dependencies: PackageDependencies;
+  pkg: PackageManifest;
+  currentVersion: string | null;
   changeSet: ChangeSet; // <{id: number; weight: number}>;
   released: boolean;
 }
@@ -33,12 +33,12 @@ const PullRequestPackagesCodec = map(
     1,
     'PullRequestPackage',
     {
-      manifests: t.Array(PackageManifestWithVersion),
-      dependencies: PackageDependenciesCodec,
+      pkg: PackageManifestCodec,
+      currentVersion: t.Union(t.String, t.Null),
       changeSet: ChangeSetCodec,
       released: t.Boolean,
     },
-    ['manifests', 'dependencies', 'changeSet', 'released'],
+    ['pkg', 'currentVersion', 'changeSet', 'released'],
   ),
 );
 

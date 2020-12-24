@@ -5,11 +5,6 @@ import {parse, startChain, param} from 'parameter-reducers';
 import printHelp from './commands/help';
 import publish, {PublishResultKind} from './commands/publish';
 import changesToMarkdown from './utils/changesToMarkdown';
-import {
-  PackageStatus,
-  NoUpdateRequired,
-  NewVersionToBePublished,
-} from './utils/getPackageStatuses';
 
 const CI_ENV = require('env-ci')();
 
@@ -92,56 +87,43 @@ switch (COMMAND) {
       dryRun,
       canary: canary || null,
       logger: {
-        onValidatedPackages({packages}) {
-          const hasUpdates = packages.some(
-            (p) => p.status === PackageStatus.NewVersionToBePublished,
-          );
-          const hasPkgsWithoutUpdates = packages.some(
-            (p) => p.status === PackageStatus.NoUpdateRequired,
-          );
-
-          if (hasPkgsWithoutUpdates) {
+        onValidatedPackages({packagesToRelease, packagesWithNoChanges}) {
+          if (packagesWithNoChanges.length) {
             console.warn(
-              hasUpdates
+              packagesToRelease.length
                 ? chalk.blue(`# Packages without updates`)
                 : chalk.blue(`None of the packages require updates:`),
             );
             console.warn(``);
-            for (const p of packages.filter(
-              (p): p is NoUpdateRequired =>
-                p.status === PackageStatus.NoUpdateRequired,
-            )) {
+            for (const {pkg, version} of packagesWithNoChanges) {
               console.warn(
-                p.currentVersion
-                  ? `  - ${p.packageName}@${p.currentVersion}`
-                  : `  - ${p.packageName}`,
+                version
+                  ? `  - ${pkg.packageName}@${version}`
+                  : `  - ${pkg.packageName}`,
               );
             }
             console.warn(``);
           }
 
-          if (hasUpdates) {
+          if (packagesToRelease.length) {
             console.warn(chalk.blue(`# Packages to publish`));
             console.warn(``);
-            for (const p of packages.filter(
-              (p): p is NewVersionToBePublished =>
-                p.status === PackageStatus.NewVersionToBePublished,
-            )) {
+            for (const {pkg, release} of packagesToRelease) {
               console.warn(
                 chalk.yellow(
-                  `## ${p.packageName} (${p.currentVersion || 'unreleased'} → ${
-                    p.newVersion
-                  })`,
+                  `## ${pkg.packageName} (${
+                    release.oldVersion || 'unreleased'
+                  } → ${release.newVersion})`,
                 ),
               );
               console.warn(``);
-              console.warn(changesToMarkdown(p.changeSet, 3));
+              console.warn(changesToMarkdown(release.changeSet, 3));
               console.warn(``);
             }
             console.warn(``);
           }
         },
-        onPublishGitHubRelease({pkg, dryRun, canary}) {
+        onPublishGitHubRelease({pkg, release, dryRun, canary}) {
           if (canary !== null) {
             console.warn(
               `not publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
@@ -152,19 +134,19 @@ switch (COMMAND) {
             console.warn(
               `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
                 'GitHub Release',
-              )} @ ${chalk.yellow(pkg.newVersion)}${
+              )} @ ${chalk.yellow(release.newVersion)}${
                 dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
               }`,
             );
           }
         },
-        onPublishTargetRelease({pkg, pkgManifest, dryRun}) {
+        onPublishTargetRelease({pkg, target, release, dryRun}) {
           console.warn(
-            `publishing ${chalk.yellow(
-              pkgManifest.packageName,
-            )} to ${chalk.blue(pkgManifest.targetConfig.type)} @ ${chalk.yellow(
-              pkg.newVersion,
-            )}${dryRun ? ` ${chalk.red(`(dry run)`)}` : ''}`,
+            `publishing ${chalk.yellow(pkg.packageName)} to ${chalk.blue(
+              target.type,
+            )} @ ${chalk.yellow(release.newVersion)}${
+              dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
+            }`,
           );
         },
       },
@@ -187,9 +169,9 @@ switch (COMMAND) {
             console.error(``);
             return process.exit(supressErrors ? 0 : 1);
           case PublishResultKind.PrepublishFailures:
-            for (const {pkg, reasons} of result.failures) {
+            for (const {pkg, release, reasons} of result.failures) {
               console.error(
-                `Pre-release steps failed for ${pkg.packageName}@${pkg.newVersion}:`,
+                `Pre-release steps failed for ${pkg.packageName}@${release.newVersion}:`,
               );
               console.error(``);
               if (reasons.length === 1) {

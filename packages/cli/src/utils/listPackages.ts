@@ -1,5 +1,6 @@
 import {pathMayContainPackage, getPackageManifests} from '../PublishTargets';
-import {PackageManifest, PackageDependencies} from '../types';
+import {PackageManifest} from '../types';
+import {mergePackageManifests} from '../types/PackageManifest';
 
 export default async function listPackages(
   files: AsyncGenerator<
@@ -11,13 +12,7 @@ export default async function listPackages(
     any
   >,
 ) {
-  const packagesByName = new Map<
-    string,
-    {
-      manifests: PackageManifest[];
-      dependencies: PackageDependencies;
-    }
-  >();
+  const packagesByName = new Map<string, PackageManifest>();
   const pending: Promise<void>[] = [];
   async function pushFile(file: {
     path: string;
@@ -25,22 +20,15 @@ export default async function listPackages(
   }) {
     const contents = await file.getContents();
     const packages = await getPackageManifests(file.path, contents);
-    for (const {manifest, dependencies} of packages) {
-      const r = packagesByName.get(manifest.packageName);
-      if (!r) {
-        packagesByName.set(manifest.packageName, {
-          manifests: [manifest],
-          dependencies,
-        });
+    for (const manifest of packages) {
+      const existingManifest = packagesByName.get(manifest.packageName);
+      if (existingManifest) {
+        packagesByName.set(
+          manifest.packageName,
+          mergePackageManifests(existingManifest, manifest),
+        );
       } else {
-        r.manifests.push(manifest);
-        for (const type of ['required', 'optional', 'development'] as const) {
-          r.dependencies[type].push(
-            ...dependencies[type].filter(
-              (d) => !r.dependencies[type].includes(d),
-            ),
-          );
-        }
+        packagesByName.set(manifest.packageName, manifest);
       }
     }
   }

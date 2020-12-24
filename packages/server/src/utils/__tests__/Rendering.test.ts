@@ -1,33 +1,38 @@
 import {URL} from 'url';
 import {PublishTarget} from 'rollingversions/lib/types';
-import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
+import {createEmptyChangeSet} from 'rollingversions/lib/types/ChangeSet';
 import {renderCommentWithoutState} from '../Rendering';
 import {PullRequestPackage} from '../../types';
 
 function mockPackage(input: {
-  manifests: (Pick<PullRequestPackage['manifests'][number], 'packageName'> &
-    Partial<PullRequestPackage['manifests'][number]>)[];
-  dependencies?: Partial<PullRequestPackage['dependencies']>;
+  pkg: Pick<PullRequestPackage['pkg'], 'packageName'> &
+    Partial<PullRequestPackage['pkg']>;
+  currentVersion?: string;
   changeSet?: Partial<PullRequestPackage['changeSet']>;
   released?: boolean;
 }): PullRequestPackage {
   return {
-    manifests: input.manifests.map((manifest) => ({
-      path: `${manifest.packageName}/package.json`,
-      targetConfig: {type: PublishTarget.npm, publishConfigAccess: 'public'},
-      notToBePublished: true,
-      registryVersion: null,
-      versionTag: null,
-      ...manifest,
-    })),
-    dependencies: {
-      required: [],
-      optional: [],
-      development: [],
-      ...input.dependencies,
+    pkg: {
+      packageName: input.pkg.packageName,
+      dependencies: input.pkg.dependencies ?? {
+        required: [],
+        optional: [],
+        development: [],
+      },
+      targetConfigs: [
+        {
+          type: PublishTarget.npm,
+          packageName: input.pkg.packageName,
+          path: `${input.pkg.packageName}/package.json`,
+          private: false,
+          publishConfigAccess: 'public',
+        },
+      ],
+      // ...manifest,
     },
+    currentVersion: input.currentVersion ?? null,
     changeSet: {
-      ...getEmptyChangeSet(),
+      ...createEmptyChangeSet(),
       ...input.changeSet,
     },
     released: input.released === undefined ? false : input.released,
@@ -47,13 +52,13 @@ test('renderCommentWithoutState', () => {
         [
           'changelogversion\u002dutils',
           mockPackage({
-            manifests: [{packageName: 'changelogversion-utils'}],
+            pkg: {packageName: 'changelogversion-utils'},
           }),
         ],
         [
           'changelogversion',
           mockPackage({
-            manifests: [{packageName: 'changelogversion'}],
+            pkg: {packageName: 'changelogversion'},
             changeSet: {
               feat: [{title: 'Something awesome was added', body: ''}],
             },
@@ -62,7 +67,7 @@ test('renderCommentWithoutState', () => {
         [
           'changelogversion\u002dserver',
           mockPackage({
-            manifests: [{packageName: 'changelogversion-server'}],
+            pkg: {packageName: 'changelogversion-server'},
           }),
         ],
       ]),

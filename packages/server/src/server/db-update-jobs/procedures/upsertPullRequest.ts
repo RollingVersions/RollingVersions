@@ -12,7 +12,7 @@ import {
   getPullRequestFromNumber,
 } from '../../services/github';
 import getPullRequestStateFromComment from './getPullRequestStateFromComment';
-import {ChangeTypes} from 'rollingversions/lib/types/PullRequestState';
+import {ChangeTypes} from 'rollingversions/lib/types/ChangeSet';
 import {Logger} from '../../logger';
 import {deleteComment, readComments} from 'rollingversions/lib/services/github';
 import {COMMENT_GUID} from '../../../utils/Rendering';

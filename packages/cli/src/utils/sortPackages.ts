@@ -1,4 +1,4 @@
-import {PackageStatusDetail} from './getPackageStatuses';
+import {PackageManifest} from '../types';
 
 export interface CircularPackages {
   readonly circular: true;
@@ -6,23 +6,17 @@ export interface CircularPackages {
 }
 export interface SortedPackages {
   readonly circular: false;
-  readonly packages: readonly PackageStatusDetail[];
+  readonly packages: readonly PackageManifest[];
 }
 
 export type SortResult = CircularPackages | SortedPackages;
 
-export default async function sortPackages(
-  statuses: PackageStatusDetail[],
-): Promise<SortResult> {
-  const input = new Map(
-    await Promise.all(
-      statuses.map(async (pkg) => [pkg.packageName, pkg] as const),
-    ),
-  );
+export default function sortPackages(packages: PackageManifest[]): SortResult {
+  const input = new Map(packages.map((pkg) => [pkg.packageName, pkg] as const));
   function putPackage(
     stack: readonly string[],
     resultSoFar: SortedPackages,
-    pkg: PackageStatusDetail,
+    pkg: PackageManifest,
   ): SortResult {
     if (resultSoFar.packages.includes(pkg)) {
       return resultSoFar;

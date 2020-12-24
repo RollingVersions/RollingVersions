@@ -1,92 +1,107 @@
 import React from 'react';
-import {
-  PackageManifestWithVersion,
-  PublishTarget,
-} from 'rollingversions/lib/types';
+import {PublishTarget} from 'rollingversions/lib/types';
+import {PublishTargetConfig} from 'rollingversions/lib/types/PublishTarget';
+import Alert from '../Alert';
 
 export interface RegistryStatusProps {
-  packageManifest: Pick<
-    PackageManifestWithVersion,
-    'notToBePublished' | 'versionTag' | 'targetConfig'
-  >[];
+  targetConfigs: PublishTargetConfig[];
+  currentVersion: string | null;
 }
 
-export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
-  const publishTarget = packageManifest
-    .map((p) => p.targetConfig.type)
-    .join(', ');
-  if (packageManifest.every((p) => p.notToBePublished)) {
+export default function RegistryStatus({
+  targetConfigs,
+  currentVersion,
+}: RegistryStatusProps) {
+  if (targetConfigs.length === 0) {
+    return <Alert>This package no longer has any publish targets.</Alert>;
+  }
+  if (targetConfigs.length === 1) {
     return (
-      <p>
-        This package is not published on any registry, but git tags/releases
-        will still be created for it if you add a changelog.
-      </p>
+      <TargetStatus
+        targetConfig={targetConfigs[0]}
+        currentVersion={currentVersion}
+      />
+    );
+  } else {
+    return (
+      <>
+        <p>
+          This package has multiple targets that will be published to when you
+          release changes.
+        </p>
+        {targetConfigs.map((targetConfig, i) => (
+          <TargetStatus
+            key={i}
+            targetConfig={targetConfig}
+            currentVersion={currentVersion}
+          />
+        ))}
+      </>
     );
   }
-  return (
-    <>
-      {packageManifest
-        .filter((p) => !p.notToBePublished)
-        .map(
-          (p, i): React.ReactElement => {
-            switch (p.targetConfig.type) {
-              case PublishTarget.npm: {
-                // if (p.versionTag || p.registryVersion) {
-                //   if (p.registryVersion) {
-                //     return (
-                //       <p key={i}>
-                //         This package is published <strong>publicly</strong> on
-                //         the {publishTarget} registry.
-                //       </p>
-                //     );
-                //   } else {
-                //     return (
-                //       <p key={i}>
-                //         This package is published <strong>privately</strong> on
-                //         the {publishTarget} registry.
-                //       </p>
-                //     );
-                //   }
-                // }
-                if (p.targetConfig.publishConfigAccess === 'restricted') {
-                  return (
-                    <React.Fragment key={i}>
-                      <p>
-                        This package will be published{' '}
-                        <strong>privately</strong> on the {publishTarget}{' '}
-                        registry, unless you have manually updated the acess
-                        config.
-                      </p>
-                      <p>
-                        If you prefer to publish it publicly, you can add the
-                        following to your package.json:
-                        <pre>
-                          <code>{'"publishConfig": {"access": "public"}'}</code>
-                        </pre>
-                      </p>
-                    </React.Fragment>
-                  );
-                }
-                return (
-                  <p key={i}>
-                    This package will be published <strong>publicly</strong> on
-                    the {publishTarget} registry.
-                  </p>
-                );
-              }
-              case PublishTarget.custom_script: {
-                return (
-                  <p key={i}>
-                    This package will be published via a custom script:
-                    <pre>
-                      <code>{p.targetConfig.publish}</code>
-                    </pre>
-                  </p>
-                );
-              }
-            }
-          },
-        )}
-    </>
-  );
+}
+
+function TargetStatus({
+  targetConfig,
+  currentVersion,
+}: {
+  targetConfig: PublishTargetConfig;
+  currentVersion: string | null;
+}) {
+  switch (targetConfig.type) {
+    case PublishTarget.npm: {
+      if (targetConfig.private) {
+        return (
+          <p>
+            This package has the value <code>"private": true</code> in{' '}
+            <code>package.json</code>, so it will not be published on the npm
+            registry. Git tags and release notes will still be generated.
+          </p>
+        );
+      }
+      if (targetConfig.publishConfigAccess === 'restricted') {
+        if (!currentVersion) {
+          return (
+            <React.Fragment>
+              <p>
+                This package will be published <strong>privately</strong> on the{' '}
+                npm registry.
+              </p>
+              <p>
+                If you prefer to publish it publicly, you can add the following
+                to your package.json:
+                <pre>
+                  <code>{'"publishConfig": {"access": "public"}'}</code>
+                </pre>
+              </p>
+            </React.Fragment>
+          );
+        } else {
+          return (
+            <p>
+              This package will be published <strong>privately</strong> on the{' '}
+              npm registry.
+            </p>
+          );
+        }
+      } else {
+        return (
+          <p>
+            This package wil be published <strong>publicly</strong> on the npm
+            registry.
+          </p>
+        );
+      }
+    }
+    case PublishTarget.custom_script: {
+      return (
+        <p>
+          This package wil be published via a custom script:
+          <pre>
+            <code>{targetConfig.publish}</code>
+          </pre>
+        </p>
+      );
+    }
+  }
 }

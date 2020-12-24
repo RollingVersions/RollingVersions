@@ -1,11 +1,59 @@
 import assert from 'assert';
 
+export default interface VersionTagTemplate {
+  variables: string[];
+  parse: (tag: string, packageName: string) => Partial<Version> | null;
+  applyTemplate: (value: Version) => string;
+}
+
 export interface Version {
   PACKAGE_NAME: string;
+
   MAJOR: string;
   MINOR: string;
   PATCH: string;
 }
+
+const cache = new Map<string, VersionTagTemplate>();
+function parseVersionTagTemplateCached(str: string): VersionTagTemplate {
+  const cached = cache.get(str);
+  if (cached) return cached;
+  const fresh = parseVersionTagTemplate(str);
+  cache.set(str, fresh);
+  return fresh;
+}
+
+export function getDefaultTagTemplte({
+  packageCount,
+  tagNames,
+}: {
+  packageCount: number;
+  tagNames: string[];
+}) {
+  if (
+    packageCount === 1 &&
+    tagNames.length &&
+    tagNames.every((tagName) => !tagName.includes('@'))
+  ) {
+    if (tagNames.every((tagName) => tagName.startsWith('v'))) {
+      return parseVersionTagTemplateCached(`v{{MAJOR}}.{{MINOR}}.{{PATCH}}`);
+    } else {
+      return parseVersionTagTemplateCached(`{{MAJOR}}.{{MINOR}}.{{PATCH}}`);
+    }
+  }
+  if (
+    tagNames.length &&
+    tagNames.every((tagName) => tagName.split('@').pop()!.startsWith('v'))
+  ) {
+    return parseVersionTagTemplateCached(
+      `{{PACKAGE_NAME}}@v{{MAJOR}}.{{MINOR}}.{{PATCH}}`,
+    );
+  }
+  return parseVersionTagTemplateCached(
+    `{{PACKAGE_NAME}}@{{MAJOR}}.{{MINOR}}.{{PATCH}}`,
+  );
+}
+
 function isValidVariable(
   variable: string,
 ): variable is 'PACKAGE_NAME' | 'MAJOR' | 'MINOR' | 'PATCH' {
@@ -19,7 +67,7 @@ function isValidVariable(
       return false;
   }
 }
-export default function parseVersionTagTemplate(str: string) {
+export function parseVersionTagTemplate(str: string): VersionTagTemplate {
   const variables = [];
   const printer: ((values: Version) => string)[] = [];
   const parser: ((
@@ -126,7 +174,7 @@ export default function parseVersionTagTemplate(str: string) {
       const result: Partial<Version> = {};
       for (const part of parser) {
         const partResult = part(rest, packageName);
-        if (!partResult) return partResult;
+        if (!partResult) return null;
         rest = partResult.rest;
         Object.assign(result, partResult.parsed);
       }

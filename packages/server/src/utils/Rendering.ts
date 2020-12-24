@@ -1,16 +1,9 @@
 import {URL} from 'url';
-import {
-  PackageManifestWithVersion,
-  ChangeSet,
-  PullRequest,
-} from 'rollingversions/lib/types';
-import {isEmptyChangeSet} from 'rollingversions/lib/types/PullRequestState';
+import {ChangeSet, PullRequest} from 'rollingversions/lib/types';
+import {isEmptyChangeSet} from 'rollingversions/lib/types/ChangeSet';
 import {writeState} from 'rollingversions/lib/utils/CommentState';
 import changesToMarkdown from 'rollingversions/lib/utils/changesToMarkdown';
-import {
-  getCurrentVerion,
-  getNewVersion,
-} from 'rollingversions/lib/utils/Versioning';
+import {getNewVersion} from 'rollingversions/lib/utils/Versioning';
 import {PullRequestPackage} from '../types';
 
 // N.B. this comment guid must be kept in sync with the CLI for now
@@ -18,7 +11,7 @@ export const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
 const COMMENT_PREFIX = `<!-- This comment is maintained by Rolling Versions. Do not edit it manually! -->\n<!-- ${COMMENT_GUID} -->\n\n`;
 
 export function getVersionShift(
-  currentVersion: PackageManifestWithVersion[],
+  currentVersion: string | null,
   changes: ChangeSet,
 ) {
   // if we want to support not knowing the previous version:
@@ -35,7 +28,7 @@ export function getVersionShift(
   //       return 'no new release';
   //   }
   // }
-  return `(${getCurrentVerion(currentVersion) || 'unreleased'} → ${
+  return `(${currentVersion || 'unreleased'} → ${
     getNewVersion(currentVersion, changes) || 'no new release'
   })`;
 }
@@ -93,12 +86,12 @@ export function renderCommentWithoutState(
 
   const packages = [...packagesMap].sort(([a], [b]) => (a < b ? -1 : 1));
   if (packages.length === 1) {
-    const [packageName, {changeSet, manifests}] = packages[0];
+    const [packageName, {changeSet, currentVersion}] = packages[0];
     if (isEmptyChangeSet(changeSet)) {
       return `This PR will **not** result in a new version of ${packageName} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
     }
     return `### Change Log for ${packageName} ${getVersionShift(
-      manifests,
+      currentVersion,
       changeSet,
     )}\n\n${changesToMarkdown(changeSet, 4)}\n\n[Edit changelog](${
       url.href
@@ -119,9 +112,9 @@ export function renderCommentWithoutState(
     })${outdated}`;
   }
   return `${packagesWithChanges
-    .map(([packageName, {changeSet, manifests}]) => {
+    .map(([packageName, {changeSet, currentVersion}]) => {
       return `### ${packageName} ${getVersionShift(
-        manifests,
+        currentVersion,
         changeSet,
       )}\n\n${changesToMarkdown(changeSet, 4)}`;
     })
