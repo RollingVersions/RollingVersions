@@ -22,6 +22,7 @@
     "dev": "yarn typecheck && concurrently -n build,server,ui \"yarn build:ts --watch --preserveWatchOutput\" \"yarn server dev:server\" \"sleep 2 && yarn server dev:ui\"",
     "start": "yarn server start",
     "storybook": "yarn typecheck && yarn server storybook",
+    "storybook:build": "yarn typecheck && yarn server storybook:build",
     "lint": "tslint './packages/*/src/**/*.{ts,tsx}' -t verbose -p .",
     "prettier:write": "prettier --ignore-path .gitignore --write './**/*.{md,yaml,js,jsx,ts,tsx,graphql}'",
     "prettier:check": "prettier --ignore-path .gitignore --list-different './**/*.{md,yaml,js,jsx,ts,tsx,graphql}'",

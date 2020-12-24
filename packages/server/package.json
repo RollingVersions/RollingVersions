@@ -14,7 +14,8 @@
     "dev:ui": "TS_NODE_PROJECT='tsconfig.webpack.json' webpack-dev-server -d --open",
     "dev:server": "nodemon",
     "start": "node ./index.js",
-    "storybook": "start-storybook"
+    "storybook": "start-storybook",
+    "storybook:build": "build-storybook -o .storybook-dist --quiet --loglevel warn"
   },
   "dependencies": {
     "@authentication/cookie": "^0.1.2",
