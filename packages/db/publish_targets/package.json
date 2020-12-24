@@ -1,0 +1,4 @@
+{
+  "main": "../lib/__generated__/publish_targets.js",
+  "types": "../lib/__generated__/publish_targets.d.ts"
+}

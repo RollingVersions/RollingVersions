@@ -1,6 +1,6 @@
-import DbGitCommit from '@rollingversions/db-schema/git_commits';
-import {PackageManifestRecords_InsertParameters} from '@rollingversions/db-schema/package_manifest_records';
-import {PackageDependencyRecords_InsertParameters} from '@rollingversions/db-schema/package_dependency_records';
+import DbGitCommit from '@rollingversions/db/git_commits';
+import {PackageManifestRecords_InsertParameters} from '@rollingversions/db/package_manifest_records';
+import {PackageDependencyRecords_InsertParameters} from '@rollingversions/db/package_dependency_records';
 import listPackages from 'rollingversions/lib/utils/listPackages';
 import {getAllFiles} from 'rollingversions/lib/services/github';
 import {GitHubClient} from '../services/github';
@@ -10,13 +10,7 @@ import {
   PublishTarget,
 } from 'rollingversions/lib/types';
 import {Logger} from '../logger';
-import {
-  Queryable,
-  git_commits,
-  git_repositories,
-  package_dependency_records,
-  package_manifest_records,
-} from '../services/postgres/connection';
+import {tables, Queryable} from '@rollingversions/db';
 import dedupeByKey from '../../utils/dedupeByKey';
 
 export type PackageManifests = Map<
@@ -36,7 +30,7 @@ export async function getPackageManifests(
   logger: Logger,
 ): Promise<PackageManifests> {
   return dedupe(commitID, async () => {
-    const commit = await git_commits(db).findOne({id: commitID});
+    const commit = await tables.git_commits(db).findOne({id: commitID});
     if (!commit) {
       // unable to find the commit, assume no packages
       logger.warning(
@@ -50,7 +44,7 @@ export async function getPackageManifests(
       return await getPackageManifestsFromPostgres(db, commit);
     }
 
-    const repo = (await git_repositories(db).findOne({
+    const repo = (await tables.git_repositories(db).findOne({
       id: commit.git_repository_id,
     }))!;
 
@@ -93,7 +87,8 @@ async function getPackageManifestsFromPostgres(
       dependencies: PackageDependencies;
     }
   >();
-  for (const pi of await package_manifest_records(db)
+  for (const pi of await tables
+    .package_manifest_records(db)
     .find({
       git_commit_id: commit.id,
     })
@@ -118,7 +113,8 @@ async function getPackageManifestsFromPostgres(
       });
     }
   }
-  for (const d of await package_dependency_records(db)
+  for (const d of await tables
+    .package_dependency_records(db)
     .find({
       git_commit_id: commit.id,
     })
@@ -162,7 +158,7 @@ async function writePackageManifestsToPostgres(
       ),
     );
     if (manifests.length) {
-      await package_manifest_records(db).insertOrIgnore(...manifests);
+      await tables.package_manifest_records(db).insertOrIgnore(...manifests);
     }
     const dependencies = [...packages].flatMap(
       ([packageName, {dependencies}]) =>
@@ -179,11 +175,15 @@ async function writePackageManifestsToPostgres(
         ),
     );
     if (dependencies.length) {
-      await package_dependency_records(db).insertOrIgnore(...dependencies);
+      await tables
+        .package_dependency_records(db)
+        .insertOrIgnore(...dependencies);
     }
-    await git_commits(db).update(
-      {id: commit.id, has_package_manifests: false},
-      {has_package_manifests: true},
-    );
+    await tables
+      .git_commits(db)
+      .update(
+        {id: commit.id, has_package_manifests: false},
+        {has_package_manifests: true},
+      );
   });
 }

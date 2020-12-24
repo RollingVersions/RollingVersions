@@ -6,18 +6,27 @@
     "packages/*"
   ],
   "scripts": {
+    "cli": "yarn workspace rollingversions",
+    "db": "yarn workspace @rollingversions/db",
+    "server": "yarn workspace @rollingversions/server",
+
     "database:introspect": "pg-test run pg-schema",
-    "build": "yarn wsrun -m -e --stages build",
-    "typecheck": "yarn workspace rollingversions build && yarn workspace @rollingversions/server typecheck",
-    "dev": "yarn build && concurrently -n build,run \"yarn wsrun -e --exclude @rollingversions/server build --watch --preserveWatchOutput\" \"yarn workspace @rollingversions/server dev\"",
-    "start": "yarn workspace @rollingversions/server start",
-    "prestorybook": "yarn workspace rollingversions build",
-    "storybook": "yarn workspace @rollingversions/server storybook",
+
+    "build": "yarn build:codegen && yarn build:ts && yarn build:ui && yarn build:cleanup",
+    "build:codegen": "concurrently -n cli,server \"yarn cli codegen\" \"yarn server codegen\"",
+    "build:ts": "yarn server build:ts",
+    "build:ui": "yarn server build:ui",
+    "build:cleanup": "rimraf packages/*/lib/**/{__tests__,__mock_services__}",
+
+    "typecheck": "yarn build:codegen && yarn build:ts",
+    "dev": "yarn typecheck && concurrently -n build,server,ui \"yarn build:ts --watch --preserveWatchOutput\" \"yarn server dev:server\" \"sleep 2 && yarn server dev:ui\"",
+    "start": "yarn server start",
+    "storybook": "yarn typecheck && yarn server storybook",
+    "storybook:build": "yarn typecheck && yarn server storybook:build",
     "lint": "tslint './packages/*/src/**/*.{ts,tsx}' -t verbose -p .",
-    "prettier:write": "prettier --ignore-path .gitignore --write './**/*.{md,json,yaml,js,jsx,ts,tsx,graphql}'",
-    "prettier:check": "prettier --ignore-path .gitignore --list-different './**/*.{md,json,yaml,js,jsx,ts,tsx,graphql}'",
-    "test": "jest",
-    "ci:test": "jest --silent --maxWorkers=2"
+    "prettier:write": "prettier --ignore-path .gitignore --write './**/*.{md,yaml,js,jsx,ts,tsx,graphql}'",
+    "prettier:check": "prettier --ignore-path .gitignore --list-different './**/*.{md,yaml,js,jsx,ts,tsx,graphql}'",
+    "test": "jest"
   },
   "devDependencies": {
     "@databases/pg": "^3.1.0",
@@ -32,6 +41,7 @@
     "jskube": "^1.1.2",
     "lint-staged": "^9.4.2",
     "prettier": "^2.2.0",
+    "rimraf": "^3.0.2",
     "ts-jest": "^26.4.4",
     "ts-node": "^9.0.0",
     "tslint": "^6.1.3",
@@ -46,7 +56,7 @@
       ]
     },
     "types": {
-      "directory": "packages/db-schema",
+      "directory": "packages/db/src/__generated__",
       "tableTypeName": "Db{{ TABLE_NAME | singular | pascal-case }}",
       "columnTypeOverrides": {
         "change_log_entry_kinds.id": "import('rollingversions/lib/types/PullRequestState').ChangeType",
@@ -92,7 +102,7 @@
       "prettier --write",
       "git add"
     ],
-    "*.{md,json,yaml,js,jsx}": [
+    "*.{md,yaml,js,jsx}": [
       "prettier --write",
       "git add"
     ]

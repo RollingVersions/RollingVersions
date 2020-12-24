@@ -1,0 +1,13 @@
+{
+  "name": "@rollingversions/db",
+  "private": true,
+  "@rollingversions/ignore": true,
+  "version": "0.0.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "dependencies": {
+    "@databases/pg": "^3.1.1",
+    "@databases/pg-typed": "^2.1.0",
+    "rollingversions": "0.0.0"
+  }
+}

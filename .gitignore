@@ -9,3 +9,5 @@ coverage
 lib/
 dist/
 yarn-error.log
+
+.storybook-dist

@@ -1,11 +1,11 @@
-import {git_branches, Queryable} from './connection';
+import {tables, Queryable} from '@rollingversions/db';
 
 export async function getBranch(
   git_repository_id: number,
   branchName: string,
   db?: Queryable,
 ) {
-  return await git_branches(db).selectOne({
+  return await tables.git_branches(db).findOne({
     git_repository_id: git_repository_id,
     name: branchName,
   });
@@ -18,12 +18,14 @@ export async function writeBranch(
 ): Promise<void> {
   const existingBranch = await getBranch(git_repository_id, branch.name, db);
   if (existingBranch) {
-    await git_branches(db).update(
-      {id: existingBranch.id},
-      {target_git_commit_id: branch.target_git_commit_id},
-    );
+    await tables
+      .git_branches(db)
+      .update(
+        {id: existingBranch.id},
+        {target_git_commit_id: branch.target_git_commit_id},
+      );
   } else {
-    await git_branches(db).insertOrUpdate(['id'], {
+    await tables.git_branches(db).insertOrUpdate(['id'], {
       git_repository_id,
       graphql_id: branch.graphql_id,
       name: branch.name,
@@ -37,7 +39,7 @@ export async function deleteBranch(
   branchName: string,
   db?: Queryable,
 ): Promise<void> {
-  await git_branches(db).delete({
+  await tables.git_branches(db).delete({
     git_repository_id: git_repository_id,
     name: branchName,
   });
