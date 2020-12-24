@@ -176,12 +176,17 @@ export function getNextVersion(
   );
 }
 
-export function changesToMarkdown(
-  changeSet: ChangeSet<{readonly pr?: number}>,
+export function changesToMarkdown<TContext = {}>(
+  changeSet: ChangeSet<TContext>,
   {
     changeTypes,
     headingLevel,
-  }: {changeTypes: readonly ChangeTypeConfig[]; headingLevel: number},
+    renderContext,
+  }: {
+    changeTypes: readonly ChangeTypeConfig[];
+    headingLevel: number;
+    renderContext?: (changeLogEntry: ChangeLogEntry<TContext>) => Markdown;
+  },
 ) {
   const headingPrefix = '#'.repeat(headingLevel);
   return changeTypes
@@ -191,7 +196,7 @@ export function changesToMarkdown(
       return `${headingPrefix} ${changeType.plural}\n\n${changes
         .map(
           (c) =>
-            `- ${c.title}${c.pr ? ` (#${c.pr})` : ``}${
+            `- ${c.title}${renderContext ? renderContext(c) : ``}${
               c.body ? `\n\n${c.body.replace(/^/gm, '  ')}` : ``
             }`,
         )
