@@ -1,5 +1,5 @@
+import db, {sql, Queryable} from '@rollingversions/db';
 import {ChangeType} from 'rollingversions/lib/types/PullRequestState';
-import db, {sql, Queryable} from './connection';
 
 export {db, Queryable};
 

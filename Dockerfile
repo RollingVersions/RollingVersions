@@ -4,13 +4,18 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY package.json /app/package.json
-COPY yarn.lock /app/yarn.lock
+ADD package.json /app/package.json
+ADD yarn.lock /app/yarn.lock
 ADD packages/cli/package.json /app/packages/cli/package.json
+ADD packages/db/package.json /app/packages/db/package.json
 ADD packages/server/package.json /app/packages/server/package.json
 
 RUN yarn install --production \
   && yarn cache clean
+
+ADD packages/db/lib /app/packages/db/lib
+ADD scripts/db-post-introspect.js /app/scripts/db-post-introspect.js
+RUN node /app/scripts/db-post-introspect.js
 
 ADD packages/cli/lib /app/packages/cli/lib
 ADD packages/server/lib /app/packages/server/lib
