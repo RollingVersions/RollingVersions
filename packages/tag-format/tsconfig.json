@@ -1,0 +1,15 @@
+{
+  "extends": "@forbeslindesay/tsconfig",
+  "compilerOptions": {
+    "outDir": "lib",
+    "incremental": true,
+    "composite": true,
+    "rootDir": "src",
+    "tsBuildInfoFile": "lib/.tsbuildinfo",
+    "esModuleInterop": true
+  },
+  "include": ["src"],
+  "references": [
+    {"path": "../version-number"},
+  ],
+}
