@@ -1,0 +1,13 @@
+{
+  "name": "@rollingversions/config",
+  "version": "0.0.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "dependencies": {
+    "@rollingversions/change-set": "^0.0.0",
+    "@rollingversions/tag-format": "^0.0.0",
+    "@rollingversions/version-number": "^0.0.0",
+    "funtypes": "^3.0.1"
+  },
+  "publishConfig": {"access": "public"}
+}
