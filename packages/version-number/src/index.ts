@@ -39,7 +39,7 @@ function parseDotSeparated<T>(
         return [true, remaining.substr(match.length), values];
       }
 
-      remaining = remaining.substr(match.length);
+      remaining = remaining.substr(match.length + 1);
       match = getMatch(remaining);
     }
     return [false, remaining, values];
@@ -110,7 +110,7 @@ export function normalize(version: VersionNumber, numericalLength: number) {
   if (version.numerical.length === numericalLength) return version;
   return {
     numerical: Array.from({length: numericalLength}).map((_, i) =>
-      i < version.numerical.length ? i : 0,
+      i < version.numerical.length ? version.numerical[i] : 0,
     ),
     prerelease: version.prerelease,
     build: version.build,
