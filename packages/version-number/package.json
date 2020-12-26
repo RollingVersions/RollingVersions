@@ -1,0 +1,8 @@
+{
+  "name": "@rollingversions/version-number",
+  "version": "0.0.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "dependencies": {},
+  "publishConfig": {"access": "public"}
+}
