@@ -9,8 +9,6 @@ export interface ChangeSetEntryBase {
 
 export type ChangeSetEntry<TContext = {}> = ChangeSetEntryBase & TContext;
 
-export type ChangeSet<TContext = {}> = readonly ChangeSetEntry<TContext>[];
-
 export interface ChangeType {
   readonly id: ChangeTypeID;
   readonly plural: string;

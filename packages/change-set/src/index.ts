@@ -1,12 +1,8 @@
-import type {
-  ChangeSetEntry,
-  ChangeSet,
-  ChangeType,
-  ChangeTypeID,
-  Markdown,
-} from './types';
+import type {ChangeSetEntry, ChangeType, ChangeTypeID, Markdown} from './types';
 
+type ChangeSet<TContext = {}> = readonly ChangeSetEntry<TContext>[];
 export default ChangeSet;
+
 export type {ChangeSetEntry, ChangeType, ChangeTypeID, Markdown};
 
 export function createChangeSet<TContext = {}>(
@@ -20,10 +16,9 @@ export function isEmptyChangeSet(changes: ChangeSet) {
 }
 
 export function mergeChangeSets<T>(
-  a: ChangeSet<T>,
-  b: ChangeSet<T>,
+  ...sets: readonly ChangeSet<T>[]
 ): ChangeSet<T> {
-  return [...a, ...b];
+  return sets.reduce((a, b) => [...a, ...b], []);
 }
 
 export function addContextToChangeSet<TNewContext, TOldContext = {}>(
