@@ -6,6 +6,7 @@
     "packages/*"
   ],
   "scripts": {
+    "change-set": "yarn workspace @rollingversions/change-set",
     "cli": "yarn workspace rollingversions",
     "db": "yarn workspace @rollingversions/db",
     "server": "yarn workspace @rollingversions/server",
@@ -16,7 +17,7 @@
 
     "build": "yarn build:codegen && yarn build:ts && yarn build:ui && yarn build:cleanup",
     "build:codegen": "concurrently -n cli,server \"yarn cli codegen\" \"yarn server codegen\"",
-    "build:ts": "yarn server build:ts && yarn tag-format tsc --build",
+    "build:ts": "yarn server build:ts && yarn tag-format tsc --build && yarn change-set tsc --build",
     "build:ui": "yarn server build:ui",
     "build:cleanup": "rimraf packages/*/lib/**/{__tests__,__mock_services__}",
 
