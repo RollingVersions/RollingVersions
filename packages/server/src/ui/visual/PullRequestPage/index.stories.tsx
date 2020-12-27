@@ -20,7 +20,6 @@ function packageManifest(
     path: 'fake-path',
     targetConfig: {type: PublishTarget.npm, publishConfigAccess: 'public'},
     notToBePublished: false,
-    registryVersion: null,
     versionTag: null,
     ...manifest,
   };

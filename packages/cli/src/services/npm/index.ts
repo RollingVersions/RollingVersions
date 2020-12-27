@@ -1,5 +1,4 @@
 import {resolve, dirname} from 'path';
-import {gt, prerelease} from 'semver';
 import {spawnBuffered} from '../../utils/spawn';
 
 // Could use libnpmpublish to publish, but probably best to just use CLI
@@ -152,30 +151,6 @@ export async function getOwners(
     throw npmError(result);
   }
   return result.value;
-}
-
-export async function getNpmVersion(packageName: string) {
-  const result = await parseNPM(
-    spawnBuffered('npm', ['view', packageName, '--json'], {}),
-  );
-  if (!result.ok) {
-    if (result.code === 'E404') {
-      return null;
-    }
-    throw npmError(result);
-  }
-  const p = result.value;
-
-  const versions = (p.versions as string[]).filter((v) => !prerelease(v));
-
-  if (!versions.length) return null;
-
-  return versions.reduce((a, b) => {
-    if (gt(b, a)) {
-      return b;
-    }
-    return a;
-  });
 }
 
 export async function publish(

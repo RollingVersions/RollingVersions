@@ -7,7 +7,7 @@ import {
 export interface RegistryStatusProps {
   packageManifest: Pick<
     PackageManifestWithVersion,
-    'notToBePublished' | 'versionTag' | 'registryVersion' | 'targetConfig'
+    'notToBePublished' | 'versionTag' | 'targetConfig'
   >[];
 }
 
@@ -31,29 +31,31 @@ export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
           (p, i): React.ReactElement => {
             switch (p.targetConfig.type) {
               case PublishTarget.npm: {
-                if (p.versionTag || p.registryVersion) {
-                  if (p.registryVersion) {
-                    return (
-                      <p key={i}>
-                        This package is published <strong>publicly</strong> on
-                        the {publishTarget} registry.
-                      </p>
-                    );
-                  } else {
-                    return (
-                      <p key={i}>
-                        This package is published <strong>privately</strong> on
-                        the {publishTarget} registry.
-                      </p>
-                    );
-                  }
-                }
+                // if (p.versionTag || p.registryVersion) {
+                //   if (p.registryVersion) {
+                //     return (
+                //       <p key={i}>
+                //         This package is published <strong>publicly</strong> on
+                //         the {publishTarget} registry.
+                //       </p>
+                //     );
+                //   } else {
+                //     return (
+                //       <p key={i}>
+                //         This package is published <strong>privately</strong> on
+                //         the {publishTarget} registry.
+                //       </p>
+                //     );
+                //   }
+                // }
                 if (p.targetConfig.publishConfigAccess === 'restricted') {
                   return (
                     <React.Fragment key={i}>
                       <p>
-                        This package wil be published <strong>privately</strong>{' '}
-                        on the {publishTarget} registry.
+                        This package will be published{' '}
+                        <strong>privately</strong> on the {publishTarget}{' '}
+                        registry, unless you have manually updated the acess
+                        config.
                       </p>
                       <p>
                         If you prefer to publish it publicly, you can add the
@@ -67,7 +69,7 @@ export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
                 }
                 return (
                   <p key={i}>
-                    This package wil be published <strong>publicly</strong> on
+                    This package will be published <strong>publicly</strong> on
                     the {publishTarget} registry.
                   </p>
                 );
@@ -75,7 +77,7 @@ export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
               case PublishTarget.custom_script: {
                 return (
                   <p key={i}>
-                    This package wil be published via a custom script:
+                    This package will be published via a custom script:
                     <pre>
                       <code>{p.targetConfig.publish}</code>
                     </pre>

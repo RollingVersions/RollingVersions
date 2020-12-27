@@ -22,27 +22,18 @@ export const PackageManifest: t.Codec<PackageManifest> = compressedObjectCodec(
 );
 
 export interface PackageManifestWithVersion extends PackageManifest {
-  registryVersion: string | null;
   versionTag: VersionTag | null;
 }
 
 export const PackageManifestWithVersion: t.Codec<PackageManifestWithVersion> = compressedObjectCodec(
-  4,
+  5,
   'PackageManifest',
   {
     path: t.String,
     packageName: t.String,
     notToBePublished: t.Boolean,
     targetConfig: PublishTargetConfig,
-    registryVersion: t.Union(t.String, t.Null),
     versionTag: t.Union(VersionTag, t.Null),
   },
-  [
-    'path',
-    'packageName',
-    'notToBePublished',
-    'targetConfig',
-    'registryVersion',
-    'versionTag',
-  ],
+  ['path', 'packageName', 'notToBePublished', 'targetConfig', 'versionTag'],
 );

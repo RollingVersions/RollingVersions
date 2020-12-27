@@ -2,19 +2,13 @@ import getVersionTag from '../getVersionTag';
 
 test('getVersionTag', () => {
   expect(
-    getVersionTag([{name: 'foo-bar'}], 'my-package', null, {
+    getVersionTag([{name: 'foo-bar'}], 'my-package', {
       repoHasMultiplePackages: false,
       tagFormat: null,
     }),
   ).toMatchInlineSnapshot(`null`);
   expect(
-    getVersionTag([{name: 'foo-bar'}], 'my-package', '1.0.0', {
-      repoHasMultiplePackages: false,
-      tagFormat: null,
-    }),
-  ).toMatchInlineSnapshot(`null`);
-  expect(
-    getVersionTag([{name: '1.0.0'}], 'my-package', '1.0.0', {
+    getVersionTag([{name: '1.0.0'}], 'my-package', {
       repoHasMultiplePackages: false,
       tagFormat: null,
     }),
@@ -25,7 +19,7 @@ test('getVersionTag', () => {
     }
   `);
   expect(
-    getVersionTag([{name: 'my-package@1.0.0'}], 'my-package', '1.0.0', {
+    getVersionTag([{name: 'my-package@1.0.0'}], 'my-package', {
       repoHasMultiplePackages: false,
       tagFormat: null,
     }),
@@ -36,13 +30,13 @@ test('getVersionTag', () => {
     }
   `);
   expect(
-    getVersionTag([{name: '1.0.0'}], 'my-package', '1.0.0', {
+    getVersionTag([{name: '1.0.0'}], 'my-package', {
       repoHasMultiplePackages: true,
       tagFormat: null,
     }),
   ).toMatchInlineSnapshot(`null`);
   expect(
-    getVersionTag([{name: 'my-package@1.0.0'}], 'my-package', '1.0.0', {
+    getVersionTag([{name: 'my-package@1.0.0'}], 'my-package', {
       repoHasMultiplePackages: true,
       tagFormat: null,
     }),
@@ -56,7 +50,7 @@ test('getVersionTag', () => {
 
 test('Custom tag format', () => {
   expect(
-    getVersionTag([{name: '0-4-5'}], 'my-package', null, {
+    getVersionTag([{name: '0-4-5'}], 'my-package', {
       repoHasMultiplePackages: true,
       tagFormat: '{{PATCH}}-{{MINOR}}-{{MAJOR}}',
     }),
@@ -67,7 +61,7 @@ test('Custom tag format', () => {
     }
   `);
   expect(
-    getVersionTag([{name: '0-4-5'}], 'my-package', '5.4.0', {
+    getVersionTag([{name: '0-4-5'}], 'my-package', {
       repoHasMultiplePackages: true,
       tagFormat: '{{PATCH}}-{{MINOR}}-{{MAJOR}}',
     }),
@@ -78,7 +72,7 @@ test('Custom tag format', () => {
     }
   `);
   expect(
-    getVersionTag([{name: 'before-0-4-5-after'}], 'my-package', '5.4.0', {
+    getVersionTag([{name: 'before-0-4-5-after'}], 'my-package', {
       repoHasMultiplePackages: true,
       tagFormat: 'before-{{PATCH}}-{{MINOR}}-{{MAJOR}}-after',
     }),
@@ -93,7 +87,6 @@ test('Custom tag format', () => {
     getVersionTag(
       [{name: 'before-0-4-5-after'}, {name: 'before-0-04-006-after'}],
       'my-package',
-      null,
       {
         repoHasMultiplePackages: true,
         tagFormat:

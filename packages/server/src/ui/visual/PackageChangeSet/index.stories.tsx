@@ -17,7 +17,6 @@ export const Default = () => {
           {
             notToBePublished: false,
             versionTag: null,
-            registryVersion: null,
             targetConfig: {
               type: PublishTarget.npm,
               publishConfigAccess: 'public',

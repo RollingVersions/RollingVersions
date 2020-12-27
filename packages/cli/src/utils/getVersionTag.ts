@@ -5,7 +5,6 @@ import parseVersionTagTemplate from './parseVersionTagTemplate';
 export default function getVersionTag<Tag extends {readonly name: string}>(
   allTags: readonly Tag[],
   packageName: string,
-  registryVersion: string | null,
   {
     repoHasMultiplePackages,
     tagFormat,
@@ -44,18 +43,15 @@ export default function getVersionTag<Tag extends {readonly name: string}>(
     })
     .filter(isTruthy);
 
-  if (registryVersion) {
-    return tags.find((t) => t.version === registryVersion) || null;
-  } else if (tags.some((t) => !prerelease(t.version))) {
-    return tags
-      .filter((t) => !prerelease(t.version))
-      .reduce((a, b) => {
-        if (gt(a.version, b.version)) {
-          return a;
-        } else {
-          return b;
-        }
-      });
+  const nonPrerelease = tags.filter((t) => !prerelease(t.version));
+  if (nonPrerelease.length) {
+    return nonPrerelease.reduce((a, b) => {
+      if (gt(a.version, b.version)) {
+        return a;
+      } else {
+        return b;
+      }
+    });
   } else {
     return null;
   }

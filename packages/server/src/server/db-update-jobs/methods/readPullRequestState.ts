@@ -23,7 +23,6 @@ import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import readRepository from '../procedures/readRepository';
 import {Logger} from '../../logger';
-import {getRegistryVersion} from '../../PublishTargets';
 import {getPackageManifests} from '../../models/PackageManifests';
 
 interface PullRequestPackage {
@@ -109,18 +108,7 @@ export default async function readPullRequestState(
           failure: 'failed_get_package_manifests_for_pr',
         },
       )
-      .then((packages) =>
-        logger.withLogging(
-          addPackageVersions(packages, repo.tags, (pkg) =>
-            getRegistryVersion(pkg, logger),
-          ),
-          {
-            success: 'got_package_versions',
-            successMessage: 'Got package versions',
-            failure: 'failed_get_package_versions',
-          },
-        ),
-      ),
+      .then((packages) => addPackageVersions(packages, repo.tags)),
   ]);
 
   const changeSets = new Map<string, ChangeSet<{id: number; weight: number}>>();

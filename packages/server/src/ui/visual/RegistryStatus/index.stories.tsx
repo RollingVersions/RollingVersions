@@ -13,7 +13,6 @@ export const Default = () => {
           {
             notToBePublished: true,
             versionTag: null,
-            registryVersion: null,
             targetConfig: {
               type: PublishTarget.npm,
               publishConfigAccess: 'public',
@@ -26,7 +25,6 @@ export const Default = () => {
           {
             notToBePublished: false,
             versionTag: null,
-            registryVersion: null,
             targetConfig: {
               type: PublishTarget.npm,
               publishConfigAccess: 'public',
@@ -39,7 +37,6 @@ export const Default = () => {
           {
             notToBePublished: false,
             versionTag: null,
-            registryVersion: null,
             targetConfig: {
               type: PublishTarget.npm,
               publishConfigAccess: 'restricted',
@@ -56,7 +53,6 @@ export const Default = () => {
               name: 'my-package@1.0.0',
               version: '1.0.0',
             },
-            registryVersion: '1.0.0',
             targetConfig: {
               type: PublishTarget.npm,
               publishConfigAccess: 'public',
@@ -73,7 +69,6 @@ export const Default = () => {
               name: 'my-package@1.0.0',
               version: '1.0.0',
             },
-            registryVersion: '1.0.0',
             targetConfig: {
               type: PublishTarget.npm,
               publishConfigAccess: 'restricted',

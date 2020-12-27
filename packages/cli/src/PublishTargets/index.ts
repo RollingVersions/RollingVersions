@@ -47,11 +47,6 @@ export async function getPackageManifests(
   ).filter(isTruthy);
 }
 
-export async function getRegistryVersion(pkg: PackageManifest) {
-  if (pkg.notToBePublished) return null;
-  return await targets[pkg.targetConfig.type].getRegistryVersion(pkg);
-}
-
 export async function prepublish(
   config: PublishConfig,
   pkg: NewVersionToBePublished,
