@@ -23,7 +23,6 @@ export const NpmPublishTargetConfig: t.Codec<NpmPublishTargetConfig> = t.Object(
 
 export interface CustomScriptTargetConfig {
   type: PublishTarget.custom_script;
-  version?: string;
   prepublish?: string;
   publish_dry_run?: string;
   publish: string;
@@ -36,7 +35,6 @@ export const CustomScriptTargetConfig: t.Codec<CustomScriptTargetConfig> = t
   })
   .And(
     t.Partial({
-      version: t.String,
       prepublish: t.String,
       publish_dry_run: t.String,
       tag_format: t.String,

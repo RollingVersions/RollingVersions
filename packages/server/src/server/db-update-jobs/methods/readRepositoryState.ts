@@ -12,7 +12,6 @@ import {
 } from 'rollingversions/lib/utils/Versioning';
 import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
-import {getRegistryVersion} from '../../PublishTargets';
 import {getPackageManifests} from '../../models/PackageManifests';
 
 export default async function readRepositoryState(
@@ -43,11 +42,7 @@ export default async function readRepositoryState(
     client,
     repo.head.id,
     logger,
-  ).then((packages) =>
-    addPackageVersions(packages, repo.tags, (pkg) =>
-      getRegistryVersion(pkg, logger),
-    ),
-  );
+  ).then((packages) => addPackageVersions(packages, repo.tags));
 
   getPackageManifestsTimer.info('get_manifests', 'Got package manifets');
 

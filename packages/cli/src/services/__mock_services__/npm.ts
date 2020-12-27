@@ -1,6 +1,6 @@
 import * as real from '../npm';
 import {npmProfile, npmPackages} from './fixtures';
-import {prerelease, gt, valid} from 'semver';
+import {valid} from 'semver';
 import {readRepoFile} from './git';
 
 export const getOrgRoster: typeof real.getOrgRoster = async (_orgName) => {
@@ -20,17 +20,6 @@ export const getVersions: typeof real.getVersions = async (
 };
 export const getOwners: typeof real.getOwners = async (packageName: string) => {
   return npmPackages.get(packageName)?.maintainers || null;
-};
-
-export const getNpmVersion: typeof real.getNpmVersion = async (packageName) => {
-  const packument = npmPackages.get(packageName);
-  if (!packument?.versions.size) return null;
-  return [...packument.versions].reduce((a, b) => {
-    if (!prerelease(b) && gt(b, a)) {
-      return b;
-    }
-    return a;
-  });
 };
 
 export const publish: typeof real.publish = async (

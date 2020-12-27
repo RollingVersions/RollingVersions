@@ -18,14 +18,12 @@ export function getCurrentVerion(
   currentVersions: PackageManifestWithVersion[],
 ) {
   const versionNumbers = currentVersions
-    .map((v) => v.registryVersion || v.versionTag?.version)
+    .map((v) => v.versionTag?.version)
     .filter(<T>(v: T): v is Exclude<T, undefined> => v !== undefined);
+
   if (versionNumbers.length === 0) return null;
 
-  const maxVersion = currentVersions
-    .map((v) => v.registryVersion || v.versionTag?.version)
-    .filter(<T>(v: T): v is Exclude<T, undefined> => v !== undefined)
-    .reduce((a, b) => (gt(a, b) ? a : b), '0.0.0');
+  const maxVersion = versionNumbers.reduce((a, b) => (gt(a, b) ? a : b));
 
   return maxVersion;
 }

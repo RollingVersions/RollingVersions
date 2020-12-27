@@ -44,18 +44,6 @@ export function pathMayContainPackage(filename: string): boolean {
   return filenames.some((f) => filename === f || filename.endsWith(`/${f}`));
 }
 
-export async function getRegistryVersion(pkg: PackageManifest) {
-  if (pkg.targetConfig.type !== PublishTarget.custom_script) {
-    throw new Error('Expected custom script target config');
-  }
-  if (!pkg.targetConfig.version) return null;
-  const result = await execBuffered(pkg.targetConfig.version, {
-    // TODO: get correct dirname
-    cwd: dirname(pkg.path),
-  });
-  return result.getResult('utf8').trim();
-}
-
 /**
  * Parses the JSON and returns all the package info except
  * the version tag.
@@ -77,15 +65,6 @@ export async function getPackageManifest(
   if (isObject(result) && typeof result.name === 'string') {
     if (!isObject(result.scripts)) {
       throw new Error('Expected "scripts" to be an object');
-    }
-
-    if (
-      result.scripts.version !== undefined &&
-      typeof result.scripts.version !== 'string'
-    ) {
-      throw new Error(
-        'Expected "scripts"."version" to be a string or undefined',
-      );
     }
 
     if (
@@ -145,7 +124,6 @@ export async function getPackageManifest(
         notToBePublished: false,
         targetConfig: {
           type: PublishTarget.custom_script,
-          version: result.scripts.version,
           prepublish: result.scripts.prepublish,
           publish_dry_run: result.scripts.publish_dry_run,
           publish: result.scripts.publish,

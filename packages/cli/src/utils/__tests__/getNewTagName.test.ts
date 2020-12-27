@@ -12,7 +12,6 @@ test('getNewTagName', () => {
       changeSet: {breaking: [], feat: [], refactor: [], perf: [], fix: []},
       manifests: [
         {
-          registryVersion: null,
           versionTag: null,
           path: 'some/path',
           packageName: 'my-package-name',
@@ -37,7 +36,6 @@ test('getNewTagName', () => {
       changeSet: {breaking: [], feat: [], refactor: [], perf: [], fix: []},
       manifests: [
         {
-          registryVersion: null,
           versionTag: null,
           path: 'some/path',
           packageName: 'my-package-name',

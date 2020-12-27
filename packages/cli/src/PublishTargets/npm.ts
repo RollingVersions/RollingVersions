@@ -3,7 +3,6 @@ import {
   getOwners,
   getVersions,
   getOrgRoster,
-  getNpmVersion,
   publish as npmPublish,
 } from '../services/npm';
 import {
@@ -15,6 +14,7 @@ import {
 } from '../types';
 import isObject from '../ts-utils/isObject';
 import {readRepoFile, writeRepoFile} from '../services/git';
+import {gt, prerelease} from 'semver';
 
 const stringifyPackage = require('stringify-package');
 const detectIndent = require('detect-indent');
@@ -75,11 +75,6 @@ async function withNpmVersion<T>(
  */
 export function pathMayContainPackage(filename: string): boolean {
   return filename === 'package.json' || filename.endsWith('/package.json');
-}
-
-export async function getRegistryVersion(pkg: PackageManifest) {
-  if (pkg.notToBePublished) return null;
-  return await getNpmVersion(pkg.packageName);
 }
 
 function getConfigValue(
@@ -193,7 +188,7 @@ export async function prepublish(
     };
   }
 
-  if (!owners || !versions) {
+  if (!owners) {
     const orgName = pkg.packageName.split('/')[0].substr(1);
     if (pkg.packageName[0] === '@' && profile.name !== orgName) {
       const orgRoster = await getOrgRoster(orgName);
@@ -211,11 +206,21 @@ export async function prepublish(
         reason: `The user @${profile.name} is not listed as a maintainer of ${pkg.packageName} on npm`,
       };
     }
-
+  }
+  if (versions) {
     if (versions.has(newVersion)) {
       return {
         ok: false,
         reason: `${pkg.packageName} already has a version ${newVersion} on npm`,
+      };
+    }
+    const max = [...versions]
+      .filter((v) => !prerelease(v))
+      .reduce((a, b) => (gt(a, b) ? a : b), '0.0.0');
+    if (gt(max, newVersion)) {
+      return {
+        ok: false,
+        reason: `${pkg.packageName} already has a version ${max} on npm, which is greater than the version that would be published (${newVersion}). Please add a tag/release in GitHub called "${pkg.packageName}@${max}" that points at the correct commit for ${max}`,
       };
     }
   }
