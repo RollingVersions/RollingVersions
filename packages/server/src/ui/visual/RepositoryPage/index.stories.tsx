@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {MemoryRouter} from 'react-router-dom';
-import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import AppNavBar, {AppNavBarLink} from '../AppNavBar';
 import AppContainer from '../AppContainer';
 import RepositoryPage, {
@@ -10,6 +9,7 @@ import RepositoryPage, {
   ReleaseButton,
   RepositoryPageProps,
 } from './';
+import {createChangeSet} from '@rollingversions/change-set';
 
 export default {title: 'pages/RepositoryPage'};
 
@@ -46,31 +46,23 @@ export const UpdateRequired = () => {
         packageName="@database/pg"
         currentVersion={null}
         newVersion="1.0.0"
-        changeSet={{
-          ...getEmptyChangeSet(),
-          feat: [
-            {
-              title: 'Initial release',
-              body: '',
-              pr: 42,
-            },
-          ],
-        }}
+        changeSet={createChangeSet({
+          type: 'feat',
+          title: 'Initial release',
+          body: '',
+          pr: 42,
+        })}
       />
       <PackageWithChanges
         packageName="@database/mysql"
         currentVersion="1.0.0"
         newVersion="2.0.0"
-        changeSet={{
-          ...getEmptyChangeSet(),
-          breaking: [
-            {
-              title: 'Renamed queryStream to queryIterable',
-              body: '',
-              pr: 42,
-            },
-          ],
-        }}
+        changeSet={createChangeSet({
+          type: 'breaking',
+          title: 'Renamed queryStream to queryIterable',
+          body: '',
+          pr: 42,
+        })}
       />
     </Template>
   );
@@ -86,31 +78,23 @@ export const CircularDependency = () => {
         packageName="@database/pg"
         currentVersion={null}
         newVersion="1.0.0"
-        changeSet={{
-          ...getEmptyChangeSet(),
-          feat: [
-            {
-              title: 'Initial release',
-              body: '',
-              pr: 42,
-            },
-          ],
-        }}
+        changeSet={createChangeSet({
+          type: 'feat',
+          title: 'Initial release',
+          body: '',
+          pr: 42,
+        })}
       />
       <PackageWithChanges
         packageName="@database/mysql"
         currentVersion="1.0.0"
         newVersion="2.0.0"
-        changeSet={{
-          ...getEmptyChangeSet(),
-          breaking: [
-            {
-              title: 'Renamed queryStream to queryIterable',
-              body: '',
-              pr: 42,
-            },
-          ],
-        }}
+        changeSet={createChangeSet({
+          type: 'breaking',
+          title: 'Renamed queryStream to queryIterable',
+          body: '',
+          pr: 42,
+        })}
       />
     </Template>
   );

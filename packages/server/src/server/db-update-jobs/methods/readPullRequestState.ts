@@ -18,7 +18,6 @@ import {
 import addRepository from '../procedures/addRepository';
 import upsertPullRequest from '../procedures/upsertPullRequest';
 import upsertCommits from '../procedures/upsertCommits';
-import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import readRepository from '../procedures/readRepository';
@@ -165,7 +164,7 @@ export default async function readPullRequestState(
               packageName,
               {
                 ...metadata,
-                changeSet: changeSets.get(packageName) || getEmptyChangeSet(),
+                changeSet: changeSets.get(packageName) || [],
                 released:
                   is_merged &&
                   (await isPullRequestReleased(db, {
