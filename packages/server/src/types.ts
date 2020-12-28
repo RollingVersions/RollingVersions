@@ -4,11 +4,11 @@ import {
   map,
 } from 'rollingversions/lib/utils/ValidationCodec';
 import Permission, {PermissionCodec} from './server/permissions/Permission';
+import {ModernChangeSetCodec} from 'rollingversions/lib/types/PullRequestState';
 import {PackageDependencies} from 'rollingversions/lib/types';
 import {PackageManifestWithVersion} from 'rollingversions/lib/types/PackageManifest';
 import {PackageDependenciesCodec} from 'rollingversions/lib/types/PackageDependencies';
 import ChangeSet from '@rollingversions/change-set';
-import {ModernChangeSetCodec} from 'rollingversions/src/types/PullRequestState';
 
 export interface RepoResponse {
   headSha: string | null;
