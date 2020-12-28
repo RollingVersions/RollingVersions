@@ -1,10 +1,4 @@
 import {getBranch} from 'rollingversions/lib/services/github';
-import {
-  isPackageStatus,
-  PackageStatus,
-} from 'rollingversions/lib/utils/getPackageStatuses';
-import orFn from 'rollingversions/lib/ts-utils/orFn';
-import arrayEvery from 'rollingversions/lib/ts-utils/arrayEvery';
 import sortPackages from 'rollingversions/lib/utils/sortPackages';
 import {Repository} from 'rollingversions/lib/types';
 import {RepoResponse} from '../../../types';
@@ -22,19 +16,6 @@ export default async function getRepository(
     getBranch(client, repo),
     readRepositoryState(db, client, repo, logger),
   ] as const);
-
-  const isSuccessPackageStatus = orFn(
-    isPackageStatus(PackageStatus.NewVersionToBePublished),
-    isPackageStatus(PackageStatus.NoUpdateRequired),
-  );
-
-  if (!arrayEvery(unsortedPackageStatuses, isSuccessPackageStatus)) {
-    return {
-      headSha: branch?.headSha || null,
-      packages: unsortedPackageStatuses,
-      cycleDetected: null,
-    };
-  }
 
   const sortResult = await sortPackages(unsortedPackageStatuses);
 

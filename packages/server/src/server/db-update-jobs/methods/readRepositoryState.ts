@@ -56,20 +56,6 @@ export default async function readRepositoryState(
         {manifests, dependencies},
       ]): Promise<PackageStatusDetail> => {
         const currentVersion = getCurrentVerion(manifests);
-        const currentTag = currentVersion
-          ? manifests.find(
-              (manifest) => manifest.versionTag?.version === currentVersion,
-            )?.versionTag
-          : null;
-        if (currentVersion && !currentTag) {
-          return {
-            status: PackageStatus.MissingTag,
-            packageName,
-            currentVersion,
-            manifests: manifests,
-            dependencies,
-          };
-        }
 
         const releasedShas = new Set(
           manifests.map((m) => m.versionTag?.commitSha).filter(isTruthy),

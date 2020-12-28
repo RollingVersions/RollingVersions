@@ -33,15 +33,5 @@ export default async function getPullRequest(
     packages: pr.packages,
     closed: pr.is_closed,
     merged: pr.is_merged,
-    // [
-    //   ...(await getUnreleasedPackages(
-    //     client,
-    //     {
-    //       ...pullRequest,
-    //       closed: pr.is_closed || pr.is_merged,
-    //     },
-    //     pr.packages,
-    //   )),
-    // ],
   };
 }

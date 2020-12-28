@@ -39,21 +39,6 @@ export function CycleWarning({cycle}: {cycle: readonly string[]}) {
   return <Alert className="mb-4">Cycle Detected: {cycle.join(' -> ')}</Alert>;
 }
 
-export function PackageWithMissingTag({
-  packageName,
-  currentVersion,
-}: {
-  packageName: string;
-  currentVersion: string;
-}) {
-  return (
-    <React.Fragment key={packageName}>
-      <PackageName>{packageName}</PackageName>
-      <Alert className="mb-4">Missing tag for {currentVersion}</Alert>
-    </React.Fragment>
-  );
-}
-
 export function PackageWithChanges({
   packageName,
   currentVersion,
