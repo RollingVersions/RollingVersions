@@ -1,7 +1,6 @@
 import React from 'react';
 import {useParams} from 'react-router-dom';
 import {RepoResponse} from '../../types';
-import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import AppContainer from '../visual/AppContainer';
 import AppNavBar, {AppNavBarLink} from '../visual/AppNavBar';
 import RepositoryPage, {
@@ -64,10 +63,7 @@ export default function Repository() {
         }
 
         const updateRequired =
-          !state.cycleDetected &&
-          state.packages.some(
-            (p) => p.status === PackageStatus.NewVersionToBePublished,
-          );
+          !state.cycleDetected && state.packagesWithChanges.length !== 0;
 
         return (
           <RepositoryPage
@@ -86,26 +82,22 @@ export default function Repository() {
             {state.cycleDetected ? (
               <CycleWarning cycle={state.cycleDetected} />
             ) : null}
-            {state.packages.map((pkg) =>
-              pkg.status === PackageStatus.NewVersionToBePublished ? (
-                <PackageWithChanges
-                  key={pkg.packageName}
-                  packageName={pkg.packageName}
-                  currentVersion={pkg.currentVersion}
-                  newVersion={pkg.newVersion}
-                  changeSet={pkg.changeSet}
-                />
-              ) : null,
-            )}
-            {state.packages.map((pkg) =>
-              pkg.status === PackageStatus.NoUpdateRequired ? (
-                <PackageWithNoChanges
-                  key={pkg.packageName}
-                  packageName={pkg.packageName}
-                  currentVersion={pkg.currentVersion}
-                />
-              ) : null,
-            )}
+            {state.packagesWithChanges.map((pkg) => (
+              <PackageWithChanges
+                key={pkg.packageName}
+                packageName={pkg.packageName}
+                currentVersion={pkg.currentVersion}
+                newVersion={pkg.newVersion}
+                changeSet={pkg.changeSet}
+              />
+            ))}
+            {state.packagesWithNoChanges.map((pkg) => (
+              <PackageWithNoChanges
+                key={pkg.packageName}
+                packageName={pkg.packageName}
+                currentVersion={pkg.currentVersion}
+              />
+            ))}
           </RepositoryPage>
         );
       })()}
