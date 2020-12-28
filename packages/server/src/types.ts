@@ -8,14 +8,22 @@ import {
   ChangeSetCodec,
 } from 'rollingversions/lib/types/PullRequestState';
 import Permission, {PermissionCodec} from './server/permissions/Permission';
-import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
 import {PackageDependencies} from 'rollingversions/lib/types';
 import {PackageManifestWithVersion} from 'rollingversions/lib/types/PackageManifest';
 import {PackageDependenciesCodec} from 'rollingversions/lib/types/PackageDependencies';
 
 export interface RepoResponse {
   headSha: string | null;
-  packages: readonly PackageStatusDetail[];
+  packagesWithChanges: readonly {
+    packageName: string;
+    changeSet: ChangeSet<{pr: number}>;
+    currentVersion: string | null;
+    newVersion: string;
+  }[];
+  packagesWithNoChanges: readonly {
+    packageName: string;
+    currentVersion: string | null;
+  }[];
   cycleDetected: readonly string[] | null;
 }
 

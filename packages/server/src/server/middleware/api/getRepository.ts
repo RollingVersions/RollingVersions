@@ -6,6 +6,8 @@ import readRepositoryState from '../../db-update-jobs/methods/readRepositoryStat
 import {db} from '../../services/postgres';
 import {GitHubClient} from '../../services/github';
 import {Logger} from '../../logger';
+import PackageStatus from 'rollingversions/src/types/PackageStatus';
+import isTruthy from 'rollingversions/src/ts-utils/isTruthy';
 
 export default async function getRepository(
   client: GitHubClient,
@@ -19,17 +21,34 @@ export default async function getRepository(
 
   const sortResult = await sortPackages(unsortedPackageStatuses);
 
-  if (sortResult.circular) {
-    return {
-      headSha: branch?.headSha || null,
-      packages: unsortedPackageStatuses,
-      cycleDetected: sortResult.packageNames,
-    };
-  }
+  const packages = sortResult.circular
+    ? unsortedPackageStatuses
+    : sortResult.packages;
 
   return {
     headSha: branch?.headSha || null,
-    packages: sortResult.packages,
-    cycleDetected: null,
+    packagesWithChanges: packages
+      .map((pkg) =>
+        pkg.status === PackageStatus.NewVersionToBePublished
+          ? {
+              packageName: pkg.packageName,
+              changeSet: pkg.changeSet,
+              currentVersion: pkg.currentVersion,
+              newVersion: pkg.newVersion,
+            }
+          : null,
+      )
+      .filter(isTruthy),
+    packagesWithNoChanges: packages
+      .map((pkg) =>
+        pkg.status === PackageStatus.NoUpdateRequired
+          ? {
+              packageName: pkg.packageName,
+              currentVersion: pkg.currentVersion,
+            }
+          : null,
+      )
+      .filter(isTruthy),
+    cycleDetected: sortResult.circular ? sortResult.packageNames : null,
   };
 }
