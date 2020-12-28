@@ -48,13 +48,7 @@ test('readState', () => {
   ).toMatchInlineSnapshot(`
     Object {
       "packages": Map {
-        "fake package" => Object {
-          "breaking": Array [],
-          "feat": Array [],
-          "fix": Array [],
-          "perf": Array [],
-          "refactor": Array [],
-        },
+        "fake package" => Array [],
       },
       "submittedAtCommitSha": "SHASHASHA",
     }
@@ -83,22 +77,17 @@ test('regression test', () => {
   expect(readState(input)).toMatchInlineSnapshot(`
     Object {
       "packages": Map {
-        "@rollingversions/test-single-npm-package-circleci" => Object {
-          "breaking": Array [],
-          "feat": Array [
-            Object {
-              "body": "It is the case that 13 < 14
+        "@rollingversions/test-single-npm-package-circleci" => Array [
+          Object {
+            "body": "It is the case that 13 < 14
 
     \`\`\`js
     assert(13 < 14)
     \`\`\`",
-              "title": "Feature 14",
-            },
-          ],
-          "fix": Array [],
-          "perf": Array [],
-          "refactor": Array [],
-        },
+            "title": "Feature 14",
+            "type": "feat",
+          },
+        ],
       },
       "submittedAtCommitSha": "95894a0b11f7c789f7837f280683a52089d94bec",
     }
