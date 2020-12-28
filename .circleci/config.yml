@@ -73,7 +73,7 @@ jobs:
             fi
       - run:
           name: Publish Canary
-          command: node publish-canary
+          command: node scripts/publish-canary
       - push
       - deploy:
           environment: staging
