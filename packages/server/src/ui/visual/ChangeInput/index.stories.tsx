@@ -24,6 +24,7 @@ const Story = ({disabled}: {disabled: boolean}) => {
           ref={(input) => {
             input?.focus();
           }}
+          localId={1}
           title={change.title}
           body={change.body}
           disabled={disabled}
@@ -33,6 +34,7 @@ const Story = ({disabled}: {disabled: boolean}) => {
           onBlur={action('blur 1')}
         />
         <ChangeInput
+          localId={2}
           title={change2.title}
           body={change2.body}
           disabled={disabled}
@@ -42,6 +44,7 @@ const Story = ({disabled}: {disabled: boolean}) => {
           onBlur={action('blur 2')}
         />
         <ChangeInput
+          localId={3}
           title={change3.title}
           body={change3.body}
           disabled={disabled}

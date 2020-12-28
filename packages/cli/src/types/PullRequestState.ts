@@ -3,53 +3,55 @@
 //          must support parsing all versions of this data that have ever existed.
 //          Be very conservative with changes, and aim not to reference Codecs defined
 //          in other files.
+
+import ChangeSet, {mergeChangeSets} from '@rollingversions/change-set';
 import {t, compressedObjectCodec, map} from '../utils/ValidationCodec';
 
-export interface ChangeLogEntry {
-  readonly title: string;
-  readonly body: string;
-}
-
-export const ChangeLogEntryCodec: t.Codec<ChangeLogEntry> = compressedObjectCodec(
+const LegacyChangeLogEntryCodec = compressedObjectCodec(
   1,
   'ChangLogEntry',
   {title: t.String, body: t.String},
   ['title', 'body'],
 );
-
-export interface ChangeSet<TExtra = {}> {
-  breaking: (ChangeLogEntry & TExtra)[];
-  feat: (ChangeLogEntry & TExtra)[];
-  refactor: (ChangeLogEntry & TExtra)[];
-  perf: (ChangeLogEntry & TExtra)[];
-  fix: (ChangeLogEntry & TExtra)[];
-}
-
-export type ChangeType = keyof ChangeSet;
-export const ChangeTypes = [
-  'breaking',
-  'feat',
-  'refactor',
-  'perf',
-  'fix',
-] as const;
-
-export function isEmptyChangeSet(changes: ChangeSet) {
-  return ChangeTypes.every((changeType) => changes[changeType].length === 0);
-}
-
-export const ChangeSetCodec: t.Codec<ChangeSet> = compressedObjectCodec(
+const LegacyChangeSetCodec: t.Codec<ChangeSet> = compressedObjectCodec(
   1,
   'ChangeSet',
   {
-    breaking: t.Array(ChangeLogEntryCodec),
-    feat: t.Array(ChangeLogEntryCodec),
-    refactor: t.Array(ChangeLogEntryCodec),
-    perf: t.Array(ChangeLogEntryCodec),
-    fix: t.Array(ChangeLogEntryCodec),
+    breaking: t.Array(LegacyChangeLogEntryCodec),
+    feat: t.Array(LegacyChangeLogEntryCodec),
+    refactor: t.Array(LegacyChangeLogEntryCodec),
+    perf: t.Array(LegacyChangeLogEntryCodec),
+    fix: t.Array(LegacyChangeLogEntryCodec),
   },
   ['breaking', 'feat', 'refactor', 'perf', 'fix'],
+).withParser({
+  parse: (cs): t.Result<ChangeSet> => ({
+    success: true,
+    value: mergeChangeSets(
+      ...([
+        'breaking',
+        'feat',
+        'refactor',
+        'perf',
+        'fix',
+      ] as const).map((type) => cs[type].map((c) => ({...c, type}))),
+    ),
+  }),
+});
+const ModernChangeSetCodec: t.Codec<ChangeSet> = t.ReadonlyArray(
+  compressedObjectCodec(
+    2,
+    'ChangLogEntry',
+    {type: t.String, title: t.String, body: t.String},
+    ['type', 'title', 'body'],
+  ),
 );
+
+const ChangeSetCodec: t.Codec<ChangeSet> = t.Union(
+  LegacyChangeSetCodec,
+  ModernChangeSetCodec,
+);
+export {ModernChangeSetCodec};
 
 export default interface PullRequestState {
   /**

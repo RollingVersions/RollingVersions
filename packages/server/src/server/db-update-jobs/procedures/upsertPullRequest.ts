@@ -12,7 +12,6 @@ import {
   getPullRequestFromNumber,
 } from '../../services/github';
 import getPullRequestStateFromComment from './getPullRequestStateFromComment';
-import {ChangeTypes} from 'rollingversions/lib/types/PullRequestState';
 import {Logger} from '../../logger';
 import {deleteComment, readComments} from 'rollingversions/lib/services/github';
 import {COMMENT_GUID} from '../../../utils/Rendering';
@@ -69,14 +68,12 @@ export default async function upsertPullRequest(
             pr.id,
             [...state.packages]
               .flatMap(([package_name, changeSet]) =>
-                ChangeTypes.flatMap((kind) =>
-                  changeSet[kind].map((changeLogEntry) => ({
-                    package_name,
-                    kind,
-                    title: changeLogEntry.title,
-                    body: changeLogEntry.body,
-                  })),
-                ),
+                changeSet.map((changeLogEntry) => ({
+                  package_name,
+                  kind: changeLogEntry.type,
+                  title: changeLogEntry.title,
+                  body: changeLogEntry.body,
+                })),
               )
               .map((cle, sort_order_weight) => ({...cle, sort_order_weight})),
           );

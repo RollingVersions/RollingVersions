@@ -1,0 +1,2 @@
+ALTER TABLE change_log_entries DROP CONSTRAINT change_log_entries_kind_fkey;
+DROP TABLE change_log_entry_kinds;

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@github-graph/api": "^2.2.1",
+    "@rollingversions/change-set": "^0.0.0",
     "@types/semver": "^7.1.0",
     "assert-never": "^1.2.0",
     "chalk": "^3.0.0",

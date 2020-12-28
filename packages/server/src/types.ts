@@ -3,14 +3,12 @@ import {
   compressedObjectCodec,
   map,
 } from 'rollingversions/lib/utils/ValidationCodec';
-import {
-  ChangeSet,
-  ChangeSetCodec,
-} from 'rollingversions/lib/types/PullRequestState';
 import Permission, {PermissionCodec} from './server/permissions/Permission';
 import {PackageDependencies} from 'rollingversions/lib/types';
 import {PackageManifestWithVersion} from 'rollingversions/lib/types/PackageManifest';
 import {PackageDependenciesCodec} from 'rollingversions/lib/types/PackageDependencies';
+import ChangeSet from '@rollingversions/change-set';
+import {ModernChangeSetCodec} from 'rollingversions/src/types/PullRequestState';
 
 export interface RepoResponse {
   headSha: string | null;
@@ -43,7 +41,7 @@ const PullRequestPackagesCodec = map(
     {
       manifests: t.Array(PackageManifestWithVersion),
       dependencies: PackageDependenciesCodec,
-      changeSet: ChangeSetCodec,
+      changeSet: ModernChangeSetCodec,
       released: t.Boolean,
     },
     ['manifests', 'dependencies', 'changeSet', 'released'],
@@ -87,7 +85,7 @@ export const UpdatePullRequestBody: t.Codec<UpdatePullRequestBody> = compressedO
         'Updates',
         {
           packageName: t.String,
-          changes: ChangeSetCodec,
+          changes: ModernChangeSetCodec,
         },
         ['packageName', 'changes'],
       ),

@@ -1,7 +1,7 @@
+import ChangeSet, {ChangeSetEntry} from '@rollingversions/change-set';
 import {
   PullRequest,
   PackageDependencies,
-  ChangeSet,
   PackageManifestWithVersion,
 } from 'rollingversions/lib/types';
 import {
@@ -111,16 +111,20 @@ export default async function readPullRequestState(
       .then((packages) => addPackageVersions(packages, repo.tags)),
   ]);
 
-  const changeSets = new Map<string, ChangeSet<{id: number; weight: number}>>();
+  const changeSets = new Map<
+    string,
+    ChangeSetEntry<{id: number; weight: number}>[]
+  >();
   for (const change of changes) {
     let changeSet = changeSets.get(change.package_name);
     if (!changeSet) {
-      changeSet = getEmptyChangeSet();
+      changeSet = [];
       changeSets.set(change.package_name, changeSet);
     }
-    changeSet[change.kind].push({
+    changeSet.push({
       id: change.id,
       weight: change.sort_order_weight,
+      type: change.kind,
       title: change.title,
       body: change.body,
     });

@@ -1,8 +1,8 @@
-import React from 'react';
-import {ChangeLogEntry, ChangeSet} from 'rollingversions/lib/types';
+import React, {useCallback} from 'react';
 import RegistryStatus, {RegistryStatusProps} from '../RegistryStatus';
 import ChangeSetEditorLayout from '../ChangeSetEditorLayout';
 import Changes from '../Changes';
+import ChangeSet, {extractChanges} from '@rollingversions/change-set';
 
 export interface PackageChangeSetProps {
   packageName: string;
@@ -19,18 +19,6 @@ export interface PackageChangeSetProps {
   ) => void;
 }
 
-function useOnChange(
-  packageName: string,
-  type: keyof ChangeSet,
-  onChange: PackageChangeSetProps['onChange'],
-) {
-  return React.useCallback(
-    (changes: (ChangeLogEntry & {localId: number})[]) => {
-      onChange(packageName, (oldChanges) => ({...oldChanges, [type]: changes}));
-    },
-    [packageName, type, onChange],
-  );
-}
 function PackageChangeSet({
   packageManifest,
   packageName,
@@ -40,14 +28,13 @@ function PackageChangeSet({
   warning,
   onChange,
 }: PackageChangeSetProps) {
-  const handleChange = {
-    breaking: useOnChange(packageName, 'breaking', onChange),
-    feat: useOnChange(packageName, 'feat', onChange),
-    refactor: useOnChange(packageName, 'refactor', onChange),
-    fix: useOnChange(packageName, 'fix', onChange),
-    perf: useOnChange(packageName, 'perf', onChange),
-  };
+  const onChangeInner = useCallback((update) => onChange(packageName, update), [
+    packageName,
+    onChange,
+  ]);
+  // TODO(feat): allow alternative change types
   // TODO(feat): show warning if no changes are added and the commit has modified files in the directory
+  // TODO(feat): show warning if dependencies have breaking changes but this package has no changes
   return (
     <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
       <div>
@@ -63,8 +50,9 @@ function PackageChangeSet({
             title="Breaking Changes"
             disabled={disabled}
             readOnly={readOnly}
-            changes={changes.breaking}
-            onChange={handleChange.breaking}
+            type="breaking"
+            changes={extractChanges(changes, 'breaking')}
+            onChange={onChangeInner}
           />
         }
         feat={
@@ -72,8 +60,9 @@ function PackageChangeSet({
             title="New Features"
             disabled={disabled}
             readOnly={readOnly}
-            changes={changes.feat}
-            onChange={handleChange.feat}
+            type="feat"
+            changes={extractChanges(changes, 'feat')}
+            onChange={onChangeInner}
           />
         }
         refactor={
@@ -81,8 +70,9 @@ function PackageChangeSet({
             title="Refactors"
             disabled={disabled}
             readOnly={readOnly}
-            changes={changes.refactor}
-            onChange={handleChange.refactor}
+            type="refactor"
+            changes={extractChanges(changes, 'refactor')}
+            onChange={onChangeInner}
           />
         }
         fix={
@@ -90,8 +80,9 @@ function PackageChangeSet({
             title="Bug Fixes"
             disabled={disabled}
             readOnly={readOnly}
-            changes={changes.fix}
-            onChange={handleChange.fix}
+            type="fix"
+            changes={extractChanges(changes, 'fix')}
+            onChange={onChangeInner}
           />
         }
         perf={
@@ -99,8 +90,9 @@ function PackageChangeSet({
             title="Performance Improvements"
             disabled={disabled}
             readOnly={readOnly}
-            changes={changes.perf}
-            onChange={handleChange.perf}
+            type="perf"
+            changes={extractChanges(changes, 'perf')}
+            onChange={onChangeInner}
           />
         }
       />

@@ -8,5 +8,8 @@
     "tsBuildInfoFile": "lib/.tsbuildinfo",
     "esModuleInterop": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    {"path": "../change-set"},
+  ]
 }

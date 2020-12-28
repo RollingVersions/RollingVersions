@@ -1,5 +1,5 @@
+import {ChangeTypeID} from '@rollingversions/config';
 import db, {sql, Queryable} from '@rollingversions/db';
-import {ChangeType} from 'rollingversions/lib/types/PullRequestState';
 
 export {db, Queryable};
 
@@ -352,7 +352,7 @@ export async function insertChangeLogEntries(
   entries: {
     sort_order_weight: number;
     package_name: string;
-    kind: 'breaking' | 'feat' | 'refactor' | 'perf' | 'fix';
+    kind: ChangeTypeID;
     title: string;
     body: string;
   }[],
@@ -378,7 +378,7 @@ export async function updateChangeLogEntries(
   entries: {
     sort_order_weight: number;
     package_name: string;
-    kind: 'breaking' | 'feat' | 'refactor' | 'perf' | 'fix';
+    kind: ChangeTypeID;
     title: string;
     body: string;
   }[],
@@ -470,7 +470,7 @@ export async function getChangesForPullRequest(
     id: number;
     package_name: string;
     sort_order_weight: number;
-    kind: ChangeType;
+    kind: ChangeTypeID;
     title: string;
     body: string;
   }[]
@@ -499,7 +499,7 @@ export async function getAllUnreleasedChanges(
     pr_number: number;
     id: number;
     sort_order_weight: number;
-    kind: ChangeType;
+    kind: ChangeTypeID;
     title: string;
     body: string;
   }[]

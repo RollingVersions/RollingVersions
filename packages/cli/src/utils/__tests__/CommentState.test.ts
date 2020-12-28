@@ -1,5 +1,5 @@
+import {createChangeSet} from '@rollingversions/change-set';
 import {writeState, readState} from '../CommentState';
-import getEmptyChangeSet from '../getEmptyChangeSet';
 
 test('writeState', () => {
   expect(
@@ -42,7 +42,7 @@ test('readState', () => {
     readState(
       writeState('Comment', {
         submittedAtCommitSha: 'SHASHASHA',
-        packages: new Map([['fake package', getEmptyChangeSet()]]),
+        packages: new Map([['fake package', createChangeSet()]]),
       }).replace(/\n/g, '\r\n'),
     ),
   ).toMatchInlineSnapshot(`

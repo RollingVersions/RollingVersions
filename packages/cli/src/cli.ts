@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
+import {changesToMarkdown} from '@rollingversions/change-set';
 import chalk from 'chalk';
 import {parse, startChain, param} from 'parameter-reducers';
 import printHelp from './commands/help';
 import publish, {PublishResultKind} from './commands/publish';
-import changesToMarkdown from './utils/changesToMarkdown';
 import {
   PackageStatus,
   NoUpdateRequired,
@@ -135,7 +135,12 @@ switch (COMMAND) {
                 ),
               );
               console.warn(``);
-              console.warn(changesToMarkdown(p.changeSet, 3));
+              console.warn(
+                changesToMarkdown(p.changeSet, {
+                  headingLevel: 3,
+                  renderContext: ({pr}) => ` (#${pr})`,
+                }),
+              );
               console.warn(``);
             }
             console.warn(``);

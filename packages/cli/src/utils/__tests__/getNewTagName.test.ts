@@ -9,7 +9,7 @@ test('getNewTagName', () => {
       packageName: 'my-package-name',
       currentVersion: null,
       newVersion: '1.0.0',
-      changeSet: {breaking: [], feat: [], refactor: [], perf: [], fix: []},
+      changeSet: [],
       manifests: [
         {
           versionTag: null,
@@ -33,7 +33,7 @@ test('getNewTagName', () => {
       packageName: 'my-package-name',
       currentVersion: null,
       newVersion: '1.0.0',
-      changeSet: {breaking: [], feat: [], refactor: [], perf: [], fix: []},
+      changeSet: [],
       manifests: [
         {
           versionTag: null,

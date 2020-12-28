@@ -1,28 +1,28 @@
+import {createChangeSet, extractChanges} from '@rollingversions/change-set';
 import * as React from 'react';
 import Changes from './';
 import getLocalId from '../../utils/getLocalId';
-import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 
 export default {title: 'modules/Changes'};
 
 export const Default = () => {
-  const [changes, setChanges] = React.useState({
-    ...getEmptyChangeSet<{localId: number}>(),
-    breaking: [
+  const [changes, setChanges] = React.useState(
+    createChangeSet<{localId: number}>(
       {
         localId: getLocalId(),
+        type: 'breaking',
         title: 'Renamed `merged.unmerge` to `merged.unmergeAllQueries`',
         body: '',
       },
       {
         localId: getLocalId(),
+        type: 'breaking',
         title: 'Renamed `merged.documents` to `merged.allQueries`',
         body: '',
       },
-    ],
-    feat: [
       {
         localId: getLocalId(),
+        type: 'feat',
         title:
           'Add `Batch` API that allows you to cleanly queue up queries and run them as a batch',
         body: `\`\`\`ts
@@ -65,23 +65,25 @@ console.log(await resultA);
 console.log(await resultB);
 \`\`\``,
       },
-    ],
-  });
+    ),
+  );
   return (
     <div className="w-full min-h-full bg-gray-300 p-2">
       <Changes
         title="Breaking Changes"
         disabled={false}
         readOnly={false}
-        changes={changes.breaking}
-        onChange={(breaking) => setChanges((old) => ({...old, breaking}))}
+        type="breaking"
+        changes={extractChanges(changes, 'breaking')}
+        onChange={setChanges}
       />
       <Changes
         title="New Features"
         disabled={false}
         readOnly={false}
-        changes={changes.feat}
-        onChange={(feat) => setChanges((old) => ({...old, feat}))}
+        type="feat"
+        changes={extractChanges(changes, 'feat')}
+        onChange={setChanges}
       />
     </div>
   );

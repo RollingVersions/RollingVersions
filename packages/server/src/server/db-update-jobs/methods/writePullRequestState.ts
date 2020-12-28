@@ -1,3 +1,4 @@
+import ChangeSet from '@rollingversions/change-set';
 import retry from 'then-retry';
 import {
   Queryable,
@@ -5,7 +6,7 @@ import {
   updateChangeLogEntries,
 } from '../../services/postgres';
 import {GitHubClient} from '../../services/github';
-import {PullRequest, ChangeSet} from 'rollingversions/lib/types';
+import {PullRequest} from 'rollingversions/lib/types';
 import readPullRequestState from './readPullRequestState';
 import {PullRequestPackage} from '../../../types';
 
@@ -16,7 +17,6 @@ import {
 } from '../../../utils/Rendering';
 import {APP_URL} from '../../environment';
 import {updateStatus} from 'rollingversions/lib/services/github';
-import {ChangeTypes} from 'rollingversions/lib/types/PullRequestState';
 import {Logger} from '../../logger';
 
 export default async function writePullRequestState(
@@ -98,14 +98,12 @@ export default async function writePullRequestState(
     headSha,
     [...packages]
       .flatMap(([package_name, {changeSet}]) =>
-        ChangeTypes.flatMap((kind) =>
-          changeSet[kind].map((changeLogEntry) => ({
-            package_name,
-            kind,
-            title: changeLogEntry.title,
-            body: changeLogEntry.body,
-          })),
-        ),
+        changeSet.map((changeLogEntry) => ({
+          package_name,
+          kind: changeLogEntry.type,
+          title: changeLogEntry.title,
+          body: changeLogEntry.body,
+        })),
       )
       .map((cle, sort_order_weight) => ({...cle, sort_order_weight})),
   );

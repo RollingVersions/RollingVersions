@@ -2,17 +2,18 @@ import DataLoader from 'dataloader';
 import {GitHubClient, readComments} from '../services/github';
 import {getCurrentVerion, getNewVersion} from '../utils/Versioning';
 import {
-  ChangeSet,
   Repository,
   PullRequest,
   PackageDependencies,
   PackageManifestWithVersion,
 } from '../types';
-import {ChangeTypes} from '../types/PullRequestState';
 import {readState} from './CommentState';
 import isTruthy from '../ts-utils/isTruthy';
-import getEmptyChangeSet from './getEmptyChangeSet';
 import PackageStatus from '../types/PackageStatus';
+import ChangeSet, {
+  addContextToChangeSet,
+  mergeChangeSets,
+} from '@rollingversions/change-set';
 
 // N.B. This comment GUID must be kept in sync with the server code for now
 const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
@@ -96,20 +97,17 @@ export default async function getPackageStatuses(
         );
         const changeLogs = await getChangeLogsFromCommits(commits);
 
-        const changeSet = getEmptyChangeSet<{pr: number}>();
-        for (const pullChangeLog of changeLogs.filter(isTruthy)) {
-          const changes = pullChangeLog.packages.get(packageName);
-          if (changes) {
-            for (const key of ChangeTypes) {
-              changeSet[key].push(
-                ...changes[key].map((c) => ({
-                  ...c,
-                  pr: pullChangeLog.pr,
-                })),
-              );
-            }
-          }
-        }
+        const changeSet = mergeChangeSets(
+          ...changeLogs
+            .filter(isTruthy)
+            .map((pullChangeLog) => {
+              const changeSet = pullChangeLog.packages.get(packageName);
+              return changeSet
+                ? addContextToChangeSet(changeSet, {pr: pullChangeLog.pr})
+                : null;
+            })
+            .filter(isTruthy),
+        );
         const newVersion = getNewVersion(currentVersion, changeSet);
         if (!newVersion) {
           return {
