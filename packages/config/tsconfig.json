@@ -9,8 +9,4 @@
     "esModuleInterop": true
   },
   "include": ["src"],
-  "references": [
-    {"path": "../config"},
-    {"path": "../version-number"},
-  ],
 }

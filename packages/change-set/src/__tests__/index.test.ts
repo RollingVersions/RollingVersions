@@ -223,11 +223,6 @@ test('changesToMarkdown', () => {
       ],
       {
         headingLevel: 3,
-        changeTypes: [
-          {id: 'breaking', plural: 'Breaking Changes'},
-          {id: 'feat', plural: 'New Features'},
-          {id: 'fix', plural: 'Bug Fixes'},
-        ],
         renderContext: (change) => ` (#${change.pr})`,
       },
     ),

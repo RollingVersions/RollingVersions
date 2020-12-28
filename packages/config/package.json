@@ -1,10 +1,10 @@
 {
-  "name": "@rollingversions/version-number",
+  "name": "@rollingversions/config",
   "version": "0.0.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "dependencies": {
-    "@rollingversions/config": "^0.0.0"
+    "funtypes": "^3.0.1"
   },
   "publishConfig": {"access": "public"}
 }
