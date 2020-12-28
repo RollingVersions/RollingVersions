@@ -1,6 +1,6 @@
 import {PublishTarget} from '../types';
 import {
-  SuccessPackageStatus,
+  PackageStatusDetail,
   NewVersionToBePublished,
 } from './getPackageStatuses';
 import parseVersionTagTemplate from './parseVersionTagTemplate';
@@ -17,7 +17,7 @@ import parseVersionTagTemplate from './parseVersionTagTemplate';
  * if the package contains exactly 1 package.
  */
 function isSinglePackageWithDirectVersion(
-  packages: readonly SuccessPackageStatus[],
+  packages: readonly PackageStatusDetail[],
 ) {
   return (
     packages.length === 1 &&
@@ -39,7 +39,7 @@ function isSinglePackageWithDirectVersion(
  *
  * If all existing tags are formatted that way
  */
-function gitTagsHavePrefixV(packages: readonly SuccessPackageStatus[]) {
+function gitTagsHavePrefixV(packages: readonly PackageStatusDetail[]) {
   return (
     packages.some((p) => p.manifests.some((pi) => pi.versionTag)) &&
     packages.every((p) =>
@@ -59,7 +59,7 @@ function gitTagsHavePrefixV(packages: readonly SuccessPackageStatus[]) {
  * @param pkg The new package to be published
  */
 export default function getNewTagName(
-  allPackages: readonly SuccessPackageStatus[],
+  allPackages: readonly PackageStatusDetail[],
   pkg: NewVersionToBePublished,
 ) {
   const tagFormat = pkg.manifests

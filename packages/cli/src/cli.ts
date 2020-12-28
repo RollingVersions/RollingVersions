@@ -180,14 +180,6 @@ switch (COMMAND) {
               `There is no safe order to publish packages in when there is a circular dependency, therefore none of your packages were published.`,
             );
             return process.exit(supressErrors ? 0 : 1);
-          case PublishResultKind.MissingTags:
-            console.error(`Missing tag for:`);
-            console.error(``);
-            for (const p of result.packages) {
-              console.error(`  - ${p.packageName}@${p.currentVersion}`);
-            }
-            console.error(``);
-            return process.exit(supressErrors ? 0 : 1);
           case PublishResultKind.GitHubAuthCheckFail:
             console.error(`GitHub pre-release steps failed:`);
             console.error(``);

@@ -6,7 +6,6 @@ import AppContainer from '../AppContainer';
 import RepositoryPage, {
   CycleWarning,
   PackageWithChanges,
-  PackageWithMissingTag,
   PackageWithNoChanges,
   ReleaseButton,
   RepositoryPageProps,
@@ -107,32 +106,6 @@ export const CircularDependency = () => {
           breaking: [
             {
               title: 'Renamed queryStream to queryIterable',
-              body: '',
-              pr: 42,
-            },
-          ],
-        }}
-      />
-    </Template>
-  );
-};
-
-export const MissingTag = () => {
-  return (
-    <Template>
-      <PackageWithMissingTag
-        packageName="@database/mysql"
-        currentVersion="1.0.0"
-      />
-      <PackageWithChanges
-        packageName="@database/pg"
-        currentVersion={null}
-        newVersion="1.0.0"
-        changeSet={{
-          ...getEmptyChangeSet(),
-          feat: [
-            {
-              title: 'Initial release',
               body: '',
               pr: 42,
             },

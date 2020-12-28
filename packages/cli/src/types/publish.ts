@@ -1,6 +1,6 @@
 import PackageManifest from './PackageManifest';
 import {
-  SuccessPackageStatus,
+  PackageStatusDetail,
   NewVersionToBePublished,
 } from '../utils/getPackageStatuses';
 
@@ -17,7 +17,7 @@ export interface PublishConfig {
 
 export interface PublishEvents {
   onValidatedPackages: {
-    packages: readonly SuccessPackageStatus[];
+    packages: readonly PackageStatusDetail[];
     dryRun: boolean;
   };
 

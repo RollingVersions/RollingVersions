@@ -8,19 +8,14 @@ import {
 import {getAllFiles} from '../services/git';
 import getPackageStatuses, {
   NoUpdateRequired,
-  SuccessPackageStatus,
-  MissingTag,
+  PackageStatusDetail,
   NewVersionToBePublished,
   PackageStatus,
-  isPackageStatus,
 } from '../utils/getPackageStatuses';
 import sortPackages from '../utils/sortPackages';
 import {checkGitHubReleaseStatus} from '../PublishTargets/github';
 import getNewTagName from '../utils/getNewTagName';
 import {prepublish, publish as publishTarget} from '../PublishTargets';
-import notFn from '../ts-utils/notFn';
-import arrayEvery from '../ts-utils/arrayEvery';
-import orFn from '../ts-utils/orFn';
 import listPackages from '../utils/listPackages';
 import splitAsyncGenerator from '../ts-utils/splitAsyncGenerator';
 import addPackageVersions from '../utils/addPackageVersions';
@@ -28,7 +23,6 @@ import addPackageVersions from '../utils/addPackageVersions';
 export enum PublishResultKind {
   NoUpdatesRequired,
   UpdatesPublished,
-  MissingTags,
   CircularPackageDependencies,
   GitHubAuthCheckFail,
   PrepublishFailures,
@@ -39,11 +33,7 @@ export interface NoUpdatesRequired {
 }
 export interface UpdatesPublished {
   readonly kind: PublishResultKind.UpdatesPublished;
-  readonly packages: readonly SuccessPackageStatus[];
-}
-export interface MissingTags {
-  readonly kind: PublishResultKind.MissingTags;
-  readonly packages: readonly MissingTag[];
+  readonly packages: readonly PackageStatusDetail[];
 }
 export interface CircularPackageDependencies {
   readonly kind: PublishResultKind.CircularPackageDependencies;
@@ -64,7 +54,6 @@ export interface PrepublishFailures {
 export type Result =
   | NoUpdatesRequired
   | UpdatesPublished
-  | MissingTags
   | CircularPackageDependencies
   | GitHubAuthCheckFail
   | PrepublishFailures;
@@ -112,17 +101,6 @@ export default async function publish(config: PublishConfig): Promise<Result> {
         pkg.newVersion = `${pkg.newVersion}-canary-${config.canary}`;
       }
     }
-  }
-
-  const isSuccessPackageStatus = orFn(
-    isPackageStatus(PackageStatus.NewVersionToBePublished),
-    isPackageStatus(PackageStatus.NoUpdateRequired),
-  );
-  if (!arrayEvery(unsortedPackageStatuses, isSuccessPackageStatus)) {
-    return {
-      kind: PublishResultKind.MissingTags,
-      packages: unsortedPackageStatuses.filter(notFn(isSuccessPackageStatus)),
-    };
   }
 
   const sortResult = await sortPackages(unsortedPackageStatuses);

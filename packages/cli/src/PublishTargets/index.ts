@@ -8,7 +8,7 @@ import {
 
 import isTruthy from '../ts-utils/isTruthy';
 import {
-  SuccessPackageStatus,
+  PackageStatusDetail,
   NewVersionToBePublished,
 } from '../utils/getPackageStatuses';
 import {GitHubClient} from '../services/github';
@@ -74,7 +74,7 @@ export async function publish(
     packageVersions,
     client,
   }: {
-    packageStatuses: readonly SuccessPackageStatus[];
+    packageStatuses: readonly PackageStatusDetail[];
     packageVersions: Map<string, string | null>;
     client: GitHubClient;
   },

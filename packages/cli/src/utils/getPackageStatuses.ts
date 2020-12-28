@@ -19,14 +19,6 @@ const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
 
 export {PackageStatus};
 
-export interface MissingTag {
-  status: PackageStatus.MissingTag;
-  packageName: string;
-  currentVersion: string;
-  manifests: readonly PackageManifestWithVersion[];
-  dependencies: PackageDependencies;
-}
-
 export interface NoUpdateRequired {
   status: PackageStatus.NoUpdateRequired;
   packageName: string;
@@ -46,21 +38,7 @@ export interface NewVersionToBePublished {
   dependencies: PackageDependencies;
 }
 
-export type PackageStatusDetail =
-  | MissingTag
-  | NoUpdateRequired
-  | NewVersionToBePublished;
-
-export type SuccessPackageStatus = NoUpdateRequired | NewVersionToBePublished;
-
-export function isPackageStatus<TStatus extends PackageStatus>(
-  status: TStatus,
-) {
-  return (
-    packageStatus: PackageStatusDetail,
-  ): packageStatus is Extract<PackageStatusDetail, {status: TStatus}> =>
-    packageStatus.status === status;
-}
+export type PackageStatusDetail = NoUpdateRequired | NewVersionToBePublished;
 
 export default async function getPackageStatuses(
   client: GitHubClient,
@@ -113,15 +91,6 @@ export default async function getPackageStatuses(
               (manifest) => manifest.versionTag?.version === currentVersion,
             )?.versionTag
           : null;
-        if (currentVersion && !currentTag) {
-          return {
-            status: PackageStatus.MissingTag,
-            packageName,
-            currentVersion,
-            manifests: manifests,
-            dependencies,
-          };
-        }
         const commits = await commitsLoader.load(
           currentTag ? currentTag.commitSha : '',
         );

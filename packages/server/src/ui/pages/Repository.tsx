@@ -7,7 +7,6 @@ import AppNavBar, {AppNavBarLink} from '../visual/AppNavBar';
 import RepositoryPage, {
   CycleWarning,
   PackageWithChanges,
-  PackageWithMissingTag,
   PackageWithNoChanges,
   ReleaseButton,
 } from '../visual/RepositoryPage';
@@ -68,8 +67,7 @@ export default function Repository() {
           !state.cycleDetected &&
           state.packages.some(
             (p) => p.status === PackageStatus.NewVersionToBePublished,
-          ) &&
-          !state.packages.some((p) => p.status === PackageStatus.MissingTag);
+          );
 
         return (
           <RepositoryPage
@@ -88,15 +86,6 @@ export default function Repository() {
             {state.cycleDetected ? (
               <CycleWarning cycle={state.cycleDetected} />
             ) : null}
-            {state.packages.map((pkg) =>
-              pkg.status === PackageStatus.MissingTag ? (
-                <PackageWithMissingTag
-                  key={pkg.packageName}
-                  packageName={pkg.packageName}
-                  currentVersion={pkg.currentVersion}
-                />
-              ) : null,
-            )}
             {state.packages.map((pkg) =>
               pkg.status === PackageStatus.NewVersionToBePublished ? (
                 <PackageWithChanges
