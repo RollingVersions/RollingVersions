@@ -1,3 +1,10 @@
+import RollingConfigOptions, {
+  ChangeTypeID,
+  DEFAULT_CHANGE_TYPES,
+  DEFAULT_VERSION_SCHEMA,
+  DEFAULT_BASE_VERSION,
+} from '@rollingversions/config';
+
 const MAX_LENGTH = 256;
 const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER;
 const MAX_SAFE_INTEGER_LENGTH = MAX_SAFE_INTEGER.toString(10).length;
@@ -269,3 +276,36 @@ function sorter(order: 1 | -1) {
 }
 export const sortAscending = sorter(1);
 export const sortDescending = sorter(-1);
+
+export function getNextVersion(
+  currentVersion: VersionNumber | null,
+  changeSet: readonly {readonly type: ChangeTypeID}[],
+  {
+    changeTypes = DEFAULT_CHANGE_TYPES,
+    versionSchema = DEFAULT_VERSION_SCHEMA,
+    baseVersion = DEFAULT_BASE_VERSION(versionSchema),
+  }: Partial<
+    Pick<RollingConfigOptions, 'changeTypes' | 'versionSchema' | 'baseVersion'>
+  > = {},
+): VersionNumber | null {
+  let minIndex = -1;
+  for (const c of changeSet) {
+    const bumps = changeTypes.find((ct) => ct.id === c.type)?.bumps ?? null;
+    const bumpsIndex = bumps === null ? -1 : versionSchema.indexOf(bumps);
+    if (bumpsIndex !== -1 && (minIndex === -1 || minIndex > bumpsIndex)) {
+      minIndex = bumpsIndex;
+    }
+  }
+  if (minIndex === -1) return null;
+
+  const baseVersionNumber: VersionNumber = {
+    numerical: baseVersion,
+    prerelease: [],
+    build: [],
+  };
+  if (currentVersion === null || lt(currentVersion, baseVersionNumber)) {
+    return baseVersionNumber;
+  }
+
+  return increment(normalize(currentVersion, versionSchema.length), minIndex);
+}

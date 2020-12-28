@@ -1,17 +1,24 @@
+import {DEFAULT_VERSION_SCHEMA, VersionSchema} from '@rollingversions/config';
 import VersionNumber, {
   parseString,
   printString,
 } from '@rollingversions/version-number';
 import parseTemplate from './Template';
+
 export interface PrintTagContext {
   packageName: string;
   oldTagName: string | null;
-  versionSchema: readonly string[];
-  tagFormat: string | undefined;
+  versionSchema?: VersionSchema;
+  tagFormat?: string;
 }
 export function printTag(
   version: VersionNumber,
-  {packageName, oldTagName, versionSchema, tagFormat}: PrintTagContext,
+  {
+    packageName,
+    oldTagName,
+    versionSchema = DEFAULT_VERSION_SCHEMA,
+    tagFormat,
+  }: PrintTagContext,
 ): string {
   if (tagFormat) {
     return parseTemplate(tagFormat).applyTemplate((variableName: string) => {
@@ -38,22 +45,17 @@ export function printTag(
 export interface ParseTagContext {
   allowTagsWithoutPackageName: boolean;
   packageName: string;
-  versionSchema: readonly string[];
-  tagFormat: string | undefined;
+  versionSchema?: VersionSchema;
+  tagFormat?: string;
 }
 export function parseTag(
   tagName: string,
   {
     allowTagsWithoutPackageName,
     packageName,
-    versionSchema,
+    versionSchema = DEFAULT_VERSION_SCHEMA,
     tagFormat,
-  }: {
-    allowTagsWithoutPackageName: boolean;
-    packageName: string;
-    versionSchema: readonly string[];
-    tagFormat: string | undefined;
-  },
+  }: ParseTagContext,
 ): VersionNumber | null {
   if (tagFormat) {
     const numerical = versionSchema.map(() => 0);

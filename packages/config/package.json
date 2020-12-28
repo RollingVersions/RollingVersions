@@ -1,0 +1,9 @@
+{
+  "name": "@rollingversions/config",
+  "version": "0.0.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "dependencies": {
+    "funtypes": "^3.0.1"
+  }
+}

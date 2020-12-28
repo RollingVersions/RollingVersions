@@ -1,4 +1,5 @@
 import {
+  getNextVersion,
   gt,
   increment,
   lt,
@@ -156,4 +157,70 @@ test('sortDescending', () => {
   expect(
     sortDescending(['2.0.0', '1.0.0', '3.0.0'], (v) => parseString(v)!),
   ).toEqual(['3.0.0', '2.0.0', '1.0.0']);
+});
+
+test('getNextVersion', () => {
+  expect(getNextVersion(null, [])).toEqual(null);
+
+  expect(
+    getNextVersion(
+      {
+        numerical: [2, 0, 0],
+        prerelease: [],
+        build: [],
+      },
+      [],
+    ),
+  ).toEqual(null);
+
+  expect(getNextVersion(null, [{type: 'feat'}])).toEqual({
+    numerical: [1, 0, 0],
+    prerelease: [],
+    build: [],
+  });
+
+  expect(
+    getNextVersion(
+      {
+        numerical: [0, 1, 0],
+        prerelease: [],
+        build: [],
+      },
+      [{type: 'feat'}],
+    ),
+  ).toEqual({
+    numerical: [1, 0, 0],
+    prerelease: [],
+    build: [],
+  });
+
+  expect(
+    getNextVersion(
+      {
+        numerical: [2, 0, 0],
+        prerelease: [],
+        build: [],
+      },
+      [{type: 'feat'}],
+    ),
+  ).toEqual({
+    numerical: [2, 1, 0],
+    prerelease: [],
+    build: [],
+  });
+
+  expect(
+    getNextVersion(
+      {
+        numerical: [2, 0, 0],
+        prerelease: [],
+        build: [],
+      },
+      [{type: 'feat'}, {type: 'breaking'}, {type: 'fix'}],
+    ),
+  ).toEqual({
+    numerical: [3, 0, 0],
+    prerelease: [],
+    build: [],
+  });
 });

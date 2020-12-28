@@ -1,9 +1,21 @@
-import type {ChangeSetEntry, ChangeType, ChangeTypeID, Markdown} from './types';
+import {
+  ChangeTypeID,
+  ChangeType,
+  DEFAULT_CHANGE_TYPES,
+} from '@rollingversions/config';
+
+export type Markdown = string & {__brand?: 'Markdown'};
+
+export interface ChangeSetEntryBase {
+  readonly type: ChangeTypeID;
+  readonly title: Markdown;
+  readonly body: Markdown;
+}
+
+export type ChangeSetEntry<TContext = {}> = ChangeSetEntryBase & TContext;
 
 type ChangeSet<TContext = {}> = readonly ChangeSetEntry<TContext>[];
 export default ChangeSet;
-
-export type {ChangeSetEntry, ChangeType, ChangeTypeID, Markdown};
 
 export function createChangeSet<TContext = {}>(
   ...changes: ChangeSet<TContext>
@@ -38,11 +50,11 @@ export function extractChanges<TExtra>(
 export function changesToMarkdown<TContext = {}>(
   changeSet: ChangeSet<TContext>,
   {
-    changeTypes,
+    changeTypes = DEFAULT_CHANGE_TYPES,
     headingLevel,
     renderContext,
   }: {
-    changeTypes: readonly ChangeType[];
+    changeTypes?: readonly ChangeType[];
     headingLevel: number;
     renderContext?: (changeLogEntry: ChangeSetEntry<TContext>) => Markdown;
   },
