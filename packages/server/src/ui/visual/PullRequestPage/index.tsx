@@ -6,7 +6,7 @@ import getLocalId from '../../utils/getLocalId';
 import Permission from '../../../server/permissions/Permission';
 import {PullRequestPackage} from '../../../types';
 import Alert from '../Alert';
-import {PackageManifestWithVersion} from 'rollingversions/src/types';
+import {PackageManifestWithVersion} from 'rollingversions/lib/types';
 
 function getState(
   packages: Map<string, PullRequestPackage>,

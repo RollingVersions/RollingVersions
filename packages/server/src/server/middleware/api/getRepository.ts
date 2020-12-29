@@ -6,8 +6,8 @@ import readRepositoryState from '../../db-update-jobs/methods/readRepositoryStat
 import {db} from '../../services/postgres';
 import {GitHubClient} from '../../services/github';
 import {Logger} from '../../logger';
-import PackageStatus from 'rollingversions/src/types/PackageStatus';
-import isTruthy from 'rollingversions/src/ts-utils/isTruthy';
+import PackageStatus from 'rollingversions/lib/types/PackageStatus';
+import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 
 export default async function getRepository(
   client: GitHubClient,
