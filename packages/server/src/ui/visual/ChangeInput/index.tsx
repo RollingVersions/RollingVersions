@@ -67,7 +67,7 @@ const ChangeInput = React.forwardRef<HTMLTextAreaElement, ChangeInputProps>(
     const titleFocus = useTrackFocus();
     const bodyFocus = useTrackFocus();
 
-    const isFocused = titleFocus.focused && bodyFocus.focused;
+    const isFocused = titleFocus.focused || bodyFocus.focused;
     const [isFocusedDebounced, setIsFocusedDebounced] = React.useState(
       isFocused,
     );
