@@ -73,7 +73,7 @@ jobs:
             fi
       - run:
           name: Publish Canary
-          command: node scripts/publish-canary
+          command: sudo npm i -g rollingversions && rollingversions publish --dry-run --deploy-branch $CIRCLE_BRANCH --canary $CIRCLE_BUILD_NUM
       - push
       - deploy:
           environment: staging
