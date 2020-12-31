@@ -1,6 +1,6 @@
 import connect, {sql, Queryable} from '@databases/pg';
 import createTyped from '@databases/pg-typed';
-import DatabaseSchema from './__generated__';
+import DatabaseSchema, {serializeValue} from './__generated__';
 
 export {sql, Queryable};
 const db = connect({
@@ -10,4 +10,5 @@ export default db;
 
 export const tables = createTyped<DatabaseSchema>({
   defaultConnection: db,
+  serializeValue,
 });
