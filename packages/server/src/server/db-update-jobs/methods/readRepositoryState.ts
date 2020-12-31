@@ -3,12 +3,8 @@ import {Queryable, getAllUnreleasedChanges} from '../../services/postgres';
 import {GitHubClient} from '../../services/github';
 import addRepository from '../procedures/addRepository';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
-import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import {Logger} from '../../logger';
-import {
-  getCurrentVerion,
-  getNewVersion,
-} from 'rollingversions/lib/utils/Versioning';
+import {getNewVersion} from 'rollingversions/lib/utils/Versioning';
 import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
 import {getPackageManifests} from '../../models/PackageManifests';
@@ -51,18 +47,12 @@ export default async function readRepositoryState(
   );
   return await Promise.all(
     [...packages].map(
-      async ([
-        packageName,
-        {manifests, dependencies},
-      ]): Promise<PackageStatusDetail> => {
-        const currentVersion = getCurrentVerion(manifests);
+      async ([packageName, manifest]): Promise<PackageStatusDetail> => {
+        const currentVersion = manifest.versionTag?.version ?? null;
 
-        const releasedShas = new Set(
-          manifests.map((m) => m.versionTag?.commitSha).filter(isTruthy),
-        );
-        const releasedIDs = [...releasedShas]
-          .map((sha) => commitIDs.get(sha))
-          .filter(isTruthy);
+        const releasedID = manifest.versionTag?.commitSha
+          ? commitIDs.get(manifest.versionTag.commitSha) ?? null
+          : null;
         const changeSet = createChangeSet<{
           id: number;
           weight: number;
@@ -71,7 +61,7 @@ export default async function readRepositoryState(
           ...(
             await getAllUnreleasedChanges(db, {
               headCommitID: repo.head.id,
-              lastReleaseCommitIDs: releasedIDs,
+              lastReleaseCommitIDs: releasedID !== null ? [releasedID] : [],
               packageName,
             })
           ).map((change) => ({
@@ -90,19 +80,18 @@ export default async function readRepositoryState(
             currentVersion,
             newVersion: currentVersion,
             packageName,
-            manifests: manifests,
-            dependencies,
+            manifest,
           };
         }
 
         return {
           status: PackageStatus.NewVersionToBePublished,
           currentVersion,
+          currentTagName: manifest.versionTag?.name ?? null,
           newVersion,
           packageName,
           changeSet,
-          manifests: manifests,
-          dependencies,
+          manifest,
         };
       },
     ),

@@ -1,7 +1,6 @@
 import ChangeSet, {ChangeSetEntry} from '@rollingversions/change-set';
 import {
   PullRequest,
-  PackageDependencies,
   PackageManifestWithVersion,
 } from 'rollingversions/lib/types';
 import {
@@ -25,8 +24,7 @@ import {Logger} from '../../logger';
 import {getPackageManifests} from '../../models/PackageManifests';
 
 interface PullRequestPackage {
-  manifests: PackageManifestWithVersion[];
-  dependencies: PackageDependencies;
+  manifest: PackageManifestWithVersion;
   changeSet: ChangeSet<{id: number; weight: number}>;
   released: boolean;
 }
@@ -133,17 +131,13 @@ export default async function readPullRequestState(
     ...new Set(
       changes.map((c) => c.package_name).filter((pn) => !packages.has(pn)),
     ),
-  ].map((packagName): [
-    string,
+  ].map((packageName): [string, PackageManifestWithVersion] => [
+    packageName,
     {
-      manifests: PackageManifestWithVersion[];
-      dependencies: PackageDependencies;
-    },
-  ] => [
-    packagName,
-    {
-      manifests: [],
-      dependencies: {required: [], optional: [], development: []},
+      packageName,
+      versionTag: null,
+      targetConfigs: [],
+      dependencies: {development: [], required: [], optional: []},
     },
   ]);
   return {
@@ -157,25 +151,21 @@ export default async function readPullRequestState(
     packages: new Map<string, PullRequestPackage>(
       await Promise.all(
         [...packages, ...missingPackages].map(
-          async ([packageName, metadata]): Promise<
+          async ([packageName, manifest]): Promise<
             [string, PullRequestPackage]
           > => {
             return [
               packageName,
               {
-                ...metadata,
+                manifest,
                 changeSet: changeSets.get(packageName) || [],
                 released:
                   is_merged &&
+                  manifest.versionTag !== null &&
                   (await isPullRequestReleased(db, {
                     releasedCommitIDs: new Set(
-                      metadata.manifests
-                        .map(({versionTag}) => {
-                          if (!versionTag) return undefined;
-                          return repo.tags.find(
-                            (t2) => t2.name === versionTag?.name,
-                          );
-                        })
+                      repo.tags
+                        .filter((t2) => t2.name === manifest.versionTag!.name)
                         .filter(isTruthy)
                         .map((versionTag) => versionTag.target_git_commit_id),
                     ),

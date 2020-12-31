@@ -14,7 +14,6 @@ import getPackageStatuses, {
 } from '../utils/getPackageStatuses';
 import sortPackages from '../utils/sortPackages';
 import {checkGitHubReleaseStatus} from '../PublishTargets/github';
-import getNewTagName from '../utils/getNewTagName';
 import {prepublish, publish as publishTarget} from '../PublishTargets';
 import listPackages from '../utils/listPackages';
 import splitAsyncGenerator from '../ts-utils/splitAsyncGenerator';
@@ -142,19 +141,17 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   const packageVersions = new Map(
     packageStatuses.map((p) => [p.packageName, p.newVersion]),
   );
+  const allTagNames = new Set(allTags.map((t) => t.name));
 
   const failures: PrepublishFailures['failures'][number][] = [];
   for (const pkg of packageStatuses) {
     if (pkg.status === PackageStatus.NewVersionToBePublished) {
       const reasons = [];
-      const tagName = getNewTagName(packageStatuses, pkg);
-      if (gitHubPrepublishInfo.tags.includes(tagName)) {
-        reasons.push(`A github release already exists for ${tagName}`);
-      }
       for (const prepublishResult of await prepublish(
         config,
         pkg,
         packageVersions,
+        allTagNames,
       )) {
         if (!prepublishResult.ok) {
           reasons.push(prepublishResult.reason);
@@ -175,11 +172,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
 
   for (const pkg of packageStatuses) {
     if (pkg.status === PackageStatus.NewVersionToBePublished) {
-      await publishTarget(config, pkg, {
-        packageVersions,
-        packageStatuses,
-        client,
-      });
+      await publishTarget(config, pkg, packageVersions, client);
     }
   }
   return {

@@ -13,7 +13,7 @@
     "tag-format": "yarn workspace @rollingversions/tag-format",
     "version-number": "yarn workspace @rollingversions/version-number",
 
-    "database:introspect": "pg-test run pg-schema",
+    "database:introspect": "pg-test run pg-schema && node scripts/db-post-introspect.js",
 
     "build": "yarn build:codegen && yarn build:ts && yarn build:ui && yarn build:cleanup",
     "build:codegen": "concurrently -n cli,server \"yarn cli codegen\" \"yarn server codegen\"",
@@ -63,7 +63,8 @@
       "tableTypeName": "Db{{ TABLE_NAME | singular | pascal-case }}",
       "columnTypeOverrides": {
         "change_log_entry_kinds.id": "import('rollingversions/lib/types/PullRequestState').ChangeType",
-        "package_dependency_records_kinds.id": "'required' | 'optional' | 'development'"
+        "package_dependency_records_kinds.id": "'required' | 'optional' | 'development'",
+        "package_manifest_records_v2.manifest": "import('rollingversions/lib/types/PackageManifest').default"
       }
     }
   },

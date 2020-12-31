@@ -13,17 +13,17 @@ function getState(
 ): {
   packageName: string;
   changes: ChangeSet<{localId: number}>;
-  manifests: PackageManifestWithVersion[];
+  manifest: PackageManifestWithVersion;
   released: boolean;
 }[] {
   return [...packages]
-    .map(([packageName, {changeSet, manifests, released}]) => ({
+    .map(([packageName, {changeSet, manifest, released}]) => ({
       packageName,
       changes: changeSet.map((c) => ({
         ...c,
         localId: getLocalId(),
       })),
-      manifests,
+      manifest,
       released,
     }))
     .sort(({packageName: a}, {packageName: b}) => (a < b ? -1 : 1));
@@ -94,27 +94,24 @@ export default function PullRequestPage({
             edit the release notes.
           </Alert>
         ) : null}
-        {state
-          // TODO(feat): consider still rendering these in some way
-          .filter(({manifests}) => manifests.length !== 0)
-          .map(({packageName, changes, manifests: manifest, released}, i) => (
-            <React.Fragment key={packageName}>
-              {i === 0 ? null : <hr className="my-16" />}
-              <PackageChangeSet
-                disabled={saving}
-                readOnly={permission !== 'edit' || released}
-                warning={
-                  !allReleased && released && permission === 'edit'
-                    ? alreadyReleasedWarning
-                    : null
-                }
-                packageName={packageName}
-                packageManifest={manifest}
-                changes={changes}
-                onChange={onChange}
-              />
-            </React.Fragment>
-          ))}
+        {state.map(({packageName, changes, manifest, released}, i) => (
+          <React.Fragment key={packageName}>
+            {i === 0 ? null : <hr className="my-16" />}
+            <PackageChangeSet
+              disabled={saving}
+              readOnly={permission !== 'edit' || released}
+              warning={
+                !allReleased && released && permission === 'edit'
+                  ? alreadyReleasedWarning
+                  : null
+              }
+              packageName={packageName}
+              targetConfigs={manifest.targetConfigs}
+              changes={changes}
+              onChange={onChange}
+            />
+          </React.Fragment>
+        ))}
       </div>
       {permission === 'edit' && !allReleased && (
         <SaveChangeLogFooter

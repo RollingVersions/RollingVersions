@@ -1,15 +1,10 @@
 import {dirname, resolve} from 'path';
 import * as toml from 'toml';
-import {
-  PackageManifest,
-  PublishTarget,
-  PublishConfig,
-  PrePublishResult,
-  PackageDependencies,
-} from '../types';
+import {PublishTarget, PublishConfig, PackageManifest} from '../types';
 import isObject from '../ts-utils/isObject';
 import {execBuffered} from 'modern-spawn';
-import parseVersionTagTemplate from '../utils/parseVersionTagTemplate';
+import createPublishTargetAPI from './baseTarget';
+import {CustomScriptTargetConfig} from '../types/PublishTarget';
 
 const MANIFEST_NAME = 'rolling-package';
 // TODO: better error messages
@@ -37,109 +32,125 @@ function parsePackage(path: string, content: string) {
   return undefined;
 }
 
-/**
- * returns true for package.json files
- */
-export function pathMayContainPackage(filename: string): boolean {
-  return filenames.some((f) => filename === f || filename.endsWith(`/${f}`));
-}
+export default createPublishTargetAPI<CustomScriptTargetConfig>({
+  type: PublishTarget.custom_script,
+  pathMayContainPackage(filename) {
+    return filenames.some((f) => filename === f || filename.endsWith(`/${f}`));
+  },
 
-/**
- * Parses the JSON and returns all the package info except
- * the version tag.
- */
-export async function getPackageManifest(
-  path: string,
-  content: string,
-): Promise<{
-  manifest: Omit<PackageManifest, 'versionTag'>;
-  dependencies: PackageDependencies;
-} | null> {
-  let result: unknown;
-  try {
-    result = parsePackage(path, content);
-  } catch (ex) {
-    // ignore
-  }
-
-  if (isObject(result) && typeof result.name === 'string') {
-    if (!isObject(result.scripts)) {
-      throw new Error('Expected "scripts" to be an object');
+  async getPackageManifest(path, content): Promise<PackageManifest | null> {
+    let result: unknown;
+    try {
+      result = parsePackage(path, content);
+    } catch (ex) {
+      // ignore
     }
 
-    if (
-      result.scripts.prepublish !== undefined &&
-      typeof result.scripts.prepublish !== 'string'
-    ) {
-      throw new Error(
-        'Expected "scripts"."prepublish" to be a string or undefined',
-      );
-    }
+    if (isObject(result) && typeof result.name === 'string') {
+      if (!isObject(result.scripts)) {
+        throw new Error('Expected "scripts" to be an object');
+      }
+      if (
+        result.scripts.prepublish !== undefined &&
+        typeof result.scripts.prepublish !== 'string'
+      ) {
+        throw new Error(
+          'Expected "scripts"."prepublish" to be a string or undefined',
+        );
+      }
 
-    if (
-      result.scripts.publish_dry_run !== undefined &&
-      typeof result.scripts.publish_dry_run !== 'string'
-    ) {
-      throw new Error(
-        'Expected "scripts"."publish_dry_run" to be a string or undefined',
-      );
-    }
+      if (
+        result.scripts.publish_dry_run !== undefined &&
+        typeof result.scripts.publish_dry_run !== 'string'
+      ) {
+        throw new Error(
+          'Expected "scripts"."publish_dry_run" to be a string or undefined',
+        );
+      }
 
-    if (typeof result.scripts.publish !== 'string') {
-      throw new Error('Expected "scripts"."publish" to be a string');
-    }
+      if (typeof result.scripts.publish !== 'string') {
+        throw new Error('Expected "scripts"."publish" to be a string');
+      }
 
-    if (
-      result.dependencies !== undefined &&
-      !(
-        Array.isArray(result.dependencies) &&
-        result.dependencies.every((value) => typeof value === 'string')
-      )
-    ) {
-      throw new Error(
-        'Expected "dependencies" to be undefined or an array of strings',
-      );
-    }
+      if (
+        result.dependencies !== undefined &&
+        !(
+          Array.isArray(result.dependencies) &&
+          result.dependencies.every((value) => typeof value === 'string')
+        )
+      ) {
+        throw new Error(
+          'Expected "dependencies" to be undefined or an array of strings',
+        );
+      }
 
-    if (
-      result.tag_format !== undefined &&
-      typeof result.tag_format !== 'string'
-    ) {
-      throw new Error('Expected "tag_format" to be undefined or a string');
+      if (
+        result.tag_format !== undefined &&
+        typeof result.tag_format !== 'string'
+      ) {
+        throw new Error('Expected "tag_format" to be undefined or a string');
+      }
+      return {
+        packageName: result.name,
+        tagFormat: result.tag_format,
+        targetConfigs: [
+          {
+            type: PublishTarget.custom_script,
+            path,
+            prepublish: result.scripts.prepublish,
+            publish_dry_run: result.scripts.publish_dry_run,
+            publish: result.scripts.publish,
+          },
+        ],
+        dependencies: {
+          required: result.dependencies || [],
+          optional: [],
+          development: [],
+        },
+      };
+    } else {
+      return null;
     }
-    if (result.tag_format) {
-      const {variables} = parseVersionTagTemplate(result.tag_format);
-      for (const expected of ['MAJOR', 'MINOR', 'PATCH']) {
-        if (!variables.includes(expected)) {
-          throw new Error(
-            'Expected "tag_format" to contain placeholders for "{{ MAJOR }}", "{{ MINOR }}" and "{{ PATCH }}"',
-          );
-        }
+  },
+
+  async prepublish(config, pkg, targetConfig, packageVersions) {
+    const env = getEnv(config, pkg.newVersion, packageVersions);
+
+    if (targetConfig.prepublish) {
+      const result = await execBuffered(targetConfig.prepublish, {
+        env,
+        cwd: dirname(resolve(config.dirname, targetConfig.path)),
+      });
+      if (result.status) {
+        return {ok: false, reason: result.stderr.toString('utf8')};
       }
     }
-    return {
-      manifest: {
-        packageName: result.name,
-        path,
-        notToBePublished: false,
-        targetConfig: {
-          type: PublishTarget.custom_script,
-          prepublish: result.scripts.prepublish,
-          publish_dry_run: result.scripts.publish_dry_run,
-          publish: result.scripts.publish,
-          tag_format: result.tag_format,
-        },
-      },
-      dependencies: {
-        required: result.dependencies || [],
-        optional: [],
-        development: [],
-      },
-    };
-  } else {
-    return null;
-  }
-}
+
+    return {ok: true};
+  },
+
+  async publish(config, pkg, targetConfig, packageVersions) {
+    const env = getEnv(config, pkg.newVersion, packageVersions);
+    if (config.dryRun) {
+      if (targetConfig.publish_dry_run) {
+        const result = await execBuffered(targetConfig.publish_dry_run, {
+          env,
+          debug: true,
+        });
+        // getResult throws if the command failed
+        result.getResult();
+      }
+    } else {
+      const result = await execBuffered(targetConfig.publish, {
+        env,
+        cwd: dirname(resolve(config.dirname, targetConfig.path)),
+        debug: true,
+      });
+      // getResult throws if the command failed
+      result.getResult();
+    }
+  },
+});
 
 function getEnv(
   config: PublishConfig,
@@ -167,58 +178,4 @@ function getEnv(
     }
   }
   return env;
-}
-
-export async function prepublish(
-  config: PublishConfig,
-  pkg: PackageManifest,
-  newVersion: string,
-  packageVersions: Map<string, string | null>,
-): Promise<PrePublishResult> {
-  if (pkg.targetConfig.type !== PublishTarget.custom_script) {
-    throw new Error('Expected custom script target config');
-  }
-  const env = getEnv(config, newVersion, packageVersions);
-
-  if (pkg.targetConfig.prepublish) {
-    const result = await execBuffered(pkg.targetConfig.prepublish, {
-      env,
-      cwd: dirname(resolve(config.dirname, pkg.path)),
-    });
-    if (result.status) {
-      return {ok: false, reason: result.stderr.toString('utf8')};
-    }
-  }
-
-  return {ok: true};
-}
-
-export async function publish(
-  config: PublishConfig,
-  pkg: PackageManifest,
-  newVersion: string,
-  packageVersions: Map<string, string | null>,
-) {
-  if (pkg.targetConfig.type !== PublishTarget.custom_script) {
-    throw new Error('Expected custom script target config');
-  }
-  const env = getEnv(config, newVersion, packageVersions);
-  if (config.dryRun) {
-    if (pkg.targetConfig.publish_dry_run) {
-      const result = await execBuffered(pkg.targetConfig.publish_dry_run, {
-        env,
-        debug: true,
-      });
-      // getResult throws if the command failed
-      result.getResult();
-    }
-  } else {
-    const result = await execBuffered(pkg.targetConfig.publish, {
-      env,
-      cwd: dirname(resolve(config.dirname, pkg.path)),
-      debug: true,
-    });
-    // getResult throws if the command failed
-    result.getResult();
-  }
 }

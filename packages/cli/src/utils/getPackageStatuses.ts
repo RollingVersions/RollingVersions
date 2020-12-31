@@ -1,12 +1,7 @@
 import DataLoader from 'dataloader';
 import {GitHubClient, readComments} from '../services/github';
-import {getCurrentVerion, getNewVersion} from '../utils/Versioning';
-import {
-  Repository,
-  PullRequest,
-  PackageDependencies,
-  PackageManifestWithVersion,
-} from '../types';
+import {getNewVersion} from '../utils/Versioning';
+import {Repository, PullRequest, PackageManifestWithVersion} from '../types';
 import {readState} from './CommentState';
 import isTruthy from '../ts-utils/isTruthy';
 import PackageStatus from '../types/PackageStatus';
@@ -25,18 +20,17 @@ export interface NoUpdateRequired {
   packageName: string;
   currentVersion: string | null;
   newVersion: string | null;
-  manifests: readonly PackageManifestWithVersion[];
-  dependencies: PackageDependencies;
+  manifest: PackageManifestWithVersion;
 }
 
 export interface NewVersionToBePublished {
   status: PackageStatus.NewVersionToBePublished;
   packageName: string;
+  currentTagName: string | null;
   currentVersion: string | null;
   newVersion: string;
   changeSet: ChangeSet<{pr: number}>;
-  manifests: readonly PackageManifestWithVersion[];
-  dependencies: PackageDependencies;
+  manifest: PackageManifestWithVersion;
 }
 
 export type PackageStatusDetail = NoUpdateRequired | NewVersionToBePublished;
@@ -44,13 +38,7 @@ export type PackageStatusDetail = NoUpdateRequired | NewVersionToBePublished;
 export default async function getPackageStatuses(
   client: GitHubClient,
   {owner, name}: Repository,
-  pkgManifests: Map<
-    string,
-    {
-      manifests: PackageManifestWithVersion[];
-      dependencies: PackageDependencies;
-    }
-  >,
+  pkgManifests: Map<string, PackageManifestWithVersion>,
   getCommits: (
     sinceCommitSha: string | undefined,
   ) => Promise<readonly {associatedPullRequests: {number: number}[]}[]>,
@@ -82,16 +70,9 @@ export default async function getPackageStatuses(
 
   const packages = await Promise.all(
     [...pkgManifests.entries()].map(
-      async ([
-        packageName,
-        {manifests, dependencies},
-      ]): Promise<PackageStatusDetail> => {
-        const currentVersion = getCurrentVerion(manifests);
-        const currentTag = currentVersion
-          ? manifests.find(
-              (manifest) => manifest.versionTag?.version === currentVersion,
-            )?.versionTag
-          : null;
+      async ([packageName, manifest]): Promise<PackageStatusDetail> => {
+        const currentVersion = manifest.versionTag?.version ?? null;
+        const currentTag = manifest.versionTag ?? null;
         const commits = await commitsLoader.load(
           currentTag ? currentTag.commitSha : '',
         );
@@ -115,19 +96,18 @@ export default async function getPackageStatuses(
             currentVersion,
             newVersion: currentVersion,
             packageName,
-            manifests: manifests,
-            dependencies,
+            manifest,
           };
         }
 
         return {
           status: PackageStatus.NewVersionToBePublished,
           currentVersion,
+          currentTagName: currentTag?.name ?? null,
           newVersion,
           packageName,
           changeSet,
-          manifests: manifests,
-          dependencies,
+          manifest,
         };
       },
     ),

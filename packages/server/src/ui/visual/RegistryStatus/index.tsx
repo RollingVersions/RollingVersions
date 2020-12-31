@@ -1,92 +1,93 @@
 import React from 'react';
-import {
-  PackageManifestWithVersion,
-  PublishTarget,
-} from 'rollingversions/lib/types';
+import {PublishTarget} from 'rollingversions/lib/types';
+import {PublishTargetConfig} from 'rollingversions/src/types/PublishTarget';
+import Alert from '../Alert';
 
 export interface RegistryStatusProps {
-  packageManifest: Pick<
-    PackageManifestWithVersion,
-    'notToBePublished' | 'versionTag' | 'targetConfig'
-  >[];
+  targetConfigs: readonly PublishTargetConfig[];
 }
 
-export default function RegistryStatus({packageManifest}: RegistryStatusProps) {
-  const publishTarget = packageManifest
-    .map((p) => p.targetConfig.type)
-    .join(', ');
-  if (packageManifest.every((p) => p.notToBePublished)) {
+export default function RegistryStatus({targetConfigs}: RegistryStatusProps) {
+  if (targetConfigs.length === 0) {
     return (
-      <p>
-        This package is not published on any registry, but git tags/releases
-        will still be created for it if you add a changelog.
-      </p>
+      <Alert>
+        This package will not be published because there are no longer any
+        target configs for it. If you want to publish these changes, either move
+        the changes onto the correct package, or add a publish target in the
+        repo for this package name.
+      </Alert>
     );
   }
   return (
     <>
-      {packageManifest
-        .filter((p) => !p.notToBePublished)
-        .map(
-          (p, i): React.ReactElement => {
-            switch (p.targetConfig.type) {
-              case PublishTarget.npm: {
-                // if (p.versionTag || p.registryVersion) {
-                //   if (p.registryVersion) {
-                //     return (
-                //       <p key={i}>
-                //         This package is published <strong>publicly</strong> on
-                //         the {publishTarget} registry.
-                //       </p>
-                //     );
-                //   } else {
-                //     return (
-                //       <p key={i}>
-                //         This package is published <strong>privately</strong> on
-                //         the {publishTarget} registry.
-                //       </p>
-                //     );
-                //   }
-                // }
-                if (p.targetConfig.publishConfigAccess === 'restricted') {
-                  return (
-                    <React.Fragment key={i}>
-                      <p>
-                        This package will be published{' '}
-                        <strong>privately</strong> on the {publishTarget}{' '}
-                        registry, unless you have manually updated the acess
-                        config.
-                      </p>
-                      <p>
-                        If you prefer to publish it publicly, you can add the
-                        following to your package.json:
-                        <pre>
-                          <code>{'"publishConfig": {"access": "public"}'}</code>
-                        </pre>
-                      </p>
-                    </React.Fragment>
-                  );
-                }
+      {targetConfigs.map(
+        (targetConfig, i): React.ReactElement => {
+          switch (targetConfig.type) {
+            case PublishTarget.npm: {
+              // if (p.versionTag || p.registryVersion) {
+              //   if (p.registryVersion) {
+              //     return (
+              //       <p key={i}>
+              //         This package is published <strong>publicly</strong> on
+              //         the {publishTarget} registry.
+              //       </p>
+              //     );
+              //   } else {
+              //     return (
+              //       <p key={i}>
+              //         This package is published <strong>privately</strong> on
+              //         the {publishTarget} registry.
+              //       </p>
+              //     );
+              //   }
+              // }
+              if (targetConfig.private) {
                 return (
-                  <p key={i}>
-                    This package will be published <strong>publicly</strong> on
-                    the {publishTarget} registry.
+                  <p>
+                    This package is not published on any registry, but git
+                    tags/releases will still be created for it if you add a
+                    changelog.
                   </p>
                 );
               }
-              case PublishTarget.custom_script: {
+              if (targetConfig.publishConfigAccess === 'restricted') {
                 return (
-                  <p key={i}>
-                    This package will be published via a custom script:
-                    <pre>
-                      <code>{p.targetConfig.publish}</code>
-                    </pre>
-                  </p>
+                  <React.Fragment key={i}>
+                    <p>
+                      This package will be published <strong>privately</strong>{' '}
+                      on the npm registry, unless you have manually updated the
+                      acess config.
+                    </p>
+                    <p>
+                      If you prefer to publish it publicly, you can add the
+                      following to your package.json:
+                      <pre>
+                        <code>{'"publishConfig": {"access": "public"}'}</code>
+                      </pre>
+                    </p>
+                  </React.Fragment>
                 );
               }
+              return (
+                <p key={i}>
+                  This package will be published <strong>publicly</strong> on
+                  the npm registry.
+                </p>
+              );
             }
-          },
-        )}
+            case PublishTarget.custom_script: {
+              return (
+                <p key={i}>
+                  This package will be published via a custom script:
+                  <pre>
+                    <code>{targetConfig.publish}</code>
+                  </pre>
+                </p>
+              );
+            }
+          }
+        },
+      )}
     </>
   );
 }

@@ -1,8 +1,8 @@
-import PackageManifest from './PackageManifest';
 import {
   PackageStatusDetail,
   NewVersionToBePublished,
 } from '../utils/getPackageStatuses';
+import {PublishTargetConfig} from './PublishTarget';
 
 export interface PublishConfig {
   dryRun: boolean;
@@ -21,11 +21,15 @@ export interface PublishEvents {
     dryRun: boolean;
   };
 
+  onCanaryGitHubRelease: {
+    pkg: NewVersionToBePublished;
+    dryRun: boolean;
+  };
+
   onPublishGitHubRelease: {
     pkg: NewVersionToBePublished;
     tagName: string;
     dryRun: boolean;
-    canary: string | null;
   };
   onPublishedGitHubRelease: {
     pkg: NewVersionToBePublished;
@@ -36,12 +40,12 @@ export interface PublishEvents {
 
   onPublishTargetRelease: {
     pkg: NewVersionToBePublished;
-    pkgManifest: PackageManifest;
+    target: PublishTargetConfig;
     dryRun: boolean;
   };
   onPublishedTargetRelease: {
     pkg: NewVersionToBePublished;
-    pkgManifest: PackageManifest;
+    target: PublishTargetConfig;
     dryRun: boolean;
   };
 }

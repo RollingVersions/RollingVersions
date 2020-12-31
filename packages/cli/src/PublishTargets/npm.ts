@@ -5,15 +5,11 @@ import {
   getOrgRoster,
   publish as npmPublish,
 } from '../services/npm';
-import {
-  PackageManifest,
-  PublishTarget,
-  PublishConfig,
-  PrePublishResult,
-  PackageDependencies,
-} from '../types';
+import {PublishTarget, PublishConfig} from '../types';
 import isObject from '../ts-utils/isObject';
 import {readRepoFile, writeRepoFile} from '../services/git';
+import {NpmPublishTargetConfig} from '../types/PublishTarget';
+import createPublishTargetAPI from './baseTarget';
 import {gt, prerelease} from 'semver';
 
 const stringifyPackage = require('stringify-package');
@@ -33,12 +29,12 @@ function versionPrefix(oldVersion: string, {canary}: {canary: boolean}) {
 
 async function withNpmVersion<T>(
   config: PublishConfig,
-  pkg: PackageManifest,
+  target: NpmPublishTargetConfig,
   newVersion: string,
   packageVersions: Map<string, string | null>,
   fn: () => Promise<T>,
 ) {
-  const original = await readRepoFile(config.dirname, pkg.path, 'utf8');
+  const original = await readRepoFile(config.dirname, target.path, 'utf8');
   const pkgData = JSON.parse(original);
   pkgData.version = newVersion;
   function setVersions(obj: any) {
@@ -63,18 +59,11 @@ async function withNpmVersion<T>(
     detectNewline(original),
   );
   try {
-    await writeRepoFile(config.dirname, pkg.path, str);
+    await writeRepoFile(config.dirname, target.path, str);
     return await fn();
   } finally {
-    await writeRepoFile(config.dirname, pkg.path, original);
+    await writeRepoFile(config.dirname, target.path, original);
   }
-}
-
-/**
- * returns true for package.json files
- */
-export function pathMayContainPackage(filename: string): boolean {
-  return filename === 'package.json' || filename.endsWith('/package.json');
 }
 
 function getConfigValue(
@@ -93,158 +82,158 @@ function getConfigValue(
   }
   return undefined;
 }
-/**
- * Parses the JSON and returns all the package info except
- * the version tag.
- */
-export async function getPackageManifest(
-  path: string,
-  content: string,
-): Promise<{
-  manifest: Omit<PackageManifest, 'versionTag'>;
-  dependencies: PackageDependencies;
-} | null> {
-  let pkgData: unknown;
-  try {
-    pkgData = JSON.parse(content);
-  } catch (ex) {
-    // ignore
-  }
 
-  if (isObject(pkgData) && typeof pkgData.name === 'string') {
-    const pkgName = pkgData.name;
-    if (getConfigValue('ignore', pkgData)) {
-      return null;
+export default createPublishTargetAPI<NpmPublishTargetConfig>({
+  type: PublishTarget.npm,
+  pathMayContainPackage(filename) {
+    return filename === 'package.json' || filename.endsWith('/package.json');
+  },
+  async getPackageManifest(path, content) {
+    let pkgData: unknown;
+    try {
+      pkgData = JSON.parse(content);
+    } catch (ex) {
+      // ignore
     }
 
-    const required = [
-      ...(isObject(pkgData) && isObject(pkgData.dependencies)
-        ? Object.keys(pkgData.dependencies)
-        : []),
-      ...(isObject(pkgData) && isObject(pkgData.peerDependencies)
-        ? Object.keys(pkgData.peerDependencies)
-        : []),
-    ];
+    if (isObject(pkgData) && typeof pkgData.name === 'string') {
+      const pkgName = pkgData.name;
+      if (getConfigValue('ignore', pkgData)) {
+        return null;
+      }
 
-    const optional =
-      isObject(pkgData) && isObject(pkgData.optionalDependencies)
-        ? Object.keys(pkgData.optionalDependencies)
-        : [];
+      const required = [
+        ...(isObject(pkgData) && isObject(pkgData.dependencies)
+          ? Object.keys(pkgData.dependencies)
+          : []),
+        ...(isObject(pkgData) && isObject(pkgData.peerDependencies)
+          ? Object.keys(pkgData.peerDependencies)
+          : []),
+      ];
 
-    const development =
-      isObject(pkgData) && isObject(pkgData.devDependencies)
-        ? Object.keys(pkgData.devDependencies)
-        : [];
+      const optional =
+        isObject(pkgData) && isObject(pkgData.optionalDependencies)
+          ? Object.keys(pkgData.optionalDependencies)
+          : [];
 
-    return {
-      manifest: {
+      const development =
+        isObject(pkgData) && isObject(pkgData.devDependencies)
+          ? Object.keys(pkgData.devDependencies)
+          : [];
+
+      return {
         packageName: pkgName,
-        path,
-        notToBePublished: pkgData.private === true,
-        targetConfig: {
-          type: PublishTarget.npm,
-          publishConfigAccess:
-            pkgName[0] === '@'
-              ? isObject(pkgData.publishConfig) &&
-                pkgData.publishConfig.access === 'public'
-                ? 'public'
-                : 'restricted'
-              : 'public',
-        },
-      },
-      dependencies: {required, optional, development},
-    };
-  } else {
-    return null;
-  }
-}
+        targetConfigs: [
+          {
+            type: PublishTarget.npm,
+            packageName: pkgName,
+            path,
+            private: pkgData.private === true,
+            publishConfigAccess:
+              pkgName[0] === '@'
+                ? isObject(pkgData.publishConfig) &&
+                  pkgData.publishConfig.access === 'public'
+                  ? 'public'
+                  : 'restricted'
+                : 'public',
+          },
+        ],
+        dependencies: {required, optional, development},
+      };
+    } else {
+      return null;
+    }
+  },
+  async prepublish(config, pkg, targetConfig, packageVersions) {
+    if (targetConfig.private) return {ok: true};
+    const [auth, owners, versions] = await Promise.all([
+      getProfile(),
+      getOwners(targetConfig.packageName),
+      getVersions(targetConfig.packageName),
+    ] as const);
 
-export async function prepublish(
-  config: PublishConfig,
-  pkg: PackageManifest,
-  newVersion: string,
-  packageVersions: Map<string, string | null>,
-): Promise<PrePublishResult> {
-  const [auth, owners, versions] = await Promise.all([
-    getProfile(),
-    getOwners(pkg.packageName),
-    getVersions(pkg.packageName),
-  ] as const);
+    if (!auth.authenticated) {
+      return {
+        ok: false,
+        reason: 'Could not authenticate to npm: ' + auth.message,
+      };
+    }
 
-  if (!auth.authenticated) {
-    return {
-      ok: false,
-      reason: 'Could not authenticate to npm: ' + auth.message,
-    };
-  }
+    const profile = auth.profile;
 
-  const profile = auth.profile;
+    if (profile.tfaOnPublish) {
+      return {
+        ok: false,
+        reason:
+          'This user requires 2fa on publish to npm, which is not supported',
+      };
+    }
 
-  if (profile.tfaOnPublish) {
-    return {
-      ok: false,
-      reason:
-        'This user requires 2fa on publish to npm, which is not supported',
-    };
-  }
-
-  if (!owners) {
-    const orgName = pkg.packageName.split('/')[0].substr(1);
-    if (pkg.packageName[0] === '@' && profile.name !== orgName) {
-      const orgRoster = await getOrgRoster(orgName);
-      if (!orgRoster[profile.name]) {
+    if (!owners) {
+      const orgName = targetConfig.packageName.split('/')[0].substr(1);
+      if (targetConfig.packageName[0] === '@' && profile.name !== orgName) {
+        const orgRoster = await getOrgRoster(orgName);
+        if (!orgRoster[profile.name]) {
+          return {
+            ok: false,
+            reason: `@${profile.name} does not appear to have permission to publish new packages to @${orgName} on npm`,
+          };
+        }
+      }
+    } else {
+      if (!owners.some((m) => m.name === profile.name)) {
         return {
           ok: false,
-          reason: `@${profile.name} does not appear to have permission to publish new packages to @${orgName} on npm`,
+          reason: `The user @${profile.name} is not listed as a maintainer of ${targetConfig.packageName} on npm`,
         };
       }
     }
-  } else {
-    if (!owners.some((m) => m.name === profile.name)) {
-      return {
-        ok: false,
-        reason: `The user @${profile.name} is not listed as a maintainer of ${pkg.packageName} on npm`,
-      };
+    if (versions) {
+      const max = [...versions]
+        .filter((v) => !prerelease(v))
+        .reduce((a, b) => (gt(a, b) ? a : b), '0.0.0');
+      if (gt(max, pkg.newVersion)) {
+        return {
+          ok: false,
+          reason: `${pkg.packageName} already has a version ${max} on npm, which is greater than the version that would be published (${pkg.newVersion}). Please add a tag/release in GitHub called "${pkg.packageName}@${max}" that points at the correct commit for ${max}`,
+        };
+      }
+      if (versions.has(pkg.newVersion)) {
+        return {
+          ok: false,
+          reason: `${targetConfig.packageName} already has a version ${pkg.newVersion} on npm`,
+        };
+      }
     }
-  }
-  if (versions) {
-    if (versions.has(newVersion)) {
-      return {
-        ok: false,
-        reason: `${pkg.packageName} already has a version ${newVersion} on npm`,
-      };
-    }
-    const max = [...versions]
-      .filter((v) => !prerelease(v))
-      .reduce((a, b) => (gt(a, b) ? a : b), '0.0.0');
-    if (gt(max, newVersion)) {
-      return {
-        ok: false,
-        reason: `${pkg.packageName} already has a version ${max} on npm, which is greater than the version that would be published (${newVersion}). Please add a tag/release in GitHub called "${pkg.packageName}@${max}" that points at the correct commit for ${max}`,
-      };
-    }
-  }
 
-  await withNpmVersion(config, pkg, newVersion, packageVersions, async () => {
-    await npmPublish(config.dirname, pkg.path, {
-      dryRun: true,
-      canary: config.canary !== null,
-    });
-  });
+    await withNpmVersion(
+      config,
+      targetConfig,
+      pkg.newVersion,
+      packageVersions,
+      async () => {
+        await npmPublish(config.dirname, targetConfig.path, {
+          dryRun: true,
+          canary: config.canary !== null,
+        });
+      },
+    );
 
-  return {ok: true};
-}
-
-export async function publish(
-  config: PublishConfig,
-  pkg: PackageManifest,
-  newVersion: string,
-  packageVersions: Map<string, string | null>,
-) {
-  await withNpmVersion(config, pkg, newVersion, packageVersions, async () => {
-    await npmPublish(config.dirname, pkg.path, {
-      dryRun: config.dryRun,
-      canary: config.canary !== null,
-    });
-  });
-}
+    return {ok: true};
+  },
+  async publish(config, pkg, targetConfig, packageVersions) {
+    if (targetConfig.private) return;
+    await withNpmVersion(
+      config,
+      targetConfig,
+      pkg.newVersion,
+      packageVersions,
+      async () => {
+        await npmPublish(config.dirname, targetConfig.path, {
+          dryRun: config.dryRun,
+          canary: config.canary !== null,
+        });
+      },
+    );
+  },
+});

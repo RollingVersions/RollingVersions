@@ -4,10 +4,7 @@ import {
   PullRequest,
 } from 'rollingversions/lib/types';
 import {writeState} from 'rollingversions/lib/utils/CommentState';
-import {
-  getCurrentVerion,
-  getNewVersion,
-} from 'rollingversions/lib/utils/Versioning';
+import {getNewVersion} from 'rollingversions/lib/utils/Versioning';
 import {PullRequestPackage} from '../types';
 import ChangeSet, {
   changesToMarkdown,
@@ -19,11 +16,12 @@ export const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
 const COMMENT_PREFIX = `<!-- This comment is maintained by Rolling Versions. Do not edit it manually! -->\n<!-- ${COMMENT_GUID} -->\n\n`;
 
 export function getVersionShift(
-  currentVersion: PackageManifestWithVersion[],
+  currentVersion: PackageManifestWithVersion,
   changes: ChangeSet,
 ) {
-  return `(${getCurrentVerion(currentVersion) || 'unreleased'} → ${
-    getNewVersion(currentVersion, changes) || 'no new release'
+  return `(${currentVersion.versionTag?.version || 'unreleased'} → ${
+    getNewVersion(currentVersion.versionTag?.version ?? null, changes) ||
+    'no new release'
   })`;
 }
 
@@ -80,12 +78,12 @@ export function renderCommentWithoutState(
 
   const packages = [...packagesMap].sort(([a], [b]) => (a < b ? -1 : 1));
   if (packages.length === 1) {
-    const [packageName, {changeSet, manifests}] = packages[0];
+    const [packageName, {manifest, changeSet}] = packages[0];
     if (isEmptyChangeSet(changeSet)) {
       return `This PR will **not** result in a new version of ${packageName} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
     }
     return `### Change Log for ${packageName} ${getVersionShift(
-      manifests,
+      manifest,
       changeSet,
     )}\n\n${changesToMarkdown(changeSet, {
       headingLevel: 4,
@@ -106,9 +104,9 @@ export function renderCommentWithoutState(
     })${outdated}`;
   }
   return `${packagesWithChanges
-    .map(([packageName, {changeSet, manifests}]) => {
+    .map(([packageName, {changeSet, manifest}]) => {
       return `### ${packageName} ${getVersionShift(
-        manifests,
+        manifest,
         changeSet,
       )}\n\n${changesToMarkdown(changeSet, {headingLevel: 4})}`;
     })
