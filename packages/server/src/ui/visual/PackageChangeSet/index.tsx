@@ -1,6 +1,5 @@
 import React, {useCallback} from 'react';
 import RegistryStatus, {RegistryStatusProps} from '../RegistryStatus';
-import ChangeSetEditorLayout from '../ChangeSetEditorLayout';
 import Changes from '../Changes';
 import ChangeSet, {extractChanges} from '@rollingversions/change-set';
 
@@ -44,58 +43,48 @@ function PackageChangeSet({
         {warning}
         <RegistryStatus packageManifest={packageManifest} />
       </div>
-      <ChangeSetEditorLayout
-        breaking={
-          <Changes
-            title="Breaking Changes"
-            disabled={disabled}
-            readOnly={readOnly}
-            type="breaking"
-            changes={extractChanges(changes, 'breaking')}
-            onChange={onChangeInner}
-          />
-        }
-        feat={
-          <Changes
-            title="New Features"
-            disabled={disabled}
-            readOnly={readOnly}
-            type="feat"
-            changes={extractChanges(changes, 'feat')}
-            onChange={onChangeInner}
-          />
-        }
-        refactor={
-          <Changes
-            title="Refactors"
-            disabled={disabled}
-            readOnly={readOnly}
-            type="refactor"
-            changes={extractChanges(changes, 'refactor')}
-            onChange={onChangeInner}
-          />
-        }
-        fix={
-          <Changes
-            title="Bug Fixes"
-            disabled={disabled}
-            readOnly={readOnly}
-            type="fix"
-            changes={extractChanges(changes, 'fix')}
-            onChange={onChangeInner}
-          />
-        }
-        perf={
-          <Changes
-            title="Performance Improvements"
-            disabled={disabled}
-            readOnly={readOnly}
-            type="perf"
-            changes={extractChanges(changes, 'perf')}
-            onChange={onChangeInner}
-          />
-        }
-      />
+      <div className="grid gap-4 lg:gap-8">
+        <Changes
+          title="Breaking Changes"
+          disabled={disabled}
+          readOnly={readOnly}
+          type="breaking"
+          changes={extractChanges(changes, 'breaking')}
+          onChange={onChangeInner}
+        />
+        <Changes
+          title="New Features"
+          disabled={disabled}
+          readOnly={readOnly}
+          type="feat"
+          changes={extractChanges(changes, 'feat')}
+          onChange={onChangeInner}
+        />
+        <Changes
+          title="Refactors"
+          disabled={disabled}
+          readOnly={readOnly}
+          type="refactor"
+          changes={extractChanges(changes, 'refactor')}
+          onChange={onChangeInner}
+        />
+        <Changes
+          title="Bug Fixes"
+          disabled={disabled}
+          readOnly={readOnly}
+          type="fix"
+          changes={extractChanges(changes, 'fix')}
+          onChange={onChangeInner}
+        />
+        <Changes
+          title="Performance Improvements"
+          disabled={disabled}
+          readOnly={readOnly}
+          type="perf"
+          changes={extractChanges(changes, 'perf')}
+          onChange={onChangeInner}
+        />
+      </div>
     </div>
   );
 }
