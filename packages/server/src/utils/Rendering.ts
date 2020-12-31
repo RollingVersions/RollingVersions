@@ -1,17 +1,18 @@
 import {URL} from 'url';
 import {
   PackageManifestWithVersion,
-  ChangeSet,
   PullRequest,
 } from 'rollingversions/lib/types';
-import {isEmptyChangeSet} from 'rollingversions/lib/types/PullRequestState';
 import {writeState} from 'rollingversions/lib/utils/CommentState';
-import changesToMarkdown from 'rollingversions/lib/utils/changesToMarkdown';
 import {
   getCurrentVerion,
   getNewVersion,
 } from 'rollingversions/lib/utils/Versioning';
 import {PullRequestPackage} from '../types';
+import ChangeSet, {
+  changesToMarkdown,
+  isEmptyChangeSet,
+} from '@rollingversions/change-set';
 
 // N.B. this comment guid must be kept in sync with the CLI for now
 export const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
@@ -21,20 +22,6 @@ export function getVersionShift(
   currentVersion: PackageManifestWithVersion[],
   changes: ChangeSet,
 ) {
-  // if we want to support not knowing the previous version:
-  // if (currentVersion === undefined) {
-  //   const bump = getVersionBump(changes);
-  //   switch (bump) {
-  //     case 'major':
-  //       return '(↑.-.-)';
-  //     case 'minor':
-  //       return '(-.↑.-)';
-  //     case 'patch':
-  //       return '(-.-.↑)';
-  //     default:
-  //       return 'no new release';
-  //   }
-  // }
   return `(${getCurrentVerion(currentVersion) || 'unreleased'} → ${
     getNewVersion(currentVersion, changes) || 'no new release'
   })`;
@@ -100,9 +87,9 @@ export function renderCommentWithoutState(
     return `### Change Log for ${packageName} ${getVersionShift(
       manifests,
       changeSet,
-    )}\n\n${changesToMarkdown(changeSet, 4)}\n\n[Edit changelog](${
-      url.href
-    })${outdated}`;
+    )}\n\n${changesToMarkdown(changeSet, {
+      headingLevel: 4,
+    })}\n\n[Edit changelog](${url.href})${outdated}`;
   }
 
   const packagesWithChanges = packages.filter(([, {changeSet}]) => {
@@ -123,7 +110,7 @@ export function renderCommentWithoutState(
       return `### ${packageName} ${getVersionShift(
         manifests,
         changeSet,
-      )}\n\n${changesToMarkdown(changeSet, 4)}`;
+      )}\n\n${changesToMarkdown(changeSet, {headingLevel: 4})}`;
     })
     .join('\n\n')}${
     packagesWithoutChanges.length

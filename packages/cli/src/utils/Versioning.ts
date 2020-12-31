@@ -1,14 +1,15 @@
+import ChangeSet from '@rollingversions/change-set';
 import {inc, gt, lt} from 'semver';
-import {ChangeSet, PackageManifestWithVersion} from '../types';
+import {PackageManifestWithVersion} from '../types';
 
 export function getVersionBump(changes: ChangeSet) {
-  if (changes.breaking.length) {
+  if (changes.some((c) => c.type === 'breaking')) {
     return 'major';
   }
-  if (changes.feat.length || changes.refactor.length) {
+  if (changes.some((c) => c.type === 'feat' || c.type === 'refactor')) {
     return 'minor';
   }
-  if (changes.fix.length || changes.perf.length) {
+  if (changes.some((c) => c.type === 'perf' || c.type === 'fix')) {
     return 'patch';
   }
   return null;

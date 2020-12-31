@@ -1,7 +1,8 @@
-import React from 'react';
-import {ChangeLogEntry} from 'rollingversions/lib/types';
+import React, {useEffect} from 'react';
 import ChangeInput, {ChangeInputList} from '../ChangeInput';
 import getLocalId from '../../utils/getLocalId';
+import ChangeSet from '@rollingversions/change-set';
+import {ChangeTypeID} from '@rollingversions/config';
 
 function useIsMouseDownRef() {
   const mouseDownRef = React.useRef(false);
@@ -22,17 +23,35 @@ function useIsMouseDownRef() {
   return mouseDownRef;
 }
 export interface ChangesProps {
+  type: ChangeTypeID;
   title: string;
-  changes: (ChangeLogEntry & {localId: number})[];
+  changes: ChangeSet<{localId: number}>;
   disabled: boolean;
   readOnly: boolean;
-  onChange: (changes: (ChangeLogEntry & {localId: number})[]) => void;
+  onChange: (
+    update: (
+      before: ChangeSet<{localId: number}>,
+    ) => ChangeSet<{localId: number}>,
+  ) => void;
 }
-function Changes({title, changes, disabled, readOnly, onChange}: ChangesProps) {
+function Changes({
+  type,
+  title,
+  changes,
+  disabled,
+  readOnly,
+  onChange,
+}: ChangesProps) {
   const [newID, setNewID] = React.useState<number>();
   const [adding, setAdding] = React.useState(false);
   const isMouseDownRef = useIsMouseDownRef();
-  const focusCountRef = React.useRef(0);
+  const [focusCount, setFocusCount] = React.useState(0);
+
+  useEffect(() => {
+    if (focusCount === 0 && changes.length === 0) {
+      setNewID(undefined);
+    }
+  }, [focusCount === 0 && changes.length === 0]);
 
   if (!changes.length && readOnly) {
     return null;
@@ -68,6 +87,7 @@ function Changes({title, changes, disabled, readOnly, onChange}: ChangesProps) {
           ].map((entry) => (
             <ChangeInput
               key={entry.localId}
+              localId={entry.localId}
               ref={(input) => {
                 if (input && adding && entry.localId === newID) {
                   input.focus();
@@ -81,33 +101,35 @@ function Changes({title, changes, disabled, readOnly, onChange}: ChangesProps) {
               onChange={(update) => {
                 if (entry.localId === newID) {
                   setNewID(getLocalId());
-                  onChange([...changes, {...entry, ...update}]);
-                } else {
-                  onChange(
-                    changes.map((c) =>
-                      c.localId === entry.localId ? {...c, ...update} : c,
-                    ),
-                  );
                 }
+                onChange(
+                  (changes): ChangeSet<{localId: number}> => {
+                    let found = false;
+                    const updated = changes.map((c) => {
+                      if (c.localId === entry.localId) {
+                        found = true;
+                        return {type, ...update};
+                      }
+                      return c;
+                    });
+                    if (found) {
+                      return updated;
+                    } else {
+                      return [...changes, {type, ...update}];
+                    }
+                  },
+                );
               }}
-              onFocus={() => {
-                focusCountRef.current++;
-              }}
+              onFocus={() => setFocusCount(inc)}
               onBlur={() => {
-                focusCountRef.current--;
+                setFocusCount(dec);
                 let removed = false;
                 const remove = () => {
                   if (removed) return;
                   removed = true;
                   document.removeEventListener('mouseup', remove);
                   if (!entry.title && !entry.body && entry.localId !== newID) {
-                    const newChanges = changes.filter((c) => c !== entry);
-                    onChange(newChanges);
-                    if (!newChanges.length && !focusCountRef.current) {
-                      setNewID(undefined);
-                    }
-                  } else if (!changes.length && !focusCountRef.current) {
-                    setNewID(undefined);
+                    onChange((changes) => changes.filter((c) => c !== entry));
                   }
                 };
                 if (isMouseDownRef.current) {
@@ -126,3 +148,10 @@ function Changes({title, changes, disabled, readOnly, onChange}: ChangesProps) {
 }
 
 export default React.memo(Changes);
+
+function inc(v: number) {
+  return v + 1;
+}
+function dec(v: number) {
+  return v - 1;
+}

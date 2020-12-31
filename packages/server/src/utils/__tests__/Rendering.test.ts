@@ -1,6 +1,5 @@
 import {URL} from 'url';
 import {PublishTarget} from 'rollingversions/lib/types';
-import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import {renderCommentWithoutState} from '../Rendering';
 import {PullRequestPackage} from '../../types';
 
@@ -8,7 +7,7 @@ function mockPackage(input: {
   manifests: (Pick<PullRequestPackage['manifests'][number], 'packageName'> &
     Partial<PullRequestPackage['manifests'][number]>)[];
   dependencies?: Partial<PullRequestPackage['dependencies']>;
-  changeSet?: Partial<PullRequestPackage['changeSet']>;
+  changeSet?: PullRequestPackage['changeSet'];
   released?: boolean;
 }): PullRequestPackage {
   return {
@@ -26,10 +25,7 @@ function mockPackage(input: {
       development: [],
       ...input.dependencies,
     },
-    changeSet: {
-      ...getEmptyChangeSet(),
-      ...input.changeSet,
-    },
+    changeSet: input.changeSet ?? [],
     released: input.released === undefined ? false : input.released,
   };
 }
@@ -54,9 +50,9 @@ test('renderCommentWithoutState', () => {
           'changelogversion',
           mockPackage({
             manifests: [{packageName: 'changelogversion'}],
-            changeSet: {
-              feat: [{title: 'Something awesome was added', body: ''}],
-            },
+            changeSet: [
+              {type: 'feat', title: 'Something awesome was added', body: ''},
+            ],
           }),
         ],
         [

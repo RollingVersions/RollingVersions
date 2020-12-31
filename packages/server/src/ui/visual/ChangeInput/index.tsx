@@ -1,15 +1,21 @@
 import React from 'react';
 import GitHubMarkdown from '../GitHubMarkdown/async';
 import TextareaAutosize from 'react-textarea-autosize';
+import useChanges from '../../hooks/useChanges';
 
 export interface ChangeInputProps {
+  localId: number;
   title: string;
   body: string;
   disabled: boolean;
   readOnly: boolean;
-  onChange: (log: {title: string; body: string}) => void;
-  onFocus?: () => void;
-  onBlur?: () => void;
+  onChange: (changeSetEntry: {
+    localId: number;
+    title: string;
+    body: string;
+  }) => void;
+  onFocus?: (id: number) => void;
+  onBlur?: (id: number) => void;
 }
 
 export interface ChangeInputListProps {
@@ -46,6 +52,7 @@ type MakeRefMutable<T> = T extends React.RefObject<infer S>
 const ChangeInput = React.forwardRef<HTMLTextAreaElement, ChangeInputProps>(
   function ChangeInput(
     {
+      localId,
       title,
       body,
       disabled,
@@ -59,27 +66,35 @@ const ChangeInput = React.forwardRef<HTMLTextAreaElement, ChangeInputProps>(
     const titleRef = React.useRef<HTMLTextAreaElement | null>(null);
     const titleFocus = useTrackFocus();
     const bodyFocus = useTrackFocus();
-    const [focused, setFocused] = React.useState(false);
 
-    React.useEffect(() => {
-      // This is debounced because as the user tabs
-      // from title to body the browser fires
-      // blur on title before firing focus on body
-      const handle = setTimeout(() => {
-        const $focused = titleFocus.focused || bodyFocus.focused;
-        if ($focused !== focused) {
-          setFocused($focused);
-          if ($focused && onFocus) onFocus();
-          if (!$focused && onBlur) onBlur();
-          if (!$focused) {
-            if (!title.trim() && body.trim() && titleRef.current) {
-              titleRef.current.focus();
-            }
-          }
+    const isFocused = titleFocus.focused || bodyFocus.focused;
+    const [isFocusedDebounced, setIsFocusedDebounced] = React.useState(
+      isFocused,
+    );
+    // delay handling blur a tiny bit so that we don't handle blur when tabbing between fields, but ensure focus is always immediate
+    React.useLayoutEffect(() => {
+      if (isFocused) {
+        setIsFocusedDebounced(true);
+        return undefined;
+      } else {
+        const timeout = setTimeout(() => {
+          setIsFocusedDebounced(false);
+        }, 15);
+        return () => clearTimeout(timeout);
+      }
+    }, [isFocused]);
+
+    useChanges(() => {
+      if (isFocused) {
+        if (onFocus) onFocus(localId);
+      } else {
+        if (onBlur) onBlur(localId);
+
+        if (!title.trim() && body.trim() && titleRef.current) {
+          titleRef.current.focus();
         }
-      }, 0);
-      return () => clearTimeout(handle);
-    }, [titleFocus.focused, bodyFocus.focused]);
+      }
+    }, [isFocusedDebounced]);
 
     if (readOnly) {
       return (
@@ -95,7 +110,7 @@ const ChangeInput = React.forwardRef<HTMLTextAreaElement, ChangeInputProps>(
         </div>
       );
     }
-    const showBody = !!(body.trim() || (focused && title.trim()));
+    const showBody = !!(body.trim() || (isFocusedDebounced && title.trim()));
     return (
       <div style={{minHeight: 113}}>
         <div className={`rounded-lg bg-white ${disabled ? `opacity-50` : ``}`}>
@@ -140,7 +155,11 @@ const ChangeInput = React.forwardRef<HTMLTextAreaElement, ChangeInputProps>(
                   }
                 }}
                 onChange={(e) => {
-                  onChange({title: e.target.value.replace(/\r?\n/g, ''), body});
+                  onChange({
+                    localId,
+                    title: e.target.value.replace(/\r?\n/g, ''),
+                    body,
+                  });
                 }}
                 onFocus={titleFocus.onFocus}
                 onBlur={titleFocus.onBlur}
@@ -151,7 +170,7 @@ const ChangeInput = React.forwardRef<HTMLTextAreaElement, ChangeInputProps>(
           {showBody && (
             <>
               <div className={`bg-gray-300 mx-1`} style={{height: 2}} />
-              {(focused || body.trim()) && (
+              {(isFocusedDebounced || body.trim()) && (
                 <div
                   className="relative"
                   style={{
@@ -177,7 +196,7 @@ const ChangeInput = React.forwardRef<HTMLTextAreaElement, ChangeInputProps>(
                       onFocus={bodyFocus.onFocus}
                       onBlur={bodyFocus.onBlur}
                       onChange={(e) => {
-                        onChange({title, body: e.target.value});
+                        onChange({localId, title, body: e.target.value});
                       }}
                     />
                   )}

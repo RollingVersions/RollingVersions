@@ -1,9 +1,8 @@
+import ChangeSet, {changesToMarkdown} from '@rollingversions/change-set';
 import React from 'react';
-import changesToMarkdown from 'rollingversions/lib/utils/changesToMarkdown';
 import GitHubMarkdownAsync from '../GitHubMarkdown/async';
 import Alert from '../Alert';
 import InstallIcon from '../HeroBar/install-icon.svg';
-import {ChangeSet} from 'rollingversions/lib/types';
 
 function PackageName({children}: {children: React.ReactNode}) {
   return (
@@ -58,7 +57,10 @@ export function PackageWithChanges({
         {newVersion})
       </PackageName>
       <GitHubMarkdownAsync>
-        {changesToMarkdown(changeSet, 3)}
+        {changesToMarkdown(changeSet, {
+          headingLevel: 3,
+          renderContext: ({pr}) => ` (#${pr})`,
+        })}
       </GitHubMarkdownAsync>
     </React.Fragment>
   );

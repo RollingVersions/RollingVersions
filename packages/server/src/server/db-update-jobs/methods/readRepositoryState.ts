@@ -2,7 +2,6 @@ import {Repository} from 'rollingversions/lib/types';
 import {Queryable, getAllUnreleasedChanges} from '../../services/postgres';
 import {GitHubClient} from '../../services/github';
 import addRepository from '../procedures/addRepository';
-import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import {Logger} from '../../logger';
@@ -13,6 +12,7 @@ import {
 import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
 import {getPackageManifests} from '../../models/PackageManifests';
+import {createChangeSet} from '@rollingversions/change-set';
 
 export default async function readRepositoryState(
   db: Queryable,
@@ -63,24 +63,26 @@ export default async function readRepositoryState(
         const releasedIDs = [...releasedShas]
           .map((sha) => commitIDs.get(sha))
           .filter(isTruthy);
-        const changeSet = getEmptyChangeSet<{
+        const changeSet = createChangeSet<{
           id: number;
           weight: number;
           pr: number;
-        }>();
-        for (const change of await getAllUnreleasedChanges(db, {
-          headCommitID: repo.head.id,
-          lastReleaseCommitIDs: releasedIDs,
-          packageName,
-        })) {
-          changeSet[change.kind].push({
+        }>(
+          ...(
+            await getAllUnreleasedChanges(db, {
+              headCommitID: repo.head.id,
+              lastReleaseCommitIDs: releasedIDs,
+              packageName,
+            })
+          ).map((change) => ({
+            type: change.kind,
             id: change.id,
             weight: change.sort_order_weight,
             title: change.title,
             body: change.body,
             pr: change.pr_number,
-          });
-        }
+          })),
+        );
         const newVersion = getNewVersion(currentVersion, changeSet);
         if (!newVersion) {
           return {

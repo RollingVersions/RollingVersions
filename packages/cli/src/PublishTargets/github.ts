@@ -6,10 +6,10 @@ import {
   getViewer,
 } from '../services/github';
 import {getHeadSha} from '../services/git';
-import changesToMarkdown from '../utils/changesToMarkdown';
 
 import {PublishConfig} from '../types';
 import {NewVersionToBePublished} from '../utils/getPackageStatuses';
+import {changesToMarkdown} from '@rollingversions/change-set';
 
 export async function checkGitHubReleaseStatus(
   {
@@ -81,7 +81,10 @@ export async function createGitHubRelease(
         owner,
         repo,
 
-        body: changesToMarkdown(pkg.changeSet, 2),
+        body: changesToMarkdown(pkg.changeSet, {
+          headingLevel: 2,
+          renderContext: ({pr}) => ` (#${pr})`,
+        }),
         name: tagName,
         tag_name: tagName,
         target_commitish: headSha,

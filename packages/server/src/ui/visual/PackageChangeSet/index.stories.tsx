@@ -1,13 +1,13 @@
 import * as React from 'react';
 import PackageChangeSet from './';
 import {PublishTarget} from 'rollingversions/lib/types';
-import getEmptyChangeSet from 'rollingversions/lib/utils/getEmptyChangeSet';
+import {createChangeSet} from '@rollingversions/change-set';
 
 export default {title: 'modules/PackageChangeSet'};
 
 export const Default = () => {
   const [changes, setChanges] = React.useState(
-    getEmptyChangeSet<{localId: number}>(),
+    createChangeSet<{localId: number}>(),
   );
   return (
     <div className="w-full min-h-full bg-gray-300 p-2">

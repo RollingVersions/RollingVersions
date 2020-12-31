@@ -1,30 +1,25 @@
+import ChangeSet from '@rollingversions/change-set';
 import React from 'react';
 import PackageChangeSet, {PackageChangeSetProps} from '../PackageChangeSet';
 import SaveChangeLogFooter from '../SaveChangeLogFooter';
 import getLocalId from '../../utils/getLocalId';
-import {ChangeSet, ChangeLogEntry} from 'rollingversions/lib/types';
 import Permission from '../../../server/permissions/Permission';
 import {PullRequestPackage} from '../../../types';
 import Alert from '../Alert';
+import {PackageManifestWithVersion} from 'rollingversions/lib/types';
 
-function mapChangeSet<T, S>(
-  changes: ChangeSet<T>,
-  fn: (c: ChangeLogEntry & T) => S,
-) {
-  return {
-    breaking: changes.breaking.map(fn),
-    feat: changes.feat.map(fn),
-    refactor: changes.refactor.map(fn),
-    fix: changes.fix.map(fn),
-    perf: changes.perf.map(fn),
-  };
-}
-
-function getState(packages: Map<string, PullRequestPackage>) {
+function getState(
+  packages: Map<string, PullRequestPackage>,
+): {
+  packageName: string;
+  changes: ChangeSet<{localId: number}>;
+  manifests: PackageManifestWithVersion[];
+  released: boolean;
+}[] {
   return [...packages]
     .map(([packageName, {changeSet, manifests, released}]) => ({
       packageName,
-      changes: mapChangeSet(changeSet, (c) => ({
+      changes: changeSet.map((c) => ({
         ...c,
         localId: getLocalId(),
       })),
@@ -139,7 +134,7 @@ export default function PullRequestPage({
                 )
                 .map(({packageName, changes}) => ({
                   packageName,
-                  changes: mapChangeSet(changes, ({localId, ...c}) => c),
+                  changes: changes.map(({localId, ...c}) => c),
                 })),
             );
           }}
