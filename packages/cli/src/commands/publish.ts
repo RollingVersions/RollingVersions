@@ -142,6 +142,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
     packageStatuses.map((p) => [p.packageName, p.newVersion]),
   );
   const allTagNames = new Set(allTags.map((t) => t.name));
+  console.error('packageVersions=', packageVersions);
 
   const failures: PrepublishFailures['failures'][number][] = [];
   for (const pkg of packageStatuses) {
