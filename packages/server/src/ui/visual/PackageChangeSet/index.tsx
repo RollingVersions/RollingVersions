@@ -1,11 +1,12 @@
 import React, {useCallback} from 'react';
-import RegistryStatus, {RegistryStatusProps} from '../RegistryStatus';
+import RegistryStatus from '../RegistryStatus';
 import Changes from '../Changes';
 import ChangeSet, {extractChanges} from '@rollingversions/change-set';
+import {PublishTargetConfig} from 'rollingversions/src/types/PublishTarget';
 
 export interface PackageChangeSetProps {
   packageName: string;
-  packageManifest: RegistryStatusProps['packageManifest'];
+  targetConfigs: readonly PublishTargetConfig[];
   changes: ChangeSet<{localId: number}>;
   disabled: boolean;
   readOnly: boolean;
@@ -19,7 +20,7 @@ export interface PackageChangeSetProps {
 }
 
 function PackageChangeSet({
-  packageManifest,
+  targetConfigs,
   packageName,
   changes,
   disabled,
@@ -41,7 +42,7 @@ function PackageChangeSet({
           {packageName}
         </h2>
         {warning}
-        <RegistryStatus packageManifest={packageManifest} />
+        <RegistryStatus targetConfigs={targetConfigs} />
       </div>
       <div className="grid gap-4 lg:gap-8">
         <Changes

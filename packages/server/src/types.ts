@@ -5,9 +5,7 @@ import {
 } from 'rollingversions/lib/utils/ValidationCodec';
 import Permission, {PermissionCodec} from './server/permissions/Permission';
 import {ModernChangeSetCodec} from 'rollingversions/lib/types/PullRequestState';
-import {PackageDependencies} from 'rollingversions/lib/types';
 import {PackageManifestWithVersion} from 'rollingversions/lib/types/PackageManifest';
-import {PackageDependenciesCodec} from 'rollingversions/lib/types/PackageDependencies';
 import ChangeSet from '@rollingversions/change-set';
 
 export interface RepoResponse {
@@ -26,8 +24,7 @@ export interface RepoResponse {
 }
 
 export interface PullRequestPackage {
-  manifests: PackageManifestWithVersion[];
-  dependencies: PackageDependencies;
+  manifest: PackageManifestWithVersion;
   changeSet: ChangeSet; // <{id: number; weight: number}>;
   released: boolean;
 }
@@ -39,12 +36,11 @@ const PullRequestPackagesCodec = map(
     1,
     'PullRequestPackage',
     {
-      manifests: t.Array(PackageManifestWithVersion),
-      dependencies: PackageDependenciesCodec,
+      manifest: PackageManifestWithVersion,
       changeSet: ModernChangeSetCodec,
       released: t.Boolean,
     },
-    ['manifests', 'dependencies', 'changeSet', 'released'],
+    ['manifest', 'changeSet', 'released'],
   ),
 );
 

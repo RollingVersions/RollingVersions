@@ -1,15 +1,16 @@
 import {
   GitHubClient,
-  getAllTags,
   getRepositoryViewerPermissions,
   getBranch,
   getViewer,
 } from '../services/github';
 import {getHeadSha} from '../services/git';
 
-import {PublishConfig} from '../types';
+import {PrePublishResult, PublishConfig} from '../types';
 import {NewVersionToBePublished} from '../utils/getPackageStatuses';
 import {changesToMarkdown} from '@rollingversions/change-set';
+import {printTag} from '@rollingversions/tag-format';
+import {parseString} from '@rollingversions/version-number';
 
 export async function checkGitHubReleaseStatus(
   {
@@ -19,15 +20,14 @@ export async function checkGitHubReleaseStatus(
     deployBranch,
   }: Pick<PublishConfig, 'owner' | 'name' | 'dirname' | 'deployBranch'>,
   client: GitHubClient,
-): Promise<{ok: true; tags: string[]} | {ok: false; reason: string}> {
-  const [viewer, permission, branch, allTags] = await Promise.all([
+): Promise<{ok: true} | {ok: false; reason: string}> {
+  const [viewer, permission, branch] = await Promise.all([
     getViewer(client),
     getRepositoryViewerPermissions(client, {
       owner,
       name,
     }),
     getBranch(client, {owner, name}, deployBranch),
-    getAllTags(client, {owner, name}),
   ]);
   if (
     viewer?.login !== 'github-actions[bot]' &&
@@ -60,36 +60,61 @@ export async function checkGitHubReleaseStatus(
     };
   }
 
-  return {ok: true, tags: (allTags || []).map((t) => t.name)};
+  return {ok: true};
+}
+
+export function checkGitHubTagAvailable(
+  {canary}: PublishConfig,
+  pkg: NewVersionToBePublished,
+  allTagNames: Set<string>,
+): PrePublishResult {
+  if (canary === null) {
+    const tagName = printTag(parseString(pkg.newVersion)!, {
+      packageName: pkg.packageName,
+      oldTagName: pkg.currentTagName,
+      tagFormat: pkg.manifest.tagFormat,
+    });
+    if (allTagNames.has(tagName)) {
+      return {ok: false, reason: `The tag name ${tagName} already exists.`};
+    }
+  }
+  return {ok: true};
 }
 
 export async function createGitHubRelease(
   {owner, name: repo, dirname, dryRun, canary, logger}: PublishConfig,
   client: GitHubClient,
   pkg: NewVersionToBePublished,
-  tagName: string,
 ) {
-  logger.onPublishGitHubRelease?.({pkg, tagName, dryRun, canary});
   const headSha = await getHeadSha(dirname);
-  if (dryRun) {
-    logger.onPublishedGitHubRelease?.({pkg, tagName, dryRun});
-  } else if (canary === null) {
-    const response = (
-      await client.rest.repos.createRelease({
-        draft: false,
-        prerelease: false,
-        owner,
-        repo,
+  if (canary) {
+    logger.onCanaryGitHubRelease?.({pkg, dryRun});
+  } else {
+    const tagName = printTag(parseString(pkg.newVersion)!, {
+      packageName: pkg.packageName,
+      oldTagName: pkg.currentTagName,
+      tagFormat: pkg.manifest.tagFormat,
+    });
+    logger.onPublishGitHubRelease?.({pkg, tagName, dryRun});
+    let response;
+    if (!dryRun) {
+      response = (
+        await client.rest.repos.createRelease({
+          draft: false,
+          prerelease: false,
+          owner,
+          repo,
 
-        body: changesToMarkdown(pkg.changeSet, {
-          headingLevel: 2,
-          renderContext: ({pr}) => ` (#${pr})`,
-        }),
-        name: tagName,
-        tag_name: tagName,
-        target_commitish: headSha,
-      })
-    ).data;
+          body: changesToMarkdown(pkg.changeSet, {
+            headingLevel: 2,
+            renderContext: ({pr}) => ` (#${pr})`,
+          }),
+          name: tagName,
+          tag_name: tagName,
+          target_commitish: headSha,
+        })
+      ).data;
+    }
     logger.onPublishedGitHubRelease?.({pkg, tagName, dryRun, response});
   }
 }

@@ -17,10 +17,17 @@ function packageManifest(
     Partial<PackageManifestWithVersion>,
 ): PackageManifestWithVersion {
   return {
-    path: 'fake-path',
-    targetConfig: {type: PublishTarget.npm, publishConfigAccess: 'public'},
-    notToBePublished: false,
+    targetConfigs: [
+      {
+        type: PublishTarget.npm,
+        packageName: manifest.packageName,
+        private: false,
+        publishConfigAccess: 'public',
+        path: 'fake-path',
+      },
+    ],
     versionTag: null,
+    dependencies: {required: [], optional: [], development: []},
     ...manifest,
   };
 }
@@ -45,7 +52,7 @@ const Template = (props: Partial<PullRequestPageProps>) => {
                 '@databases/pg',
                 {
                   changeSet: createChangeSet(),
-                  manifests: [packageManifest({packageName: '@databases/pg'})],
+                  manifest: packageManifest({packageName: '@databases/pg'}),
                   dependencies: {required: [], optional: [], development: []},
                   released: false,
                 },
@@ -54,9 +61,8 @@ const Template = (props: Partial<PullRequestPageProps>) => {
                 '@databases/mysql',
                 {
                   changeSet: createChangeSet(),
-                  manifests: [
-                    packageManifest({packageName: '@databases/mysql'}),
-                  ],
+                  manifest: packageManifest({packageName: '@databases/mysql'}),
+
                   dependencies: {required: [], optional: [], development: []},
                   released: false,
                 },
@@ -90,8 +96,7 @@ export const ReadOnlyPackage = () => {
             '@databases/pg',
             {
               changeSet: createChangeSet(),
-              manifests: [packageManifest({packageName: '@databases/pg'})],
-              dependencies: {required: [], optional: [], development: []},
+              manifest: packageManifest({packageName: '@databases/pg'}),
               released: false,
             },
           ],
@@ -103,8 +108,7 @@ export const ReadOnlyPackage = () => {
                 title: 'Renamed `querySingleResult` to `queryOneResult`',
                 body: '',
               }),
-              manifests: [packageManifest({packageName: '@databases/mysql'})],
-              dependencies: {required: [], optional: [], development: []},
+              manifest: packageManifest({packageName: '@databases/mysql'}),
               released: true,
             },
           ],
@@ -125,8 +129,7 @@ export const AllChangesReleased = () => {
             '@databases/pg',
             {
               changeSet: createChangeSet(),
-              manifests: [packageManifest({packageName: '@databases/pg'})],
-              dependencies: {required: [], optional: [], development: []},
+              manifest: packageManifest({packageName: '@databases/pg'}),
               released: true,
             },
           ],
@@ -138,8 +141,7 @@ export const AllChangesReleased = () => {
                 title: 'Renamed `querySingleResult` to `queryOneResult`',
                 body: '',
               }),
-              manifests: [packageManifest({packageName: '@databases/mysql'})],
-              dependencies: {required: [], optional: [], development: []},
+              manifest: packageManifest({packageName: '@databases/mysql'}),
               released: true,
             },
           ],
@@ -161,7 +163,7 @@ export const ClosedNonAdmin = () => {
             '@databases/pg',
             {
               changeSet: createChangeSet(),
-              manifests: [packageManifest({packageName: '@databases/pg'})],
+              manifest: packageManifest({packageName: '@databases/pg'}),
               dependencies: {required: [], optional: [], development: []},
               released: true,
             },
@@ -174,8 +176,7 @@ export const ClosedNonAdmin = () => {
                 title: 'Renamed `querySingleResult` to `queryOneResult`',
                 body: '',
               }),
-              manifests: [packageManifest({packageName: '@databases/mysql'})],
-              dependencies: {required: [], optional: [], development: []},
+              manifest: packageManifest({packageName: '@databases/mysql'}),
               released: false,
             },
           ],
@@ -195,8 +196,7 @@ export const OpenNonAdminNonAuthor = () => {
             '@databases/pg',
             {
               changeSet: createChangeSet(),
-              manifests: [packageManifest({packageName: '@databases/pg'})],
-              dependencies: {required: [], optional: [], development: []},
+              manifest: packageManifest({packageName: '@databases/pg'}),
               released: false,
             },
           ],
@@ -208,8 +208,7 @@ export const OpenNonAdminNonAuthor = () => {
                 title: 'Renamed `querySingleResult` to `queryOneResult`',
                 body: '',
               }),
-              manifests: [packageManifest({packageName: '@databases/mysql'})],
-              dependencies: {required: [], optional: [], development: []},
+              manifest: packageManifest({packageName: '@databases/mysql'}),
               released: true,
             },
           ],

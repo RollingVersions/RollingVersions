@@ -13,14 +13,13 @@ export const Default = () => {
     <div className="w-full min-h-full bg-gray-300 p-2">
       <PackageChangeSet
         packageName="@databases/pg"
-        packageManifest={[
+        targetConfigs={[
           {
-            notToBePublished: false,
-            versionTag: null,
-            targetConfig: {
-              type: PublishTarget.npm,
-              publishConfigAccess: 'public',
-            },
+            type: PublishTarget.npm,
+            publishConfigAccess: 'public',
+            packageName: '@databases/pg',
+            path: 'fake-path',
+            private: false,
           },
         ]}
         changes={changes}

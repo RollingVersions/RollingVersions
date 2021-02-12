@@ -146,30 +146,29 @@ switch (COMMAND) {
             console.warn(``);
           }
         },
-        onPublishGitHubRelease({pkg, dryRun, canary}) {
-          if (canary !== null) {
-            console.warn(
-              `not publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
-                'GitHub Release',
-              )} in ${chalk.red(`canary mode`)}`,
-            );
-          } else {
-            console.warn(
-              `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
-                'GitHub Release',
-              )} @ ${chalk.yellow(pkg.newVersion)}${
-                dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
-              }`,
-            );
-          }
-        },
-        onPublishTargetRelease({pkg, pkgManifest, dryRun}) {
+        onCanaryGitHubRelease({pkg}) {
           console.warn(
-            `publishing ${chalk.yellow(
-              pkgManifest.packageName,
-            )} to ${chalk.blue(pkgManifest.targetConfig.type)} @ ${chalk.yellow(
-              pkg.newVersion,
-            )}${dryRun ? ` ${chalk.red(`(dry run)`)}` : ''}`,
+            `not publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
+              'GitHub Release',
+            )} in ${chalk.red(`canary mode`)}`,
+          );
+        },
+        onPublishGitHubRelease({pkg, dryRun}) {
+          console.warn(
+            `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
+              'GitHub Release',
+            )} @ ${chalk.yellow(pkg.newVersion)}${
+              dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
+            }`,
+          );
+        },
+        onPublishTargetRelease({pkg, target, dryRun}) {
+          console.warn(
+            `publishing ${chalk.yellow(pkg.packageName)} to ${chalk.blue(
+              target.type,
+            )} @ ${chalk.yellow(pkg.newVersion)}${
+              dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
+            }`,
           );
         },
       },

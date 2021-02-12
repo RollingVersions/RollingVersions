@@ -14,15 +14,14 @@ test('listPackages - single npm package', async () => {
           "optional": Array [],
           "required": Array [],
         },
-        "manifests": Array [
+        "packageName": "example-package",
+        "targetConfigs": Array [
           Object {
-            "notToBePublished": false,
             "packageName": "example-package",
             "path": "package.json",
-            "targetConfig": Object {
-              "publishConfigAccess": "public",
-              "type": "npm",
-            },
+            "private": false,
+            "publishConfigAccess": "public",
+            "type": "npm",
           },
         ],
       },
@@ -55,15 +54,14 @@ test('listPackages - multiple npm packages', async () => {
           "optional": Array [],
           "required": Array [],
         },
-        "manifests": Array [
+        "packageName": "@root-package/a",
+        "targetConfigs": Array [
           Object {
-            "notToBePublished": false,
             "packageName": "@root-package/a",
             "path": "package.json",
-            "targetConfig": Object {
-              "publishConfigAccess": "restricted",
-              "type": "npm",
-            },
+            "private": false,
+            "publishConfigAccess": "restricted",
+            "type": "npm",
           },
         ],
       },
@@ -73,15 +71,14 @@ test('listPackages - multiple npm packages', async () => {
           "optional": Array [],
           "required": Array [],
         },
-        "manifests": Array [
+        "packageName": "@root-package/b",
+        "targetConfigs": Array [
           Object {
-            "notToBePublished": false,
             "packageName": "@root-package/b",
             "path": "package.json",
-            "targetConfig": Object {
-              "publishConfigAccess": "restricted",
-              "type": "npm",
-            },
+            "private": false,
+            "publishConfigAccess": "restricted",
+            "type": "npm",
           },
         ],
       },

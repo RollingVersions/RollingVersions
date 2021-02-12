@@ -41,7 +41,9 @@ export default async function sortPackages(
     const childStack = [...stack, pkg.packageName];
 
     for (const kind of ['required', 'optional', 'development'] as const) {
-      for (const dependencyName of pkg.dependencies[kind].slice().sort()) {
+      for (const dependencyName of pkg.manifest.dependencies[kind]
+        .slice()
+        .sort()) {
         const dep = input.get(dependencyName);
         if (dep) {
           const child = putPackage(childStack, result, dep);

@@ -17,11 +17,6 @@ test('checkGitHubReleaseStatus', async () => {
   expect(status).toMatchInlineSnapshot(`
     Object {
       "ok": true,
-      "tags": Array [
-        "single-package@1.0.0",
-        "single-package@2.0.0",
-        "single-package@3.0.0",
-      ],
     }
   `);
 });
