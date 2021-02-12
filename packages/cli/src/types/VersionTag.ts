@@ -1,10 +1,19 @@
+import VersionNumber from '@rollingversions/version-number';
 import {t, compressedObjectCodec} from '../utils/ValidationCodec';
 
 interface VersionTag {
   commitSha: string;
   name: string;
-  version: string;
+  version: VersionNumber;
 }
+
+const VersionNumberCodec: t.Codec<VersionNumber> = t
+  .Object({
+    numerical: t.ReadonlyArray(t.Number),
+    prerelease: t.ReadonlyArray(t.String),
+    build: t.ReadonlyArray(t.String),
+  })
+  .asReadonly();
 
 const VersionTag: t.Codec<VersionTag> = compressedObjectCodec(
   1,
@@ -12,7 +21,7 @@ const VersionTag: t.Codec<VersionTag> = compressedObjectCodec(
   {
     commitSha: t.String,
     name: t.String,
-    version: t.String,
+    version: VersionNumberCodec,
   },
   ['commitSha', 'name', 'version'],
 );

@@ -1,6 +1,5 @@
 import DataLoader from 'dataloader';
 import {GitHubClient, readComments} from '../services/github';
-import {getNewVersion} from '../utils/Versioning';
 import {Repository, PullRequest, PackageManifestWithVersion} from '../types';
 import {readState} from './CommentState';
 import isTruthy from '../ts-utils/isTruthy';
@@ -9,6 +8,7 @@ import ChangeSet, {
   addContextToChangeSet,
   mergeChangeSets,
 } from '@rollingversions/change-set';
+import VersionNumber, {getNextVersion} from '@rollingversions/version-number';
 
 // N.B. This comment GUID must be kept in sync with the server code for now
 const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
@@ -18,8 +18,8 @@ export {PackageStatus};
 export interface NoUpdateRequired {
   status: PackageStatus.NoUpdateRequired;
   packageName: string;
-  currentVersion: string | null;
-  newVersion: string | null;
+  currentVersion: VersionNumber | null;
+  newVersion: VersionNumber | null;
   manifest: PackageManifestWithVersion;
 }
 
@@ -27,8 +27,8 @@ export interface NewVersionToBePublished {
   status: PackageStatus.NewVersionToBePublished;
   packageName: string;
   currentTagName: string | null;
-  currentVersion: string | null;
-  newVersion: string;
+  currentVersion: VersionNumber | null;
+  newVersion: VersionNumber;
   changeSet: ChangeSet<{pr: number}>;
   manifest: PackageManifestWithVersion;
 }
@@ -89,7 +89,7 @@ export default async function getPackageStatuses(
             })
             .filter(isTruthy),
         );
-        const newVersion = getNewVersion(currentVersion, changeSet);
+        const newVersion = getNextVersion(currentVersion, changeSet);
         if (!newVersion) {
           return {
             status: PackageStatus.NoUpdateRequired,

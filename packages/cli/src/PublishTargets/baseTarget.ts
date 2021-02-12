@@ -1,3 +1,4 @@
+import VersionNumber from '@rollingversions/version-number';
 import {PrePublishResult} from '../types';
 import PackageManifest from '../types/PackageManifest';
 import {PublishConfig} from '../types/publish';
@@ -15,13 +16,13 @@ export interface BaseTargetConfig<T extends PublishTargetConfig> {
     config: PublishConfig,
     pkg: NewVersionToBePublished,
     targetConfig: T,
-    packageVersions: Map<string, string | null>,
+    packageVersions: Map<string, VersionNumber | null>,
   ): Promise<PrePublishResult>;
   publish(
     config: PublishConfig,
     pkg: NewVersionToBePublished,
     targetConfig: T,
-    packageVersions: Map<string, string | null>,
+    packageVersions: Map<string, VersionNumber | null>,
   ): Promise<void>;
 }
 
@@ -35,13 +36,13 @@ export interface BaseTarget {
     config: PublishConfig,
     pkg: NewVersionToBePublished,
     targetConfig: PublishTargetConfig,
-    packageVersions: Map<string, string | null>,
+    packageVersions: Map<string, VersionNumber | null>,
   ): Promise<PrePublishResult | null>;
   publish(
     config: PublishConfig,
     pkg: NewVersionToBePublished,
     targetConfig: PublishTargetConfig,
-    packageVersions: Map<string, string | null>,
+    packageVersions: Map<string, VersionNumber | null>,
   ): Promise<null | true>;
 }
 

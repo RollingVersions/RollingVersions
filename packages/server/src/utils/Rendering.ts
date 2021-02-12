@@ -4,12 +4,12 @@ import {
   PullRequest,
 } from 'rollingversions/lib/types';
 import {writeState} from 'rollingversions/lib/utils/CommentState';
-import {getNewVersion} from 'rollingversions/lib/utils/Versioning';
 import {PullRequestPackage} from '../types';
 import ChangeSet, {
   changesToMarkdown,
   isEmptyChangeSet,
 } from '@rollingversions/change-set';
+import {getNextVersion, printString} from '@rollingversions/version-number';
 
 // N.B. this comment guid must be kept in sync with the CLI for now
 export const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
@@ -19,9 +19,12 @@ export function getVersionShift(
   currentVersion: PackageManifestWithVersion,
   changes: ChangeSet,
 ) {
+  const newVersion = getNextVersion(
+    currentVersion.versionTag?.version ?? null,
+    changes,
+  );
   return `(${currentVersion.versionTag?.version || 'unreleased'} → ${
-    getNewVersion(currentVersion.versionTag?.version ?? null, changes) ||
-    'no new release'
+    newVersion ? printString(newVersion) : 'no new release'
   })`;
 }
 

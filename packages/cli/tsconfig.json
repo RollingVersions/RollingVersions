@@ -11,6 +11,7 @@
   "include": ["src"],
   "references": [
     {"path": "../change-set"},
+    {"path": "../config"},
     {"path": "../tag-format"},
     {"path": "../version-number"},
   ]

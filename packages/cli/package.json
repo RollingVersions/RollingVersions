@@ -18,6 +18,7 @@
   "dependencies": {
     "@github-graph/api": "^2.2.1",
     "@rollingversions/change-set": "^0.0.0",
+    "@rollingversions/config": "0.0.0",
     "@rollingversions/tag-format": "^0.0.0",
     "@rollingversions/version-number": "^0.0.0",
     "@types/semver": "^7.1.0",
