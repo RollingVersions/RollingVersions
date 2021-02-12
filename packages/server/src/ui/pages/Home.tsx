@@ -9,6 +9,7 @@ export default function Home() {
       <NavBar>
         <NavBarLink to="/">HOME</NavBarLink>
         <NavBarLink to="/help/github-actions">DOCS</NavBarLink>
+        <NavBarLink to="/pricing">PRICING</NavBarLink>
         <NavBarLink to="/contact">CONTACT</NavBarLink>
       </NavBar>
       <LandingPage />

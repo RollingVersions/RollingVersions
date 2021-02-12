@@ -4,6 +4,7 @@ import {render} from 'react-dom';
 import {BrowserRouter, Switch, Route} from 'react-router-dom';
 import Home from './pages/Home';
 import Docs from './pages/Docs';
+import Pricing from './pages/Pricing';
 import Contact from './pages/Contact';
 import PullChangeLog from './pages/PullChangeLog';
 import Repository from './pages/Repository';
@@ -16,6 +17,9 @@ render(
       </Route>
       <Route path="/help" exact={false}>
         <Docs />
+      </Route>
+      <Route path="/pricing" exact>
+        <Pricing />
       </Route>
       <Route path="/contact" exact>
         <Contact />
