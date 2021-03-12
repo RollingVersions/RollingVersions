@@ -17,7 +17,11 @@ export async function checkGitHubReleaseStatus(
     name,
     dirname,
     deployBranch,
-  }: Pick<PublishConfig, 'owner' | 'name' | 'dirname' | 'deployBranch'>,
+    allowNonLatestCommit,
+  }: Pick<
+    PublishConfig,
+    'owner' | 'name' | 'dirname' | 'deployBranch' | 'allowNonLatestCommit'
+  >,
   client: GitHubClient,
 ): Promise<{ok: true} | {ok: false; reason: string}> {
   const [viewer, permission, branch] = await Promise.all([
@@ -51,12 +55,14 @@ export async function checkGitHubReleaseStatus(
       reason: `Could not find a commit for the "${branch.name}" in the repository "${owner}/${name}".`,
     };
   }
-  const headSha = await getHeadSha(dirname);
-  if (headSha !== branch.headSha) {
-    return {
-      ok: false,
-      reason: `This build is not running against the latest commit in ${branch.name}. To avoid awkward race conditions we'll skip publishing here and leave publishing to the other commit.`,
-    };
+  if (!allowNonLatestCommit) {
+    const headSha = await getHeadSha(dirname);
+    if (headSha !== branch.headSha) {
+      return {
+        ok: false,
+        reason: `This build is not running against the latest commit in ${branch.name}. To avoid awkward race conditions we'll skip publishing here and leave publishing to the other commit. If this looks like the wrong branch name, you can pass a different branch name via the "--deploy-branch" CLI parameter. You can supress this warning and publish anyway by passing the "--allow-non-latest-commit" flag when calling the Rolling Versions CLI.`,
+      };
+    }
   }
 
   return {ok: true};

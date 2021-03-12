@@ -13,6 +13,7 @@ export interface PublishConfig {
   deployBranch: string | null;
   logger: PublishEventHandlers;
   canary: string | null;
+  allowNonLatestCommit: boolean;
 }
 
 export interface PublishEvents {
