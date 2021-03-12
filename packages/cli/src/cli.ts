@@ -29,6 +29,9 @@ switch (COMMAND) {
       .addParam(param.string(['-g', '--github-token'], 'githubToken'))
       .addParam(param.string(['-b', '--deploy-branch'], 'deployBranch'))
       .addParam(
+        param.flag([`--allow-non-latest-commit`], `allowNonLatestCommit`),
+      )
+      .addParam(
         param.parsedString(['--canary'], 'canary', (value) => {
           if (!value) {
             return {
@@ -60,6 +63,7 @@ switch (COMMAND) {
       githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
       deployBranch,
       canary,
+      allowNonLatestCommit = false,
     } = parserResult.parsed;
 
     if (!githubToken) {
@@ -91,6 +95,7 @@ switch (COMMAND) {
       deployBranch: deployBranch || null,
       dryRun,
       canary: canary || null,
+      allowNonLatestCommit,
       logger: {
         onValidatedPackages({packages}) {
           const hasUpdates = packages.some(
