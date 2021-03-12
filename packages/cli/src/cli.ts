@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import {changesToMarkdown} from '@rollingversions/change-set';
+import {printString} from '@rollingversions/version-number';
 import chalk from 'chalk';
 import {parse, startChain, param} from 'parameter-reducers';
 import printHelp from './commands/help';
@@ -113,7 +114,7 @@ switch (COMMAND) {
             )) {
               console.warn(
                 p.currentVersion
-                  ? `  - ${p.packageName}@${p.currentVersion}`
+                  ? `  - ${p.packageName}@${printString(p.currentVersion)}`
                   : `  - ${p.packageName}`,
               );
             }
@@ -129,9 +130,11 @@ switch (COMMAND) {
             )) {
               console.warn(
                 chalk.yellow(
-                  `## ${p.packageName} (${p.currentVersion || 'unreleased'} → ${
-                    p.newVersion
-                  })`,
+                  `## ${p.packageName} (${
+                    p.currentVersion
+                      ? printString(p.currentVersion)
+                      : 'unreleased'
+                  } → ${printString(p.newVersion)})`,
                 ),
               );
               console.warn(``);
@@ -157,7 +160,7 @@ switch (COMMAND) {
           console.warn(
             `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
               'GitHub Release',
-            )} @ ${chalk.yellow(pkg.newVersion)}${
+            )} @ ${chalk.yellow(printString(pkg.newVersion))}${
               dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
             }`,
           );
@@ -166,7 +169,7 @@ switch (COMMAND) {
           console.warn(
             `publishing ${chalk.yellow(pkg.packageName)} to ${chalk.blue(
               target.type,
-            )} @ ${chalk.yellow(pkg.newVersion)}${
+            )} @ ${chalk.yellow(printString(pkg.newVersion))}${
               dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
             }`,
           );
@@ -193,7 +196,9 @@ switch (COMMAND) {
           case PublishResultKind.PrepublishFailures:
             for (const {pkg, reasons} of result.failures) {
               console.error(
-                `Pre-release steps failed for ${pkg.packageName}@${pkg.newVersion}:`,
+                `Pre-release steps failed for ${pkg.packageName}@${printString(
+                  pkg.newVersion,
+                )}:`,
               );
               console.error(``);
               if (reasons.length === 1) {

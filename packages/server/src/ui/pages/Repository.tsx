@@ -1,3 +1,4 @@
+import {printString} from '@rollingversions/version-number';
 import React from 'react';
 import {useParams} from 'react-router-dom';
 import {RepoResponse} from '../../types';
@@ -86,8 +87,10 @@ export default function Repository() {
               <PackageWithChanges
                 key={pkg.packageName}
                 packageName={pkg.packageName}
-                currentVersion={pkg.currentVersion}
-                newVersion={pkg.newVersion}
+                currentVersion={
+                  pkg.currentVersion && printString(pkg.currentVersion)
+                }
+                newVersion={printString(pkg.newVersion)}
                 changeSet={pkg.changeSet}
               />
             ))}
@@ -95,7 +98,9 @@ export default function Repository() {
               <PackageWithNoChanges
                 key={pkg.packageName}
                 packageName={pkg.packageName}
-                currentVersion={pkg.currentVersion}
+                currentVersion={
+                  pkg.currentVersion && printString(pkg.currentVersion)
+                }
               />
             ))}
           </RepositoryPage>

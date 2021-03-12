@@ -1,5 +1,11 @@
-import {PackageManifest, PackageManifestWithVersion} from '../types';
-import getVersionTag from './getVersionTag';
+import {parseTag} from '@rollingversions/tag-format';
+import {isPrerelease, max} from '@rollingversions/version-number';
+import isTruthy from '../ts-utils/isTruthy';
+import {
+  PackageManifest,
+  PackageManifestWithVersion,
+  VersionTag,
+} from '../types';
 
 export default function addPackageVersions(
   packages: Map<string, PackageManifest>,
@@ -10,15 +16,26 @@ export default function addPackageVersions(
       string,
       PackageManifestWithVersion,
     ] => {
-      const tagFormat = manifest.tagFormat;
       return [
         packageName,
         {
           ...manifest,
-          versionTag: getVersionTag(allTags, packageName, {
-            repoHasMultiplePackages: packages.size > 1,
-            tagFormat: tagFormat || null,
-          }),
+          versionTag:
+            max(
+              allTags
+                .map((tag): VersionTag | null => {
+                  const version = parseTag(tag.name, {
+                    allowTagsWithoutPackageName: packages.size <= 1,
+                    packageName,
+                    tagFormat: manifest.tagFormat,
+                  });
+                  return version && !isPrerelease(version)
+                    ? {commitSha: tag.commitSha, name: tag.name, version}
+                    : null;
+                })
+                .filter(isTruthy),
+              (tag) => tag.version,
+            ) ?? null,
         },
       ];
     }),

@@ -97,7 +97,10 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   if (config.canary !== null) {
     for (const pkg of unsortedPackageStatuses) {
       if (pkg.status === PackageStatus.NewVersionToBePublished) {
-        pkg.newVersion = `${pkg.newVersion}-canary-${config.canary}`;
+        pkg.newVersion = {
+          ...pkg.newVersion,
+          prerelease: [`canary-${config.canary}`],
+        };
       }
     }
   }

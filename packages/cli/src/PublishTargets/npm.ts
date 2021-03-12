@@ -11,6 +11,7 @@ import {readRepoFile, writeRepoFile} from '../services/git';
 import {NpmPublishTargetConfig} from '../types/PublishTarget';
 import createPublishTargetAPI from './baseTarget';
 import {gt, prerelease} from 'semver';
+import VersionNumber, {printString} from '@rollingversions/version-number';
 
 const stringifyPackage = require('stringify-package');
 const detectIndent = require('detect-indent');
@@ -31,7 +32,7 @@ async function withNpmVersion<T>(
   config: PublishConfig,
   target: NpmPublishTargetConfig,
   newVersion: string,
-  packageVersions: Map<string, string | null>,
+  packageVersions: Map<string, VersionNumber | null>,
   fn: () => Promise<T>,
 ) {
   const original = await readRepoFile(config.dirname, target.path, 'utf8');
@@ -44,7 +45,7 @@ async function withNpmVersion<T>(
         if (version) {
           obj[key] = `${versionPrefix(obj[key], {
             canary: config.canary !== null,
-          })}${version}`;
+          })}${printString(version)}`;
         }
       }
     }
@@ -188,17 +189,18 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
         };
       }
     }
+    const semverVersion = printString(pkg.newVersion);
     if (versions) {
       const max = [...versions]
         .filter((v) => !prerelease(v))
         .reduce((a, b) => (gt(a, b) ? a : b), '0.0.0');
-      if (gt(max, pkg.newVersion)) {
+      if (gt(max, semverVersion)) {
         return {
           ok: false,
           reason: `${pkg.packageName} already has a version ${max} on npm, which is greater than the version that would be published (${pkg.newVersion}). Please add a tag/release in GitHub called "${pkg.packageName}@${max}" that points at the correct commit for ${max}`,
         };
       }
-      if (versions.has(pkg.newVersion)) {
+      if (versions.has(semverVersion)) {
         return {
           ok: false,
           reason: `${targetConfig.packageName} already has a version ${pkg.newVersion} on npm`,
@@ -209,7 +211,7 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
     await withNpmVersion(
       config,
       targetConfig,
-      pkg.newVersion,
+      semverVersion,
       packageVersions,
       async () => {
         await npmPublish(config.dirname, targetConfig.path, {
@@ -226,7 +228,7 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
     await withNpmVersion(
       config,
       targetConfig,
-      pkg.newVersion,
+      printString(pkg.newVersion),
       packageVersions,
       async () => {
         await npmPublish(config.dirname, targetConfig.path, {

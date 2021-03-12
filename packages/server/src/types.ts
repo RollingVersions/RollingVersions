@@ -7,18 +7,19 @@ import Permission, {PermissionCodec} from './server/permissions/Permission';
 import {ModernChangeSetCodec} from 'rollingversions/lib/types/PullRequestState';
 import {PackageManifestWithVersion} from 'rollingversions/lib/types/PackageManifest';
 import ChangeSet from '@rollingversions/change-set';
+import VersionNumber from '@rollingversions/version-number';
 
 export interface RepoResponse {
   headSha: string | null;
   packagesWithChanges: readonly {
     packageName: string;
     changeSet: ChangeSet<{pr: number}>;
-    currentVersion: string | null;
-    newVersion: string;
+    currentVersion: VersionNumber | null;
+    newVersion: VersionNumber;
   }[];
   packagesWithNoChanges: readonly {
     packageName: string;
-    currentVersion: string | null;
+    currentVersion: VersionNumber | null;
   }[];
   cycleDetected: readonly string[] | null;
 }

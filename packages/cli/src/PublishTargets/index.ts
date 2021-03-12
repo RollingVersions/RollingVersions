@@ -1,3 +1,4 @@
+import VersionNumber from '@rollingversions/version-number';
 import {PackageManifest, PrePublishResult, PublishConfig} from '../types';
 
 import isTruthy from '../ts-utils/isTruthy';
@@ -32,7 +33,7 @@ export async function getPackageManifests(
 export async function prepublish(
   config: PublishConfig,
   pkg: NewVersionToBePublished,
-  packageVersions: Map<string, string | null>,
+  packageVersions: Map<string, VersionNumber | null>,
   allTagNames: Set<string>,
 ): Promise<PrePublishResult[]> {
   const results = await Promise.all(
@@ -54,7 +55,7 @@ export async function prepublish(
 export async function publish(
   config: PublishConfig,
   pkg: NewVersionToBePublished,
-  packageVersions: Map<string, string | null>,
+  packageVersions: Map<string, VersionNumber | null>,
   client: GitHubClient,
 ) {
   for (const target of pkg.manifest.targetConfigs) {

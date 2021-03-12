@@ -10,7 +10,6 @@ import {PrePublishResult, PublishConfig} from '../types';
 import {NewVersionToBePublished} from '../utils/getPackageStatuses';
 import {changesToMarkdown} from '@rollingversions/change-set';
 import {printTag} from '@rollingversions/tag-format';
-import {parseString} from '@rollingversions/version-number';
 
 export async function checkGitHubReleaseStatus(
   {
@@ -69,7 +68,7 @@ export function checkGitHubTagAvailable(
   allTagNames: Set<string>,
 ): PrePublishResult {
   if (canary === null) {
-    const tagName = printTag(parseString(pkg.newVersion)!, {
+    const tagName = printTag(pkg.newVersion, {
       packageName: pkg.packageName,
       oldTagName: pkg.currentTagName,
       tagFormat: pkg.manifest.tagFormat,
@@ -90,7 +89,7 @@ export async function createGitHubRelease(
   if (canary) {
     logger.onCanaryGitHubRelease?.({pkg, dryRun});
   } else {
-    const tagName = printTag(parseString(pkg.newVersion)!, {
+    const tagName = printTag(pkg.newVersion, {
       packageName: pkg.packageName,
       oldTagName: pkg.currentTagName,
       tagFormat: pkg.manifest.tagFormat,

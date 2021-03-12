@@ -277,6 +277,40 @@ function sorter(order: 1 | -1) {
 export const sortAscending = sorter(1);
 export const sortDescending = sorter(-1);
 
+function limit(order: 1 | -1) {
+  function getLimit(
+    versions: readonly VersionNumber[],
+  ): VersionNumber | undefined;
+  function getLimit<T>(
+    versions: readonly T[],
+    getVersionNumber: (value: T) => VersionNumber,
+  ): T | undefined;
+  function getLimit<T>(
+    versions: readonly T[],
+    getVersionNumber: (value: T) => VersionNumber = (value: any) => value,
+  ): T | undefined {
+    let limit: T | undefined;
+    let limitV: VersionNumber | undefined;
+    for (const v of versions) {
+      if (limitV === undefined) {
+        limit = v;
+        limitV = getVersionNumber(v);
+      } else {
+        const version = getVersionNumber(v);
+        const comparison = _compare(limitV, version);
+        if (comparison === order) {
+          limit = v;
+          limitV = version;
+        }
+      }
+    }
+    return limit;
+  }
+  return getLimit;
+}
+export const min = limit(1);
+export const max = limit(-1);
+
 export function getNextVersion(
   currentVersion: VersionNumber | null,
   changeSet: readonly {readonly type: ChangeTypeID}[],

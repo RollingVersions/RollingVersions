@@ -1,5 +1,6 @@
 import {dirname, resolve} from 'path';
 import * as toml from 'toml';
+import VersionNumber, {printString} from '@rollingversions/version-number';
 import {PublishTarget, PublishConfig, PackageManifest} from '../types';
 import isObject from '../ts-utils/isObject';
 import {execBuffered} from 'modern-spawn';
@@ -154,8 +155,8 @@ export default createPublishTargetAPI<CustomScriptTargetConfig>({
 
 function getEnv(
   config: PublishConfig,
-  newVersion: string,
-  packageVersions: Map<string, string | null>,
+  newVersion: VersionNumber,
+  packageVersions: Map<string, VersionNumber | null>,
 ) {
   const env: {[key: string]: string | undefined} = {...process.env};
   if (config.canary) {
@@ -171,10 +172,10 @@ function getEnv(
   env.GITHUB_REPOSITORY_OWNER = config.owner;
   env.GITHUB_REPOSITORY_NAME = config.name;
 
-  env.NEW_VERSION = newVersion;
+  env.NEW_VERSION = printString(newVersion);
   for (const [name, version] of packageVersions) {
     if (version !== null) {
-      env[dependencyNameToEnvVar(name)] = version;
+      env[dependencyNameToEnvVar(name)] = printString(version);
     }
   }
   return env;

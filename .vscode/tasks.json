@@ -1,0 +1,46 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "install",
+			"group": "build",
+			"label": "Build - Install Dependencies",
+			"presentation": {
+				"reveal": "always",
+			},
+			"isBackground": false,
+		},
+		{
+			"type": "npm",
+			"script": "build:codegen",
+			"group": "build",
+			"label": "Build - Codegen",
+			"presentation": {
+				"reveal": "always",
+			},
+			"isBackground": false,
+		},
+		{
+			"type": "npm",
+			"script": "build:ts:watch",
+			"group": "build",
+			"label": "Build - TypeScript",
+			"problemMatcher": ["$tsc-watch"],
+			"presentation": {
+				"reveal": "never",
+			},
+			"isBackground": true,
+		},
+		{
+			"type": "npm",
+			"script": "database:introspect",
+			"group": "build",
+			"label": "Database - Introspect",
+			"presentation": {
+				"reveal": "always",
+			},
+			"isBackground": false,
+		},
+	]
+}

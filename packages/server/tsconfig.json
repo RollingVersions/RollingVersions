@@ -15,6 +15,8 @@
     {"path": "../change-set"},
     {"path": "../cli"},
     {"path": "../config"},
+    {"path": "../tag-format"},
+    {"path": "../version-number"},
     {"path": "../db"},
   ],
 }

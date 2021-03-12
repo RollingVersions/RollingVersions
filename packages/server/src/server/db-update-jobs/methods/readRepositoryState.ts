@@ -4,11 +4,11 @@ import {GitHubClient} from '../../services/github';
 import addRepository from '../procedures/addRepository';
 import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
 import {Logger} from '../../logger';
-import {getNewVersion} from 'rollingversions/lib/utils/Versioning';
 import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
 import {getPackageManifests} from '../../models/PackageManifests';
 import {createChangeSet} from '@rollingversions/change-set';
+import {getNextVersion} from '@rollingversions/version-number';
 
 export default async function readRepositoryState(
   db: Queryable,
@@ -73,7 +73,7 @@ export default async function readRepositoryState(
             pr: change.pr_number,
           })),
         );
-        const newVersion = getNewVersion(currentVersion, changeSet);
+        const newVersion = getNextVersion(currentVersion, changeSet);
         if (!newVersion) {
           return {
             status: PackageStatus.NoUpdateRequired,

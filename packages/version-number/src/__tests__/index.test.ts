@@ -3,6 +3,8 @@ import {
   gt,
   increment,
   lt,
+  max,
+  min,
   normalize,
   parseString,
   printString,
@@ -157,6 +159,17 @@ test('sortDescending', () => {
   expect(
     sortDescending(['2.0.0', '1.0.0', '3.0.0'], (v) => parseString(v)!),
   ).toEqual(['3.0.0', '2.0.0', '1.0.0']);
+});
+
+test('min', () => {
+  expect(min(['2.0.0', '1.0.0', '3.0.0'], (v) => parseString(v)!)).toBe(
+    '1.0.0',
+  );
+});
+test('max', () => {
+  expect(max(['2.0.0', '1.0.0', '3.0.0'], (v) => parseString(v)!)).toBe(
+    '3.0.0',
+  );
 });
 
 test('getNextVersion', () => {
