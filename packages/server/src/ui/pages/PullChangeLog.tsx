@@ -1,9 +1,10 @@
 import React from 'react';
 import {useParams} from 'react-router-dom';
+
 import usePullRequest from '../hooks/usePullRequest';
-import PullRequestPage from '../visual/PullRequestPage';
 import AppContainer from '../visual/AppContainer';
 import AppNavBar, {AppNavBarLink} from '../visual/AppNavBar';
+import PullRequestPage from '../visual/PullRequestPage';
 
 interface Params {
   owner: string;

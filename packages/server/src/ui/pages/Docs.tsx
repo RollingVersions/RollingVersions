@@ -1,8 +1,9 @@
 import * as React from 'react';
 import {useRouteMatch} from 'react-router-dom';
+
+import DocsPage from '../visual/DocsPage';
 import NavBar from '../visual/NavBar';
 import NavBarLink from '../visual/NavBarLink';
-import DocsPage from '../visual/DocsPage';
 
 export default function Docs() {
   const match = useRouteMatch<{selected: string}>('/help/:selected');

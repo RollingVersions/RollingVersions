@@ -1,10 +1,12 @@
 import React from 'react';
+
 import {InstallButton} from '../HeroBar';
+import CircleCI from './circleCI';
 import {Heading, Instruction, Details} from './docsFormats';
 import GithubActions from './githubActions';
-import CircleCI from './circleCI';
 import MonoRepos from './monoRepos';
-import Selector, {CIservice} from './selector';
+import type {CIservice} from './selector';
+import Selector from './selector';
 
 export default function Docs({
   selected,

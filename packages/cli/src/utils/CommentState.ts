@@ -1,6 +1,5 @@
-import PullRequestState, {
-  PullRequestStateCodec,
-} from '../types/PullRequestState';
+import type PullRequestState from '../types/PullRequestState';
+import {PullRequestStateCodec} from '../types/PullRequestState';
 
 const stateRegex = /<!-- """[a-zA-Z ]+ State Start""" (.*) """[a-zA-Z ]+ State End""" -->/;
 export function readState(body?: string): PullRequestState | undefined {

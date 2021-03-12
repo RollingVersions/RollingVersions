@@ -1,6 +1,8 @@
 import React from 'react';
+
 import {PublishTarget} from 'rollingversions/lib/types';
-import {PublishTargetConfig} from 'rollingversions/src/types/PublishTarget';
+import type {PublishTargetConfig} from 'rollingversions/src/types/PublishTarget';
+
 import Alert from '../Alert';
 
 export interface RegistryStatusProps {

@@ -1,15 +1,15 @@
+import {changesToMarkdown} from '@rollingversions/change-set';
+import {printTag} from '@rollingversions/tag-format';
+
+import {getHeadSha} from '../services/git';
+import type {GitHubClient} from '../services/github';
 import {
-  GitHubClient,
   getRepositoryViewerPermissions,
   getBranch,
   getViewer,
 } from '../services/github';
-import {getHeadSha} from '../services/git';
-
-import {PrePublishResult, PublishConfig} from '../types';
-import {NewVersionToBePublished} from '../utils/getPackageStatuses';
-import {changesToMarkdown} from '@rollingversions/change-set';
-import {printTag} from '@rollingversions/tag-format';
+import type {PrePublishResult, PublishConfig} from '../types';
+import type {NewVersionToBePublished} from '../utils/getPackageStatuses';
 
 export async function checkGitHubReleaseStatus(
   {
@@ -33,7 +33,7 @@ export async function checkGitHubReleaseStatus(
     getBranch(client, {owner, name}, deployBranch),
   ]);
   if (
-    viewer?.login !== 'github-actions[bot]' &&
+    viewer.login !== 'github-actions[bot]' &&
     (!permission || !['ADMIN', 'MAINTAIN', 'WRITE'].includes(permission))
   ) {
     return {

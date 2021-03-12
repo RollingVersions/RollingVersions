@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {MemoryRouter} from 'react-router-dom';
-import LandingPage from './';
+
+import LandingPage from '.';
 import NavBar from '../NavBar';
 import NavBarLink from '../NavBarLink';
 

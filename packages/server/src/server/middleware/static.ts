@@ -1,8 +1,10 @@
 import {readFileSync} from 'fs';
+
 import {Router, static as expressStatic} from 'express';
+
 import {requiresAuth} from './auth';
-import validateParams, {validateRepoParams} from './utils/validateParams';
 import checkPermissions, {checkRepoPermissions} from './utils/checkPermissions';
+import validateParams, {validateRepoParams} from './utils/validateParams';
 
 const staticMiddleware = Router();
 
@@ -62,7 +64,7 @@ staticMiddleware.get(
 );
 
 staticMiddleware.get('/*', async (req, res, next) => {
-  if (/^\/static\//.test(req.path)) {
+  if (req.path.startsWith('/static/')) {
     next();
     return;
   }

@@ -1,5 +1,6 @@
-import {Response, Request} from 'express';
+import type {Response, Request} from 'express';
 import {showError} from 'funtypes';
+
 import {UpdatePullRequestBody} from '../../../types';
 
 export default function validateBody() {

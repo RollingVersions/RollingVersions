@@ -1,7 +1,8 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
-import Logo from '../Logo';
+
 import InstallIcon from '../HeroBar/install-icon.svg';
+import Logo from '../Logo';
 
 export interface NavBarProps {
   children?: React.ReactNode;

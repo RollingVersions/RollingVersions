@@ -1,4 +1,5 @@
 import React from 'react';
+
 import ContactsPage from '../visual/ContactsPage';
 import NavBar from '../visual/NavBar';
 import NavBarLink from '../visual/NavBarLink';

@@ -1,5 +1,5 @@
-import {checkGitHubReleaseStatus} from '../github';
 import {createRepository} from '../../services/__mock_services__';
+import {checkGitHubReleaseStatus} from '../github';
 
 test('checkGitHubReleaseStatus', async () => {
   const {repo, dirname, newCommit} = createRepository();

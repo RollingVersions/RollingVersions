@@ -1,10 +1,11 @@
-import express from 'express';
 import {json} from 'body-parser';
-import webhooks from './webhooks';
+import express from 'express';
+
+import {errorLoggingMiddlware, expressMiddlewareLogger} from './logger';
+import appMiddleware from './middleware/app';
 import authMiddleware from './middleware/auth';
 import staticMiddleware from './middleware/static';
-import appMiddleware from './middleware/app';
-import {errorLoggingMiddlware, expressMiddlewareLogger} from './logger';
+import webhooks from './webhooks';
 
 const app = express();
 type EventSource = typeof EventSource;

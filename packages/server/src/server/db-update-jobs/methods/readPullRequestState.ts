@@ -1,27 +1,26 @@
-import ChangeSet, {ChangeSetEntry} from '@rollingversions/change-set';
-import {
+import type {ChangeSetEntry} from '@rollingversions/change-set';
+import type ChangeSet from '@rollingversions/change-set';
+import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
+import type {
   PullRequest,
   PackageManifestWithVersion,
 } from 'rollingversions/lib/types';
+import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
+
+import type {Logger} from '../../logger';
+import {getPackageManifests} from '../../models/PackageManifests';
+import type {GitHubClient, GitHubCommit} from '../../services/github';
+import {getAllPullRequestCommits} from '../../services/github';
+import type {Queryable} from '../../services/postgres';
 import {
-  Queryable,
   getChangesForPullRequest,
   getCommitIdFromSha,
   isPullRequestReleased,
 } from '../../services/postgres';
-import {
-  GitHubClient,
-  getAllPullRequestCommits,
-  GitHubCommit,
-} from '../../services/github';
 import addRepository from '../procedures/addRepository';
-import upsertPullRequest from '../procedures/upsertPullRequest';
-import upsertCommits from '../procedures/upsertCommits';
-import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
-import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import readRepository from '../procedures/readRepository';
-import {Logger} from '../../logger';
-import {getPackageManifests} from '../../models/PackageManifests';
+import upsertCommits from '../procedures/upsertCommits';
+import upsertPullRequest from '../procedures/upsertPullRequest';
 
 interface PullRequestPackage {
   manifest: PackageManifestWithVersion;
@@ -195,11 +194,11 @@ async function getPackageManifestsForPr(
     // (once we are able to display changes on packages that no longer exist)
     const id = await getCommitIdFromSha(db, repo.id, head.commit_sha);
     if (id) {
-      return getPackageManifests(db, client, id, logger);
+      return await getPackageManifests(db, client, id, logger);
     }
   }
   if (repo.head) {
-    return getPackageManifests(db, client, repo.head.id, logger);
+    return await getPackageManifests(db, client, repo.head.id, logger);
   }
   // TODO: report this error to users
   throw new Error('Could not find package manifests for this pull request');

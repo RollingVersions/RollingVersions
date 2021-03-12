@@ -1,14 +1,16 @@
-import {Repository} from 'rollingversions/lib/types';
-import {Queryable, getAllUnreleasedChanges} from '../../services/postgres';
-import {GitHubClient} from '../../services/github';
-import addRepository from '../procedures/addRepository';
-import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
-import {Logger} from '../../logger';
-import PackageStatus from 'rollingversions/lib/types/PackageStatus';
-import {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
-import {getPackageManifests} from '../../models/PackageManifests';
 import {createChangeSet} from '@rollingversions/change-set';
 import {getNextVersion} from '@rollingversions/version-number';
+import type {Repository} from 'rollingversions/lib/types';
+import PackageStatus from 'rollingversions/lib/types/PackageStatus';
+import addPackageVersions from 'rollingversions/lib/utils/addPackageVersions';
+import type {PackageStatusDetail} from 'rollingversions/lib/utils/getPackageStatuses';
+
+import type {Logger} from '../../logger';
+import {getPackageManifests} from '../../models/PackageManifests';
+import type {GitHubClient} from '../../services/github';
+import {getAllUnreleasedChanges} from '../../services/postgres';
+import type {Queryable} from '../../services/postgres';
+import addRepository from '../procedures/addRepository';
 
 export default async function readRepositoryState(
   db: Queryable,

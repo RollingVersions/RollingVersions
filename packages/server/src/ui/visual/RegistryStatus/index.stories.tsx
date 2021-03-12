@@ -1,6 +1,8 @@
 import * as React from 'react';
-import RegistryStatus from './';
+
 import {PublishTarget} from 'rollingversions/lib/types';
+
+import RegistryStatus from '.';
 
 export default {title: 'modules/RegistryStatus'};
 

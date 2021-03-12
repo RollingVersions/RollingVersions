@@ -1,6 +1,7 @@
-import * as React from 'react';
 import {action} from '@storybook/addon-actions';
-import SaveChangeLogFooter from './';
+import * as React from 'react';
+
+import SaveChangeLogFooter from '.';
 
 export default {title: 'modules/SaveChangeLogFooter'};
 

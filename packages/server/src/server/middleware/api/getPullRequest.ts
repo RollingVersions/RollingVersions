@@ -1,10 +1,11 @@
-import {PullRequest} from 'rollingversions/lib/types';
-import {Logger} from '../../logger';
-import {Permission, User} from '../utils/checkPermissions';
-import {GitHubClient} from '../../services/github';
-import {PullRequestResponse} from '../../../types';
-import {db} from '../../services/postgres';
+import type {PullRequest} from 'rollingversions/lib/types';
+
+import type {PullRequestResponse} from '../../../types';
 import readPullRequestState from '../../db-update-jobs/methods/readPullRequestState';
+import type {Logger} from '../../logger';
+import type {GitHubClient} from '../../services/github';
+import {db} from '../../services/postgres';
+import type {Permission, User} from '../utils/checkPermissions';
 
 export default async function getPullRequest(
   client: GitHubClient,

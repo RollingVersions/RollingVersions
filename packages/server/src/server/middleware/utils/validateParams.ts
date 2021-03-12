@@ -1,5 +1,6 @@
-import {Response, Request} from 'express';
-import {PullRequest, Repository} from 'rollingversions/lib/types';
+import type {Response, Request} from 'express';
+
+import type {PullRequest, Repository} from 'rollingversions/lib/types';
 
 const validRequests = new WeakSet<Request>();
 export default function validateParams() {

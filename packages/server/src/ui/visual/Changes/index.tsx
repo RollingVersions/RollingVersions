@@ -1,8 +1,10 @@
 import React, {useEffect} from 'react';
-import ChangeInput, {ChangeInputList} from '../ChangeInput';
+
+import type ChangeSet from '@rollingversions/change-set';
+import type {ChangeTypeID} from '@rollingversions/config';
+
 import getLocalId from '../../utils/getLocalId';
-import ChangeSet from '@rollingversions/change-set';
-import {ChangeTypeID} from '@rollingversions/config';
+import ChangeInput, {ChangeInputList} from '../ChangeInput';
 
 function useIsMouseDownRef() {
   const mouseDownRef = React.useRef(false);

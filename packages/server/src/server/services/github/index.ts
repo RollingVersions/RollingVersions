@@ -2,11 +2,13 @@ import GitHubClient, {
   auth,
   OptionsWithAuth as GitHubOptions,
 } from '@github-graph/api';
-import {Repository} from 'rollingversions/lib/types';
+import retry from 'then-retry';
+
 import paginateBatched from 'rollingversions/lib/services/github/paginateBatched';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
+import type {Repository} from 'rollingversions/lib/types';
+
 import * as queries from './github-graph';
-import retry from 'then-retry';
 
 export {GitHubClient};
 export {auth, GitHubOptions};
@@ -55,9 +57,9 @@ export async function getDefaultBranch(client: GitHubClient, repo: Repository) {
   if (!branch) {
     return null;
   }
-  if (branch?.target.__typename !== 'Commit') {
+  if (branch.target.__typename !== 'Commit') {
     throw new Error(
-      `Expected branch target to be "Commit" but got "${branch?.target.__typename}"`,
+      `Expected branch target to be "Commit" but got "${branch.target.__typename}"`,
     );
   }
   return {
@@ -121,7 +123,7 @@ export async function* getCommitHistory(
     async (token) => {
       const currentPageSize = pageSize;
       pageSize = Math.min(100, pageSize + 20);
-      return retry(() =>
+      return await retry(() =>
         queries.getAllCommitHistory(client, {
           commitID,
           pageSize: currentPageSize,
@@ -135,7 +137,7 @@ export async function* getCommitHistory(
           `Expected a Commit but got ${page.node?.__typename || 'undefined'}`,
         );
       }
-      return page.node?.__typename === 'Commit'
+      return page.node.__typename === 'Commit'
         ? page.node.history.nodes || []
         : [];
     },
@@ -158,7 +160,7 @@ export async function* getAllRefCommits(
     async (token) => {
       const currentPageSize = pageSize;
       pageSize = Math.min(100, pageSize + 20);
-      return retry(() =>
+      return await retry(() =>
         queries.getAllRefCommits(client, {
           owner: repo.owner,
           name: repo.name,
@@ -170,12 +172,12 @@ export async function* getAllRefCommits(
     },
     (page) =>
       page.repository?.ref?.target.__typename === 'Commit'
-        ? page.repository.ref?.target.history.nodes || []
+        ? page.repository.ref.target.history.nodes || []
         : [],
     (page) =>
       page.repository?.ref?.target.__typename === 'Commit' &&
       page.repository.ref.target.history.pageInfo.hasNextPage
-        ? page.repository?.ref?.target.history.pageInfo.endCursor || undefined
+        ? page.repository.ref.target.history.pageInfo.endCursor || undefined
         : undefined,
   )) {
     yield result.filter(isTruthy).map(formatCommit);
@@ -190,7 +192,7 @@ export async function* getAllDefaultBranchCommits(
     async (token) => {
       const currentPageSize = pageSize;
       pageSize = Math.min(100, pageSize + 20);
-      return queries.getAllDefaultBranchCommits(client, {
+      return await queries.getAllDefaultBranchCommits(client, {
         ...repo,
         pageSize: currentPageSize,
         after: token,
@@ -198,13 +200,12 @@ export async function* getAllDefaultBranchCommits(
     },
     (page) =>
       page.repository?.branch?.target.__typename === 'Commit'
-        ? page.repository.branch?.target.history.nodes || []
+        ? page.repository.branch.target.history.nodes || []
         : [],
     (page) =>
       page.repository?.branch?.target.__typename === 'Commit' &&
       page.repository.branch.target.history.pageInfo.hasNextPage
-        ? page.repository?.branch?.target.history.pageInfo.endCursor ||
-          undefined
+        ? page.repository.branch.target.history.pageInfo.endCursor || undefined
         : undefined,
   )) {
     yield result.filter(isTruthy).map(formatCommit);
@@ -318,7 +319,7 @@ export async function* getAllPullRequestCommits(
     async (token) => {
       const currentPagesize = pageSize;
       pageSize = Math.min(100, pageSize + 5);
-      return queries.getAllPullRequestCommits(client, {
+      return await queries.getAllPullRequestCommits(client, {
         owner: repo.owner,
         name: repo.name,
         number: prNumber,

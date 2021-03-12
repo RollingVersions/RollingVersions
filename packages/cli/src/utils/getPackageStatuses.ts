@@ -1,14 +1,23 @@
 import DataLoader from 'dataloader';
-import {GitHubClient, readComments} from '../services/github';
-import {Repository, PullRequest, PackageManifestWithVersion} from '../types';
-import {readState} from './CommentState';
-import isTruthy from '../ts-utils/isTruthy';
-import PackageStatus from '../types/PackageStatus';
-import ChangeSet, {
+
+import type ChangeSet from '@rollingversions/change-set';
+import {
   addContextToChangeSet,
   mergeChangeSets,
 } from '@rollingversions/change-set';
-import VersionNumber, {getNextVersion} from '@rollingversions/version-number';
+import type VersionNumber from '@rollingversions/version-number';
+import {getNextVersion} from '@rollingversions/version-number';
+
+import type {GitHubClient} from '../services/github';
+import {readComments} from '../services/github';
+import isTruthy from '../ts-utils/isTruthy';
+import type {
+  Repository,
+  PullRequest,
+  PackageManifestWithVersion,
+} from '../types';
+import PackageStatus from '../types/PackageStatus';
+import {readState} from './CommentState';
 
 // N.B. This comment GUID must be kept in sync with the server code for now
 const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;

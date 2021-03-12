@@ -1,15 +1,17 @@
+import {getAllTags as getAllTagsGh} from 'rollingversions/lib/services/github';
+import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
+import type {Repository} from 'rollingversions/lib/types';
+
+import type {Logger} from '../../logger';
+import {getCommitHistory} from '../../services/github';
+import type {GitHubClient} from '../../services/github';
 import {
-  Queryable,
   getCommitIdFromSha,
   upsertTag,
   getAllTags as getAllTagsPg,
 } from '../../services/postgres';
-import {GitHubClient, getCommitHistory} from '../../services/github';
-import {Repository} from 'rollingversions/lib/types';
-import {getAllTags as getAllTagsGh} from 'rollingversions/lib/services/github';
+import type {Queryable} from '../../services/postgres';
 import upsertCommits from './upsertCommits';
-import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
-import {Logger} from '../../logger';
 
 export default async function getAllTags(
   db: Queryable,

@@ -1,6 +1,7 @@
 import React from 'react';
-import CircleCIWorkflowsCode from './circleCIWorkflowsCode';
+
 import CircleCIJobsCode from './circleCIJobsCode';
+import CircleCIWorkflowsCode from './circleCIWorkflowsCode';
 import {Instruction, Details, InlineCode} from './docsFormats';
 
 export default function CircleCI() {

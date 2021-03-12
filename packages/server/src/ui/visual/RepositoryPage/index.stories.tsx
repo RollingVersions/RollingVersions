@@ -1,15 +1,17 @@
 import * as React from 'react';
 import {MemoryRouter} from 'react-router-dom';
-import AppNavBar, {AppNavBarLink} from '../AppNavBar';
-import AppContainer from '../AppContainer';
+
+import {createChangeSet} from '@rollingversions/change-set';
+
+import type {RepositoryPageProps} from '.';
 import RepositoryPage, {
   CycleWarning,
   PackageWithChanges,
   PackageWithNoChanges,
   ReleaseButton,
-  RepositoryPageProps,
-} from './';
-import {createChangeSet} from '@rollingversions/change-set';
+} from '.';
+import AppContainer from '../AppContainer';
+import AppNavBar, {AppNavBarLink} from '../AppNavBar';
 
 export default {title: 'pages/RepositoryPage'};
 

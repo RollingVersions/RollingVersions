@@ -1,9 +1,10 @@
-import VersionNumber from '@rollingversions/version-number';
-import {PrePublishResult} from '../types';
-import PackageManifest from '../types/PackageManifest';
-import {PublishConfig} from '../types/publish';
-import {PublishTargetConfig} from '../types/PublishTarget';
-import {NewVersionToBePublished} from '../utils/getPackageStatuses';
+import type VersionNumber from '@rollingversions/version-number';
+
+import type {PrePublishResult} from '../types';
+import type PackageManifest from '../types/PackageManifest';
+import type {PublishConfig} from '../types/publish';
+import type {PublishTargetConfig} from '../types/PublishTarget';
+import type {NewVersionToBePublished} from '../utils/getPackageStatuses';
 
 export interface BaseTargetConfig<T extends PublishTargetConfig> {
   type: T['type'];

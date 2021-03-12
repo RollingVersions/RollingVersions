@@ -8,8 +8,8 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitCommit from './git_commits';
-import DbGitRepository from './git_repositories';
+import type DbGitCommit from './git_commits';
+import type DbGitRepository from './git_repositories';
 
 interface DbGitTag {
   git_repository_id: DbGitRepository['id'];

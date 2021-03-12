@@ -1,8 +1,9 @@
-import WebhooksApi from '@octokit/webhooks';
-import {db} from '../../services/postgres';
+import type WebhooksApi from '@octokit/webhooks';
+
 import {getClientForEvent} from '../../getClient';
+import type {Logger} from '../../logger';
+import {db} from '../../services/postgres';
 import addRepository from '../procedures/addRepository';
-import {Logger} from '../../logger';
 
 export default async function onPush(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadPush>,

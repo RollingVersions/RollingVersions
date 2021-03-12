@@ -1,6 +1,7 @@
 import * as React from 'react';
-import DocsPage from './';
 import {MemoryRouter, useRouteMatch} from 'react-router-dom';
+
+import DocsPage from '.';
 import NavBar from '../NavBar';
 import NavBarLink from '../NavBarLink';
 

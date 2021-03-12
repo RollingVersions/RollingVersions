@@ -3,5 +3,8 @@
   "linterOptions": {
     "exclude": ["coverage/", "dist/", "**/node_modules/**"]
   },
-  "rules": {}
+  "rules": {
+    "no-duplicate-imports": false,
+    "no-void-expression": false
+  }
 }

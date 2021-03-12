@@ -10,7 +10,7 @@ import {
   printString,
   sortAscending,
   sortDescending,
-} from '../';
+} from '..';
 
 test('parseString', () => {
   expect(parseString('1.0.0')).toEqual({

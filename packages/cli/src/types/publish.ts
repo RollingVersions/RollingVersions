@@ -1,8 +1,8 @@
-import {
+import type {
   PackageStatusDetail,
   NewVersionToBePublished,
 } from '../utils/getPackageStatuses';
-import {PublishTargetConfig} from './PublishTarget';
+import type {PublishTargetConfig} from './PublishTarget';
 
 export interface PublishConfig {
   dryRun: boolean;

@@ -5,7 +5,7 @@ import {
   extractChanges,
   isEmptyChangeSet,
   mergeChangeSets,
-} from '../';
+} from '..';
 
 test('createChangeSet', () => {
   expect(

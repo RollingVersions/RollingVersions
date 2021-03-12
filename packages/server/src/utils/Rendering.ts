@@ -1,15 +1,15 @@
 import {URL} from 'url';
-import {
+
+import type ChangeSet from '@rollingversions/change-set';
+import {changesToMarkdown, isEmptyChangeSet} from '@rollingversions/change-set';
+import {getNextVersion, printString} from '@rollingversions/version-number';
+import type {
   PackageManifestWithVersion,
   PullRequest,
 } from 'rollingversions/lib/types';
 import {writeState} from 'rollingversions/lib/utils/CommentState';
-import {PullRequestPackage} from '../types';
-import ChangeSet, {
-  changesToMarkdown,
-  isEmptyChangeSet,
-} from '@rollingversions/change-set';
-import {getNextVersion, printString} from '@rollingversions/version-number';
+
+import type {PullRequestPackage} from '../types';
 
 // N.B. this comment guid must be kept in sync with the CLI for now
 export const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
@@ -23,9 +23,11 @@ export function getVersionShift(
     currentVersion.versionTag?.version ?? null,
     changes,
   );
-  return `(${currentVersion.versionTag?.version || 'unreleased'} → ${
-    newVersion ? printString(newVersion) : 'no new release'
-  })`;
+  return `(${
+    currentVersion.versionTag?.version
+      ? printString(currentVersion.versionTag.version)
+      : 'unreleased'
+  } → ${newVersion ? printString(newVersion) : 'no new release'})`;
 }
 
 export function getUrlForChangeLog(

@@ -1,7 +1,8 @@
 import {parseTag} from '@rollingversions/tag-format';
 import {isPrerelease, max} from '@rollingversions/version-number';
+
 import isTruthy from '../ts-utils/isTruthy';
-import {
+import type {
   PackageManifest,
   PackageManifestWithVersion,
   VersionTag,

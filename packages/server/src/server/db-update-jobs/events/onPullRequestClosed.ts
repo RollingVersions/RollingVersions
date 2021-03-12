@@ -1,8 +1,9 @@
-import WebhooksApi from '@octokit/webhooks';
+import type WebhooksApi from '@octokit/webhooks';
+
+import {getClientForEvent} from '../../getClient';
+import type {Logger} from '../../logger';
 import {updatePullRequest, db} from '../../services/postgres';
 import addRepository from '../procedures/addRepository';
-import {getClientForEvent} from '../../getClient';
-import {Logger} from '../../logger';
 
 export default async function onPullRequestClosed(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadPullRequest>,

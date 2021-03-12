@@ -1,7 +1,9 @@
 import * as React from 'react';
-import PackageChangeSet from './';
-import {PublishTarget} from 'rollingversions/lib/types';
+
 import {createChangeSet} from '@rollingversions/change-set';
+import {PublishTarget} from 'rollingversions/lib/types';
+
+import PackageChangeSet from '.';
 
 export default {title: 'modules/PackageChangeSet'};
 

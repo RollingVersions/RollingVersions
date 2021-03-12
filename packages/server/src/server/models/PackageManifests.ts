@@ -1,12 +1,14 @@
-import DbGitCommit from '@rollingversions/db/git_commits';
-import {PackageManifestRecordsV2_InsertParameters as InsertParameters} from '@rollingversions/db/package_manifest_records_v2';
-import listPackages from 'rollingversions/lib/utils/listPackages';
+import type {Queryable} from '@rollingversions/db';
+import {tables} from '@rollingversions/db';
+import type DbGitCommit from '@rollingversions/db/git_commits';
+import type {PackageManifestRecordsV2_InsertParameters as InsertParameters} from '@rollingversions/db/package_manifest_records_v2';
 import {getAllFiles} from 'rollingversions/lib/services/github';
-import {GitHubClient} from '../services/github';
-import {PackageManifest} from 'rollingversions/lib/types';
-import {Logger} from '../logger';
-import {tables, Queryable} from '@rollingversions/db';
+import type {PackageManifest} from 'rollingversions/lib/types';
+import listPackages from 'rollingversions/lib/utils/listPackages';
+
 import dedupeByKey from '../../utils/dedupeByKey';
+import type {Logger} from '../logger';
+import type {GitHubClient} from '../services/github';
 
 export type PackageManifests = Map<string, PackageManifest>;
 
@@ -21,7 +23,7 @@ export async function getPackageManifests(
   commitID: DbGitCommit['id'],
   logger: Logger,
 ): Promise<PackageManifests> {
-  return dedupe(commitID, async () => {
+  return await dedupe(commitID, async () => {
     const commit = await tables.git_commits(db).findOne({id: commitID});
     if (!commit) {
       // unable to find the commit, assume no packages

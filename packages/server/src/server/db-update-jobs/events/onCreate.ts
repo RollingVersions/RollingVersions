@@ -1,18 +1,19 @@
-import WebhooksApi from '@octokit/webhooks';
+import type WebhooksApi from '@octokit/webhooks';
+
+import {getClientForEvent} from '../../getClient';
+import type {Logger} from '../../logger';
+import {
+  getAllRefCommits,
+  getRef,
+  getCommitHistory,
+} from '../../services/github';
 import {
   db,
   writeBranch,
   upsertTag,
   getCommitFromSha,
 } from '../../services/postgres';
-import {
-  getAllRefCommits,
-  getRef,
-  getCommitHistory,
-} from '../../services/github';
-import {getClientForEvent} from '../../getClient';
 import upsertCommits from '../procedures/upsertCommits';
-import {Logger} from '../../logger';
 
 export default async function onCreate(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadCreate>,

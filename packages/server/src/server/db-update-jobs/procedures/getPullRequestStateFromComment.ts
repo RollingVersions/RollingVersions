@@ -1,17 +1,18 @@
-import {PullRequestState, Repository} from 'rollingversions/lib/types';
 import {
   readComments,
   writeComment,
   updateStatus,
 } from 'rollingversions/lib/services/github';
+import type {PullRequestState, Repository} from 'rollingversions/lib/types';
 import {readState} from 'rollingversions/lib/utils/CommentState';
+
 import {
   COMMENT_GUID,
   renderInitialComment,
   getUrlForChangeLog,
 } from '../../../utils/Rendering';
 import {APP_URL} from '../../environment';
-import {GitHubClient, PullRequestDetail} from '../../services/github';
+import type {GitHubClient, PullRequestDetail} from '../../services/github';
 
 async function getCommentState(
   client: GitHubClient,

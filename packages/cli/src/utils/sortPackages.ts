@@ -1,4 +1,4 @@
-import {PackageStatusDetail} from './getPackageStatuses';
+import type {PackageStatusDetail} from './getPackageStatuses';
 
 export interface CircularPackages {
   readonly circular: true;

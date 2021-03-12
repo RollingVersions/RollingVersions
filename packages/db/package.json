@@ -9,5 +9,8 @@
     "@databases/pg": "^3.1.3",
     "@databases/pg-typed": "^2.2.0",
     "rollingversions": "0.0.0"
+  },
+  "scripts": {
+    "lint": "eslint --fix --config ../../.typescript.eslintrc.js --no-eslintrc --ext .js,.ts,.tsx src"
   }
 }

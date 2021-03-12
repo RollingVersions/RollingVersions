@@ -2,7 +2,7 @@ import dedupeByKey from '../dedupeByKey';
 
 test('dedupeByKey', async () => {
   const dedupe = dedupeByKey<string, number>();
-  const getter = jest.fn().mockImplementation(async (key) => {
+  const getter = jest.fn().mockImplementation(async (key: string) => {
     await new Promise((r) => setTimeout(r, 100));
     return key.length;
   });

@@ -1,13 +1,12 @@
-import VersionNumber from '@rollingversions/version-number';
-import {PackageManifest, PrePublishResult, PublishConfig} from '../types';
+import type VersionNumber from '@rollingversions/version-number';
 
+import type {GitHubClient} from '../services/github';
 import isTruthy from '../ts-utils/isTruthy';
-import {GitHubClient} from '../services/github';
-
+import type {PackageManifest, PrePublishResult, PublishConfig} from '../types';
+import type {NewVersionToBePublished} from '../utils/getPackageStatuses';
+import custom_script from './custom_script';
 import * as github from './github';
 import npm from './npm';
-import custom_script from './custom_script';
-import {NewVersionToBePublished} from '../utils/getPackageStatuses';
 
 const targets = [npm, custom_script];
 

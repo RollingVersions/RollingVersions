@@ -1,5 +1,6 @@
-import * as React from 'react';
 import {action} from '@storybook/addon-actions';
+import * as React from 'react';
+
 import ChangeInput, {ChangeInputList} from '.';
 
 export default {title: 'modules/ChangeInput', component: ChangeInput};

@@ -1,6 +1,6 @@
-import listPackages from '../listPackages';
 import {createRepository} from '../../services/__mock_services__';
 import {getAllFiles} from '../../services/git';
+import listPackages from '../listPackages';
 
 test('listPackages - single npm package', async () => {
   const {dirname} = createRepository({

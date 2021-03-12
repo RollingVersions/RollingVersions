@@ -1,5 +1,6 @@
 import * as React from 'react';
-import GitHubMarkdown from './';
+
+import GitHubMarkdown from '.';
 
 export default {title: 'modules/GitHubMarkdown'};
 

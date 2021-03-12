@@ -1,4 +1,5 @@
-import {parseTag, ParseTagContext} from '../';
+import {parseTag} from '..';
+import type {ParseTagContext} from '..';
 
 const baseContext: ParseTagContext = {
   allowTagsWithoutPackageName: false,

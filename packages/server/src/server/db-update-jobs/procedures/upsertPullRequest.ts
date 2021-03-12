@@ -1,20 +1,21 @@
+import {deleteComment, readComments} from 'rollingversions/lib/services/github';
+
+import {COMMENT_GUID} from '../../../utils/Rendering';
+import type {Logger} from '../../logger';
+import type {GitHubClient} from '../../services/github';
 import {
-  Queryable,
+  getPullRequestFromGraphID,
+  getPullRequestFromNumber,
+} from '../../services/github';
+import type {Queryable} from '../../services/postgres';
+import {
   getPullRequestCommentID,
   insertPullRequest,
   updatePullRequest,
   setPullRequestSubmittedAtSha,
   insertChangeLogEntries,
 } from '../../services/postgres';
-import {
-  GitHubClient,
-  getPullRequestFromGraphID,
-  getPullRequestFromNumber,
-} from '../../services/github';
 import getPullRequestStateFromComment from './getPullRequestStateFromComment';
-import {Logger} from '../../logger';
-import {deleteComment, readComments} from 'rollingversions/lib/services/github';
-import {COMMENT_GUID} from '../../../utils/Rendering';
 
 export default async function upsertPullRequest(
   db: Queryable,

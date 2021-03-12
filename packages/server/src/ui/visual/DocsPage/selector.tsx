@@ -1,8 +1,9 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
-import {Instruction} from './docsFormats';
-import GithubActionsIcon from '../../icons/githubactions.svg';
+
 import CircleCIicon from '../../icons/circleci.svg';
+import GithubActionsIcon from '../../icons/githubactions.svg';
+import {Instruction} from './docsFormats';
 
 function SelectorButton({
   children,

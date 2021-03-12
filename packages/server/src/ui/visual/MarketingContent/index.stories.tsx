@@ -1,5 +1,6 @@
 import * as React from 'react';
-import MarketingContent from './';
+
+import MarketingContent from '.';
 
 export default {title: 'modules/MarketingContent'};
 

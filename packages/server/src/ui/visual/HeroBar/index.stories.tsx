@@ -1,5 +1,6 @@
 import * as React from 'react';
-import HeroBar, {HeroBarFooter, InstallButton} from './';
+
+import HeroBar, {HeroBarFooter, InstallButton} from '.';
 
 export default {title: 'modules/HeroBar'};
 

@@ -1,7 +1,8 @@
 import React from 'react';
-import GitHubMarkdown from '../GitHubMarkdown/async';
 import TextareaAutosize from 'react-textarea-autosize';
+
 import useChanges from '../../hooks/useChanges';
+import GitHubMarkdown from '../GitHubMarkdown/async';
 
 export interface ChangeInputProps {
   localId: number;

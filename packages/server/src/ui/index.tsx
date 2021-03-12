@@ -2,9 +2,10 @@ import './index.css';
 import React from 'react';
 import {render} from 'react-dom';
 import {BrowserRouter, Switch, Route} from 'react-router-dom';
-import Home from './pages/Home';
-import Docs from './pages/Docs';
+
 import Contact from './pages/Contact';
+import Docs from './pages/Docs';
+import Home from './pages/Home';
 import PullChangeLog from './pages/PullChangeLog';
 import Repository from './pages/Repository';
 
@@ -28,5 +29,5 @@ render(
       </Route>
     </Switch>
   </BrowserRouter>,
-  document.getElementById('app')!,
+  document.getElementById('app'),
 );

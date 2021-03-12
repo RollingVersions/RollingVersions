@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {MemoryRouter} from 'react-router-dom';
-import NavBar from './';
+
+import NavBar from '.';
 
 export default {title: 'modules/NavBar'};
 

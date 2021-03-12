@@ -1,22 +1,23 @@
-import {Repository} from 'rollingversions/lib/types';
+import type {Repository} from 'rollingversions/lib/types';
+
+import type {Logger} from '../../logger';
+import type {GitHubClient} from '../../services/github';
 import {
-  Queryable,
-  upsertRepository,
-  getCommitIdFromSha,
-  writeBranch,
-  filterOutExisingPullRequestIDs,
-} from '../../services/postgres';
-import {
-  GitHubClient,
   getRepository,
   getDefaultBranch,
   getAllDefaultBranchCommits,
   getRepositoryPullRequestIDs,
 } from '../../services/github';
+import type {Queryable} from '../../services/postgres';
+import {
+  upsertRepository,
+  getCommitIdFromSha,
+  writeBranch,
+  filterOutExisingPullRequestIDs,
+} from '../../services/postgres';
+import getAllTags from './getAllTags';
 import upsertCommits from './upsertCommits';
 import upsertPullRequest from './upsertPullRequest';
-import getAllTags from './getAllTags';
-import {Logger} from '../../logger';
 
 export default async function addRepository(
   db: Queryable,

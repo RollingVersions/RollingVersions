@@ -1,14 +1,15 @@
+import type {Repository} from 'rollingversions/lib/types';
+
+import type {Logger} from '../../logger';
+import type {GitHubClient, GitHubCommit} from '../../services/github';
+import type {Queryable} from '../../services/postgres';
 import {
-  Queryable,
   upsertCommits as upsertCommitsPg,
   filterOutExisingPullRequestIDs,
   filterToExistingCommitShas,
   addAssociatedPullRequests,
 } from '../../services/postgres';
-import {GitHubClient, GitHubCommit} from '../../services/github';
 import upsertPullRequest from './upsertPullRequest';
-import {Repository} from 'rollingversions/lib/types';
-import {Logger} from '../../logger';
 
 export default async function upsertCommits(
   db: Queryable,

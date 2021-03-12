@@ -1,7 +1,9 @@
-import {printString} from '@rollingversions/version-number';
 import React from 'react';
 import {useParams} from 'react-router-dom';
-import {RepoResponse} from '../../types';
+
+import {printString} from '@rollingversions/version-number';
+
+import type {RepoResponse} from '../../types';
 import AppContainer from '../visual/AppContainer';
 import AppNavBar, {AppNavBarLink} from '../visual/AppNavBar';
 import RepositoryPage, {

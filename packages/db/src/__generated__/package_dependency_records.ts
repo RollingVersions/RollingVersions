@@ -8,8 +8,8 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitCommit from './git_commits';
-import DbPackageDependencyRecordsKind from './package_dependency_records_kinds';
+import type DbGitCommit from './git_commits';
+import type DbPackageDependencyRecordsKind from './package_dependency_records_kinds';
 
 interface DbPackageDependencyRecord {
   dependency_name: string;

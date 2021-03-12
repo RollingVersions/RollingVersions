@@ -1,7 +1,8 @@
 // tslint:disable-next-line: no-implicit-dependencies
-import {Router, Request, Response, NextFunction} from 'express';
-import GitHubAuthentication from '@authentication/github';
 import Cookie from '@authentication/cookie';
+import GitHubAuthentication from '@authentication/github';
+import type {Request, Response, NextFunction} from 'express';
+import {Router} from 'express';
 
 const authMiddleware = Router();
 

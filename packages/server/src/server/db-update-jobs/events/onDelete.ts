@@ -1,4 +1,5 @@
-import WebhooksApi from '@octokit/webhooks';
+import type WebhooksApi from '@octokit/webhooks';
+
 import {db, deleteBranch, deleteTag} from '../../services/postgres';
 
 export default async function onDelete(
