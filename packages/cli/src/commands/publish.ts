@@ -90,6 +90,11 @@ export default async function publish(config: PublishConfig): Promise<Result> {
         }
         results.push(commit);
       }
+      if (sinceCommitSha !== undefined) {
+        throw new Error(
+          `Searched all commits and did not find the commit of the previous release: "${sinceCommitSha}"`,
+        );
+      }
       return results;
     },
   );
