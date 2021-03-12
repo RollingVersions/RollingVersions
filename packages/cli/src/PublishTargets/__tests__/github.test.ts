@@ -11,6 +11,7 @@ test('checkGitHubReleaseStatus', async () => {
       ...repo,
       dirname,
       deployBranch: null,
+      allowNonLatestCommit: false,
     },
     null as any,
   );
