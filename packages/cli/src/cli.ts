@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 
-import {changesToMarkdown} from '@rollingversions/change-set';
-import {printString} from '@rollingversions/version-number';
 import chalk from 'chalk';
 import {parse, startChain, param} from 'parameter-reducers';
+
+import {changesToMarkdown} from '@rollingversions/change-set';
+import {printString} from '@rollingversions/version-number';
+
 import printHelp from './commands/help';
 import publish, {PublishResultKind} from './commands/publish';
-import {
-  PackageStatus,
+import type {
   NoUpdateRequired,
   NewVersionToBePublished,
 } from './utils/getPackageStatuses';
+import {PackageStatus} from './utils/getPackageStatuses';
 
 const CI_ENV = require('env-ci')();
 

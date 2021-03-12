@@ -1,11 +1,12 @@
-import {Response, Request} from 'express';
-import {getGitHubAccessToken} from '../auth';
+import type {Response, Request} from 'express';
+
+import {expressLogger} from '../../logger';
 import getPermissionLevel, {
   Permission,
   getRepoPermissionLevel,
 } from '../../permissions/getPermissionLevel';
+import {getGitHubAccessToken} from '../auth';
 import {parseParams, parseRepoParams} from './validateParams';
-import {expressLogger} from '../../logger';
 
 export {Permission};
 

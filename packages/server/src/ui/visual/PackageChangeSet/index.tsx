@@ -1,8 +1,11 @@
 import React, {useCallback} from 'react';
-import RegistryStatus from '../RegistryStatus';
+
+import type ChangeSet from '@rollingversions/change-set';
+import {extractChanges} from '@rollingversions/change-set';
+import type {PublishTargetConfig} from 'rollingversions/src/types/PublishTarget';
+
 import Changes from '../Changes';
-import ChangeSet, {extractChanges} from '@rollingversions/change-set';
-import {PublishTargetConfig} from 'rollingversions/src/types/PublishTarget';
+import RegistryStatus from '../RegistryStatus';
 
 export interface PackageChangeSetProps {
   packageName: string;

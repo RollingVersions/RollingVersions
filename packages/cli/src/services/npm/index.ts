@@ -1,4 +1,5 @@
 import {resolve, dirname} from 'path';
+
 import {spawnBuffered} from '../../utils/spawn';
 
 // Could use libnpmpublish to publish, but probably best to just use CLI
@@ -66,7 +67,7 @@ async function parseNPM<T = any>(
 }
 export async function getOrgRoster(
   orgName: string,
-): Promise<Record<string, 'admin' | 'owner' | 'developer'>> {
+): Promise<Partial<Record<string, 'admin' | 'owner' | 'developer'>>> {
   const result = await parseNPM(
     spawnBuffered('npm', ['org', 'ls', orgName, '--json'], {}),
   );

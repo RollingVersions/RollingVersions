@@ -1,6 +1,7 @@
 import * as React from 'react';
-import ContactsPage from './';
 import {MemoryRouter} from 'react-router-dom';
+
+import ContactsPage from '.';
 import NavBar from '../NavBar';
 import NavBarLink from '../NavBarLink';
 

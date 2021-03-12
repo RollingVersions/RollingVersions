@@ -1,5 +1,7 @@
 import React from 'react';
+
 import InstallIcon from './install-icon.svg';
+
 // tslint:disable-next-line:no-implicit-dependencies
 import background from '!url-loader!./background-image.svg';
 

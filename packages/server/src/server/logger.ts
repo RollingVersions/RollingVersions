@@ -1,9 +1,11 @@
-import * as winston from 'winston';
 import cuid from 'cuid';
-import {APEX_LOGS_CONFIG, ENVIRONMENT} from './environment';
-import {Request, Response, NextFunction} from 'express';
+import type {Request, Response, NextFunction} from 'express';
 import onFinished from 'on-finished';
 import onHeaders from 'on-headers';
+import * as winston from 'winston';
+
+import {APEX_LOGS_CONFIG, ENVIRONMENT} from './environment';
+
 const ApexLogsTransport = require('apex-logs-winston');
 
 type levels =
@@ -174,7 +176,7 @@ export function expressMiddlewareLogger() {
 export function errorLoggingMiddlware() {
   return (err: Error, req: Request, res: Response, next: NextFunction) => {
     const logger = expressLogger(req, res);
-    logger.error('response_error', `${err?.stack || err?.message || err}`);
+    logger.error('response_error', `${err.stack || err.message || err}`);
     next(err);
   };
 }

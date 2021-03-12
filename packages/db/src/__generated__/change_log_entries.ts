@@ -8,7 +8,7 @@
 // eslint:disable
 // tslint:disable
 
-import DbPullRequest from './pull_requests';
+import type DbPullRequest from './pull_requests';
 
 interface DbChangeLogEntry {
   body: string;

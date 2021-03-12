@@ -1,12 +1,5 @@
-import {
-  RepoFixture,
-  repositories,
-  PullRequestFixture,
-  CommitFixture,
-  setNpmProfile,
-  npmPackages,
-  npmProfile,
-} from './fixtures';
+import type {RepoFixture, PullRequestFixture, CommitFixture} from './fixtures';
+import {repositories, setNpmProfile, npmPackages, npmProfile} from './fixtures';
 
 jest.mock('../github', () => require('./github'));
 jest.mock('../git', () => require('./git'));

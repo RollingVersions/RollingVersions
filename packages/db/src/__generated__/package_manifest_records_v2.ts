@@ -8,7 +8,7 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitCommit from './git_commits';
+import type DbGitCommit from './git_commits';
 
 interface DbPackageManifestRecordsV2 {
   git_commit_id: DbGitCommit['id'];

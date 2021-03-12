@@ -1,14 +1,16 @@
-import WebhooksApi from '@octokit/webhooks';
-import {db} from '../../services/postgres';
-import {getClientForEvent} from '../../getClient';
+import type WebhooksApi from '@octokit/webhooks';
+
 import {updateStatus} from 'rollingversions/lib/services/github';
-import {APP_URL} from '../../environment';
+
 import {
   getUrlForChangeLog,
   getShortDescription,
 } from '../../../utils/Rendering';
+import {APP_URL} from '../../environment';
+import {getClientForEvent} from '../../getClient';
+import type {Logger} from '../../logger';
+import {db} from '../../services/postgres';
 import readPullRequestState from '../methods/readPullRequestState';
-import {Logger} from '../../logger';
 
 export default async function onPullRequestUpdate(
   e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadPullRequest>,

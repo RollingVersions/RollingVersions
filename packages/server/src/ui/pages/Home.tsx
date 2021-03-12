@@ -1,4 +1,5 @@
 import React from 'react';
+
 import LandingPage from '../visual/LandingPage';
 import NavBar from '../visual/NavBar';
 import NavBarLink from '../visual/NavBarLink';

@@ -1,6 +1,7 @@
-import * as real from '../npm';
-import {npmProfile, npmPackages} from './fixtures';
 import {valid} from 'semver';
+
+import type * as real from '../npm';
+import {npmProfile, npmPackages} from './fixtures';
 import {readRepoFile} from './git';
 
 export const getOrgRoster: typeof real.getOrgRoster = async (_orgName) => {

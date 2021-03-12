@@ -1,13 +1,16 @@
-import WebhooksApi, {WebhookEvent} from '@octokit/webhooks';
-import {WEBHOOK_SECRET} from '../environment';
-import logger, {Logger} from '../logger';
-import onPullRequestClosed from '../db-update-jobs/events/onPullRequestClosed';
-import onInstallationRepositoriesAdded from '../db-update-jobs/events/onInstallationRepositoriesAdded';
-import onInstallation from '../db-update-jobs/events/onInstallation';
+import type {WebhookEvent} from '@octokit/webhooks';
+import WebhooksApi from '@octokit/webhooks';
+
 import onCreate from '../db-update-jobs/events/onCreate';
 import onDelete from '../db-update-jobs/events/onDelete';
+import onInstallation from '../db-update-jobs/events/onInstallation';
+import onInstallationRepositoriesAdded from '../db-update-jobs/events/onInstallationRepositoriesAdded';
+import onPullRequestClosed from '../db-update-jobs/events/onPullRequestClosed';
 import onPullRequestUpdate from '../db-update-jobs/events/onPullRequestUpdate';
 import onPush from '../db-update-jobs/events/onPush';
+import {WEBHOOK_SECRET} from '../environment';
+import logger from '../logger';
+import type {Logger} from '../logger';
 
 const webhooks = new WebhooksApi({secret: WEBHOOK_SECRET});
 

@@ -1,4 +1,5 @@
-import VersionNumber from '@rollingversions/version-number';
+import type VersionNumber from '@rollingversions/version-number';
+
 import {t, compressedObjectCodec} from '../utils/ValidationCodec';
 
 interface VersionTag {

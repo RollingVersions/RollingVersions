@@ -1,9 +1,10 @@
-import {PullRequest, Repository} from 'rollingversions/lib/types';
 import * as gh from 'rollingversions/lib/services/github';
-import Permission from './Permission';
-import {getClientForToken, getClientForRepo} from '../getClient';
-import {Logger} from '../logger';
+import type {PullRequest, Repository} from 'rollingversions/lib/types';
+
 import withCache from '../../utils/withCache';
+import {getClientForToken, getClientForRepo} from '../getClient';
+import type {Logger} from '../logger';
+import Permission from './Permission';
 
 export {Permission};
 

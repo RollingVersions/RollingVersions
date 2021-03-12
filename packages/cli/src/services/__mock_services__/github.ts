@@ -1,6 +1,6 @@
-import * as real from '../github';
-import {byRepo, byPullRequest} from './fixtures';
+import type * as real from '../github';
 import {RepositoryPermission} from '../github/github-graph';
+import {byRepo, byPullRequest} from './fixtures';
 
 export const getViewer: typeof real.getViewer = async (_client) => {
   return {

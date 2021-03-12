@@ -1,12 +1,15 @@
-import ChangeSet from '@rollingversions/change-set';
 import React from 'react';
-import PackageChangeSet, {PackageChangeSetProps} from '../PackageChangeSet';
-import SaveChangeLogFooter from '../SaveChangeLogFooter';
+
+import type ChangeSet from '@rollingversions/change-set';
+import type {PackageManifestWithVersion} from 'rollingversions/lib/types';
+
+import type Permission from '../../../server/permissions/Permission';
+import type {PullRequestPackage} from '../../../types';
 import getLocalId from '../../utils/getLocalId';
-import Permission from '../../../server/permissions/Permission';
-import {PullRequestPackage} from '../../../types';
 import Alert from '../Alert';
-import {PackageManifestWithVersion} from 'rollingversions/lib/types';
+import type {PackageChangeSetProps} from '../PackageChangeSet';
+import PackageChangeSet from '../PackageChangeSet';
+import SaveChangeLogFooter from '../SaveChangeLogFooter';
 
 function getState(
   packages: Map<string, PullRequestPackage>,

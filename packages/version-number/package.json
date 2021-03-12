@@ -6,5 +6,8 @@
   "dependencies": {
     "@rollingversions/config": "^0.0.0"
   },
+  "scripts": {
+    "lint": "eslint --fix --config ../../.typescript.eslintrc.js --no-eslintrc --ext .js,.ts,.tsx src"
+  },
   "publishConfig": {"access": "public"}
 }

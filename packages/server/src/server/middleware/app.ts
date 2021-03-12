@@ -1,22 +1,23 @@
 import {Router} from 'express';
-import {requiresAuth, getGitHubAccessToken} from './auth';
-import {getClientForRepo, getClientForToken} from '../getClient';
+
 import {PullRequestResponse} from '../../types';
-import validateParams, {
-  parseParams,
-  validateRepoParams,
-  parseRepoParams,
-} from './utils/validateParams';
+import {getClientForRepo, getClientForToken} from '../getClient';
+import {expressLogger} from '../logger';
+import getPullRequest from './api/getPullRequest';
+import getRepository from './api/getRepository';
+import updatePullRequest from './api/updatePullRequest';
+import {requiresAuth, getGitHubAccessToken} from './auth';
 import checkPermissions, {
   getPermission,
   getUser,
   checkRepoPermissions,
 } from './utils/checkPermissions';
 import validateBody, {getBody} from './utils/validateBody';
-import updatePullRequest from './api/updatePullRequest';
-import getPullRequest from './api/getPullRequest';
-import getRepository from './api/getRepository';
-import {expressLogger} from '../logger';
+import validateParams, {
+  parseParams,
+  validateRepoParams,
+  parseRepoParams,
+} from './utils/validateParams';
 
 const appMiddleware = Router();
 

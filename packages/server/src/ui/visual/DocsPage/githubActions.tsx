@@ -1,6 +1,7 @@
 import React from 'react';
-import GithubActionsCodeBlock from './githubActionsCodeBlock';
+
 import {Instruction, Details, InlineCode, CodeBlock} from './docsFormats';
+import GithubActionsCodeBlock from './githubActionsCodeBlock';
 
 export default function GithubActions() {
   return (

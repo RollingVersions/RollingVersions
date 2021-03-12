@@ -1,8 +1,5 @@
-import {
-  ChangeTypeID,
-  ChangeType,
-  DEFAULT_CHANGE_TYPES,
-} from '@rollingversions/config';
+import type {ChangeTypeID, ChangeType} from '@rollingversions/config';
+import {DEFAULT_CHANGE_TYPES} from '@rollingversions/config';
 
 export type Markdown = string & {__brand?: 'Markdown'};
 
@@ -68,7 +65,7 @@ export function changesToMarkdown<TContext = {}>(
         .map(
           (c) =>
             `- ${c.title}${renderContext ? renderContext(c) : ``}${
-              c.body ? `\n\n${c.body.replace(/^/gm, '  ')}` : ``
+              c.body.length ? `\n\n${c.body.replace(/^/gm, '  ')}` : ``
             }`,
         )
         .join('\n\n')}`;

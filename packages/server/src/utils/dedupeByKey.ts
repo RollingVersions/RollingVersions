@@ -10,7 +10,7 @@ export default function dedupeByKey<TKey, TResult>() {
       key,
       async () => await fn(key),
       (result) =>
-        result.then(
+        void result.then(
           () => cache.delete(key),
           () => cache.delete(key),
         ),

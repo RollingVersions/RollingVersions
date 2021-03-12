@@ -1,7 +1,8 @@
 // TODO: extract this into its own NPM package
 
-import {Readable} from 'stream';
-import {spawn, ChildProcess, SpawnOptionsWithoutStdio} from 'child_process';
+import type {ChildProcess, SpawnOptionsWithoutStdio} from 'child_process';
+import {spawn} from 'child_process';
+import type {Readable} from 'stream';
 
 async function getBuffer(stream: Readable) {
   const result: Buffer[] = [];
@@ -37,7 +38,11 @@ export async function spawnBuffered(
     const err: any = new Error(
       `${[command, ...args]
         .map((arg) =>
-          / /.test(arg) ? (/\"/.test(arg) ? `'${arg}'` : `"${arg}"`) : arg,
+          arg.includes(' ')
+            ? arg.includes('"')
+              ? `'${arg}'`
+              : `"${arg}"`
+            : arg,
         )
         .join(' ')} exited with code ${status}:\n${stderr.toString('utf8')}`,
     );

@@ -1,7 +1,6 @@
 import {t} from '../utils/ValidationCodec';
-import PublishConfigAccess, {
-  PublishConfigAccessCodec,
-} from './PublishConfigAccess';
+import type PublishConfigAccess from './PublishConfigAccess';
+import {PublishConfigAccessCodec} from './PublishConfigAccess';
 
 // N.B. this enum **must** be kept in sync with the publish_targets table in the database
 enum PublishTarget {

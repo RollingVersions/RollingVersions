@@ -1,13 +1,14 @@
 import {getBranch} from 'rollingversions/lib/services/github';
-import sortPackages from 'rollingversions/lib/utils/sortPackages';
-import {Repository} from 'rollingversions/lib/types';
-import {RepoResponse} from '../../../types';
-import readRepositoryState from '../../db-update-jobs/methods/readRepositoryState';
-import {db} from '../../services/postgres';
-import {GitHubClient} from '../../services/github';
-import {Logger} from '../../logger';
-import PackageStatus from 'rollingversions/lib/types/PackageStatus';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
+import type {Repository} from 'rollingversions/lib/types';
+import PackageStatus from 'rollingversions/lib/types/PackageStatus';
+import sortPackages from 'rollingversions/lib/utils/sortPackages';
+
+import type {RepoResponse} from '../../../types';
+import readRepositoryState from '../../db-update-jobs/methods/readRepositoryState';
+import type {Logger} from '../../logger';
+import type {GitHubClient} from '../../services/github';
+import {db} from '../../services/postgres';
 
 export default async function getRepository(
   client: GitHubClient,

@@ -8,8 +8,8 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitCommit from './git_commits';
-import DbPublishTarget from './publish_targets';
+import type DbGitCommit from './git_commits';
+import type DbPublishTarget from './publish_targets';
 
 interface DbPackageManifestRecord {
   file_path: string;

@@ -1,7 +1,8 @@
 import React from 'react';
+
 import HeroBar, {HeroBarFooter} from '../HeroBar';
 import Docs from './docs';
-import {CIservice} from './selector';
+import type {CIservice} from './selector';
 
 export default function DocsPage({
   selected,

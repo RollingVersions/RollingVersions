@@ -1,9 +1,10 @@
-import {PublishTargetConfig} from './PublishTarget';
 import {t} from '../utils/ValidationCodec';
-import PackageDependencies, {
+import type PackageDependencies from './PackageDependencies';
+import {
   mergePackageDependencies,
   PackageDependenciesCodec,
 } from './PackageDependencies';
+import {PublishTargetConfig} from './PublishTarget';
 import VersionTag from './VersionTag';
 
 export default interface PackageManifest {

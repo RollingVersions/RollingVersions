@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {PullRequestResponse, UpdatePullRequestBody} from '../../types';
 
 export default function usePullRequest({
@@ -26,7 +27,7 @@ export default function usePullRequest({
         if (!res.ok) {
           throw new Error(`${res.statusText}: ${await res.text()}`);
         }
-        return res.json();
+        return await res.json();
       })
       .then((data) => PullRequestResponse.safeParse(data))
       .then((data) => {

@@ -1,5 +1,6 @@
-import RollingConfigOptions, {
-  ChangeTypeID,
+import type {ChangeTypeID} from '@rollingversions/config';
+import type RollingConfigOptions from '@rollingversions/config';
+import {
   DEFAULT_CHANGE_TYPES,
   DEFAULT_VERSION_SCHEMA,
   DEFAULT_BASE_VERSION,
@@ -264,7 +265,9 @@ function sorter(order: 1 | -1) {
   ): T[];
   function sort<T>(
     versions: readonly T[],
-    getVersionNumber: (value: T) => VersionNumber = (value: any) => value,
+    getVersionNumber: (value: T) => VersionNumber = (
+      value: any,
+    ): VersionNumber => value,
   ): T[] {
     return versions
       .slice()
@@ -287,7 +290,9 @@ function limit(order: 1 | -1) {
   ): T | undefined;
   function getLimit<T>(
     versions: readonly T[],
-    getVersionNumber: (value: T) => VersionNumber = (value: any) => value,
+    getVersionNumber: (value: T) => VersionNumber = (
+      value: any,
+    ): VersionNumber => value,
   ): T | undefined {
     let limit: T | undefined;
     let limitV: VersionNumber | undefined;

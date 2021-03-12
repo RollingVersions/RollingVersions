@@ -1,6 +1,8 @@
-import {createChangeSet, extractChanges} from '@rollingversions/change-set';
 import * as React from 'react';
-import Changes from './';
+
+import {createChangeSet, extractChanges} from '@rollingversions/change-set';
+
+import Changes from '.';
 import getLocalId from '../../utils/getLocalId';
 
 export default {title: 'modules/Changes'};

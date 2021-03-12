@@ -1,11 +1,16 @@
 import {dirname, resolve} from 'path';
-import * as toml from 'toml';
-import VersionNumber, {printString} from '@rollingversions/version-number';
-import {PublishTarget, PublishConfig, PackageManifest} from '../types';
-import isObject from '../ts-utils/isObject';
+
 import {execBuffered} from 'modern-spawn';
+import * as toml from 'toml';
+
+import type VersionNumber from '@rollingversions/version-number';
+import {printString} from '@rollingversions/version-number';
+
+import isObject from '../ts-utils/isObject';
+import type {PublishConfig, PackageManifest} from '../types';
+import {PublishTarget} from '../types';
+import type {CustomScriptTargetConfig} from '../types/PublishTarget';
 import createPublishTargetAPI from './baseTarget';
-import {CustomScriptTargetConfig} from '../types/PublishTarget';
 
 const MANIFEST_NAME = 'rolling-package';
 // TODO: better error messages

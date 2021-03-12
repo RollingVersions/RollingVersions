@@ -8,7 +8,7 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitRepository from './git_repositories';
+import type DbGitRepository from './git_repositories';
 
 interface DbGitCommit {
   commit_sha: string;

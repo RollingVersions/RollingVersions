@@ -1,4 +1,4 @@
-import {ChangeTypeID} from '@rollingversions/config';
+import type {ChangeTypeID} from '@rollingversions/config';
 import db, {sql, Queryable} from '@rollingversions/db';
 
 export {db, Queryable};
@@ -63,7 +63,7 @@ export async function filterOutExisingPullRequestIDs<T extends {id: number}>(
           AND id = ANY(${pullRequests.map(({id}) => id)})
         `,
       )
-    ).map((pr) => pr.id),
+    ).map((pr): number => pr.id),
   );
   return pullRequests.filter(({id}) => !existingPullRequestIDs.has(id));
 }
@@ -81,7 +81,7 @@ export async function filterToExistingCommitShas(
           AND commit_sha = ANY(${commit_shas})
         `,
       )
-    ).map((c) => c.commit_sha),
+    ).map((c): string => c.commit_sha),
   );
 }
 
@@ -104,7 +104,7 @@ export async function upsertCommits(
           AND commit_sha = ANY(${commits.map((c) => c.commit_sha)})
         `,
       )
-    ).map((c) => c.commit_sha),
+    ).map((c): string => c.commit_sha),
   );
   const allShas = [
     ...new Set([

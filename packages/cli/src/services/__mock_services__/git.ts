@@ -1,4 +1,4 @@
-import * as real from '../git';
+import type * as real from '../git';
 import {byDirectory} from './fixtures';
 
 export const getAllFiles: typeof real.getAllFiles = async function* getAllFiles(

@@ -1,4 +1,5 @@
 import React from 'react';
+
 import HeroBar, {HeroBarFooter} from '../HeroBar';
 import Contacts from './contacts';
 

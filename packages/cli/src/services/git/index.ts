@@ -1,5 +1,6 @@
-import {relative, resolve} from 'path';
 import {statSync, readFile, writeFile} from 'fs';
+import {relative, resolve} from 'path';
+
 import globby from 'globby';
 
 import {spawnBuffered} from '../../utils/spawn';
@@ -18,7 +19,7 @@ export async function* getAllFiles(dirname: string) {
     yield {
       path: relative(dirname, entryPath).replace(/\\/g, '/'),
       getContents: async () =>
-        new Promise<string>((resolve, reject) => {
+        await new Promise<string>((resolve, reject) => {
           readFile(entryPath, 'utf8', (err, res) => {
             if (err) reject(err);
             else resolve(res);
@@ -50,7 +51,7 @@ export async function readRepoFile(
   encoding?: 'utf8',
 ) {
   if (encoding) {
-    return new Promise<string>((fulfill, reject) => {
+    return await new Promise<string>((fulfill, reject) => {
       readFile(resolve(dirname, filename), encoding, (err, res) => {
         if (err) reject(err);
         else fulfill(res);
@@ -71,7 +72,7 @@ export async function writeRepoFile(
   filename: string,
   data: Buffer | string,
 ) {
-  return new Promise<void>((fulfill, reject) => {
+  return await new Promise<void>((fulfill, reject) => {
     writeFile(resolve(dirname, filename), data, (err) => {
       if (err) reject(err);
       else fulfill();

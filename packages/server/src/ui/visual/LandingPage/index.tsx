@@ -1,4 +1,5 @@
 import React from 'react';
+
 import HeroBar, {HeroBarFooter, InstallButton} from '../HeroBar';
 import MarketingContent from '../MarketingContent';
 

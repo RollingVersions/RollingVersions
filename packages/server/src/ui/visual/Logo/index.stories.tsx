@@ -1,5 +1,6 @@
 import * as React from 'react';
-import Logo from './';
+
+import Logo from '.';
 
 export default {title: 'modules/Logo'};
 

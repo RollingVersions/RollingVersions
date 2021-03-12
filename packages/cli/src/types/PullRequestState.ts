@@ -4,7 +4,9 @@
 //          Be very conservative with changes, and aim not to reference Codecs defined
 //          in other files.
 
-import ChangeSet, {mergeChangeSets} from '@rollingversions/change-set';
+import type ChangeSet from '@rollingversions/change-set';
+import {mergeChangeSets} from '@rollingversions/change-set';
+
 import {t, compressedObjectCodec, map} from '../utils/ValidationCodec';
 
 const LegacyChangeLogEntryCodec = compressedObjectCodec(

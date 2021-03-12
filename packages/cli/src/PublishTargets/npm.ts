@@ -1,3 +1,9 @@
+import {gt, prerelease} from 'semver';
+
+import type VersionNumber from '@rollingversions/version-number';
+import {printString} from '@rollingversions/version-number';
+
+import {readRepoFile, writeRepoFile} from '../services/git';
 import {
   getProfile,
   getOwners,
@@ -5,17 +11,15 @@ import {
   getOrgRoster,
   publish as npmPublish,
 } from '../services/npm';
-import {PublishTarget, PublishConfig} from '../types';
 import isObject from '../ts-utils/isObject';
-import {readRepoFile, writeRepoFile} from '../services/git';
-import {NpmPublishTargetConfig} from '../types/PublishTarget';
+import type {PublishConfig} from '../types';
+import {PublishTarget} from '../types';
+import type {NpmPublishTargetConfig} from '../types/PublishTarget';
 import createPublishTargetAPI from './baseTarget';
-import {gt, prerelease} from 'semver';
-import VersionNumber, {printString} from '@rollingversions/version-number';
 
-const stringifyPackage = require('stringify-package');
 const detectIndent = require('detect-indent');
 const detectNewline = require('detect-newline').graceful;
+const stringifyPackage = require('stringify-package');
 
 function versionPrefix(oldVersion: string, {canary}: {canary: boolean}) {
   if (canary) return '';
@@ -130,13 +134,12 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
             packageName: pkgName,
             path,
             private: pkgData.private === true,
-            publishConfigAccess:
-              pkgName[0] === '@'
-                ? isObject(pkgData.publishConfig) &&
-                  pkgData.publishConfig.access === 'public'
-                  ? 'public'
-                  : 'restricted'
-                : 'public',
+            publishConfigAccess: pkgName.startsWith('@')
+              ? isObject(pkgData.publishConfig) &&
+                pkgData.publishConfig.access === 'public'
+                ? 'public'
+                : 'restricted'
+              : 'public',
           },
         ],
         dependencies: {required, optional, development},
@@ -172,7 +175,10 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
 
     if (!owners) {
       const orgName = targetConfig.packageName.split('/')[0].substr(1);
-      if (targetConfig.packageName[0] === '@' && profile.name !== orgName) {
+      if (
+        targetConfig.packageName.startsWith('@') &&
+        profile.name !== orgName
+      ) {
         const orgRoster = await getOrgRoster(orgName);
         if (!orgRoster[profile.name]) {
           return {
@@ -197,13 +203,21 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
       if (gt(max, semverVersion)) {
         return {
           ok: false,
-          reason: `${pkg.packageName} already has a version ${max} on npm, which is greater than the version that would be published (${pkg.newVersion}). Please add a tag/release in GitHub called "${pkg.packageName}@${max}" that points at the correct commit for ${max}`,
+          reason: `${
+            pkg.packageName
+          } already has a version ${max} on npm, which is greater than the version that would be published (${printString(
+            pkg.newVersion,
+          )}). Please add a tag/release in GitHub called "${
+            pkg.packageName
+          }@${max}" that points at the correct commit for ${max}`,
         };
       }
       if (versions.has(semverVersion)) {
         return {
           ok: false,
-          reason: `${targetConfig.packageName} already has a version ${pkg.newVersion} on npm`,
+          reason: `${
+            targetConfig.packageName
+          } already has a version ${printString(pkg.newVersion)} on npm`,
         };
       }
     }

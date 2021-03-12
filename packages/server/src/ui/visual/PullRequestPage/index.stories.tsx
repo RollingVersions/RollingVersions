@@ -1,14 +1,15 @@
-import * as React from 'react';
-import PullRequestPage, {PullRequestPageProps} from './';
-import {
-  PublishTarget,
-  PackageManifestWithVersion,
-} from 'rollingversions/lib/types';
 import {action} from '@storybook/addon-actions';
+import * as React from 'react';
 import {MemoryRouter} from 'react-router-dom';
-import AppNavBar, {AppNavBarLink} from '../AppNavBar';
-import AppContainer from '../AppContainer';
+
 import {createChangeSet} from '@rollingversions/change-set';
+import {PublishTarget} from 'rollingversions/lib/types';
+import type {PackageManifestWithVersion} from 'rollingversions/lib/types';
+
+import PullRequestPage from '.';
+import type {PullRequestPageProps} from '.';
+import AppContainer from '../AppContainer';
+import AppNavBar, {AppNavBarLink} from '../AppNavBar';
 
 export default {title: 'pages/PullRequestPage'};
 

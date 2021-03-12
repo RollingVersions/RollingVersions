@@ -1,4 +1,4 @@
-import {printTag} from '../';
+import {printTag} from '..';
 
 test('printTag', () => {
   expect(

@@ -1,9 +1,10 @@
 import React from 'react';
-import ContactMethod from './contactMethod';
+
 import EmailIcon from '../../icons/emailMono.svg';
-import GithubIcon from '../../icons/githubMono.svg';
 import FacebookIcon from '../../icons/facebookMono.svg';
+import GithubIcon from '../../icons/githubMono.svg';
 import TwitterIcon from '../../icons/twitterMono.svg';
+import ContactMethod from './contactMethod';
 
 export default function Contacts() {
   return (

@@ -1,6 +1,7 @@
 import {URL} from 'url';
+
+import type {PullRequestPackage} from '../../types';
 import {renderCommentWithoutState} from '../Rendering';
-import {PullRequestPackage} from '../../types';
 
 function mockPackage(
   packageName: string,

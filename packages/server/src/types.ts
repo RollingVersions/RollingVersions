@@ -1,13 +1,15 @@
+import type ChangeSet from '@rollingversions/change-set';
+import type VersionNumber from '@rollingversions/version-number';
+import {PackageManifestWithVersion} from 'rollingversions/lib/types/PackageManifest';
+import {ModernChangeSetCodec} from 'rollingversions/lib/types/PullRequestState';
 import {
   t,
   compressedObjectCodec,
   map,
 } from 'rollingversions/lib/utils/ValidationCodec';
-import Permission, {PermissionCodec} from './server/permissions/Permission';
-import {ModernChangeSetCodec} from 'rollingversions/lib/types/PullRequestState';
-import {PackageManifestWithVersion} from 'rollingversions/lib/types/PackageManifest';
-import ChangeSet from '@rollingversions/change-set';
-import VersionNumber from '@rollingversions/version-number';
+
+import type Permission from './server/permissions/Permission';
+import {PermissionCodec} from './server/permissions/Permission';
 
 export interface RepoResponse {
   headSha: string | null;

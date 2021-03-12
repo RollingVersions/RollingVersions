@@ -1,4 +1,5 @@
-import {tables, Queryable} from '@rollingversions/db';
+import type {Queryable} from '@rollingversions/db';
+import {tables} from '@rollingversions/db';
 
 export async function getBranch(
   git_repository_id: number,

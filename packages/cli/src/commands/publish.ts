@@ -1,30 +1,30 @@
-import {PublishConfig} from '../types';
+import {prepublish, publish as publishTarget} from '../PublishTargets';
+import {checkGitHubReleaseStatus} from '../PublishTargets/github';
+import {getAllFiles} from '../services/git';
 import {
   GitHubClient,
   auth,
   getAllTags,
   getAllCommits,
 } from '../services/github';
-import {getAllFiles} from '../services/git';
-import getPackageStatuses, {
+import splitAsyncGenerator from '../ts-utils/splitAsyncGenerator';
+import type {PublishConfig} from '../types';
+import addPackageVersions from '../utils/addPackageVersions';
+import type {
   NoUpdateRequired,
   PackageStatusDetail,
   NewVersionToBePublished,
-  PackageStatus,
 } from '../utils/getPackageStatuses';
-import sortPackages from '../utils/sortPackages';
-import {checkGitHubReleaseStatus} from '../PublishTargets/github';
-import {prepublish, publish as publishTarget} from '../PublishTargets';
+import getPackageStatuses, {PackageStatus} from '../utils/getPackageStatuses';
 import listPackages from '../utils/listPackages';
-import splitAsyncGenerator from '../ts-utils/splitAsyncGenerator';
-import addPackageVersions from '../utils/addPackageVersions';
+import sortPackages from '../utils/sortPackages';
 
 export enum PublishResultKind {
-  NoUpdatesRequired,
-  UpdatesPublished,
-  CircularPackageDependencies,
-  GitHubAuthCheckFail,
-  PrepublishFailures,
+  NoUpdatesRequired = 0,
+  UpdatesPublished = 1,
+  CircularPackageDependencies = 2,
+  GitHubAuthCheckFail = 3,
+  PrepublishFailures = 4,
 }
 export interface NoUpdatesRequired {
   readonly kind: PublishResultKind.NoUpdatesRequired;

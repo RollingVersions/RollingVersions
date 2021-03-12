@@ -1,9 +1,12 @@
-import {GitHubClient, auth, GitHubOptions} from './services/github';
-import {Repository} from 'rollingversions/lib/types';
-import {APP_ID, PRIVATE_KEY} from './environment';
+import type {Repository} from 'rollingversions/lib/types';
+
 import isObject from '../utils/isObject';
 import withCache from '../utils/withCache';
-import logger, {Logger} from './logger';
+import {APP_ID, PRIVATE_KEY} from './environment';
+import type {Logger} from './logger';
+import logger from './logger';
+import {GitHubClient, auth} from './services/github';
+import type {GitHubOptions} from './services/github';
 
 function addLogging(
   options: Omit<
@@ -29,7 +32,7 @@ function addLogging(
     },
     onBatchResponse(req, res) {
       const timer = starts.get(req) || logger;
-      if (res.data?.errors?.length) {
+      if (res.data.errors?.length) {
         timer.error(
           'graphql_batch_error',
           `GraphQL Batch Error: ${res.data.errors[0]?.message}`,

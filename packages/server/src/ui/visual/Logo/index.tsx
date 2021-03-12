@@ -1,6 +1,7 @@
 import React from 'react';
-import Wordmark from './wordmark.svg';
+
 import WordmarkDark from './wordmark-dark.svg';
+import Wordmark from './wordmark.svg';
 
 export default function Logo({
   dark,

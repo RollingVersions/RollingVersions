@@ -1,23 +1,24 @@
-import ChangeSet from '@rollingversions/change-set';
 import retry from 'then-retry';
-import {
-  Queryable,
-  updatePullRequestCommentID,
-  updateChangeLogEntries,
-} from '../../services/postgres';
-import {GitHubClient} from '../../services/github';
-import {PullRequest} from 'rollingversions/lib/types';
-import readPullRequestState from './readPullRequestState';
-import {PullRequestPackage} from '../../../types';
 
+import type ChangeSet from '@rollingversions/change-set';
+import {updateStatus} from 'rollingversions/lib/services/github';
+import type {PullRequest} from 'rollingversions/lib/types';
+
+import type {PullRequestPackage} from '../../../types';
 import {
   renderComment,
   getShortDescription,
   getUrlForChangeLog,
 } from '../../../utils/Rendering';
 import {APP_URL} from '../../environment';
-import {updateStatus} from 'rollingversions/lib/services/github';
-import {Logger} from '../../logger';
+import type {Logger} from '../../logger';
+import type {GitHubClient} from '../../services/github';
+import type {Queryable} from '../../services/postgres';
+import {
+  updatePullRequestCommentID,
+  updateChangeLogEntries,
+} from '../../services/postgres';
+import readPullRequestState from './readPullRequestState';
 
 export default async function writePullRequestState(
   db: Queryable,

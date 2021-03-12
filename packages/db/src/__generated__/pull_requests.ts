@@ -8,7 +8,7 @@
 // eslint:disable
 // tslint:disable
 
-import DbGitRepository from './git_repositories';
+import type DbGitRepository from './git_repositories';
 
 interface DbPullRequest {
   change_set_submitted_at_git_commit_sha: string | null;

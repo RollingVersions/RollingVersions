@@ -1,8 +1,8 @@
-import {DEFAULT_VERSION_SCHEMA, VersionSchema} from '@rollingversions/config';
-import VersionNumber, {
-  parseString,
-  printString,
-} from '@rollingversions/version-number';
+import type {VersionSchema} from '@rollingversions/config';
+import {DEFAULT_VERSION_SCHEMA} from '@rollingversions/config';
+import type VersionNumber from '@rollingversions/version-number';
+import {parseString, printString} from '@rollingversions/version-number';
+
 import parseTemplate from './Template';
 
 export interface PrintTagContext {

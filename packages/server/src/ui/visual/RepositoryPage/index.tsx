@@ -1,7 +1,10 @@
-import ChangeSet, {changesToMarkdown} from '@rollingversions/change-set';
 import React from 'react';
-import GitHubMarkdownAsync from '../GitHubMarkdown/async';
+
+import type ChangeSet from '@rollingversions/change-set';
+import {changesToMarkdown} from '@rollingversions/change-set';
+
 import Alert from '../Alert';
+import GitHubMarkdownAsync from '../GitHubMarkdown/async';
 import InstallIcon from '../HeroBar/install-icon.svg';
 
 function PackageName({children}: {children: React.ReactNode}) {

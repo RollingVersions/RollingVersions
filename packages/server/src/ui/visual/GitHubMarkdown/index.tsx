@@ -17,7 +17,7 @@ function GitHubMarkdown({children, inline}: GitHubMarkdownProps) {
         className="markdown"
         source={children}
         renderers={{
-          paragraph: (props) => {
+          paragraph: (props): React.ReactElement => {
             return props.children;
           },
         }}

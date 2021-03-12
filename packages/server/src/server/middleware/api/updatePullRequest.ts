@@ -1,10 +1,11 @@
-import {Logger} from '../../logger';
-import {PullRequest} from 'rollingversions/lib/types';
-import {User} from '../utils/checkPermissions';
-import {GitHubClient} from '../../services/github';
-import {UpdatePullRequestBody} from '../../../types';
+import type {PullRequest} from 'rollingversions/lib/types';
+
+import type {UpdatePullRequestBody} from '../../../types';
 import writePullRequestState from '../../db-update-jobs/methods/writePullRequestState';
+import type {Logger} from '../../logger';
+import type {GitHubClient} from '../../services/github';
 import {db} from '../../services/postgres';
+import type {User} from '../utils/checkPermissions';
 
 export default async function updatePullRequest(
   client: GitHubClient,

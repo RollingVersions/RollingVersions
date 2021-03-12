@@ -1,12 +1,12 @@
-import {URL} from 'url';
+import type {URL} from 'url';
+
 import GitHubClient, {auth} from '@github-graph/api';
 import retry, {withRetry} from 'then-retry';
 
-import {Repository, PullRequest} from '../../types';
-
-import paginate from './paginate';
-import * as gh from './github-graph';
 import isTruthy from '../../ts-utils/isTruthy';
+import type {Repository, PullRequest} from '../../types';
+import * as gh from './github-graph';
+import paginate from './paginate';
 
 export {GitHubClient, auth};
 
@@ -15,7 +15,7 @@ async function pullRequest<T>(
     {repository?: null | {pullRequest?: null | T}} | null | undefined
   >,
 ): Promise<T | null> {
-  return promise.then(
+  return await promise.then(
     (result) => {
       return result?.repository?.pullRequest || null;
     },
@@ -151,10 +151,10 @@ export async function getAllTags(client: GitHubClient, repo: Repository) {
   }[] = [];
   for await (const tag of paginate(
     (after) => retry(() => gh.getTags(client, {...repo, after})),
-    (page) => page?.repository?.refs?.nodes || [],
+    (page) => page.repository?.refs?.nodes || [],
     (page) =>
-      (page?.repository?.refs?.pageInfo?.hasNextPage &&
-        page?.repository?.refs?.pageInfo?.endCursor) ||
+      (page.repository?.refs?.pageInfo.hasNextPage &&
+        page.repository.refs.pageInfo.endCursor) ||
       undefined,
   )) {
     if (tag) {
@@ -288,10 +288,10 @@ export async function* readComments(
           }),
         ),
       ),
-    (page) => page?.comments?.nodes || [],
+    (page) => page?.comments.nodes || [],
     (page): string | undefined =>
-      (page?.comments?.pageInfo?.hasNextPage &&
-        page?.comments?.pageInfo?.endCursor) ||
+      (page?.comments.pageInfo.hasNextPage &&
+        page.comments.pageInfo.endCursor) ||
       undefined,
   )) {
     if (comment?.databaseId) {
@@ -378,15 +378,15 @@ export async function* getAllCommits(
     async (after) => {
       const currentPageSize = pageSize;
       pageSize = Math.min(100, pageSize + 20);
-      return retry(async () =>
+      return await retry(async () =>
         deployBranch
-          ? gh.getAllCommits(client, {
+          ? await gh.getAllCommits(client, {
               ...repo,
               after,
               first: currentPageSize,
               qualifiedName: `refs/heads/${deployBranch}`,
             })
-          : gh.getAllDefaultBranchCommits(client, {
+          : await gh.getAllDefaultBranchCommits(client, {
               ...repo,
               after,
               first: currentPageSize,
@@ -394,11 +394,11 @@ export async function* getAllCommits(
       );
     },
     (page) =>
-      (page?.repository?.branch?.target?.__typename === 'Commit' &&
+      (page.repository?.branch?.target.__typename === 'Commit' &&
         page.repository.branch.target.history.nodes) ||
       [],
     (page): string | undefined =>
-      (page?.repository?.branch?.target?.__typename === 'Commit' &&
+      (page.repository?.branch?.target.__typename === 'Commit' &&
         page.repository.branch.target.history.pageInfo.hasNextPage &&
         page.repository.branch.target.history.pageInfo.endCursor) ||
       undefined,

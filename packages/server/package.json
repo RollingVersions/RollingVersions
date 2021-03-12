@@ -13,6 +13,7 @@
     "build:ui": "NODE_ENV=production TS_NODE_PROJECT='tsconfig.webpack.json' webpack",
     "dev:ui": "TS_NODE_PROJECT='tsconfig.webpack.json' webpack-dev-server -d --open",
     "dev:server": "nodemon",
+    "lint": "eslint --fix --config ../../.typescript.eslintrc.js --no-eslintrc --ext .js,.ts,.tsx src",
     "start": "node ./index.js",
     "storybook": "start-storybook",
     "storybook:build": "build-storybook -o .storybook-dist --quiet --loglevel warn"
