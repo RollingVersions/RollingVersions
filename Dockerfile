@@ -38,8 +38,6 @@ ADD packages/server/dist /app/packages/server/dist
 ADD packages/server/favicon /app/packages/server/favicon
 ADD packages/server/index.js /app/packages/server/index.js
 
-RUN yarn install --production
-
 FROM base AS runtime
 
 COPY --from=deps /app /app
