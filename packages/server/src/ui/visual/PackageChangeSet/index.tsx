@@ -2,7 +2,7 @@ import React, {useCallback} from 'react';
 
 import type ChangeSet from '@rollingversions/change-set';
 import {extractChanges} from '@rollingversions/change-set';
-import type {PublishTargetConfig} from 'rollingversions/src/types/PublishTarget';
+import type {PublishTargetConfig} from 'rollingversions/lib/types/PublishTarget';
 
 import Changes from '../Changes';
 import RegistryStatus from '../RegistryStatus';

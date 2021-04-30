@@ -2,7 +2,7 @@ import * as ft from 'funtypes';
 
 import type {Queryable} from '@rollingversions/db';
 import {tables} from '@rollingversions/db';
-import type DbGitRepository from '@rollingversions/db/src/__generated__/git_repositories';
+import type DbGitRepository from '@rollingversions/db/git_repositories';
 import {GitHubClient} from 'rollingversions/lib/services/github';
 
 import {Logger} from '../logger';

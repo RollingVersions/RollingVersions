@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {PublishTarget} from 'rollingversions/lib/types';
-import type {PublishTargetConfig} from 'rollingversions/src/types/PublishTarget';
+import type {PublishTargetConfig} from 'rollingversions/lib/types/PublishTarget';
 
 import Alert from '../Alert';
 

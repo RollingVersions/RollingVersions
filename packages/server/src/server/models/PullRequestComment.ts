@@ -1,8 +1,8 @@
 import {Queryable, tables} from '@rollingversions/db';
+import DbGitCommit from '@rollingversions/db/git_commits';
 import DbGitRepository from '@rollingversions/db/git_repositories';
 import DbPullRequest from '@rollingversions/db/pull_requests';
-import DbGitCommit from '@rollingversions/db/src/__generated__/git_commits';
-import {deleteComment, writeComment} from 'rollingversions/src/services/github';
+import {deleteComment, writeComment} from 'rollingversions/lib/services/github';
 
 import {renderComment, renderInitialComment} from '../../utils/Rendering';
 import {APP_URL} from '../environment';

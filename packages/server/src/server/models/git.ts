@@ -4,13 +4,13 @@ import type {SQLQuery} from '@rollingversions/db';
 import {Queryable, sql} from '@rollingversions/db';
 import {q} from '@rollingversions/db';
 import {tables} from '@rollingversions/db';
+import DbChangeLogEntry from '@rollingversions/db/change_log_entries';
 import type {GitCommits_InsertParameters} from '@rollingversions/db/git_commits';
 import type DbGitCommit from '@rollingversions/db/git_commits';
 import type DbGitRef from '@rollingversions/db/git_refs';
 import type {GitRefs_InsertParameters} from '@rollingversions/db/git_refs';
 import type DbGitRepository from '@rollingversions/db/git_repositories';
 import type DbPullRequest from '@rollingversions/db/pull_requests';
-import DbChangeLogEntry from '@rollingversions/db/src/__generated__/change_log_entries';
 import * as git from '@rollingversions/git-http';
 import * as gitObj from '@rollingversions/git-objects';
 
