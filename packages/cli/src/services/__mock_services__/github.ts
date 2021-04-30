@@ -10,13 +10,6 @@ export const getViewer: typeof real.getViewer = async (_client) => {
   };
 };
 
-export const getPullRequestHeadSha: typeof real.getPullRequestHeadSha = async (
-  _client,
-  pr,
-) => {
-  return byPullRequest(pr).headSha || undefined;
-};
-
 export const getPullRequestStatus: typeof real.getPullRequestStatus = async (
   _client,
   pr,
@@ -109,24 +102,6 @@ export const deleteComment: typeof real.deleteComment = async (
   byPullRequest(pr).comments = byPullRequest(pr).comments.filter(
     (c) => c.commentID !== commentID,
   );
-};
-
-export const updateStatus: typeof real.updateStatus = async (
-  _client,
-  pr,
-  status,
-) => {
-  const pullRequests = byRepo(pr.repo).pullRequests;
-  if (!(pr.number in pullRequests)) {
-    throw new Error(
-      `The mock does not inclue a PR ${pr.number} in ${pr.repo.name}`,
-    );
-  }
-  byPullRequest(pr).status = {
-    state: status.state,
-    url: status.url.href,
-    description: status.description,
-  };
 };
 
 export const getAllCommits: typeof real.getAllCommits = async function* (

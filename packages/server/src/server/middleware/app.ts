@@ -28,14 +28,19 @@ appMiddleware.get(
   checkRepoPermissions(['view', 'edit']),
   async (req, res, next) => {
     try {
-      const repo = parseRepoParams(req);
-      const client = await getClientForRepo(repo);
+      const {owner, repo, branch, versionByBranch} = parseRepoParams(req);
+      const client = await getClientForRepo({owner, name: repo});
       const response = await getRepository(
         client,
-        repo,
+        {owner, name: repo},
+        {branch, versionByBranch},
         expressLogger(req, res),
       );
-      res.json(response);
+      if (!response) {
+        res.status(404).send(`Unable to find the repository/branch`);
+      } else {
+        res.json(response);
+      }
     } catch (ex) {
       next(ex);
     }
@@ -54,12 +59,13 @@ appMiddleware.post(
       const client = getClientForToken(token);
       await client.rest.repos.createDispatchEvent({
         owner: repo.owner,
-        repo: repo.name,
+        repo: repo.repo,
         event_type: 'rollingversions_publish_approved',
+        // TODO: include parameters for branch name and commit sha
       });
       await new Promise((resolve) => setTimeout(resolve, 4000));
       res.redirect(
-        `https://github.com/${repo.owner}/${repo.name}/actions?query=event%3Arepository_dispatch`,
+        `https://github.com/${repo.owner}/${repo.repo}/actions?query=event%3Arepository_dispatch`,
       );
     } catch (ex) {
       next(ex);
@@ -84,7 +90,11 @@ appMiddleware.get(
         expressLogger(req, res),
       );
 
-      res.json(PullRequestResponse.serialize(response));
+      if (!response) {
+        res.status(404).send(`Unable to find the pull request`);
+      } else {
+        res.json(PullRequestResponse.serialize(response));
+      }
     } catch (ex) {
       next(ex);
     }
@@ -103,7 +113,7 @@ appMiddleware.post(
       const client = await getClientForRepo(pullRequest.repo);
       const body = getBody(req);
 
-      await updatePullRequest(
+      const updated = await updatePullRequest(
         client,
         getUser(req),
         pullRequest,
@@ -111,7 +121,11 @@ appMiddleware.post(
         expressLogger(req, res),
       );
 
-      res.status(200).send('ok');
+      if (!updated) {
+        res.status(404).send(`Unable to find the pull request`);
+      } else {
+        res.status(200).send('ok');
+      }
     } catch (ex) {
       next(ex);
     }

@@ -1,16 +1,16 @@
 import type {WebhookEvent} from '@octokit/webhooks';
 import WebhooksApi from '@octokit/webhooks';
 
-import onCreate from '../db-update-jobs/events/onCreate';
-import onDelete from '../db-update-jobs/events/onDelete';
-import onInstallation from '../db-update-jobs/events/onInstallation';
-import onInstallationRepositoriesAdded from '../db-update-jobs/events/onInstallationRepositoriesAdded';
-import onPullRequestClosed from '../db-update-jobs/events/onPullRequestClosed';
-import onPullRequestUpdate from '../db-update-jobs/events/onPullRequestUpdate';
-import onPush from '../db-update-jobs/events/onPush';
 import {WEBHOOK_SECRET} from '../environment';
 import logger from '../logger';
 import type {Logger} from '../logger';
+import onCreate from './events/onCreate';
+import onDelete from './events/onDelete';
+import onInstallation from './events/onInstallation';
+import onInstallationRepositoriesAdded from './events/onInstallationRepositoriesAdded';
+import onPullRequestClosed from './events/onPullRequestClosed';
+import onPullRequestUpdate from './events/onPullRequestUpdate';
+import onPush from './events/onPush';
 
 const webhooks = new WebhooksApi({secret: WEBHOOK_SECRET});
 
@@ -87,7 +87,7 @@ webhooks.on('delete', async (e) => {
       ref_type: e.payload.ref_type,
       ref_name: e.payload.ref,
     },
-    () => onDelete(e),
+    () => onDelete(e, logger),
   );
 });
 

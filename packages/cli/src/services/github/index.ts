@@ -1,5 +1,3 @@
-import type {URL} from 'url';
-
 import GitHubClient, {auth} from '@github-graph/api';
 import retry, {withRetry} from 'then-retry';
 
@@ -44,20 +42,6 @@ async function pullRequest<T>(
     },
   );
 }
-
-export const getPullRequestHeadSha = withRetry(
-  async (client: GitHubClient, pr: Pick<PullRequest, 'repo' | 'number'>) => {
-    return (
-      await pullRequest(
-        gh.getPullRequestHeadSha(client, {
-          owner: pr.repo.owner,
-          name: pr.repo.name,
-          number: pr.number,
-        }),
-      )
-    )?.headRef?.target.oid;
-  },
-);
 
 export const getPullRequestStatus = withRetry(
   async (client: GitHubClient, pr: Pick<PullRequest, 'repo' | 'number'>) => {
@@ -281,7 +265,8 @@ export async function* readComments(
       retry(() =>
         pullRequest(
           gh.getPullRequestComments(client, {
-            ...pr.repo,
+            owner: pr.repo.owner,
+            name: pr.repo.name,
             number: pr.number,
             after,
             first: pageSize,
@@ -342,28 +327,6 @@ export const deleteComment = withRetry(
       owner: pr.repo.owner,
       repo: pr.repo.name,
       comment_id: existingComment,
-    });
-  },
-);
-
-export const updateStatus = withRetry(
-  async (
-    client: GitHubClient,
-    pr: Pick<PullRequest, 'repo' | 'number' | 'headSha'>,
-    status: {
-      state: 'success' | 'pending' | 'error' | 'failure';
-      url: URL;
-      description: string;
-    },
-  ) => {
-    await client.rest.repos.createStatus({
-      owner: pr.repo.owner,
-      repo: pr.repo.name,
-      sha: pr.headSha,
-      state: status.state,
-      target_url: status.url.href,
-      description: status.description,
-      context: 'RollingVersions',
     });
   },
 );

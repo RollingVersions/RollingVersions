@@ -2,8 +2,10 @@ import GitHubClient, {
   auth,
   OptionsWithAuth as GitHubOptions,
 } from '@github-graph/api';
-import retry from 'then-retry';
+import retry, {withRetry} from 'then-retry';
 
+import DbGitCommit from '@rollingversions/db/git_commits';
+import DbGitRepository from '@rollingversions/db/git_repositories';
 import paginateBatched from 'rollingversions/lib/services/github/paginateBatched';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import type {Repository} from 'rollingversions/lib/types';
@@ -26,6 +28,8 @@ export async function getRepository(client: GitHubClient, repo: Repository) {
     graphql_id: repository.id,
     owner: repo.owner,
     name: repo.name,
+    isPrivate: repository.isPrivate,
+    defaultBranch: repository.defaultBranchRef?.name,
   };
 }
 
@@ -272,6 +276,11 @@ export async function getPullRequestFromGraphID(
   if (!result.databaseId) {
     throw new Error(`Got null for pull request databaseId`);
   }
+  if (result.merged && !result.mergeCommit) {
+    throw new Error(
+      `Unexpected pull request that is merged but has no merge commit`,
+    );
+  }
   return {
     id: result.databaseId,
     graphql_id,
@@ -279,7 +288,7 @@ export async function getPullRequestFromGraphID(
     title: result.title,
     is_merged: result.merged,
     is_closed: result.closed || result.merged,
-    head_sha: result.headRef?.target.oid,
+    merge_commit_sha: result.mergeCommit?.oid ?? null,
   };
 }
 
@@ -299,6 +308,11 @@ export async function getPullRequestFromNumber(
   if (!result.databaseId) {
     throw new Error(`Got null for pull request databaseId`);
   }
+  if (result.merged && !result.mergeCommit) {
+    throw new Error(
+      `Unexpected pull request that is merged but has no merge commit`,
+    );
+  }
   return {
     id: result.databaseId,
     graphql_id: result.id,
@@ -306,7 +320,7 @@ export async function getPullRequestFromNumber(
     title: result.title,
     is_merged: result.merged,
     is_closed: result.closed || result.merged,
-    head_sha: result.headRef?.target.oid,
+    merge_commit_sha: result.mergeCommit?.oid ?? null,
   };
 }
 export async function* getAllPullRequestCommits(
@@ -349,5 +363,133 @@ export interface PullRequestDetail {
   title: string;
   is_merged: boolean;
   is_closed: boolean;
-  head_sha: string | undefined;
+  merge_commit_sha: string | null;
+}
+
+export const updateCommitStatus = withRetry(
+  async (
+    client: GitHubClient,
+    repo: DbGitRepository,
+    headCommit: DbGitCommit,
+    status: {
+      state: 'success' | 'pending' | 'error' | 'failure';
+      url: URL;
+      description: string;
+    },
+  ) => {
+    await client.rest.repos.createStatus({
+      owner: repo.owner,
+      repo: repo.name,
+      sha: headCommit.commit_sha,
+      state: status.state,
+      target_url: status.url.href,
+      description: status.description,
+      context: 'RollingVersions',
+    });
+  },
+);
+
+interface Entry {
+  name: string;
+  object:
+    | null
+    | {
+        __typename: 'Tree';
+        id: string;
+        /**
+         * A list of tree entries.
+         */
+        entries?: Entry[] | null;
+      }
+    | {
+        __typename: 'Commit' | 'Blob' | 'Tag';
+        id: string;
+      };
+}
+export async function getAllFiles(
+  client: GitHubClient,
+  source:
+    | {type: 'branch'; repositoryID: string; branchName: string}
+    | {type: 'pull_request'; pullRequestID: string},
+) {
+  const commit = await retry(async () =>
+    source.type === 'branch'
+      ? extractType(
+          extractType(
+            (
+              await queries.getBranchFileNames(client, {
+                repoID: source.repositoryID,
+                qualifiedName: `refs/heads/${source.branchName}`,
+              })
+            ).node,
+            'Repository',
+          )?.ref?.target,
+          'Commit',
+        )
+      : extractType(
+          extractType(
+            (
+              await queries.getPullRequestFileNames(client, {
+                id: source.pullRequestID,
+              })
+            ).node,
+            'PullRequest',
+          )?.headRef?.target,
+          'Commit',
+        ),
+  );
+
+  if (!commit) {
+    return null;
+  }
+
+  function formatEntry(
+    entry: Entry,
+    path: string,
+  ): {
+    path: string;
+    getContents: () => Promise<string>;
+  }[] {
+    switch (entry.object?.__typename) {
+      case 'Blob':
+        const id = entry.object.id;
+        return [
+          {
+            path,
+            getContents: async () => {
+              const file = extractType(
+                (await retry(() => queries.getBlobContents(client, {id}))).node,
+                'Blob',
+              );
+              if (typeof file?.text !== 'string') {
+                throw new Error(`Could not find file at ${path}`);
+              }
+              return file.text;
+            },
+          },
+        ];
+      case 'Tree':
+        return (entry.object.entries || []).flatMap((e) =>
+          formatEntry(e, `${path}/${e.name}`),
+        );
+      default:
+        return [];
+    }
+  }
+  return {
+    oid: commit.oid,
+    entries: (commit.tree.entries || []).flatMap((e) => formatEntry(e, e.name)),
+  };
+}
+
+function extractType<
+  TObject extends {readonly __typename: string},
+  TName extends string & TObject['__typename']
+>(
+  value: TObject | undefined | null,
+  name: TName,
+): undefined | Extract<TObject, {readonly __typename: TName}> {
+  return value?.__typename === name
+    ? (value as Extract<TObject, {readonly __typename: TName}>)
+    : undefined;
 }

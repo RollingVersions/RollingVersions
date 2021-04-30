@@ -1,55 +1,93 @@
-import {getBranch} from 'rollingversions/lib/services/github';
-import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
-import type {Repository} from 'rollingversions/lib/types';
-import PackageStatus from 'rollingversions/lib/types/PackageStatus';
-import sortPackages from 'rollingversions/lib/utils/sortPackages';
+import db from '@rollingversions/db';
+import sortPackagesByDependencies from '@rollingversions/sort-by-dependencies';
+import {getNextVersion} from '@rollingversions/version-number';
 
 import type {RepoResponse} from '../../../types';
-import readRepositoryState from '../../db-update-jobs/methods/readRepositoryState';
 import type {Logger} from '../../logger';
+import {getBranchHeadCommit} from '../../models/git';
+import {getDetailedPackageManifestsForBranch} from '../../models/PackageManifests';
+import {getRepositoryFromRestParams} from '../../models/Repositories';
 import type {GitHubClient} from '../../services/github';
-import {db} from '../../services/postgres';
 
 export default async function getRepository(
   client: GitHubClient,
-  repo: Repository,
+  repository: {
+    owner: string;
+    name: string;
+  },
+  {
+    branch: customBranch,
+    versionByBranch = false,
+  }: {branch?: string; versionByBranch?: boolean},
   logger: Logger,
-): Promise<RepoResponse> {
-  const [branch, unsortedPackageStatuses] = await Promise.all([
-    getBranch(client, repo),
-    readRepositoryState(db, client, repo, logger),
-  ] as const);
+): Promise<RepoResponse | null> {
+  const repo = await getRepositoryFromRestParams(db, client, repository);
+  if (!repo) return null;
 
-  const sortResult = await sortPackages(unsortedPackageStatuses);
+  const branchName = customBranch ?? repo.default_branch_name;
+  const headCommit = await getBranchHeadCommit(
+    db,
+    client,
+    repo,
+    branchName,
+    logger,
+  );
+  if (!headCommit) {
+    return null;
+  }
+
+  const packagesByName = await getDetailedPackageManifestsForBranch(
+    db,
+    client,
+    repo,
+    {branchName, versionByBranch},
+    logger,
+  );
+  if (!packagesByName) return null;
+
+  const sortResult = sortPackagesByDependencies(
+    packagesByName,
+    (pkg) => pkg.manifest.dependencies,
+  );
 
   const packages = sortResult.circular
-    ? unsortedPackageStatuses
+    ? [...packagesByName.values()].sort((a, b) =>
+        a.manifest.packageName < b.manifest.packageName ? -1 : 1,
+      )
     : sortResult.packages;
 
   return {
-    headSha: branch?.headSha || null,
+    headSha: headCommit.commit_sha,
     packagesWithChanges: packages
-      .map((pkg) =>
-        pkg.status === PackageStatus.NewVersionToBePublished
-          ? {
-              packageName: pkg.packageName,
-              changeSet: pkg.changeSet,
-              currentVersion: pkg.currentVersion,
-              newVersion: pkg.newVersion,
-            }
-          : null,
+      .filter(
+        (p) =>
+          getNextVersion(
+            p.manifest.versionTag?.version ?? null,
+            p.changeSet,
+          ) !== null,
       )
-      .filter(isTruthy),
+      .map((p) => ({
+        packageName: p.manifest.packageName,
+        currentVersion: p.manifest.versionTag?.version ?? null,
+        changeSet: p.changeSet,
+        newVersion: getNextVersion(
+          p.manifest.versionTag?.version ?? null,
+          p.changeSet,
+        )!,
+      })),
     packagesWithNoChanges: packages
-      .map((pkg) =>
-        pkg.status === PackageStatus.NoUpdateRequired
-          ? {
-              packageName: pkg.packageName,
-              currentVersion: pkg.currentVersion,
-            }
-          : null,
+      .filter(
+        (p) =>
+          getNextVersion(
+            p.manifest.versionTag?.version ?? null,
+            p.changeSet,
+          ) === null,
       )
-      .filter(isTruthy),
+      .map((p) => ({
+        packageName: p.manifest.packageName,
+        currentVersion: p.manifest.versionTag?.version ?? null,
+        changeSet: p.changeSet,
+      })),
     cycleDetected: sortResult.circular ? sortResult.packageNames : null,
   };
 }

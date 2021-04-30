@@ -3,14 +3,19 @@ import type {PackageManifest} from '../types';
 import {mergePackageManifests} from '../types/PackageManifest';
 
 export default async function listPackages(
-  files: AsyncGenerator<
-    {
-      path: string;
-      getContents: () => Promise<string>;
-    },
-    any,
-    any
-  >,
+  files:
+    | {
+        path: string;
+        getContents: () => Promise<string>;
+      }[]
+    | AsyncGenerator<
+        {
+          path: string;
+          getContents: () => Promise<string>;
+        },
+        any,
+        any
+      >,
 ) {
   const packagesByName = new Map<string, PackageManifest>();
   const pending: Promise<void>[] = [];

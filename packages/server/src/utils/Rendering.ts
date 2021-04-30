@@ -41,24 +41,17 @@ export function getUrlForChangeLog(
   return url;
 }
 
-export function getShortDescription(
-  pullRequest: PullRequest,
-  submittedAtCommitSha: string | null,
-  packages: Map<string, PullRequestPackage>,
-) {
-  if (submittedAtCommitSha === pullRequest.headSha) {
-    const packagesToRelease = [...packages].filter(
-      ([, {changeSet}]) => !isEmptyChangeSet(changeSet),
-    );
-    if (packagesToRelease.length === 0) {
-      return 'no changes to release';
-    }
-    if (packagesToRelease.length === 1) {
-      return `releasing ${packagesToRelease[0][0]}`;
-    }
-    return 'releasing multiple packages';
+export function getShortDescription(packages: Map<string, PullRequestPackage>) {
+  const packagesToRelease = [...packages].filter(
+    ([, {changeSet}]) => !isEmptyChangeSet(changeSet),
+  );
+  if (packagesToRelease.length === 0) {
+    return 'no changes to release';
   }
-  return 'please update the changelog';
+  if (packagesToRelease.length === 1) {
+    return `releasing ${packagesToRelease[0][0]}`;
+  }
+  return 'releasing multiple packages';
 }
 
 export function renderInitialCommentWithoutState(

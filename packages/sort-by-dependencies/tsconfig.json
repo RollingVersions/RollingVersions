@@ -9,11 +9,4 @@
     "esModuleInterop": true
   },
   "include": ["src"],
-  "references": [
-    {"path": "../change-set"},
-    {"path": "../config"},
-    {"path": "../sort-by-dependencies"},
-    {"path": "../tag-format"},
-    {"path": "../version-number"},
-  ]
 }

@@ -1,16 +1,20 @@
+import db, {tables} from '@rollingversions/db';
+import {ChangeLogEntries_InsertParameters} from '@rollingversions/db/change_log_entries';
 import type {PullRequest} from 'rollingversions/lib/types';
 
 import type {UpdatePullRequestBody} from '../../../types';
-import writePullRequestState from '../../db-update-jobs/methods/writePullRequestState';
 import type {Logger} from '../../logger';
+import {updatePullRequestComment} from '../../models/PullRequestComment';
+import {getPullRequestFromRestParams} from '../../models/PullRequests';
+import {updatePullRequestStatus} from '../../models/PullRequestStatus';
+import {getRepositoryFromRestParams} from '../../models/Repositories';
 import type {GitHubClient} from '../../services/github';
-import {db} from '../../services/postgres';
 import type {User} from '../utils/checkPermissions';
 
 export default async function updatePullRequest(
   client: GitHubClient,
   user: User,
-  pullRequest: Pick<PullRequest, 'repo' | 'number'>,
+  pr: Pick<PullRequest, 'repo' | 'number'>,
   body: UpdatePullRequestBody,
   logger: Logger,
 ) {
@@ -18,18 +22,65 @@ export default async function updatePullRequest(
     changes_count: body.updates
       .map((u) => u.changes.length)
       .reduce((a, b) => a + b, 0),
-    repo_owner: pullRequest.repo.owner,
-    repo_name: pullRequest.repo.name,
-    pull_number: pullRequest.number,
+    repo_owner: pr.repo.owner,
+    repo_name: pr.repo.name,
+    pull_number: pr.number,
     ...user,
   });
 
-  await writePullRequestState(
+  const repo = await getRepositoryFromRestParams(db, client, {
+    owner: pr.repo.owner,
+    name: pr.repo.name,
+  });
+  if (!repo) return false;
+
+  const pullRequest = await getPullRequestFromRestParams(
     db,
     client,
-    pullRequest,
-    body.headSha,
-    body.updates,
+    repo,
+    pr.number,
     logger,
   );
+  if (!pullRequest) return false;
+
+  await db.tx(async (db) => {
+    await tables
+      .change_log_entries(db)
+      .delete({pull_request_id: pullRequest.id});
+    await tables.change_log_entries(db).insert(
+      ...body.updates
+        .flatMap(({packageName, changes}) =>
+          changes.map(
+            (
+              change,
+            ): Omit<
+              ChangeLogEntries_InsertParameters,
+              'sort_order_weight'
+            > => ({
+              kind: change.type,
+              title: change.title,
+              body: change.body,
+              package_name: packageName,
+              pull_request_id: pullRequest.id,
+            }),
+          ),
+        )
+        .map((change, sort_order_weight) => ({...change, sort_order_weight})),
+    );
+    await tables.pull_requests(db).update(
+      {id: pullRequest.id},
+      {
+        change_set_submitted_at_git_commit_sha:
+          body.headSha ?? `unknown_commit`,
+        comment_updated_at_commit_sha: null,
+        status_updated_at_commit_sha: null,
+      },
+    );
+  });
+
+  await Promise.all([
+    updatePullRequestComment(db, client, repo, pullRequest, logger),
+    updatePullRequestStatus(db, client, repo, pullRequest, logger),
+  ]);
+  return true;
 }

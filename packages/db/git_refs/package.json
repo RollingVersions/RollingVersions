@@ -1,0 +1,4 @@
+{
+  "main": "../lib/__generated__/git_refs.js",
+  "types": "../lib/__generated__/git_refs.d.ts"
+}

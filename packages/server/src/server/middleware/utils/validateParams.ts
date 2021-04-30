@@ -1,6 +1,6 @@
 import type {Response, Request} from 'express';
 
-import type {PullRequest, Repository} from 'rollingversions/lib/types';
+import type {PullRequest} from 'rollingversions/lib/types';
 
 const validRequests = new WeakSet<Request>();
 export default function validateParams() {
@@ -40,18 +40,36 @@ export function validateRepoParams() {
       res.status(400).send('Expected a owner parameter');
     } else if (!repo) {
       res.status(400).send('Expected a repo parameter');
+    } else if (
+      req.query.versionByBranch !== undefined &&
+      req.query.versionByBranch !== `true` &&
+      req.query.versionByBranch !== `false`
+    ) {
+      res.status(400).send('Expected versionByBranch to be "true" or "false"');
+    } else if (
+      req.query.branch !== undefined &&
+      typeof req.query.branch !== 'string'
+    ) {
+      res.status(400).send('Expected branch to be a string, if specified.');
     } else {
       validRepoRequests.add(req);
       next();
     }
   };
 }
-export function parseRepoParams(req: Request): Repository {
+export function parseRepoParams(
+  req: Request,
+): {owner: string; repo: string; branch?: string; versionByBranch: boolean} {
   if (!validRepoRequests.has(req)) {
     throw new Error(
       'This request has not been passed through the validation middleware',
     );
   }
   const {owner, repo} = req.params;
-  return {owner, name: repo};
+  return {
+    owner,
+    repo,
+    branch: req.query.branch ?? undefined,
+    versionByBranch: req.query.versionByBranch === `true`,
+  };
 }
