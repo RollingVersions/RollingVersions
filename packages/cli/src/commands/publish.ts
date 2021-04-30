@@ -1,23 +1,18 @@
+import {URL} from 'url';
+
+import fetch from 'cross-fetch';
+
 import {prepublish, publish as publishTarget} from '../PublishTargets';
 import {checkGitHubReleaseStatus} from '../PublishTargets/github';
-import {getAllFiles} from '../services/git';
-import {
-  GitHubClient,
-  auth,
-  getAllTags,
-  getAllCommits,
-} from '../services/github';
-import splitAsyncGenerator from '../ts-utils/splitAsyncGenerator';
+import {GitHubClient, auth} from '../services/github';
 import type {PublishConfig} from '../types';
-import addPackageVersions from '../utils/addPackageVersions';
-import type {
+import {GetRepositoryApiResponse} from '../types/ApiResponse';
+import {
   NoUpdateRequired,
   PackageStatusDetail,
   NewVersionToBePublished,
+  PackageStatus,
 } from '../utils/getPackageStatuses';
-import getPackageStatuses, {PackageStatus} from '../utils/getPackageStatuses';
-import listPackages from '../utils/listPackages';
-import sortPackages from '../utils/sortPackages';
 
 export enum PublishResultKind {
   NoUpdatesRequired = 0,
@@ -61,46 +56,53 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   const client = new GitHubClient({
     auth: auth.createTokenAuth(config.accessToken),
   });
+  const url = new URL(`/api/${config.owner}/${config.name}`, config.backend);
+  if (config.deployBranch) {
+    url.searchParams.set(`branch`, config.deployBranch);
+  }
+  const res = await fetch(url.href, {
+    headers: {Authorization: `Bearer ${config.accessToken}`},
+  });
+  if (!res.ok) {
+    return {
+      kind: PublishResultKind.GitHubAuthCheckFail,
+      reason: await res.text(),
+    };
+  }
+  const response: GetRepositoryApiResponse = await res.json();
 
-  const [packageManifestsWithoutVersions, allTags] = await Promise.all([
-    listPackages(getAllFiles(config.dirname)),
-    getAllTags(client, {owner: config.owner, name: config.name}),
-  ]);
-  const packageManifests = addPackageVersions(
-    packageManifestsWithoutVersions,
-    allTags,
-  );
+  if (response.cycleDetected?.length) {
+    return {
+      kind: PublishResultKind.CircularPackageDependencies,
+      packageNames: response.cycleDetected,
+    };
+  }
 
-  const getAllCommitsCached = splitAsyncGenerator(
-    getAllCommits(
-      client,
-      {owner: config.owner, name: config.name},
-      {deployBranch: config.deployBranch},
-    ),
-  );
-  const unsortedPackageStatuses = await getPackageStatuses(
-    client,
-    config,
-    packageManifests,
-    async (sinceCommitSha) => {
-      const results: {associatedPullRequests: {number: number}[]}[] = [];
-      for await (const commit of getAllCommitsCached()) {
-        if (commit.oid === sinceCommitSha) {
-          return results;
-        }
-        results.push(commit);
+  const packages = response.packages.map(
+    (pkg): PackageStatusDetail => {
+      if (pkg.newVersion) {
+        return {
+          status: PackageStatus.NewVersionToBePublished,
+          packageName: pkg.manifest.packageName,
+          currentTagName: pkg.manifest.versionTag?.name ?? null,
+          currentVersion: pkg.manifest.versionTag?.version ?? null,
+          newVersion: pkg.newVersion,
+          changeSet: pkg.changeSet,
+          manifest: pkg.manifest,
+        };
+      } else {
+        return {
+          status: PackageStatus.NoUpdateRequired,
+          packageName: pkg.manifest.packageName,
+          currentVersion: pkg.manifest.versionTag?.version ?? null,
+          newVersion: pkg.manifest.versionTag?.version ?? null,
+          manifest: pkg.manifest,
+        };
       }
-      if (sinceCommitSha !== undefined) {
-        throw new Error(
-          `Searched all commits and did not find the commit of the previous release: "${sinceCommitSha}"`,
-        );
-      }
-      return results;
     },
   );
-
   if (config.canary !== null) {
-    for (const pkg of unsortedPackageStatuses) {
+    for (const pkg of packages) {
       if (pkg.status === PackageStatus.NewVersionToBePublished) {
         pkg.newVersion = {
           ...pkg.newVersion,
@@ -110,35 +112,31 @@ export default async function publish(config: PublishConfig): Promise<Result> {
     }
   }
 
-  const sortResult = await sortPackages(unsortedPackageStatuses);
-
-  if (sortResult.circular) {
-    return {
-      kind: PublishResultKind.CircularPackageDependencies,
-      packageNames: sortResult.packageNames,
-    };
-  }
-
-  const packageStatuses = sortResult.packages;
-
   config.logger.onValidatedPackages?.({
-    packages: packageStatuses,
+    packages,
     dryRun: config.dryRun,
   });
 
   if (
-    !packageStatuses.some(
+    !packages.some(
       (pkg) => pkg.status === PackageStatus.NewVersionToBePublished,
     )
   ) {
     return {
       kind: PublishResultKind.NoUpdatesRequired,
-      packages: packageStatuses as NoUpdateRequired[],
+      packages: packages as NoUpdateRequired[],
     };
   }
 
   // prepublish checks
-  const gitHubPrepublishInfo = await checkGitHubReleaseStatus(config, client);
+  const gitHubPrepublishInfo = await checkGitHubReleaseStatus(
+    config,
+    {
+      headSha: response.headSha,
+      name: response.branchName,
+    },
+    client,
+  );
   if (!gitHubPrepublishInfo.ok) {
     return {
       kind: PublishResultKind.GitHubAuthCheckFail,
@@ -147,12 +145,12 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   }
 
   const packageVersions = new Map(
-    packageStatuses.map((p) => [p.packageName, p.newVersion]),
+    packages.map((p) => [p.packageName, p.newVersion]),
   );
-  const allTagNames = new Set(allTags.map((t) => t.name));
+  const allTagNames = new Set(response.allTagNames);
 
   const failures: PrepublishFailures['failures'][number][] = [];
-  for (const pkg of packageStatuses) {
+  for (const pkg of packages) {
     if (pkg.status === PackageStatus.NewVersionToBePublished) {
       const reasons = [];
       for (const prepublishResult of await prepublish(
@@ -178,13 +176,13 @@ export default async function publish(config: PublishConfig): Promise<Result> {
     };
   }
 
-  for (const pkg of packageStatuses) {
+  for (const pkg of packages) {
     if (pkg.status === PackageStatus.NewVersionToBePublished) {
       await publishTarget(config, pkg, packageVersions, client);
     }
   }
   return {
     kind: PublishResultKind.UpdatesPublished,
-    packages: packageStatuses,
+    packages,
   };
 }

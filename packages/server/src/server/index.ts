@@ -2,6 +2,7 @@ import {json} from 'body-parser';
 import express from 'express';
 
 import {errorLoggingMiddlware, expressMiddlewareLogger} from './logger';
+import apiMiddleware from './middleware/api';
 import appMiddleware from './middleware/app';
 import authMiddleware from './middleware/auth';
 import staticMiddleware from './middleware/static';
@@ -41,6 +42,7 @@ app.use((req, res, next) => webhooks.middleware(req, res, next));
 
 app.use(authMiddleware);
 app.use(json());
+app.use(apiMiddleware);
 app.use(appMiddleware);
 // https://github.com/Mottie/github-reserved-names/blob/master/oddballs.json has the names that are available to use
 app.use(staticMiddleware);

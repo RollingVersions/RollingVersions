@@ -22,9 +22,10 @@ export async function checkGitHubReleaseStatus(
     PublishConfig,
     'owner' | 'name' | 'dirname' | 'deployBranch' | 'allowNonLatestCommit'
   >,
+  branch: {headSha: string; name: string},
   client: GitHubClient,
 ): Promise<{ok: true} | {ok: false; reason: string}> {
-  const [viewer, permission, branch] = await Promise.all([
+  const [viewer, permission] = await Promise.all([
     getViewer(client),
     getRepositoryViewerPermissions(client, {
       owner,
@@ -38,7 +39,7 @@ export async function checkGitHubReleaseStatus(
   ) {
     return {
       ok: false,
-      reason: `This GitHub token does not have permisison to publish tags/releases to GitHub. It has viewerPermission ${permission} but needs one of ADMIN, MAINTAIN or WRITE`,
+      reason: `This GitHub token does not have permission to publish tags/releases to GitHub. It has viewerPermission ${permission} but needs one of ADMIN, MAINTAIN or WRITE`,
     };
   }
   if (!branch) {

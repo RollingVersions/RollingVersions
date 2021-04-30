@@ -1,3 +1,5 @@
+import {URL} from 'url';
+
 import type {
   PackageStatusDetail,
   NewVersionToBePublished,
@@ -14,6 +16,7 @@ export interface PublishConfig {
   logger: PublishEventHandlers;
   canary: string | null;
   allowNonLatestCommit: boolean;
+  backend: URL;
 }
 
 export interface PublishEvents {

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import {URL} from 'url';
+
 import chalk from 'chalk';
 import {parse, startChain, param} from 'parameter-reducers';
 
@@ -31,6 +33,7 @@ switch (COMMAND) {
       .addParam(param.string(['-r', '--repo'], 'repoSlug'))
       .addParam(param.string(['-g', '--github-token'], 'githubToken'))
       .addParam(param.string(['-b', '--deploy-branch'], 'deployBranch'))
+      .addParam(param.string(['--backend'], 'backend'))
       .addParam(
         param.flag([`--allow-non-latest-commit`], `allowNonLatestCommit`),
       )
@@ -67,6 +70,7 @@ switch (COMMAND) {
       deployBranch,
       canary,
       allowNonLatestCommit = false,
+      backend,
     } = parserResult.parsed;
 
     if (!githubToken) {
@@ -91,6 +95,7 @@ switch (COMMAND) {
     const [owner, name] = slug;
 
     publish({
+      backend: new URL(backend ?? `https://rollingversions.com`),
       dirname: DIRNAME,
       owner,
       name,
