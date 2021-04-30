@@ -1,4 +1,4 @@
-import db, {tables} from '@rollingversions/db';
+import db, {q, tables} from '@rollingversions/db';
 import {ChangeLogEntries_InsertParameters} from '@rollingversions/db/change_log_entries';
 import type {PullRequest} from 'rollingversions/lib/types';
 
@@ -44,9 +44,10 @@ export default async function updatePullRequest(
   if (!pullRequest) return false;
 
   await db.tx(async (db) => {
-    await tables
-      .change_log_entries(db)
-      .delete({pull_request_id: pullRequest.id});
+    await tables.change_log_entries(db).delete({
+      pull_request_id: pullRequest.id,
+      package_name: q.anyOf(body.updates.map((u) => u.packageName)),
+    });
     await tables.change_log_entries(db).insert(
       ...body.updates
         .flatMap(({packageName, changes}) =>
