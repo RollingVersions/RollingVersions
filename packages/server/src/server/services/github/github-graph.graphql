@@ -238,7 +238,7 @@ fragment CommitDetail on Commit {
   }
 }
 
-query GetPullRequestFileNames($id: String!) {
+query GetPullRequestFileNames($id: ID!) {
   node(id: $id) {
     __typename
     ... on PullRequest {
@@ -278,7 +278,7 @@ query GetBranchFileNames($repoID: String!, $qualifiedName: String!) {
   }
 }
 
-query GetBlobContents($id: String!) {
+query GetBlobContents($id: ID!) {
   node(id: $id) {
     __typename
     ... on Blob {
