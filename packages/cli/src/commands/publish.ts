@@ -60,6 +60,9 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   if (config.deployBranch) {
     url.searchParams.set(`branch`, config.deployBranch);
   }
+  if (config.versionByBranch) {
+    url.searchParams.set(`versionByBranch`, `true`);
+  }
   const res = await fetch(url.href, {
     headers: {Authorization: `Bearer ${config.accessToken}`},
   });

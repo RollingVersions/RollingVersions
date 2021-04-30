@@ -17,6 +17,7 @@ export interface PublishConfig {
   canary: string | null;
   allowNonLatestCommit: boolean;
   backend: URL;
+  versionByBranch: boolean;
 }
 
 export interface PublishEvents {

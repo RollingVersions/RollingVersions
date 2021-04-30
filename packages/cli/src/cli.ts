@@ -34,6 +34,7 @@ switch (COMMAND) {
       .addParam(param.string(['-g', '--github-token'], 'githubToken'))
       .addParam(param.string(['-b', '--deploy-branch'], 'deployBranch'))
       .addParam(param.string(['--backend'], 'backend'))
+      .addParam(param.flag([`--version-by-branch`], `versionByBranch`))
       .addParam(
         param.flag([`--allow-non-latest-commit`], `allowNonLatestCommit`),
       )
@@ -71,6 +72,7 @@ switch (COMMAND) {
       canary,
       allowNonLatestCommit = false,
       backend,
+      versionByBranch = false,
     } = parserResult.parsed;
 
     if (!githubToken) {
@@ -104,6 +106,7 @@ switch (COMMAND) {
       dryRun,
       canary: canary || null,
       allowNonLatestCommit,
+      versionByBranch,
       logger: {
         onValidatedPackages({packages}) {
           const hasUpdates = packages.some(
