@@ -2,6 +2,7 @@ import GitHubClient, {
   auth,
   OptionsWithAuth as GitHubOptions,
 } from '@github-graph/api';
+import * as ft from 'funtypes';
 import retry, {withRetry} from 'then-retry';
 
 import DbGitCommit from '@rollingversions/db/git_commits';
@@ -406,12 +407,25 @@ interface Entry {
         id: string;
       };
 }
+
+const GetAllFilesSourceSchema = ft.Union(
+  ft.Object({
+    type: ft.Literal(`branch`),
+    repositoryID: ft.String,
+    branchName: ft.String,
+  }),
+  ft.Object({
+    type: ft.Literal(`pull_request`),
+    pullRequestID: ft.String,
+  }),
+);
 export async function getAllFiles(
   client: GitHubClient,
   source:
     | {type: 'branch'; repositoryID: string; branchName: string}
     | {type: 'pull_request'; pullRequestID: string},
 ) {
+  (GetAllFilesSourceSchema as any).assert(source);
   const commit = await retry(async () =>
     source.type === 'branch'
       ? extractType(
