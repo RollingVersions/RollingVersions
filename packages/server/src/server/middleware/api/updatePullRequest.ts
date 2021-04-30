@@ -43,7 +43,7 @@ export default async function updatePullRequest(
   );
   if (!pullRequest) return false;
 
-  await db.tx(async (db) => {
+  const updatedPullRequest = await db.tx(async (db) => {
     await tables.change_log_entries(db).delete({
       pull_request_id: pullRequest.id,
       package_name: q.anyOf(body.updates.map((u) => u.packageName)),
@@ -68,7 +68,7 @@ export default async function updatePullRequest(
         )
         .map((change, sort_order_weight) => ({...change, sort_order_weight})),
     );
-    await tables.pull_requests(db).update(
+    const [updatedPullRequest] = await tables.pull_requests(db).update(
       {id: pullRequest.id},
       {
         change_set_submitted_at_git_commit_sha:
@@ -77,11 +77,12 @@ export default async function updatePullRequest(
         status_updated_at_commit_sha: null,
       },
     );
+    return updatedPullRequest;
   });
 
   await Promise.all([
-    updatePullRequestComment(db, client, repo, pullRequest, logger),
-    updatePullRequestStatus(db, client, repo, pullRequest, logger),
+    updatePullRequestComment(db, client, repo, updatedPullRequest, logger),
+    updatePullRequestStatus(db, client, repo, updatedPullRequest, logger),
   ]);
   return true;
 }
