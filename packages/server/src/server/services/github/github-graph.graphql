@@ -257,7 +257,7 @@ query GetPullRequestFileNames($id: ID!) {
   }
 }
 
-query GetBranchFileNames($repoID: String!, $qualifiedName: String!) {
+query GetBranchFileNames($repoID: ID!, $qualifiedName: String!) {
   node(id: $repoID) {
     __typename
     ... on Repository {
