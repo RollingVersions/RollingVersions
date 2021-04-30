@@ -1,5 +1,11 @@
+const {
+  readdirSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  rmSync,
+} = require('fs');
 const {resolve, join} = require('path');
-const {readdirSync, mkdirSync, readFileSync, writeFileSync} = require('fs');
 
 const packageDirectory = resolve(`${__dirname}/../packages/db`);
 let filenames = [];
@@ -28,7 +34,7 @@ readdirSync(packageDirectory)
       return;
     }
     console.warn(`DELETE: ${join(packageDirectory, name)}`);
-    require('rimraf').sync(join(packageDirectory, name));
+    rmSync(join(packageDirectory, name), {recursive: true, force: true});
   });
 
 names.forEach((name) => {
