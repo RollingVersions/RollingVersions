@@ -1,4 +1,4 @@
-import t from 'funtypes';
+import * as t from 'funtypes';
 
 // TODO: use an enum
 type Permission = 'none' | 'view' | 'edit';
