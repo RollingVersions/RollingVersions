@@ -3,13 +3,16 @@ import {dirname, resolve} from 'path';
 import {execBuffered} from 'modern-spawn';
 import * as toml from 'toml';
 
+import {
+  CustomScriptTargetConfig,
+  PackageManifest,
+  PublishTarget,
+} from '@rollingversions/types';
 import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
 
 import isObject from '../ts-utils/isObject';
-import type {PublishConfig, PackageManifest} from '../types';
-import {PublishTarget} from '../types';
-import type {CustomScriptTargetConfig} from '../types/PublishTarget';
+import {PublishConfig} from '../types/publish';
 import createPublishTargetAPI from './baseTarget';
 
 const MANIFEST_NAME = 'rolling-package';

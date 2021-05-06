@@ -1,5 +1,6 @@
-import {t} from 'rollingversions/lib/utils/ValidationCodec';
+import t from 'funtypes';
 
+// TODO: use an enum
 type Permission = 'none' | 'view' | 'edit';
 
 export default Permission;

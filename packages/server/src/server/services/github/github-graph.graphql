@@ -277,6 +277,22 @@ query GetBranchFileNames($repoID: ID!, $qualifiedName: String!) {
     }
   }
 }
+query GetCommitFileNames($repoID: ID!, $oid: GitObjectID!) {
+  node(id: $repoID) {
+    __typename
+    ... on Repository {
+      object(oid: $oid) {
+        __typename
+        ... on Commit {
+          oid
+          tree {
+            ...FullContents
+          }
+        }
+      }
+    }
+  }
+}
 
 query GetBlobContents($id: ID!) {
   node(id: $id) {
@@ -284,6 +300,45 @@ query GetBlobContents($id: ID!) {
     ... on Blob {
       text
     }
+  }
+}
+
+query GetPullRequestStatus($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      closed
+      merged
+    }
+  }
+}
+
+query GetPullRequestAuthor($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      author {
+        __typename
+        login
+      }
+    }
+  }
+}
+
+query GetViewer {
+  viewer {
+    __typename
+    login
+  }
+}
+
+query GetRepositoryViewerPermissions($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    viewerPermission
+  }
+}
+
+query GetRepositoryIsPrivate($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    isPrivate
   }
 }
 

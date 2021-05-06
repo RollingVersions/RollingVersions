@@ -14,6 +14,7 @@
     {"path": "../config"},
     {"path": "../sort-by-dependencies"},
     {"path": "../tag-format"},
+    {"path": "../types"},
     {"path": "../version-number"},
   ]
 }

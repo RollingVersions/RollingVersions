@@ -247,6 +247,22 @@ async function getCommitByRef(
   return commit;
 }
 
+export async function getCommitBySha(
+  db: Queryable,
+  client: GitHubClient,
+  repo: DbGitRepository,
+  commitSha: string,
+  logger: Logger,
+) {
+  await updateRepoIfChanged(db, client, repo.id, logger);
+
+  const commit = await tables.git_commits(db).findOne({
+    git_repository_id: repo.id,
+    commit_sha: commitSha,
+  });
+  return commit;
+}
+
 export async function getTagHeadCommit(
   db: Queryable,
   client: GitHubClient,
@@ -351,6 +367,24 @@ function selectCommits({
     `;
 }
 
+export async function getAllBranches(
+  db: Queryable,
+  client: GitHubClient,
+  repo: DbGitRepository,
+  logger: Logger,
+): Promise<DbGitRef[]> {
+  await updateRepoIfChanged(db, client, repo.id, logger);
+
+  const refs = await tables
+    .git_refs(db)
+    .find({
+      git_repository_id: repo.id,
+      kind: 'heads',
+    })
+    .orderByAsc(`name`)
+    .all();
+  return refs;
+}
 export async function getAllTags(
   db: Queryable,
   client: GitHubClient,

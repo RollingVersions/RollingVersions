@@ -1,4 +1,4 @@
-import {t} from '../utils/ValidationCodec';
+import * as t from 'funtypes';
 
 type PublishConfigAccess = 'restricted' | 'public';
 export default PublishConfigAccess;

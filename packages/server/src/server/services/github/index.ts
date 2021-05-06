@@ -7,10 +7,10 @@ import retry, {withRetry} from 'then-retry';
 
 import DbGitCommit from '@rollingversions/db/git_commits';
 import DbGitRepository from '@rollingversions/db/git_repositories';
-import paginateBatched from 'rollingversions/lib/services/github/paginateBatched';
+import {PullRequest, Repository} from '@rollingversions/types';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
-import type {Repository} from 'rollingversions/lib/types';
 
+import paginateBatched from '../../../utils/paginateBatched';
 import * as queries from './github-graph';
 
 export {GitHubClient};
@@ -422,12 +422,26 @@ const GetAllFilesSourceSchema = ft.Union(
 export async function getAllFiles(
   client: GitHubClient,
   source:
+    | {type: 'commit'; repositoryID: string; commitSha: string}
     | {type: 'branch'; repositoryID: string; branchName: string}
     | {type: 'pull_request'; pullRequestID: string},
 ) {
   (GetAllFilesSourceSchema as any).assert(source);
   const commit = await retry(async () =>
-    source.type === 'branch'
+    source.type === 'commit'
+      ? extractType(
+          extractType(
+            (
+              await queries.getCommitFileNames(client, {
+                repoID: source.repositoryID,
+                oid: source.commitSha,
+              })
+            ).node,
+            'Repository',
+          )?.object,
+          'Commit',
+        )
+      : source.type === 'branch'
       ? extractType(
           extractType(
             (
@@ -507,3 +521,137 @@ function extractType<
     ? (value as Extract<TObject, {readonly __typename: TName}>)
     : undefined;
 }
+
+export async function writeComment(
+  client: GitHubClient,
+  pr: PullRequest,
+  body: string,
+  existingComment: number | undefined,
+) {
+  if (existingComment) {
+    return (
+      await retry(() =>
+        client.rest.issues.updateComment({
+          owner: pr.repo.owner,
+          repo: pr.repo.name,
+          body,
+          comment_id: existingComment,
+        }),
+      )
+    ).data.id;
+  } else {
+    return (
+      await client.rest.issues.createComment({
+        owner: pr.repo.owner,
+        repo: pr.repo.name,
+        issue_number: pr.number,
+        body,
+      })
+    ).data.id;
+  }
+}
+
+export const deleteComment = withRetry(
+  async (client: GitHubClient, pr: PullRequest, existingComment: number) => {
+    await client.rest.issues.deleteComment({
+      owner: pr.repo.owner,
+      repo: pr.repo.name,
+      comment_id: existingComment,
+    });
+  },
+);
+
+async function pullRequest<T>(
+  promise: Promise<
+    {repository?: null | {pullRequest?: null | T}} | null | undefined
+  >,
+): Promise<T | null> {
+  return await promise.then(
+    (result) => {
+      return result?.repository?.pullRequest || null;
+    },
+    (ex) => {
+      try {
+        if (
+          ex &&
+          ex.errors &&
+          Array.isArray(ex.errors) &&
+          ex.errors.some(
+            (e: any) =>
+              e &&
+              e.type === 'NOT_FOUND' &&
+              Array.isArray(e.path) &&
+              e.path.length === 2 &&
+              e.path[0] === 'repository' &&
+              e.path[0] === 'pullRequest',
+          )
+        ) {
+          return null;
+        }
+      } catch {
+        // fallthrough
+      }
+      throw ex;
+    },
+  );
+}
+
+export const getPullRequestStatus = withRetry(
+  async (client: GitHubClient, pr: PullRequest) => {
+    return (
+      (await pullRequest(
+        queries.getPullRequestStatus(client, {
+          owner: pr.repo.owner,
+          name: pr.repo.name,
+          number: pr.number,
+        }),
+      )) || undefined
+    );
+  },
+);
+
+export const getPullRequestAuthor = withRetry(
+  async (client: GitHubClient, pr: PullRequest) => {
+    return (
+      (
+        await pullRequest(
+          queries.getPullRequestAuthor(client, {
+            owner: pr.repo.owner,
+            name: pr.repo.name,
+            number: pr.number,
+          }),
+        )
+      )?.author || null
+    );
+  },
+);
+
+export const getViewer = withRetry(async (client: GitHubClient) => {
+  return (await queries.getViewer(client)).viewer;
+});
+
+export const getRepositoryIsPublic = withRetry(
+  async (client: GitHubClient, repo: Repository) => {
+    return (
+      (
+        await queries.getRepositoryIsPrivate(client, {
+          owner: repo.owner,
+          name: repo.name,
+        })
+      ).repository?.isPrivate === false
+    );
+  },
+);
+
+export const getRepositoryViewerPermissions = withRetry(
+  async (client: GitHubClient, repo: Repository) => {
+    return (
+      (await queries.getRepositoryViewerPermissions(client, repo)).repository
+        ?.viewerPermission || null
+    );
+  },
+  {
+    shouldRetry: (_e, failedAttempts) => failedAttempts < 3,
+    retryDelay: () => 100,
+  },
+);

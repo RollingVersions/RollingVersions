@@ -1,17 +1,8 @@
-# Backend Refactor
+# Backend Refactor & CLI Simplification
 
-1. Ensure test repo exists with release in separate release branch (30 minutes)
-1. Apply db migration to staging (30 minutes)
-1. Deploy to staging (30 minutes)
-1. Test (1 hour)
+1. Test in each of the test repositories (2 hours)
 1. Apply db migration to production (30 minutes)
 1. Deploy to production (30 minutes)
-
-# CLI Simplification
-
-1. Allow passing a GitHub token as a Bearer token to the backend API (30 minutes)
-1. Replace CLI code with call to get repository rest endpoint (1 hour)
-1. Remove any dead code from the CLI (1 hour)
 
 # Custom Changelog Sections:
 

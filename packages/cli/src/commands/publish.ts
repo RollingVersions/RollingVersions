@@ -2,17 +2,23 @@ import {URL} from 'url';
 
 import fetch from 'cross-fetch';
 
+import {
+  GetRepositoryApiResponse,
+  VersioningMode,
+  VersionTag,
+} from '@rollingversions/types';
+import {printString} from '@rollingversions/version-number';
+
 import {prepublish, publish as publishTarget} from '../PublishTargets';
 import {checkGitHubReleaseStatus} from '../PublishTargets/github';
+import {getCurrentBranchName, getHeadSha} from '../services/git';
 import {GitHubClient, auth} from '../services/github';
-import type {PublishConfig} from '../types';
-import {GetRepositoryApiResponse} from '../types/ApiResponse';
-import {
+import PackageStatus, {
+  NewVersionToBePublished,
   NoUpdateRequired,
   PackageStatusDetail,
-  NewVersionToBePublished,
-  PackageStatus,
-} from '../utils/getPackageStatuses';
+} from '../types/PackageStatus';
+import {PublishConfig} from '../types/publish';
 
 export enum PublishResultKind {
   NoUpdatesRequired = 0,
@@ -57,12 +63,13 @@ export default async function publish(config: PublishConfig): Promise<Result> {
     auth: auth.createTokenAuth(config.accessToken),
   });
   const url = new URL(`/api/${config.owner}/${config.name}`, config.backend);
-  if (config.deployBranch) {
-    url.searchParams.set(`branch`, config.deployBranch);
-  }
-  if (config.versionByBranch) {
-    url.searchParams.set(`versionByBranch`, `true`);
-  }
+
+  const headSha = await getHeadSha(config.dirname);
+  const currentBranchName = await getCurrentBranchName(config.dirname);
+  url.searchParams.set(`commit`, headSha);
+  url.searchParams.set(`deployBranch`, currentBranchName);
+  url.searchParams.set(`versioning`, config.versioning);
+
   const res = await fetch(url.href, {
     headers: {Authorization: `Bearer ${config.accessToken}`},
   });
@@ -83,12 +90,44 @@ export default async function publish(config: PublishConfig): Promise<Result> {
 
   const packages = response.packages.map(
     (pkg): PackageStatusDetail => {
+      if (pkg.currentVersion?.ok === false) {
+        // TODO: report this error properly
+        console.error(
+          `${pkg.manifest.packageName} has a different version in the current branch vs. the latest published version overall.`,
+        );
+        console.error(
+          `Current branch: ${
+            pkg.currentVersion.branchVersion
+              ? printString(pkg.currentVersion.branchVersion.version)
+              : `unpublished`
+          }`,
+        );
+        console.error(
+          `Latest version: ${
+            pkg.currentVersion.maxVersion
+              ? printString(pkg.currentVersion.maxVersion.version)
+              : `unpublished`
+          }`,
+        );
+        console.error(
+          `If you would like to base your next version number off the largest overall version, you can pass:`,
+        );
+        console.error(`--versioning ${VersioningMode.AlwaysIncreasing}`);
+        console.error(
+          `If you would like to be able to publish patch versions on branches, you can pass:`,
+        );
+        console.error(`--versioning ${VersioningMode.ByBranch}`);
+        return process.exit(1);
+      }
+      const currentVersion: VersionTag | null = pkg.currentVersion?.ok
+        ? pkg.currentVersion
+        : null;
       if (pkg.newVersion) {
         return {
           status: PackageStatus.NewVersionToBePublished,
           packageName: pkg.manifest.packageName,
-          currentTagName: pkg.manifest.versionTag?.name ?? null,
-          currentVersion: pkg.manifest.versionTag?.version ?? null,
+          currentTagName: currentVersion?.name ?? null,
+          currentVersion: currentVersion?.version ?? null,
           newVersion: pkg.newVersion,
           changeSet: pkg.changeSet,
           manifest: pkg.manifest,
@@ -97,8 +136,8 @@ export default async function publish(config: PublishConfig): Promise<Result> {
         return {
           status: PackageStatus.NoUpdateRequired,
           packageName: pkg.manifest.packageName,
-          currentVersion: pkg.manifest.versionTag?.version ?? null,
-          newVersion: pkg.manifest.versionTag?.version ?? null,
+          currentVersion: currentVersion?.version ?? null,
+          newVersion: currentVersion?.version ?? null,
           manifest: pkg.manifest,
         };
       }
@@ -135,8 +174,9 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   const gitHubPrepublishInfo = await checkGitHubReleaseStatus(
     config,
     {
-      headSha: response.headSha,
-      name: response.branchName,
+      headSha,
+      defaultBranch: response.defaultBranch,
+      deployBranch: response.deployBranch,
     },
     client,
   );

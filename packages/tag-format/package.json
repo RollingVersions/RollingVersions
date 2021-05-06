@@ -5,6 +5,7 @@
   "types": "lib/index.d.ts",
   "dependencies": {
     "@rollingversions/config": "^0.0.0",
+    "@rollingversions/types": "^0.0.0",
     "@rollingversions/version-number": "^0.0.0"
   },
   "scripts": {

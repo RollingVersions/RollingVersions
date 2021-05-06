@@ -1,5 +1,6 @@
 import {gt, prerelease} from 'semver';
 
+import {NpmPublishTargetConfig, PublishTarget} from '@rollingversions/types';
 import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
 
@@ -12,9 +13,7 @@ import {
   publish as npmPublish,
 } from '../services/npm';
 import isObject from '../ts-utils/isObject';
-import type {PublishConfig} from '../types';
-import {PublishTarget} from '../types';
-import type {NpmPublishTargetConfig} from '../types/PublishTarget';
+import {PublishConfig} from '../types/publish';
 import createPublishTargetAPI from './baseTarget';
 
 const detectIndent = require('detect-indent');

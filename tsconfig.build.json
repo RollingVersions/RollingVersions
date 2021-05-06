@@ -1,0 +1,20 @@
+{
+  "extends": "@forbeslindesay/tsconfig",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "jsx": "react",
+    "lib": ["DOM", "ES2020"],
+  },
+  "include": ["scripts/"],
+  "references": [
+    {"path": "./packages/change-set"},
+    {"path": "./packages/cli"},
+    {"path": "./packages/config"},
+    {"path": "./packages/db"},
+    {"path": "./packages/server"},
+    {"path": "./packages/sort-by-dependencies"},
+    {"path": "./packages/tag-format"},
+    {"path": "./packages/types"},
+    {"path": "./packages/version-number"},
+  ],
+}

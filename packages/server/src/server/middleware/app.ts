@@ -1,8 +1,11 @@
 import {Router} from 'express';
 
-import {PullRequestResponse} from '../../types';
+import db from '@rollingversions/db';
+
+import {PullRequestResponseCodec} from '../../types';
 import {getClientForRepo, getClientForToken} from '../getClient';
 import {expressLogger} from '../logger';
+import {getRepositoryFromRestParams} from '../models/Repositories';
 import getPullRequest from './api/getPullRequest';
 import getRepository from './api/getRepository';
 import updatePullRequest from './api/updatePullRequest';
@@ -28,12 +31,19 @@ appMiddleware.get(
   checkRepoPermissions(['view', 'edit']),
   async (req, res, next) => {
     try {
-      const {owner, repo, branch, versionByBranch} = parseRepoParams(req);
+      const {owner, repo, commit, branch, versioning} = parseRepoParams(req);
       const client = await getClientForRepo({owner, name: repo});
+      const dbRepo = await getRepositoryFromRestParams(db, client, {
+        owner,
+        name: repo,
+      });
+      if (!dbRepo) {
+        res.status(404).send(`Unable to find the repository/branch`);
+      }
       const response = await getRepository(
         client,
         {owner, name: repo},
-        {branch, versionByBranch},
+        {commit, branch, versioning},
         expressLogger(req, res),
       );
       if (!response) {
@@ -93,7 +103,7 @@ appMiddleware.get(
       if (!response) {
         res.status(404).send(`Unable to find the pull request`);
       } else {
-        res.json(PullRequestResponse.serialize(response));
+        res.json(PullRequestResponseCodec.serialize(response));
       }
     } catch (ex) {
       next(ex);

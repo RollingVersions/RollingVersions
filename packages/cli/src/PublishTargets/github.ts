@@ -3,35 +3,40 @@ import {printTag} from '@rollingversions/tag-format';
 
 import {getHeadSha} from '../services/git';
 import type {GitHubClient} from '../services/github';
-import {
-  getRepositoryViewerPermissions,
-  getBranch,
-  getViewer,
-} from '../services/github';
-import type {PrePublishResult, PublishConfig} from '../types';
-import type {NewVersionToBePublished} from '../utils/getPackageStatuses';
+import {getRepositoryViewerPermissions, getViewer} from '../services/github';
+import {NewVersionToBePublished} from '../types/PackageStatus';
+import type PrePublishResult from '../types/PrePublishResult';
+import {PublishConfig} from '../types/publish';
 
 export async function checkGitHubReleaseStatus(
   {
     owner,
     name,
-    dirname,
     deployBranch,
     allowNonLatestCommit,
+    allowAnyBranch,
   }: Pick<
     PublishConfig,
-    'owner' | 'name' | 'dirname' | 'deployBranch' | 'allowNonLatestCommit'
+    | 'owner'
+    | 'name'
+    | 'deployBranch'
+    | 'allowNonLatestCommit'
+    | 'allowAnyBranch'
   >,
-  branch: {headSha: string; name: string},
+  branches: {
+    headSha: string;
+    defaultBranch: {headSha: string | null; name: string};
+    deployBranch: {headSha: string | null; name: string};
+  },
   client: GitHubClient,
 ): Promise<{ok: true} | {ok: false; reason: string}> {
+  const expectedBranchName = deployBranch ?? branches.defaultBranch.name;
   const [viewer, permission] = await Promise.all([
     getViewer(client),
     getRepositoryViewerPermissions(client, {
       owner,
       name,
     }),
-    getBranch(client, {owner, name}, deployBranch),
   ]);
   if (
     viewer.login !== 'github-actions[bot]' &&
@@ -42,26 +47,19 @@ export async function checkGitHubReleaseStatus(
       reason: `This GitHub token does not have permission to publish tags/releases to GitHub. It has viewerPermission ${permission} but needs one of ADMIN, MAINTAIN or WRITE`,
     };
   }
-  if (!branch) {
-    return {
-      ok: false,
-      reason: deployBranch
-        ? `Could not find the branch "${deployBranch}" in the repository "${owner}/${name}".`
-        : `Could not find the default branch in the repository "${owner}/${name}".`,
-    };
-  }
-  if (!branch.headSha) {
-    return {
-      ok: false,
-      reason: `Could not find a commit for the "${branch.name}" in the repository "${owner}/${name}".`,
-    };
-  }
-  if (!allowNonLatestCommit) {
-    const headSha = await getHeadSha(dirname);
-    if (headSha !== branch.headSha) {
+  if (!allowAnyBranch) {
+    if (expectedBranchName !== branches.deployBranch.name) {
       return {
         ok: false,
-        reason: `This build is not running against the latest commit in ${branch.name}. To avoid awkward race conditions we'll skip publishing here and leave publishing to the other commit. If this looks like the wrong branch name, you can pass a different branch name via the "--deploy-branch" CLI parameter. You can supress this warning and publish anyway by passing the "--allow-non-latest-commit" flag when calling the Rolling Versions CLI.`,
+        reason: `This build is running on branch "${branches.deployBranch.name}" but the deployment branch is "${expectedBranchName}". You can specify a different deployment branch by adding --deploy-branch "${branches.deployBranch.name}" when calling the Rolling Versions CLI, or you can disable this check entirely by passing --allow-any-branch.`,
+      };
+    }
+  }
+  if (!allowNonLatestCommit) {
+    if (branches.headSha !== branches.deployBranch.headSha) {
+      return {
+        ok: false,
+        reason: `This build is not running against commit "${branches.headSha}" but the latest commit in "${branches.deployBranch.name}" is "${branches.deployBranch.headSha}". To avoid awkward race conditions we'll skip publishing here and leave publishing to the newer commit. You can disable this warning and publish anyway by passing the "--allow-non-latest-commit" flag when calling the Rolling Versions CLI.`,
       };
     }
   }

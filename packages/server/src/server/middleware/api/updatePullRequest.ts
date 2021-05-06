@@ -1,6 +1,6 @@
 import db, {q, tables} from '@rollingversions/db';
 import {ChangeLogEntries_InsertParameters} from '@rollingversions/db/change_log_entries';
-import type {PullRequest} from 'rollingversions/lib/types';
+import {PullRequest} from '@rollingversions/types';
 
 import type {UpdatePullRequestBody} from '../../../types';
 import type {Logger} from '../../logger';
@@ -14,7 +14,7 @@ import type {User} from '../utils/checkPermissions';
 export default async function updatePullRequest(
   client: GitHubClient,
   user: User,
-  pr: Pick<PullRequest, 'repo' | 'number'>,
+  pr: PullRequest,
   body: UpdatePullRequestBody,
   logger: Logger,
 ) {

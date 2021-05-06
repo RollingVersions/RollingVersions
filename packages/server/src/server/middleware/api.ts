@@ -4,7 +4,7 @@ import db, {tables} from '@rollingversions/db';
 
 import {getClientForRepo, getClientForToken} from '../getClient';
 import {expressLogger} from '../logger';
-import getRepositoryForCli from './api/getRepositoryForCli';
+import getRepository from './api/getRepository';
 import {validateRepoParams, parseRepoParams} from './utils/validateParams';
 
 const apiMiddleware = Router();
@@ -25,7 +25,7 @@ apiMiddleware.get(
       }
       const authToken = req.headers[`authorization`].substr(`Bearer `.length);
 
-      const {owner, repo, branch, versionByBranch} = parseRepoParams(req);
+      const {owner, repo, commit, branch, versioning} = parseRepoParams(req);
 
       const tokenClient = getClientForToken(authToken);
       const r = await tokenClient.rest.repos
@@ -50,10 +50,10 @@ apiMiddleware.get(
       }
 
       const client = await getClientForRepo({owner, name: repo});
-      const response = await getRepositoryForCli(
+      const response = await getRepository(
         client,
         {owner, name: repo},
-        {branch, versionByBranch},
+        {commit, branch, versioning},
         expressLogger(req, res),
       );
       if (!response) {

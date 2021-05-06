@@ -1,5 +1,5 @@
 import db from '@rollingversions/db';
-import type {PullRequest} from 'rollingversions/lib/types';
+import {PullRequest} from '@rollingversions/types';
 
 import type {PullRequestResponse} from '../../../types';
 import type {Logger} from '../../logger';
@@ -13,7 +13,7 @@ import type {Permission, User} from '../utils/checkPermissions';
 export default async function getPullRequest(
   client: GitHubClient,
   user: User,
-  pullRequest: Pick<PullRequest, 'repo' | 'number'>,
+  pullRequest: PullRequest,
   permission: Permission,
   logger: Logger,
 ): Promise<PullRequestResponse | null> {

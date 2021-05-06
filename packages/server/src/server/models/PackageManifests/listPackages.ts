@@ -1,6 +1,10 @@
-import {pathMayContainPackage, getPackageManifests} from '../PublishTargets';
-import type {PackageManifest} from '../types';
-import {mergePackageManifests} from '../types/PackageManifest';
+import type {PackageManifest} from '@rollingversions/types';
+import {
+  pathMayContainPackage,
+  getPackageManifests,
+} from 'rollingversions/lib/PublishTargets';
+
+import mergePackageManifests from './mergePackageManifests';
 
 export default async function listPackages(
   files:

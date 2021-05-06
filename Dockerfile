@@ -15,6 +15,7 @@ ADD packages/db/package.json /app/packages/db/package.json
 ADD packages/server/package.json /app/packages/server/package.json
 ADD packages/sort-by-dependencies/package.json /app/packages/sort-by-dependencies/package.json
 ADD packages/tag-format/package.json /app/packages/tag-format/package.json
+ADD packages/types/package.json /app/packages/types/package.json
 ADD packages/version-number/package.json /app/packages/version-number/package.json
 
 RUN yarn install --production \
@@ -31,6 +32,7 @@ ADD packages/cli/lib /app/packages/cli/lib
 ADD packages/config/lib /app/packages/config/lib
 ADD packages/sort-by-dependencies/lib /app/packages/sort-by-dependencies/lib
 ADD packages/tag-format/lib /app/packages/tag-format/lib
+ADD packages/types/lib /app/packages/types/lib
 ADD packages/version-number/lib /app/packages/version-number/lib
 
 ADD packages/server/lib /app/packages/server/lib

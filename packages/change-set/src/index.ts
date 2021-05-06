@@ -1,5 +1,5 @@
-import type {ChangeTypeID, ChangeType} from '@rollingversions/config';
 import {DEFAULT_CHANGE_TYPES} from '@rollingversions/config';
+import type {ChangeTypeID, ChangeType} from '@rollingversions/types';
 
 export type Markdown = string & {__brand?: 'Markdown'};
 

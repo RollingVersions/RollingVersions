@@ -1,5 +1,13 @@
 import * as t from 'funtypes';
 
+import type {
+  ChangeType,
+  ChangeTypeID,
+  RollingConfigOptions,
+  VersionBumpType,
+  VersionSchema,
+} from '@rollingversions/types';
+
 const MAX_VERSION_SCHEMA_LENGTH = 16;
 const MAX_KEY_LENGTH = 32;
 const MAX_DESCRIPTION_LENGTH = 64;
@@ -20,26 +28,7 @@ export const DEFAULT_CHANGE_TYPES = [
 export const DEFAULT_BASE_VERSION = (vs: VersionSchema): readonly number[] =>
   vs.map((_, i) => (i === 0 ? 1 : 0));
 
-export type ChangeTypeID = string & {__brand?: 'ChangeTypeID'};
-export type VersionBumpType = string & {__brand?: 'VersionBumpType'};
-
-export interface ChangeType {
-  readonly id: ChangeTypeID;
-  readonly plural: string;
-  readonly bumps: VersionBumpType | null;
-}
-export type VersionSchema = readonly [
-  VersionBumpType,
-  ...(readonly VersionBumpType[])
-];
-
-export default interface RollingConfigOptions {
-  readonly tagFormat: string | undefined;
-  readonly changeTypes: readonly ChangeType[];
-  readonly versionSchema: VersionSchema;
-  readonly baseVersion: readonly number[];
-}
-
+export default RollingConfigOptions;
 function withMaxLength<T extends {readonly length: number}>(
   codec: t.Codec<T>,
   maxLength: number,

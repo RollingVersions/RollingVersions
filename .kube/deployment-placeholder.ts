@@ -26,11 +26,3 @@ export default [
     },
   }),
 ];
-
-// containers:
-// - name: echo1
-//   image: hashicorp/http-echo
-//   args:
-//   - "-text=echo1"
-//   ports:
-//   - containerPort: 5678

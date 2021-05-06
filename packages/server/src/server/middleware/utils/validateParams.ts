@@ -1,6 +1,6 @@
 import type {Response, Request} from 'express';
 
-import type {PullRequest} from 'rollingversions/lib/types';
+import {PullRequest, VersioningMode} from '@rollingversions/types';
 
 const validRequests = new WeakSet<Request>();
 export default function validateParams() {
@@ -20,9 +20,7 @@ export default function validateParams() {
     }
   };
 }
-export function parseParams(
-  req: Request,
-): Pick<PullRequest, 'repo' | 'number'> {
+export function parseParams(req: Request): PullRequest {
   if (!validRequests.has(req)) {
     throw new Error(
       'This request has not been passed through the validation middleware',
@@ -41,11 +39,21 @@ export function validateRepoParams() {
     } else if (!repo) {
       res.status(400).send('Expected a repo parameter');
     } else if (
-      req.query.versionByBranch !== undefined &&
-      req.query.versionByBranch !== `true` &&
-      req.query.versionByBranch !== `false`
+      req.query.versioning !== undefined &&
+      req.query.versioning !== VersioningMode.Unambiguous &&
+      req.query.versioning !== VersioningMode.AlwaysIncreasing &&
+      req.query.versioning !== VersioningMode.ByBranch
     ) {
-      res.status(400).send('Expected versionByBranch to be "true" or "false"');
+      res.status(400).send(
+        `Expected versioning to be one of: ${Object.values(VersioningMode)
+          .map((v) => JSON.stringify(v))
+          .join(`, `)}`,
+      );
+    } else if (
+      req.query.commit !== undefined &&
+      typeof req.query.commit !== 'string'
+    ) {
+      res.status(400).send('Expected commit to be a string, if specified.');
     } else if (
       req.query.branch !== undefined &&
       typeof req.query.branch !== 'string'
@@ -59,7 +67,13 @@ export function validateRepoParams() {
 }
 export function parseRepoParams(
   req: Request,
-): {owner: string; repo: string; branch?: string; versionByBranch: boolean} {
+): {
+  owner: string;
+  repo: string;
+  commit?: string;
+  branch?: string;
+  versioning: VersioningMode;
+} {
   if (!validRepoRequests.has(req)) {
     throw new Error(
       'This request has not been passed through the validation middleware',
@@ -69,7 +83,8 @@ export function parseRepoParams(
   return {
     owner,
     repo,
+    commit: req.query.commit ?? undefined,
     branch: req.query.branch ?? undefined,
-    versionByBranch: req.query.versionByBranch === `true`,
+    versioning: req.query.versioning ?? VersioningMode.Unambiguous,
   };
 }

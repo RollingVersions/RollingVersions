@@ -7505,10 +7505,10 @@ functions-have-names@^1.2.0:
   resolved "https://registry.yarnpkg.com/functions-have-names/-/functions-have-names-1.2.1.tgz#a981ac397fa0c9964551402cdc5533d7a4d52f91"
   integrity sha512-j48B/ZI7VKs3sgeI2cZp7WXWmZXu7Iq5pl5/vptV5N2mq+DGFuS/ulaDjtaoLpYzuD6u8UgrUKHfgo7fDTSiBA==
 
-funtypes@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/funtypes/-/funtypes-3.0.1.tgz#419dff32d0abb3ef8dab7768fde45d64db8f7d27"
-  integrity sha512-1HxfmS7Xpa0g8fVGXCK9Xr+JzGaqUb12joeA//nfQXUvaK2Dioyc0+XOpXrZWkPqM9SXyyffE+Zgc6Zs+oZk1A==
+funtypes@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/funtypes/-/funtypes-4.1.0.tgz#a347c475a0e9f51f090d31f4912f2dc3f86f8284"
+  integrity sha512-VFAgeQPjHd8vpLNSxEZjU32jnthnXLE0SVHkNFpEAzXvFNKwjCV83vqVXpt/JFE9sNHh/hz16xywjkXXSsoHZQ==
 
 fuse.js@^3.4.6:
   version "3.6.1"

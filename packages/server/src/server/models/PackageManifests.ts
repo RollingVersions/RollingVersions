@@ -5,12 +5,13 @@ import {Queryable, tables} from '@rollingversions/db';
 import DbGitRef from '@rollingversions/db/git_refs';
 import DbGitRepository from '@rollingversions/db/git_repositories';
 import DbPullRequest from '@rollingversions/db/pull_requests';
+import DbGitCommit from '@rollingversions/db/src/__generated__/git_commits';
 import {parseTag} from '@rollingversions/tag-format';
+import {PackageManifest, VersionTag} from '@rollingversions/types';
 import {isPrerelease, max} from '@rollingversions/version-number';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
-import type {PackageManifest, VersionTag} from 'rollingversions/lib/types';
-import listPackages from 'rollingversions/lib/utils/listPackages';
 
+import {PullRequestPackage} from '../../types';
 import groupByKey from '../../utils/groupByKey';
 import type {Logger} from '../logger';
 import {getAllFiles, GitHubClient} from '../services/github';
@@ -23,6 +24,7 @@ import {
   isCommitReleased,
   updateRepoIfChanged,
 } from './git';
+import listPackages from './PackageManifests/listPackages';
 
 export type PackageManifests = Map<string, PackageManifest>;
 
@@ -40,12 +42,19 @@ async function getPackageManifestsUncached(
   repo: DbGitRepository,
   source:
     | {type: 'branch'; name: string}
-    | {type: 'pull_request'; pullRequest: DbPullRequest},
+    | {type: 'pull_request'; pullRequest: DbPullRequest}
+    | {type: 'commit'; commit: DbGitCommit},
   _logger: Logger,
 ): Promise<null | {oid: string; packages: Map<string, PackageManifest>}> {
   const commitFiles = await getAllFiles(
     client,
-    source.type === 'branch'
+    source.type === 'commit'
+      ? {
+          type: 'commit',
+          repositoryID: repo.graphql_id,
+          commitSha: source.commit.commit_sha,
+        }
+      : source.type === 'branch'
       ? {
           type: 'branch',
           repositoryID: repo.graphql_id,
@@ -67,11 +76,14 @@ export async function getPackageManifests(
   repo: DbGitRepository,
   source:
     | {type: 'branch'; name: string}
-    | {type: 'pull_request'; pullRequest: DbPullRequest},
+    | {type: 'pull_request'; pullRequest: DbPullRequest}
+    | {type: 'commit'; commit: DbGitCommit},
   logger: Logger,
 ) {
   const commit =
-    source.type === `branch`
+    source.type === 'commit'
+      ? source.commit
+      : source.type === `branch`
       ? await getBranchHeadCommit(db, client, repo, source.name, logger)
       : await getPullRequestHeadCommit(
           db,
@@ -137,7 +149,7 @@ async function getChangeLogEntriesForPR(
     .orderByAsc(`sort_order_weight`)
     .all();
 }
-function getPackageVersions({
+export function getPackageVersions({
   allowTagsWithoutPackageName,
   allTags,
   manifest,
@@ -160,7 +172,7 @@ function getPackageVersions({
     .filter(isTruthy);
 }
 
-function getMaxVersion(versions: readonly VersionTag[]) {
+export function getMaxVersion(versions: readonly VersionTag[]) {
   return max(versions, (tag) => tag.version) ?? null;
 }
 
@@ -187,7 +199,7 @@ export async function getDetailedPackageManifestsForPullRequest(
   repo: DbGitRepository,
   pullRequest: DbPullRequest,
   logger: Logger,
-) {
+): Promise<null | Map<string, PullRequestPackage>> {
   await updateRepoIfChanged(db, client, repo.id, logger);
 
   const [manifests, allTags, changeLogEntries] = await Promise.all([
@@ -203,7 +215,7 @@ export async function getDetailedPackageManifestsForPullRequest(
 
   const detailedManifests = await mapMapValuesAsync(
     manifests,
-    async (manifest) => {
+    async (manifest): Promise<PullRequestPackage> => {
       const versions = getPackageVersions({
         allowTagsWithoutPackageName: manifests.size <= 1,
         allTags,
@@ -219,7 +231,8 @@ export async function getDetailedPackageManifestsForPullRequest(
         changes.get(manifest.packageName) ?? []
       ).map((c) => ({type: c.kind, title: c.title, body: c.body}));
       return {
-        manifest: {...manifest, versionTag: getMaxVersion(versions)},
+        manifest: {...manifest},
+        currentVersion: getMaxVersion(versions),
         changeSet,
         released,
       };
@@ -236,10 +249,10 @@ export async function getDetailedPackageManifestsForPullRequest(
       detailedManifests.set(packageName, {
         manifest: {
           packageName,
-          versionTag: null,
           targetConfigs: [],
           dependencies: {development: [], required: [], optional: []},
         },
+        currentVersion: null,
         changeSet,
         released: false,
       });
@@ -306,34 +319,9 @@ export async function getDetailedPackageManifestsForBranch(
         pr: c.pr_number,
       }));
     return {
-      manifest: {...manifest, versionTag: getMaxVersion(versions)},
+      manifest,
+      currentVersion: getMaxVersion(versions),
       changeSet,
     };
   });
-}
-
-export function addPackageVersions<TPackageManifest extends PackageManifest>(
-  packages: Map<string, TPackageManifest>,
-  allTags: DbGitRef[],
-): Map<string, TPackageManifest & {versionTag: VersionTag | null}> {
-  return new Map(
-    [...packages].map(([packageName, manifest]): [
-      string,
-      TPackageManifest & {versionTag: VersionTag | null},
-    ] => {
-      return [
-        packageName,
-        {
-          ...manifest,
-          versionTag: getMaxVersion(
-            getPackageVersions({
-              allowTagsWithoutPackageName: packages.size <= 1,
-              allTags,
-              manifest,
-            }),
-          ),
-        },
-      ];
-    }),
-  );
 }

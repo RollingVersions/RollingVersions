@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type ChangeSet from '@rollingversions/change-set';
-import type {PackageManifestWithVersion} from 'rollingversions/lib/types';
+import type {PackageManifest} from '@rollingversions/types';
 
 import type Permission from '../../../server/permissions/Permission';
 import type {PullRequestPackage} from '../../../types';
@@ -16,7 +16,7 @@ function getState(
 ): {
   packageName: string;
   changes: ChangeSet<{localId: number}>;
-  manifest: PackageManifestWithVersion;
+  manifest: PackageManifest;
   released: boolean;
 }[] {
   return [...packages]

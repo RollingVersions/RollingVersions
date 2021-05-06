@@ -2,12 +2,11 @@ import {Queryable, tables} from '@rollingversions/db';
 import DbGitCommit from '@rollingversions/db/git_commits';
 import DbGitRepository from '@rollingversions/db/git_repositories';
 import DbPullRequest from '@rollingversions/db/pull_requests';
-import {deleteComment, writeComment} from 'rollingversions/lib/services/github';
 
 import {renderComment, renderInitialComment} from '../../utils/Rendering';
 import {APP_URL} from '../environment';
 import {Logger} from '../logger';
-import {GitHubClient} from '../services/github';
+import {deleteComment, GitHubClient, writeComment} from '../services/github';
 import {getPullRequestHeadCommit} from './git';
 import {getDetailedPackageManifestsForPullRequest} from './PackageManifests';
 

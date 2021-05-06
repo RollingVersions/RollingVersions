@@ -1,8 +1,4 @@
-export interface PackageDependencies {
-  required: string[];
-  optional: string[];
-  development: string[];
-}
+import type {PackageDependencies} from '@rollingversions/types';
 
 export interface CircularPackages {
   readonly circular: true;
