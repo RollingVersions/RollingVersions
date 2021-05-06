@@ -3,8 +3,7 @@ import * as React from 'react';
 import {MemoryRouter} from 'react-router-dom';
 
 import {createChangeSet} from '@rollingversions/change-set';
-import {PublishTarget} from 'rollingversions/lib/types';
-import type {PackageManifestWithVersion} from 'rollingversions/lib/types';
+import {PackageManifest, PublishTarget} from '@rollingversions/types';
 
 import PullRequestPage from '.';
 import type {PullRequestPageProps} from '.';
@@ -14,9 +13,8 @@ import AppNavBar, {AppNavBarLink} from '../AppNavBar';
 export default {title: 'pages/PullRequestPage'};
 
 function packageManifest(
-  manifest: Pick<PackageManifestWithVersion, 'packageName'> &
-    Partial<PackageManifestWithVersion>,
-): PackageManifestWithVersion {
+  manifest: Pick<PackageManifest, 'packageName'> & Partial<PackageManifest>,
+): PackageManifest {
   return {
     targetConfigs: [
       {
@@ -27,7 +25,6 @@ function packageManifest(
         path: 'fake-path',
       },
     ],
-    versionTag: null,
     dependencies: {required: [], optional: [], development: []},
     ...manifest,
   };
@@ -54,6 +51,7 @@ const Template = (props: Partial<PullRequestPageProps>) => {
                 {
                   changeSet: createChangeSet(),
                   manifest: packageManifest({packageName: '@databases/pg'}),
+                  currentVersion: null,
                   dependencies: {required: [], optional: [], development: []},
                   released: false,
                 },
@@ -63,6 +61,7 @@ const Template = (props: Partial<PullRequestPageProps>) => {
                 {
                   changeSet: createChangeSet(),
                   manifest: packageManifest({packageName: '@databases/mysql'}),
+                  currentVersion: null,
 
                   dependencies: {required: [], optional: [], development: []},
                   released: false,
@@ -98,6 +97,7 @@ export const ReadOnlyPackage = () => {
             {
               changeSet: createChangeSet(),
               manifest: packageManifest({packageName: '@databases/pg'}),
+              currentVersion: null,
               released: false,
             },
           ],
@@ -110,6 +110,7 @@ export const ReadOnlyPackage = () => {
                 body: '',
               }),
               manifest: packageManifest({packageName: '@databases/mysql'}),
+              currentVersion: null,
               released: true,
             },
           ],
@@ -131,6 +132,7 @@ export const AllChangesReleased = () => {
             {
               changeSet: createChangeSet(),
               manifest: packageManifest({packageName: '@databases/pg'}),
+              currentVersion: null,
               released: true,
             },
           ],
@@ -143,6 +145,7 @@ export const AllChangesReleased = () => {
                 body: '',
               }),
               manifest: packageManifest({packageName: '@databases/mysql'}),
+              currentVersion: null,
               released: true,
             },
           ],
@@ -165,6 +168,7 @@ export const ClosedNonAdmin = () => {
             {
               changeSet: createChangeSet(),
               manifest: packageManifest({packageName: '@databases/pg'}),
+              currentVersion: null,
               dependencies: {required: [], optional: [], development: []},
               released: true,
             },
@@ -178,6 +182,7 @@ export const ClosedNonAdmin = () => {
                 body: '',
               }),
               manifest: packageManifest({packageName: '@databases/mysql'}),
+              currentVersion: null,
               released: false,
             },
           ],
@@ -198,6 +203,7 @@ export const OpenNonAdminNonAuthor = () => {
             {
               changeSet: createChangeSet(),
               manifest: packageManifest({packageName: '@databases/pg'}),
+              currentVersion: null,
               released: false,
             },
           ],
@@ -209,6 +215,7 @@ export const OpenNonAdminNonAuthor = () => {
                 title: 'Renamed `querySingleResult` to `queryOneResult`',
                 body: '',
               }),
+              currentVersion: null,
               manifest: packageManifest({packageName: '@databases/mysql'}),
               released: true,
             },

@@ -1,12 +1,12 @@
-import * as gh from 'rollingversions/lib/services/github';
-import type {PullRequest, Repository} from 'rollingversions/lib/types';
+import {PullRequest, Repository} from '@rollingversions/types';
 
 import withCache from '../../utils/withCache';
 import {getClientForToken, getClientForRepo} from '../getClient';
 import type {Logger} from '../logger';
+import * as gh from '../services/github';
 import Permission from './Permission';
 
-export {Permission};
+export type {Permission};
 
 /**
  * Check the viewer's permissions on a repository. This only considers
@@ -91,7 +91,7 @@ const getRepositoryIsPublic = withCache(
 );
 
 const getPullRequestAuthor = withCache(
-  async (pr: Pick<PullRequest, 'repo' | 'number'>, logger: Logger) => {
+  async (pr: PullRequest, logger: Logger) => {
     try {
       const client = await getClientForRepo(pr.repo);
       const author = await gh.getPullRequestAuthor(client, pr);
@@ -116,7 +116,7 @@ const getPullRequestAuthor = withCache(
 );
 
 export default async function getPermissionLevel(
-  pr: Pick<PullRequest, 'repo' | 'number'>,
+  pr: PullRequest,
   userAuth: string,
   logger: Logger,
 ): Promise<{

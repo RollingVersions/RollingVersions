@@ -1,0 +1,13 @@
+{
+  "name": "@rollingversions/sort-by-dependencies",
+  "version": "0.0.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "dependencies": {
+    "@rollingversions/types": "^0.0.0"
+  },
+  "scripts": {
+    "lint": "eslint --fix --config ../../.typescript.eslintrc.js --no-eslintrc --ext .js,.ts,.tsx src"
+  },
+  "publishConfig": {"access": "public"}
+}

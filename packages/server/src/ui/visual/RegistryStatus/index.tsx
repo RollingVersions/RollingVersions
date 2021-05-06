@@ -1,7 +1,6 @@
 import React from 'react';
 
-import {PublishTarget} from 'rollingversions/lib/types';
-import type {PublishTargetConfig} from 'rollingversions/src/types/PublishTarget';
+import {PublishTarget, PublishTargetConfig} from '@rollingversions/types';
 
 import Alert from '../Alert';
 
@@ -58,7 +57,7 @@ export default function RegistryStatus({targetConfigs}: RegistryStatusProps) {
                     <p>
                       This package will be published <strong>privately</strong>{' '}
                       on the npm registry, unless you have manually updated the
-                      acess config.
+                      access config.
                     </p>
                     <p>
                       If you prefer to publish it publicly, you can add the

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import {PublishTarget} from 'rollingversions/lib/types';
+import {PublishTarget} from '@rollingversions/types';
 
 import RegistryStatus from '.';
 

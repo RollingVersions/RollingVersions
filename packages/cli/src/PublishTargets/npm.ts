@@ -1,5 +1,10 @@
 import {gt, prerelease} from 'semver';
 
+import {
+  NpmPublishTargetConfig,
+  PublishTarget,
+  VersioningMode,
+} from '@rollingversions/types';
 import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
 
@@ -12,9 +17,7 @@ import {
   publish as npmPublish,
 } from '../services/npm';
 import isObject from '../ts-utils/isObject';
-import type {PublishConfig} from '../types';
-import {PublishTarget} from '../types';
-import type {NpmPublishTargetConfig} from '../types/PublishTarget';
+import {PublishConfig} from '../types/publish';
 import createPublishTargetAPI from './baseTarget';
 
 const detectIndent = require('detect-indent');
@@ -107,6 +110,26 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
         return null;
       }
 
+      const tagFormat = getConfigValue(`tag-format`, pkgData);
+      if (tagFormat !== undefined && typeof tagFormat !== 'string') {
+        throw new Error('Expected "tag-format" to be undefined or a string');
+      }
+      const versioning = getConfigValue(`versioning`, pkgData);
+      if (
+        versioning !== undefined &&
+        versioning !== VersioningMode.AlwaysIncreasing &&
+        versioning !== VersioningMode.ByBranch &&
+        versioning !== VersioningMode.Unambiguous
+      ) {
+        throw new Error(
+          `Expected "versioning" to be undefined or one of: ${Object.values(
+            VersioningMode,
+          )
+            .map((v) => JSON.stringify(v))
+            .join(`, `)}`,
+        );
+      }
+
       const required = [
         ...(isObject(pkgData) && isObject(pkgData.dependencies)
           ? Object.keys(pkgData.dependencies)
@@ -128,6 +151,8 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
 
       return {
         packageName: pkgName,
+        tagFormat,
+        versioning,
         targetConfigs: [
           {
             type: PublishTarget.npm,

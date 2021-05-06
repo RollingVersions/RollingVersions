@@ -1,4 +1,4 @@
-import type {Repository} from 'rollingversions/lib/types';
+import {Repository} from '@rollingversions/types';
 
 import isObject from '../utils/isObject';
 import withCache from '../utils/withCache';

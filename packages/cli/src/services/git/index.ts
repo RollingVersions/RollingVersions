@@ -1,32 +1,17 @@
-import {statSync, readFile, writeFile} from 'fs';
-import {relative, resolve} from 'path';
-
-import globby from 'globby';
+import {readFile, writeFile} from 'fs';
+import {resolve} from 'path';
 
 import {spawnBuffered} from '../../utils/spawn';
 
-export async function* getAllFiles(dirname: string) {
-  if (!statSync(dirname).isDirectory()) {
-    throw new Error('Expected a valid directory');
-  }
-
-  const results = await globby(dirname, {
-    gitignore: true,
-    onlyFiles: true,
-  });
-
-  for (const entryPath of results) {
-    yield {
-      path: relative(dirname, entryPath).replace(/\\/g, '/'),
-      getContents: async () =>
-        await new Promise<string>((resolve, reject) => {
-          readFile(entryPath, 'utf8', (err, res) => {
-            if (err) reject(err);
-            else resolve(res);
-          });
-        }),
-    };
-  }
+export async function getCurrentBranchName(dirname: string) {
+  const data = await spawnBuffered(
+    'git',
+    ['rev-parse', '--abbrev-ref', 'HEAD'],
+    {
+      cwd: dirname,
+    },
+  );
+  return data.toString('utf8').trim();
 }
 
 export async function getHeadSha(dirname: string) {

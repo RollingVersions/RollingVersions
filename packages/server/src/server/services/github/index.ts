@@ -2,16 +2,20 @@ import GitHubClient, {
   auth,
   OptionsWithAuth as GitHubOptions,
 } from '@github-graph/api';
-import retry from 'then-retry';
+import * as ft from 'funtypes';
+import retry, {withRetry} from 'then-retry';
 
-import paginateBatched from 'rollingversions/lib/services/github/paginateBatched';
+import DbGitCommit from '@rollingversions/db/git_commits';
+import DbGitRepository from '@rollingversions/db/git_repositories';
+import {PullRequest, Repository} from '@rollingversions/types';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
-import type {Repository} from 'rollingversions/lib/types';
 
+import paginateBatched from '../../../utils/paginateBatched';
 import * as queries from './github-graph';
 
 export {GitHubClient};
-export {auth, GitHubOptions};
+export {auth};
+export type {GitHubOptions};
 
 export async function getRepository(client: GitHubClient, repo: Repository) {
   const repository = (await queries.getRepository(client, repo)).repository;
@@ -26,6 +30,8 @@ export async function getRepository(client: GitHubClient, repo: Repository) {
     graphql_id: repository.id,
     owner: repo.owner,
     name: repo.name,
+    isPrivate: repository.isPrivate,
+    defaultBranch: repository.defaultBranchRef?.name,
   };
 }
 
@@ -272,6 +278,11 @@ export async function getPullRequestFromGraphID(
   if (!result.databaseId) {
     throw new Error(`Got null for pull request databaseId`);
   }
+  if (result.merged && !result.mergeCommit) {
+    throw new Error(
+      `Unexpected pull request that is merged but has no merge commit`,
+    );
+  }
   return {
     id: result.databaseId,
     graphql_id,
@@ -279,7 +290,7 @@ export async function getPullRequestFromGraphID(
     title: result.title,
     is_merged: result.merged,
     is_closed: result.closed || result.merged,
-    head_sha: result.headRef?.target.oid,
+    merge_commit_sha: result.mergeCommit?.oid ?? null,
   };
 }
 
@@ -299,6 +310,11 @@ export async function getPullRequestFromNumber(
   if (!result.databaseId) {
     throw new Error(`Got null for pull request databaseId`);
   }
+  if (result.merged && !result.mergeCommit) {
+    throw new Error(
+      `Unexpected pull request that is merged but has no merge commit`,
+    );
+  }
   return {
     id: result.databaseId,
     graphql_id: result.id,
@@ -306,7 +322,7 @@ export async function getPullRequestFromNumber(
     title: result.title,
     is_merged: result.merged,
     is_closed: result.closed || result.merged,
-    head_sha: result.headRef?.target.oid,
+    merge_commit_sha: result.mergeCommit?.oid ?? null,
   };
 }
 export async function* getAllPullRequestCommits(
@@ -349,5 +365,296 @@ export interface PullRequestDetail {
   title: string;
   is_merged: boolean;
   is_closed: boolean;
-  head_sha: string | undefined;
+  merge_commit_sha: string | null;
 }
+
+export const updateCommitStatus = withRetry(
+  async (
+    client: GitHubClient,
+    repo: DbGitRepository,
+    headCommit: DbGitCommit,
+    status: {
+      state: 'success' | 'pending' | 'error' | 'failure';
+      url: URL;
+      description: string;
+    },
+  ) => {
+    await client.rest.repos.createStatus({
+      owner: repo.owner,
+      repo: repo.name,
+      sha: headCommit.commit_sha,
+      state: status.state,
+      target_url: status.url.href,
+      description: status.description,
+      context: 'RollingVersions',
+    });
+  },
+);
+
+interface Entry {
+  name: string;
+  object:
+    | null
+    | {
+        __typename: 'Tree';
+        id: string;
+        /**
+         * A list of tree entries.
+         */
+        entries?: Entry[] | null;
+      }
+    | {
+        __typename: 'Commit' | 'Blob' | 'Tag';
+        id: string;
+      };
+}
+
+const GetAllFilesSourceSchema = ft.Union(
+  ft.Object({
+    type: ft.Literal(`commit`),
+    repositoryID: ft.String,
+    commitSha: ft.String,
+  }),
+  ft.Object({
+    type: ft.Literal(`branch`),
+    repositoryID: ft.String,
+    branchName: ft.String,
+  }),
+  ft.Object({
+    type: ft.Literal(`pull_request`),
+    pullRequestID: ft.String,
+  }),
+);
+export async function getAllFiles(
+  client: GitHubClient,
+  source: ft.Static<typeof GetAllFilesSourceSchema>,
+) {
+  (GetAllFilesSourceSchema as any).assert(source);
+  const commit = await retry(async () =>
+    source.type === 'commit'
+      ? extractType(
+          extractType(
+            (
+              await queries.getCommitFileNames(client, {
+                repoID: source.repositoryID,
+                oid: source.commitSha,
+              })
+            ).node,
+            'Repository',
+          )?.object,
+          'Commit',
+        )
+      : source.type === 'branch'
+      ? extractType(
+          extractType(
+            (
+              await queries.getBranchFileNames(client, {
+                repoID: source.repositoryID,
+                qualifiedName: `refs/heads/${source.branchName}`,
+              })
+            ).node,
+            'Repository',
+          )?.ref?.target,
+          'Commit',
+        )
+      : extractType(
+          extractType(
+            (
+              await queries.getPullRequestFileNames(client, {
+                id: source.pullRequestID,
+              })
+            ).node,
+            'PullRequest',
+          )?.headRef?.target,
+          'Commit',
+        ),
+  );
+
+  if (!commit) {
+    return null;
+  }
+
+  function formatEntry(
+    entry: Entry,
+    path: string,
+  ): {
+    path: string;
+    getContents: () => Promise<string>;
+  }[] {
+    switch (entry.object?.__typename) {
+      case 'Blob':
+        const id = entry.object.id;
+        return [
+          {
+            path,
+            getContents: async () => {
+              const file = extractType(
+                (await retry(() => queries.getBlobContents(client, {id}))).node,
+                'Blob',
+              );
+              if (typeof file?.text !== 'string') {
+                throw new Error(`Could not find file at ${path}`);
+              }
+              return file.text;
+            },
+          },
+        ];
+      case 'Tree':
+        return (entry.object.entries || []).flatMap((e) =>
+          formatEntry(e, `${path}/${e.name}`),
+        );
+      default:
+        return [];
+    }
+  }
+  return {
+    oid: commit.oid,
+    entries: (commit.tree.entries || []).flatMap((e) => formatEntry(e, e.name)),
+  };
+}
+
+function extractType<
+  TObject extends {readonly __typename: string},
+  TName extends string & TObject['__typename']
+>(
+  value: TObject | undefined | null,
+  name: TName,
+): undefined | Extract<TObject, {readonly __typename: TName}> {
+  return value?.__typename === name
+    ? (value as Extract<TObject, {readonly __typename: TName}>)
+    : undefined;
+}
+
+export async function writeComment(
+  client: GitHubClient,
+  pr: PullRequest,
+  body: string,
+  existingComment: number | undefined,
+) {
+  if (existingComment) {
+    return (
+      await retry(() =>
+        client.rest.issues.updateComment({
+          owner: pr.repo.owner,
+          repo: pr.repo.name,
+          body,
+          comment_id: existingComment,
+        }),
+      )
+    ).data.id;
+  } else {
+    return (
+      await client.rest.issues.createComment({
+        owner: pr.repo.owner,
+        repo: pr.repo.name,
+        issue_number: pr.number,
+        body,
+      })
+    ).data.id;
+  }
+}
+
+export const deleteComment = withRetry(
+  async (client: GitHubClient, pr: PullRequest, existingComment: number) => {
+    await client.rest.issues.deleteComment({
+      owner: pr.repo.owner,
+      repo: pr.repo.name,
+      comment_id: existingComment,
+    });
+  },
+);
+
+async function pullRequest<T>(
+  promise: Promise<
+    {repository?: null | {pullRequest?: null | T}} | null | undefined
+  >,
+): Promise<T | null> {
+  return await promise.then(
+    (result) => {
+      return result?.repository?.pullRequest || null;
+    },
+    (ex) => {
+      try {
+        if (
+          ex &&
+          ex.errors &&
+          Array.isArray(ex.errors) &&
+          ex.errors.some(
+            (e: any) =>
+              e &&
+              e.type === 'NOT_FOUND' &&
+              Array.isArray(e.path) &&
+              e.path.length === 2 &&
+              e.path[0] === 'repository' &&
+              e.path[0] === 'pullRequest',
+          )
+        ) {
+          return null;
+        }
+      } catch {
+        // fallthrough
+      }
+      throw ex;
+    },
+  );
+}
+
+export const getPullRequestStatus = withRetry(
+  async (client: GitHubClient, pr: PullRequest) => {
+    return (
+      (await pullRequest(
+        queries.getPullRequestStatus(client, {
+          owner: pr.repo.owner,
+          name: pr.repo.name,
+          number: pr.number,
+        }),
+      )) || undefined
+    );
+  },
+);
+
+export const getPullRequestAuthor = withRetry(
+  async (client: GitHubClient, pr: PullRequest) => {
+    return (
+      (
+        await pullRequest(
+          queries.getPullRequestAuthor(client, {
+            owner: pr.repo.owner,
+            name: pr.repo.name,
+            number: pr.number,
+          }),
+        )
+      )?.author || null
+    );
+  },
+);
+
+export const getViewer = withRetry(async (client: GitHubClient) => {
+  return (await queries.getViewer(client)).viewer;
+});
+
+export const getRepositoryIsPublic = withRetry(
+  async (client: GitHubClient, repo: Repository) => {
+    return (
+      (
+        await queries.getRepositoryIsPrivate(client, {
+          owner: repo.owner,
+          name: repo.name,
+        })
+      ).repository?.isPrivate === false
+    );
+  },
+);
+
+export const getRepositoryViewerPermissions = withRetry(
+  async (client: GitHubClient, repo: Repository) => {
+    return (
+      (await queries.getRepositoryViewerPermissions(client, repo)).repository
+        ?.viewerPermission || null
+    );
+  },
+  {
+    shouldRetry: (_e, failedAttempts) => failedAttempts < 3,
+    retryDelay: () => 100,
+  },
+);

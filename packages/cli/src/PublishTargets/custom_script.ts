@@ -3,13 +3,17 @@ import {dirname, resolve} from 'path';
 import {execBuffered} from 'modern-spawn';
 import * as toml from 'toml';
 
+import {
+  CustomScriptTargetConfig,
+  PackageManifest,
+  PublishTarget,
+  VersioningMode,
+} from '@rollingversions/types';
 import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
 
 import isObject from '../ts-utils/isObject';
-import type {PublishConfig, PackageManifest} from '../types';
-import {PublishTarget} from '../types';
-import type {CustomScriptTargetConfig} from '../types/PublishTarget';
+import {PublishConfig} from '../types/publish';
 import createPublishTargetAPI from './baseTarget';
 
 const MANIFEST_NAME = 'rolling-package';
@@ -96,9 +100,24 @@ export default createPublishTargetAPI<CustomScriptTargetConfig>({
       ) {
         throw new Error('Expected "tag_format" to be undefined or a string');
       }
+      if (
+        result.versioning !== undefined &&
+        result.versioning !== VersioningMode.AlwaysIncreasing &&
+        result.versioning !== VersioningMode.ByBranch &&
+        result.versioning !== VersioningMode.Unambiguous
+      ) {
+        throw new Error(
+          `Expected "versioning" to be undefined or one of: ${Object.values(
+            VersioningMode,
+          )
+            .map((v) => JSON.stringify(v))
+            .join(`, `)}`,
+        );
+      }
       return {
         packageName: result.name,
         tagFormat: result.tag_format,
+        versioning: result.versioning,
         targetConfigs: [
           {
             type: PublishTarget.custom_script,

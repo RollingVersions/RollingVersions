@@ -20,6 +20,10 @@ query GetRepository($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     databaseId
     id
+    isPrivate
+    defaultBranchRef {
+      name
+    }
   }
 }
 
@@ -163,11 +167,8 @@ query GetPullRequestFromGraphID($id: ID!) {
       title
       merged
       closed
-      headRef {
-        target {
-          # __typename: Commit
-          oid
-        }
+      mergeCommit {
+        oid
       }
     }
   }
@@ -181,11 +182,8 @@ query GetPullRequestFromNumber($owner: String!, $name: String!, $number: Int!) {
       title
       merged
       closed
-      headRef {
-        target {
-          # __typename: Commit
-          oid
-        }
+      mergeCommit {
+        oid
       }
     }
   }
@@ -235,6 +233,166 @@ fragment CommitDetail on Commit {
       databaseId
       repository {
         databaseId
+      }
+    }
+  }
+}
+
+query GetPullRequestFileNames($id: ID!) {
+  node(id: $id) {
+    __typename
+    ... on PullRequest {
+      headRef {
+        target {
+          __typename
+          ... on Commit {
+            oid
+            tree {
+              ...FullContents
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+query GetBranchFileNames($repoID: ID!, $qualifiedName: String!) {
+  node(id: $repoID) {
+    __typename
+    ... on Repository {
+      ref(qualifiedName: $qualifiedName) {
+        id
+        name
+        target {
+          __typename
+          ... on Commit {
+            oid
+            tree {
+              ...FullContents
+            }
+          }
+        }
+      }
+    }
+  }
+}
+query GetCommitFileNames($repoID: ID!, $oid: GitObjectID!) {
+  node(id: $repoID) {
+    __typename
+    ... on Repository {
+      object(oid: $oid) {
+        __typename
+        ... on Commit {
+          oid
+          tree {
+            ...FullContents
+          }
+        }
+      }
+    }
+  }
+}
+
+query GetBlobContents($id: ID!) {
+  node(id: $id) {
+    __typename
+    ... on Blob {
+      text
+    }
+  }
+}
+
+query GetPullRequestStatus($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      closed
+      merged
+    }
+  }
+}
+
+query GetPullRequestAuthor($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      author {
+        __typename
+        login
+      }
+    }
+  }
+}
+
+query GetViewer {
+  viewer {
+    __typename
+    login
+  }
+}
+
+query GetRepositoryViewerPermissions($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    viewerPermission
+  }
+}
+
+query GetRepositoryIsPrivate($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    isPrivate
+  }
+}
+
+# supports up to 6 levels deep
+fragment FullContents on Tree {
+  entries {
+    name
+    object {
+      __typename
+      id
+      ... on Tree {
+        entries {
+          name
+          object {
+            __typename
+            id
+            ... on Tree {
+              entries {
+                name
+                object {
+                  __typename
+                  id
+                  ... on Tree {
+                    entries {
+                      name
+                      object {
+                        __typename
+                        id
+                        ... on Tree {
+                          entries {
+                            name
+                            object {
+                              __typename
+                              id
+                              ... on Tree {
+                                entries {
+                                  name
+                                  object {
+                                    __typename
+                                    id
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

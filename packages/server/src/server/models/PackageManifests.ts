@@ -1,110 +1,327 @@
-import type {Queryable} from '@rollingversions/db';
-import {tables} from '@rollingversions/db';
-import type DbGitCommit from '@rollingversions/db/git_commits';
-import type {PackageManifestRecordsV2_InsertParameters as InsertParameters} from '@rollingversions/db/package_manifest_records_v2';
-import {getAllFiles} from 'rollingversions/lib/services/github';
-import type {PackageManifest} from 'rollingversions/lib/types';
-import listPackages from 'rollingversions/lib/utils/listPackages';
+import Cache from 'quick-lru';
 
-import dedupeByKey from '../../utils/dedupeByKey';
+import ChangeSet from '@rollingversions/change-set';
+import {Queryable, tables} from '@rollingversions/db';
+import DbGitCommit from '@rollingversions/db/git_commits';
+import DbGitRef from '@rollingversions/db/git_refs';
+import DbGitRepository from '@rollingversions/db/git_repositories';
+import DbPullRequest from '@rollingversions/db/pull_requests';
+import {parseTag} from '@rollingversions/tag-format';
+import {PackageManifest, VersionTag} from '@rollingversions/types';
+import {isPrerelease, max} from '@rollingversions/version-number';
+import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
+
+import {PullRequestPackage} from '../../types';
+import groupByKey from '../../utils/groupByKey';
 import type {Logger} from '../logger';
-import type {GitHubClient} from '../services/github';
+import {getAllFiles, GitHubClient} from '../services/github';
+import {
+  getAllTags,
+  getAllTagsOnBranch,
+  getBranchHeadCommit,
+  getPullRequestHeadCommit,
+  getUnreleasedChanges,
+  isCommitReleased,
+  updateRepoIfChanged,
+} from './git';
+import listPackages from './PackageManifests/listPackages';
 
 export type PackageManifests = Map<string, PackageManifest>;
 
-const dedupe = dedupeByKey<DbGitCommit['id'], PackageManifests>();
+// `${git_repository_id}:${commit_sha}`
+type CommitID = string;
 
-// use this to invalidate the cache if the type of PackageManifest changes
-const SCHEMA_VERSION = 2;
+const cache = new Cache<
+  CommitID,
+  Promise<{oid: string; packages: Map<string, PackageManifest>} | null>
+>({
+  maxSize: 30,
+});
+async function getPackageManifestsUncached(
+  client: GitHubClient,
+  repo: DbGitRepository,
+  source:
+    | {type: 'branch'; name: string}
+    | {type: 'pull_request'; pullRequest: DbPullRequest}
+    | {type: 'commit'; commit: DbGitCommit},
+  _logger: Logger,
+): Promise<null | {oid: string; packages: Map<string, PackageManifest>}> {
+  const commitFiles = await getAllFiles(
+    client,
+    source.type === 'commit'
+      ? {
+          type: 'commit',
+          repositoryID: repo.graphql_id,
+          commitSha: source.commit.commit_sha,
+        }
+      : source.type === 'branch'
+      ? {
+          type: 'branch',
+          repositoryID: repo.graphql_id,
+          branchName: source.name,
+        }
+      : {type: 'pull_request', pullRequestID: source.pullRequest.graphql_id},
+  );
+  if (!commitFiles) {
+    return null;
+  }
+  const packages = await listPackages(commitFiles.entries);
+
+  return {oid: commitFiles.oid, packages};
+}
 
 export async function getPackageManifests(
   db: Queryable,
   client: GitHubClient,
-  commitID: DbGitCommit['id'],
+  repo: DbGitRepository,
+  source:
+    | {type: 'branch'; name: string}
+    | {type: 'pull_request'; pullRequest: DbPullRequest}
+    | {type: 'commit'; commit: DbGitCommit},
   logger: Logger,
-): Promise<PackageManifests> {
-  return await dedupe(commitID, async () => {
-    const commit = await tables.git_commits(db).findOne({id: commitID});
-    if (!commit) {
-      // unable to find the commit, assume no packages
-      logger.warning(
-        'missing_commit_packages',
-        `Unable to load packages for commit ${commitID} because it does not exist in the database.`,
-      );
-      return new Map();
+) {
+  const commit =
+    source.type === 'commit'
+      ? source.commit
+      : source.type === `branch`
+      ? await getBranchHeadCommit(db, client, repo, source.name, logger)
+      : await getPullRequestHeadCommit(
+          db,
+          client,
+          repo,
+          source.pullRequest,
+          logger,
+        );
+  if (!commit) {
+    return null;
+  }
+  const id: CommitID = `${repo.id}:${commit.commit_sha}`;
+  const cached = cache.get(id);
+  if (cached) {
+    return (await cached)?.packages;
+  }
+  try {
+    const fresh = getPackageManifestsUncached(client, repo, source, logger);
+    cache.set(id, fresh);
+    const result = await fresh;
+    if (result?.oid !== commit.commit_sha) {
+      cache.delete(id);
     }
-
-    if (commit.package_manifests_loaded_version === SCHEMA_VERSION) {
-      return await getPackageManifestsFromPostgres(db, commit);
-    }
-
-    const repo = (await tables.git_repositories(db).findOne({
-      id: commit.git_repository_id,
-    }))!;
-
-    const packages = await listPackages(
-      getAllFiles(
-        client,
-        {owner: repo.owner, name: repo.name},
-        commit.graphql_id,
-      ),
-    );
-
-    // No need to wait for this cache to be updated, we also
-    // want to ignore conflict errors that could happen from
-    // two processes writing package manifests at the same
-    // time.
-    writePackageManifestsToPostgres(db, commit, packages).catch((ex) => {
-      logger.error('error_writing_package_manifests', ex.stack);
-    });
-
-    return packages;
-  });
+    return result?.packages;
+  } catch (ex) {
+    cache.delete(id);
+    throw ex;
+  }
 }
 
-async function getPackageManifestsFromPostgres(
+async function getPackageManifestsForPullRequest(
   db: Queryable,
-  commit: DbGitCommit,
-): Promise<Map<string, PackageManifest>> {
-  return new Map(
-    (
-      await tables
-        .package_manifest_records_v2(db)
-        .find({git_commit_id: commit.id, schema_version: SCHEMA_VERSION})
-        .all()
-    ).map((pkg) => [pkg.package_name, pkg.manifest]),
+  client: GitHubClient,
+  repo: DbGitRepository,
+  pullRequest: DbPullRequest,
+  logger: Logger,
+) {
+  return (
+    (await getPackageManifests(
+      db,
+      client,
+      repo,
+      {type: 'pull_request', pullRequest},
+      logger,
+    )) ||
+    (await getPackageManifests(
+      db,
+      client,
+      repo,
+      {type: 'branch', name: repo.default_branch_name},
+      logger,
+    ))
   );
 }
 
-async function writePackageManifestsToPostgres(
+async function getChangeLogEntriesForPR(
   db: Queryable,
-  commit: DbGitCommit,
-  packages: Map<string, PackageManifest>,
-): Promise<void> {
-  await db.tx(async (db) => {
-    const commitBefore = await tables.git_commits(db).findOne({id: commit.id});
-    if (!commitBefore) return;
-    if (commitBefore.package_manifests_loaded_version === SCHEMA_VERSION) {
-      return;
+  pullRequest: DbPullRequest,
+) {
+  return await tables
+    .change_log_entries(db)
+    .find({pull_request_id: pullRequest.id})
+    .orderByAsc(`sort_order_weight`)
+    .all();
+}
+export function getPackageVersions({
+  allowTagsWithoutPackageName,
+  allTags,
+  manifest,
+}: {
+  allowTagsWithoutPackageName: boolean;
+  allTags: DbGitRef[];
+  manifest: PackageManifest;
+}) {
+  return allTags
+    .map((tag): VersionTag | null => {
+      const version = parseTag(tag.name, {
+        allowTagsWithoutPackageName,
+        packageName: manifest.packageName,
+        tagFormat: manifest.tagFormat,
+      });
+      return version && !isPrerelease(version)
+        ? {commitSha: tag.commit_sha, name: tag.name, version}
+        : null;
+    })
+    .filter(isTruthy);
+}
+
+export function getMaxVersion(versions: readonly VersionTag[]) {
+  return max(versions, (tag) => tag.version) ?? null;
+}
+
+// function mapMapValues<TKey, TValue, TMappedValue>(
+//   map: Map<TKey, TValue>,
+//   fn: (value: TValue) => TMappedValue,
+// ): Map<TKey, TMappedValue> {
+//   return new Map([...map].map(([k, v]) => [k, fn(v)]));
+// }
+async function mapMapValuesAsync<TKey, TValue, TMappedValue>(
+  map: Map<TKey, TValue>,
+  fn: (value: TValue) => Promise<TMappedValue>,
+): Promise<Map<TKey, TMappedValue>> {
+  return new Map(
+    await Promise.all(
+      [...map].map(async ([k, v]) => [k, await fn(v)] as const),
+    ),
+  );
+}
+
+export async function getDetailedPackageManifestsForPullRequest(
+  db: Queryable,
+  client: GitHubClient,
+  repo: DbGitRepository,
+  pullRequest: DbPullRequest,
+  logger: Logger,
+): Promise<null | Map<string, PullRequestPackage>> {
+  await updateRepoIfChanged(db, client, repo.id, logger);
+
+  const [manifests, allTags, changeLogEntries] = await Promise.all([
+    getPackageManifestsForPullRequest(db, client, repo, pullRequest, logger),
+    getAllTags(db, client, repo, logger),
+    getChangeLogEntriesForPR(db, pullRequest),
+  ]);
+  if (!manifests) {
+    return null;
+  }
+
+  const changes = groupByKey(changeLogEntries, (e) => e.package_name);
+
+  const detailedManifests = await mapMapValuesAsync(
+    manifests,
+    async (manifest): Promise<PullRequestPackage> => {
+      const versions = getPackageVersions({
+        allowTagsWithoutPackageName: manifests.size <= 1,
+        allTags,
+        manifest,
+      });
+      const released =
+        pullRequest.merge_commit_sha !== null &&
+        (await isCommitReleased(db, repo, {
+          commitShaToCheck: pullRequest.merge_commit_sha,
+          releasedCommits: new Set(versions.map((v) => v.commitSha)),
+        }));
+      const changeSet: ChangeSet = (
+        changes.get(manifest.packageName) ?? []
+      ).map((c) => ({type: c.kind, title: c.title, body: c.body}));
+      return {
+        manifest: {...manifest},
+        currentVersion: getMaxVersion(versions),
+        changeSet,
+        released,
+      };
+    },
+  );
+
+  for (const [packageName, changeLogEntries] of changes) {
+    if (!detailedManifests.has(packageName)) {
+      const changeSet: ChangeSet = changeLogEntries.map((c) => ({
+        type: c.kind,
+        title: c.title,
+        body: c.body,
+      }));
+      detailedManifests.set(packageName, {
+        manifest: {
+          packageName,
+          targetConfigs: [],
+          dependencies: {development: [], required: [], optional: []},
+        },
+        currentVersion: null,
+        changeSet,
+        released: false,
+      });
     }
-    const manifests = [...packages.values()].map(
-      (pkg): InsertParameters => ({
-        git_commit_id: commit.id,
-        package_name: pkg.packageName,
-        schema_version: SCHEMA_VERSION,
-        manifest: pkg,
-      }),
-    );
-    if (manifests.length) {
-      await tables.package_manifest_records_v2(db).insertOrIgnore(...manifests);
-    }
-    await tables.git_commits(db).update(
-      {
-        id: commit.id,
-        package_manifests_loaded_version:
-          commitBefore.package_manifests_loaded_version,
-      },
-      {package_manifests_loaded_version: SCHEMA_VERSION},
-    );
+  }
+
+  return detailedManifests;
+}
+
+export async function getDetailedPackageManifestsForBranch(
+  db: Queryable,
+  client: GitHubClient,
+  repo: DbGitRepository,
+  {
+    branchName,
+    versionByBranch,
+  }: {branchName: string; versionByBranch?: boolean},
+  logger: Logger,
+) {
+  await updateRepoIfChanged(db, client, repo.id, logger);
+
+  const headCommit = await getBranchHeadCommit(
+    db,
+    client,
+    repo,
+    branchName,
+    logger,
+  );
+  if (!headCommit) return null;
+  const [manifests, tags] = await Promise.all([
+    getPackageManifests(
+      db,
+      client,
+      repo,
+      {type: 'branch', name: branchName},
+      logger,
+    ),
+    versionByBranch
+      ? getAllTagsOnBranch(db, headCommit)
+      : getAllTags(db, client, repo, logger),
+  ]);
+  if (!manifests) {
+    return null;
+  }
+
+  return await mapMapValuesAsync(manifests, async (manifest) => {
+    const versions = getPackageVersions({
+      allowTagsWithoutPackageName: manifests.size <= 1,
+      allTags: tags,
+      manifest,
+    });
+    const changeSet: ChangeSet<{pr: number}> = (
+      await getUnreleasedChanges(db, repo, {
+        packageName: manifest.packageName,
+        headCommitSha: headCommit.commit_sha,
+        releasedCommits: new Set(versions.map((v) => v.commitSha)),
+      })
+    )
+      .sort((a, b) => a.sort_order_weight - b.sort_order_weight)
+      .map((c) => ({
+        type: c.kind,
+        title: c.title,
+        body: c.body,
+        pr: c.pr_number,
+      }));
+    return {
+      manifest,
+      currentVersion: getMaxVersion(versions),
+      changeSet,
+    };
   });
 }

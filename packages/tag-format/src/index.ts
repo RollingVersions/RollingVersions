@@ -1,6 +1,5 @@
-import type {VersionSchema} from '@rollingversions/config';
 import {DEFAULT_VERSION_SCHEMA} from '@rollingversions/config';
-import type VersionNumber from '@rollingversions/version-number';
+import type {VersionNumber, VersionSchema} from '@rollingversions/types';
 import {parseString, printString} from '@rollingversions/version-number';
 
 import parseTemplate from './Template';

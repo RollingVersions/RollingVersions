@@ -8,20 +8,20 @@ import getPermissionLevel, {
 import {getGitHubAccessToken} from '../auth';
 import {parseParams, parseRepoParams} from './validateParams';
 
-export {Permission};
+export type {Permission};
 
-const permisisonInfoMap = new WeakMap<
+const permissionInfoMap = new WeakMap<
   Request,
   {permission: Permission; login: string}
 >();
 export function getPermission(req: Request) {
-  return permisisonInfoMap.get(req)?.permission || 'none';
+  return permissionInfoMap.get(req)?.permission || 'none';
 }
 export interface User {
   login: string;
 }
 export function getUser(req: Request): User {
-  const pi = permisisonInfoMap.get(req) || repoPermisisonInfoMap.get(req);
+  const pi = permissionInfoMap.get(req) || repoPermissionInfoMap.get(req);
   return {
     login: pi?.login || 'unknown',
   };
@@ -48,7 +48,7 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
         repo_name: pullRequest.repo.name,
         pull_number: pullRequest.number,
       });
-      permisisonInfoMap.set(req, permissionInfo);
+      permissionInfoMap.set(req, permissionInfo);
       if (!allowedPermissions.includes(permissionInfo.permission)) {
         logger.warning(
           'permission_denied',
@@ -66,7 +66,7 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
         res
           .status(404)
           .send(
-            'Either this PR does not exist, you do not have acess to it, or Rolling Versions is not installed on this repository.',
+            'Either this PR does not exist, you do not have access to it, or Rolling Versions is not installed on this repository.',
           );
       } else {
         next();
@@ -77,12 +77,12 @@ export default function checkPermissions(allowedPermissions: Permission[]) {
   };
 }
 
-const repoPermisisonInfoMap = new WeakMap<
+const repoPermissionInfoMap = new WeakMap<
   Request,
   {permission: Permission; login: string}
 >();
 export function getRepoPermission(req: Request) {
-  return repoPermisisonInfoMap.get(req)?.permission || 'none';
+  return repoPermissionInfoMap.get(req)?.permission || 'none';
 }
 export function checkRepoPermissions(allowedPermissions: Permission[]) {
   return async (req: Request, res: Response, next: (err?: any) => void) => {
@@ -92,7 +92,7 @@ export function checkRepoPermissions(allowedPermissions: Permission[]) {
       const logger = expressLogger(req, res);
       const timer = logger.withTimer();
       const permissionInfo = await getRepoPermissionLevel(
-        repo,
+        {owner: repo.owner, name: repo.repo},
         userAuth,
         logger,
       );
@@ -102,26 +102,26 @@ export function checkRepoPermissions(allowedPermissions: Permission[]) {
         reason: permissionInfo.reason,
         login: permissionInfo.login,
         repo_owner: repo.owner,
-        repo_name: repo.name,
+        repo_name: repo.repo,
       });
-      repoPermisisonInfoMap.set(req, permissionInfo);
+      repoPermissionInfoMap.set(req, permissionInfo);
       if (!allowedPermissions.includes(permissionInfo.permission)) {
         logger.warning(
           'permission_denied',
-          `${permissionInfo.login} does not have access to ${repo.owner}/${repo.name}`,
+          `${permissionInfo.login} does not have access to ${repo.owner}/${repo.repo}`,
           {
             allowed_permissions: allowedPermissions,
             permission: permissionInfo.permission,
             reason: permissionInfo.reason,
             login: permissionInfo.login,
             repo_owner: repo.owner,
-            repo_name: repo.name,
+            repo_name: repo.repo,
           },
         );
         res
           .status(404)
           .send(
-            'Either this repository does not exist, you do not have acess to it, or Rolling Versions is not installed on this repository.',
+            'Either this repository does not exist, you do not have access to it, or Rolling Versions is not installed on this repository.',
           );
       } else {
         next();

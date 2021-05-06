@@ -1,9 +1,10 @@
 import React from 'react';
 import {useParams} from 'react-router-dom';
 
+import {GetRepositoryApiResponse, VersioningMode} from '@rollingversions/types';
 import {printString} from '@rollingversions/version-number';
 
-import type {RepoResponse} from '../../types';
+import Alert from '../visual/Alert';
 import AppContainer from '../visual/AppContainer';
 import AppNavBar, {AppNavBarLink} from '../visual/AppNavBar';
 import RepositoryPage, {
@@ -21,7 +22,9 @@ interface Params {
 export default function Repository() {
   const params = useParams<Params>();
   const [error, setError] = React.useState<Error | undefined>();
-  const [state, setState] = React.useState<RepoResponse | undefined>();
+  const [state, setState] = React.useState<
+    GetRepositoryApiResponse | undefined
+  >();
   const path = `/${params.owner}/${params.repo}`;
 
   React.useEffect(() => {
@@ -66,7 +69,7 @@ export default function Repository() {
         }
 
         const updateRequired =
-          !state.cycleDetected && state.packagesWithChanges.length !== 0;
+          !state.cycleDetected && state.packages.some((pkg) => pkg.newVersion);
 
         return (
           <RepositoryPage
@@ -85,26 +88,55 @@ export default function Repository() {
             {state.cycleDetected ? (
               <CycleWarning cycle={state.cycleDetected} />
             ) : null}
-            {state.packagesWithChanges.map((pkg) => (
-              <PackageWithChanges
-                key={pkg.packageName}
-                packageName={pkg.packageName}
-                currentVersion={
-                  pkg.currentVersion && printString(pkg.currentVersion)
-                }
-                newVersion={printString(pkg.newVersion)}
-                changeSet={pkg.changeSet}
-              />
-            ))}
-            {state.packagesWithNoChanges.map((pkg) => (
-              <PackageWithNoChanges
-                key={pkg.packageName}
-                packageName={pkg.packageName}
-                currentVersion={
-                  pkg.currentVersion && printString(pkg.currentVersion)
-                }
-              />
-            ))}
+            {state.packages.map((pkg) => {
+              if (pkg.currentVersion?.ok !== false) {
+                return null;
+              }
+              return (
+                <Alert key={pkg.manifest.packageName}>
+                  {pkg.manifest.packageName} has an ambiguous version on the
+                  selected branch. You need to set the versioning in the package
+                  manifest to either:{' '}
+                  <code>{VersioningMode.AlwaysIncreasing}</code> or{' '}
+                  <code>{VersioningMode.ByBranch}</code>.
+                </Alert>
+              );
+            })}
+            {state.packages.map((pkg) => {
+              const currentVersion = pkg.currentVersion;
+              if (!pkg.newVersion) {
+                return null;
+              }
+              return (
+                <PackageWithChanges
+                  key={pkg.manifest.packageName}
+                  packageName={pkg.manifest.packageName}
+                  currentVersion={
+                    currentVersion?.ok
+                      ? printString(currentVersion.version)
+                      : null
+                  }
+                  newVersion={printString(pkg.newVersion)}
+                  changeSet={pkg.changeSet}
+                />
+              );
+            })}
+            {state.packages.map((pkg) => {
+              if (pkg.newVersion) {
+                return null;
+              }
+              return (
+                <PackageWithNoChanges
+                  key={pkg.manifest.packageName}
+                  packageName={pkg.manifest.packageName}
+                  currentVersion={
+                    pkg.currentVersion?.ok
+                      ? printString(pkg.currentVersion.version)
+                      : null
+                  }
+                />
+              );
+            })}
           </RepositoryPage>
         );
       })()}

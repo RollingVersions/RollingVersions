@@ -19,11 +19,11 @@ function mockPackage(
       packageName: packageName,
       targetConfigs: [],
       dependencies: {required: [], optional: [], development: []},
-      versionTag: null,
       ...manifest,
     },
+    currentVersion: null,
     changeSet: changeSet ?? [],
-    released: released === undefined ? false : released,
+    released: released ?? false,
   };
 }
 

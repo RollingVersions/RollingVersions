@@ -1,6 +1,6 @@
 import type {Response, Request} from 'express';
 
-import type {PullRequest, Repository} from 'rollingversions/lib/types';
+import {PullRequest} from '@rollingversions/types';
 
 const validRequests = new WeakSet<Request>();
 export default function validateParams() {
@@ -20,9 +20,7 @@ export default function validateParams() {
     }
   };
 }
-export function parseParams(
-  req: Request,
-): Pick<PullRequest, 'repo' | 'number'> {
+export function parseParams(req: Request): PullRequest {
   if (!validRequests.has(req)) {
     throw new Error(
       'This request has not been passed through the validation middleware',
@@ -40,18 +38,40 @@ export function validateRepoParams() {
       res.status(400).send('Expected a owner parameter');
     } else if (!repo) {
       res.status(400).send('Expected a repo parameter');
+    } else if (
+      req.query.commit !== undefined &&
+      typeof req.query.commit !== 'string'
+    ) {
+      res.status(400).send('Expected commit to be a string, if specified.');
+    } else if (
+      req.query.branch !== undefined &&
+      typeof req.query.branch !== 'string'
+    ) {
+      res.status(400).send('Expected branch to be a string, if specified.');
     } else {
       validRepoRequests.add(req);
       next();
     }
   };
 }
-export function parseRepoParams(req: Request): Repository {
+export function parseRepoParams(
+  req: Request,
+): {
+  owner: string;
+  repo: string;
+  commit?: string;
+  branch?: string;
+} {
   if (!validRepoRequests.has(req)) {
     throw new Error(
       'This request has not been passed through the validation middleware',
     );
   }
   const {owner, repo} = req.params;
-  return {owner, name: repo};
+  return {
+    owner,
+    repo,
+    commit: req.query.commit ?? undefined,
+    branch: req.query.branch ?? undefined,
+  };
 }

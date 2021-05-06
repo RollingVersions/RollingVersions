@@ -12,10 +12,14 @@ export default function printHelp() {
  -g --github-token   token      A GitHub access token with at least "repo"
                                 scope. Used to read changelogs and write
                                 git tags/releases. You can alternatively
-                                just set the GITHUB_TOKEN enviornment variable.
+                                just set the GITHUB_TOKEN environment variable.
  -b --deploy-branch  branch     The branch to deploy from. This will default
                                 to your default branch on GitHub.
     --canary         build_no   Create a canary release with the provided build
-                                number.`);
+                                number.
+    --allow-any-branch          Always publish from the current branch, even if
+                                it does not match the --deploy-branch
+    --allow-non-latest-commit   Always publish the current commit, even if there
+                                is a newer commit on the same branch.`);
   console.warn(``);
 }

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import {URL} from 'url';
+
 import chalk from 'chalk';
 import {parse, startChain, param} from 'parameter-reducers';
 
@@ -8,11 +10,10 @@ import {printString} from '@rollingversions/version-number';
 
 import printHelp from './commands/help';
 import publish, {PublishResultKind} from './commands/publish';
-import type {
-  NoUpdateRequired,
+import PackageStatus, {
   NewVersionToBePublished,
-} from './utils/getPackageStatuses';
-import {PackageStatus} from './utils/getPackageStatuses';
+  NoUpdateRequired,
+} from './types/PackageStatus';
 
 const CI_ENV = require('env-ci')();
 
@@ -31,6 +32,8 @@ switch (COMMAND) {
       .addParam(param.string(['-r', '--repo'], 'repoSlug'))
       .addParam(param.string(['-g', '--github-token'], 'githubToken'))
       .addParam(param.string(['-b', '--deploy-branch'], 'deployBranch'))
+      .addParam(param.string(['--backend'], 'backend'))
+      .addParam(param.flag([`--allow-any-branch`], `allowAnyBranch`))
       .addParam(
         param.flag([`--allow-non-latest-commit`], `allowNonLatestCommit`),
       )
@@ -61,12 +64,14 @@ switch (COMMAND) {
     const {
       dryRun = false,
       supressErrors = false,
-      // env.CI does not support GitHub actions, which uses GITHUB_REPOSITORY
+      // env-ci does not support GitHub actions, which uses GITHUB_REPOSITORY
       repoSlug = CI_ENV.slug || process.env.GITHUB_REPOSITORY,
       githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
       deployBranch,
       canary,
+      allowAnyBranch = false,
       allowNonLatestCommit = false,
+      backend,
     } = parserResult.parsed;
 
     if (!githubToken) {
@@ -91,6 +96,7 @@ switch (COMMAND) {
     const [owner, name] = slug;
 
     publish({
+      backend: new URL(backend ?? `https://rollingversions.com`),
       dirname: DIRNAME,
       owner,
       name,
@@ -98,6 +104,7 @@ switch (COMMAND) {
       deployBranch: deployBranch || null,
       dryRun,
       canary: canary || null,
+      allowAnyBranch,
       allowNonLatestCommit,
       logger: {
         onValidatedPackages({packages}) {

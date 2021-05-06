@@ -2,12 +2,8 @@ import {URL} from 'url';
 
 import type ChangeSet from '@rollingversions/change-set';
 import {changesToMarkdown, isEmptyChangeSet} from '@rollingversions/change-set';
+import {PullRequest, VersionTag} from '@rollingversions/types';
 import {getNextVersion, printString} from '@rollingversions/version-number';
-import type {
-  PackageManifestWithVersion,
-  PullRequest,
-} from 'rollingversions/lib/types';
-import {writeState} from 'rollingversions/lib/utils/CommentState';
 
 import type {PullRequestPackage} from '../types';
 
@@ -16,24 +12,16 @@ export const COMMENT_GUID = `9d24171b-1f63-43f0-9019-c4202b3e8e22`;
 const COMMENT_PREFIX = `<!-- This comment is maintained by Rolling Versions. Do not edit it manually! -->\n<!-- ${COMMENT_GUID} -->\n\n`;
 
 export function getVersionShift(
-  currentVersion: PackageManifestWithVersion,
+  currentVersion: VersionTag | null,
   changes: ChangeSet,
 ) {
-  const newVersion = getNextVersion(
-    currentVersion.versionTag?.version ?? null,
-    changes,
-  );
+  const newVersion = getNextVersion(currentVersion?.version ?? null, changes);
   return `(${
-    currentVersion.versionTag?.version
-      ? printString(currentVersion.versionTag.version)
-      : 'unreleased'
+    currentVersion?.version ? printString(currentVersion.version) : 'unreleased'
   } → ${newVersion ? printString(newVersion) : 'no new release'})`;
 }
 
-export function getUrlForChangeLog(
-  pr: Pick<PullRequest, 'repo' | 'number'>,
-  rollingVersionsUrl: URL,
-) {
+export function getUrlForChangeLog(pr: PullRequest, rollingVersionsUrl: URL) {
   const url = new URL(
     `/${pr.repo.owner}/${pr.repo.name}/pull/${pr.number}`,
     rollingVersionsUrl,
@@ -41,28 +29,21 @@ export function getUrlForChangeLog(
   return url;
 }
 
-export function getShortDescription(
-  pullRequest: PullRequest,
-  submittedAtCommitSha: string | null,
-  packages: Map<string, PullRequestPackage>,
-) {
-  if (submittedAtCommitSha === pullRequest.headSha) {
-    const packagesToRelease = [...packages].filter(
-      ([, {changeSet}]) => !isEmptyChangeSet(changeSet),
-    );
-    if (packagesToRelease.length === 0) {
-      return 'no changes to release';
-    }
-    if (packagesToRelease.length === 1) {
-      return `releasing ${packagesToRelease[0][0]}`;
-    }
-    return 'releasing multiple packages';
+export function getShortDescription(packages: Map<string, PullRequestPackage>) {
+  const packagesToRelease = [...packages].filter(
+    ([, {changeSet}]) => !isEmptyChangeSet(changeSet),
+  );
+  if (packagesToRelease.length === 0) {
+    return 'no changes to release';
   }
-  return 'please update the changelog';
+  if (packagesToRelease.length === 1) {
+    return `releasing ${packagesToRelease[0][0]}`;
+  }
+  return 'releasing multiple packages';
 }
 
 export function renderInitialCommentWithoutState(
-  pullRequest: Pick<PullRequest, 'repo' | 'number'>,
+  pullRequest: PullRequest,
   rollingVersionsUrl: URL,
 ) {
   const url = getUrlForChangeLog(pullRequest, rollingVersionsUrl);
@@ -83,12 +64,12 @@ export function renderCommentWithoutState(
 
   const packages = [...packagesMap].sort(([a], [b]) => (a < b ? -1 : 1));
   if (packages.length === 1) {
-    const [packageName, {manifest, changeSet}] = packages[0];
+    const [packageName, {changeSet, currentVersion}] = packages[0];
     if (isEmptyChangeSet(changeSet)) {
       return `This PR will **not** result in a new version of ${packageName} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
     }
     return `### Change Log for ${packageName} ${getVersionShift(
-      manifest,
+      currentVersion,
       changeSet,
     )}\n\n${changesToMarkdown(changeSet, {
       headingLevel: 4,
@@ -109,9 +90,9 @@ export function renderCommentWithoutState(
     })${outdated}`;
   }
   return `${packagesWithChanges
-    .map(([packageName, {changeSet, manifest}]) => {
+    .map(([packageName, {changeSet, currentVersion}]) => {
       return `### ${packageName} ${getVersionShift(
-        manifest,
+        currentVersion,
         changeSet,
       )}\n\n${changesToMarkdown(changeSet, {headingLevel: 4})}`;
     })
@@ -125,7 +106,7 @@ export function renderCommentWithoutState(
 }
 
 export function renderInitialComment(
-  pullRequest: Pick<PullRequest, 'repo' | 'number'>,
+  pullRequest: PullRequest,
   rollingVersionsUrl: URL,
 ) {
   return `${COMMENT_PREFIX}${renderInitialCommentWithoutState(
@@ -139,21 +120,10 @@ export function renderComment(
   packages: Map<string, PullRequestPackage>,
   rollingVersionsUrl: URL,
 ) {
-  return writeState(
-    `${COMMENT_PREFIX}${renderCommentWithoutState(
-      pullRequest,
-      submittedAtCommitSha,
-      packages,
-      rollingVersionsUrl,
-    )}`,
-    {
-      submittedAtCommitSha,
-      packages: new Map(
-        [...packages].map(([packageName, {changeSet}]) => [
-          packageName,
-          changeSet,
-        ]),
-      ),
-    },
-  );
+  return `${COMMENT_PREFIX}${renderCommentWithoutState(
+    pullRequest,
+    submittedAtCommitSha,
+    packages,
+    rollingVersionsUrl,
+  )}`;
 }

@@ -1,8 +1,8 @@
-import type {
-  PackageStatusDetail,
-  NewVersionToBePublished,
-} from '../utils/getPackageStatuses';
-import type {PublishTargetConfig} from './PublishTarget';
+import {URL} from 'url';
+
+import {PublishTargetConfig} from '@rollingversions/types';
+
+import {NewVersionToBePublished, PackageStatusDetail} from './PackageStatus';
 
 export interface PublishConfig {
   dryRun: boolean;
@@ -14,6 +14,8 @@ export interface PublishConfig {
   logger: PublishEventHandlers;
   canary: string | null;
   allowNonLatestCommit: boolean;
+  allowAnyBranch: boolean;
+  backend: URL;
 }
 
 export interface PublishEvents {

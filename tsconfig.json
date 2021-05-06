@@ -1,6 +1,7 @@
 {
   "extends": "@forbeslindesay/tsconfig",
   "compilerOptions": {
+    "isolatedModules": true,
     "outDir": "lib",
     "esModuleInterop": true,
     "jsx": "react",

@@ -2,6 +2,7 @@
   "extends": "@forbeslindesay/tsconfig",
   "compilerOptions": {
     "outDir": "lib",
+    "isolatedModules": true,
     "incremental": true,
     "composite": true,
     "rootDir": "src",
@@ -12,7 +13,9 @@
   "references": [
     {"path": "../change-set"},
     {"path": "../config"},
+    {"path": "../sort-by-dependencies"},
     {"path": "../tag-format"},
+    {"path": "../types"},
     {"path": "../version-number"},
   ]
 }
