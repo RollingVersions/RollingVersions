@@ -2,10 +2,10 @@ import Cache from 'quick-lru';
 
 import ChangeSet from '@rollingversions/change-set';
 import {Queryable, tables} from '@rollingversions/db';
+import DbGitCommit from '@rollingversions/db/git_commits';
 import DbGitRef from '@rollingversions/db/git_refs';
 import DbGitRepository from '@rollingversions/db/git_repositories';
 import DbPullRequest from '@rollingversions/db/pull_requests';
-import DbGitCommit from '@rollingversions/db/src/__generated__/git_commits';
 import {parseTag} from '@rollingversions/tag-format';
 import {PackageManifest, VersionTag} from '@rollingversions/types';
 import {isPrerelease, max} from '@rollingversions/version-number';

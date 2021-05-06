@@ -14,7 +14,8 @@ import paginateBatched from '../../../utils/paginateBatched';
 import * as queries from './github-graph';
 
 export {GitHubClient};
-export {auth, GitHubOptions};
+export {auth};
+export type {GitHubOptions};
 
 export async function getRepository(client: GitHubClient, repo: Repository) {
   const repository = (await queries.getRepository(client, repo)).repository;

@@ -4,7 +4,7 @@ import {
   DEFAULT_BASE_VERSION,
 } from '@rollingversions/config';
 import type {
-  VersionNumber,
+  VersionNumber as VN,
   ChangeTypeID,
   RollingConfigOptions,
 } from '@rollingversions/types';
@@ -13,6 +13,7 @@ const MAX_LENGTH = 256;
 const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER;
 const MAX_SAFE_INTEGER_LENGTH = MAX_SAFE_INTEGER.toString(10).length;
 
+type VersionNumber = VN;
 export default VersionNumber;
 
 function parseInteger(str: string | undefined): number | undefined {

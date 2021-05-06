@@ -2,6 +2,7 @@
   "extends": "@forbeslindesay/tsconfig",
   "compilerOptions": {
     "outDir": "lib",
+    "isolatedModules": false,
     "incremental": true,
     "composite": true,
     "rootDir": "src",

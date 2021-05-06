@@ -6,7 +6,7 @@ import type {Logger} from '../logger';
 import * as gh from '../services/github';
 import Permission from './Permission';
 
-export {Permission};
+export type {Permission};
 
 /**
  * Check the viewer's permissions on a repository. This only considers

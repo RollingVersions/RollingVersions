@@ -4,10 +4,10 @@ import createTyped, {anyOf} from '@databases/pg-typed';
 import type DatabaseSchema from './__generated__';
 import {serializeValue} from './__generated__';
 
-export type {SQLQuery};
+export type {Queryable, SQLQuery};
 
 export const q = {anyOf};
-export {sql, Queryable};
+export {sql};
 const db = connect({
   bigIntMode: 'number',
 });

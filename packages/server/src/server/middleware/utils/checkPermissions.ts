@@ -8,7 +8,7 @@ import getPermissionLevel, {
 import {getGitHubAccessToken} from '../auth';
 import {parseParams, parseRepoParams} from './validateParams';
 
-export {Permission};
+export type {Permission};
 
 const permissionInfoMap = new WeakMap<
   Request,

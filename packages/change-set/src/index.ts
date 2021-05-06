@@ -3,12 +3,12 @@ import type {
   ChangeTypeID,
   ChangeType,
   ChangeSetEntry,
-  ChangeSet,
+  ChangeSet as CS,
   MarkdownString,
 } from '@rollingversions/types';
 
 export type {ChangeSetEntry};
-
+type ChangeSet<TContext = {}> = CS<TContext>;
 export default ChangeSet;
 
 export function createChangeSet<TContext = {}>(
