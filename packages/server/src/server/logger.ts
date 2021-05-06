@@ -4,6 +4,8 @@ import onFinished from 'on-finished';
 import onHeaders from 'on-headers';
 import * as winston from 'winston';
 
+import {setDatabaseLogger} from '@rollingversions/db';
+
 import {APEX_LOGS_CONFIG, ENVIRONMENT} from './environment';
 
 const ApexLogsTransport = require('apex-logs-winston');
@@ -114,6 +116,7 @@ class Logger {
 }
 
 const logger = new Logger(winLogger, []);
+setDatabaseLogger(logger);
 export default logger;
 
 const expressLoggerKey = '@rollingversions/logger';
