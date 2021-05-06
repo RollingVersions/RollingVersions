@@ -16,7 +16,9 @@ import * as gitObj from '@rollingversions/git-objects';
 
 import dedupeByKey from '../../utils/dedupeByKey';
 import groupByKey from '../../utils/groupByKey';
+import {getTokenForRepo} from '../getClient';
 import type {Logger} from '../logger';
+import {getGitHubAccessToken} from '../middleware/auth';
 import type {GitHubClient} from '../services/github';
 
 function notNull<T>(value: T | null | undefined): T {
@@ -31,14 +33,21 @@ const CONFLICTING_UPDATES_ERROR = new Error(
 );
 const dedupe = dedupeByKey<DbGitRepository['id'], void>();
 async function getHttpHandler(
-  _client: GitHubClient,
-  _repo: DbGitRepository,
+  repo: DbGitRepository,
 ): Promise<git.HttpInterface<Headers>> {
+  const accessToken = await getTokenForRepo(repo);
+  const headerValue = `Basic ${Buffer.from(
+    `x-access-token:${accessToken}`,
+  ).toString(`base64`)}`;
   return {
     ...git.DEFAULT_HTTP_HANDLER,
     createHeaders(url: URL) {
       const headers = git.DEFAULT_HTTP_HANDLER.createHeaders(url);
-      // TODO: set auth headers
+
+      // https://docs.github.com/en/developers/apps/authenticating-with-github-apps#http-based-git-access-by-an-installation
+      // x-access-token:<token>
+      headers.set('Authorization', headerValue);
+
       return headers;
     },
   };
@@ -67,14 +76,14 @@ export async function markRepoAsUpdated(
 
 export async function updateRepoIfChanged(
   db: Queryable,
-  client: GitHubClient,
+  _client: GitHubClient,
   repoID: DbGitRepository['id'],
   logger: Logger,
 ): Promise<void> {
   return await dedupe(repoID, async () => {
     let repo = notNull(await tables.git_repositories(db).findOne({id: repoID}));
     while (repo.remote_git_version !== repo.local_git_version) {
-      const http = await getHttpHandler(client, repo);
+      const http = await getHttpHandler(repo);
       const repoURL = new URL(
         `https://github.com/${repo.owner}/${repo.name}.git`,
       );
