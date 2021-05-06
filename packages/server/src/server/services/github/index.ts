@@ -411,6 +411,11 @@ interface Entry {
 
 const GetAllFilesSourceSchema = ft.Union(
   ft.Object({
+    type: ft.Literal(`commit`),
+    repositoryID: ft.String,
+    commitSha: ft.String,
+  }),
+  ft.Object({
     type: ft.Literal(`branch`),
     repositoryID: ft.String,
     branchName: ft.String,
@@ -422,10 +427,7 @@ const GetAllFilesSourceSchema = ft.Union(
 );
 export async function getAllFiles(
   client: GitHubClient,
-  source:
-    | {type: 'commit'; repositoryID: string; commitSha: string}
-    | {type: 'branch'; repositoryID: string; branchName: string}
-    | {type: 'pull_request'; pullRequestID: string},
+  source: ft.Static<typeof GetAllFilesSourceSchema>,
 ) {
   (GetAllFilesSourceSchema as any).assert(source);
   const commit = await retry(async () =>

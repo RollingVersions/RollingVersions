@@ -32,7 +32,7 @@ For libraries it may be common to release a patch for an old major version. This
 
 1. **Done** allow specifying the `versioning` mode in the package manifest: "UNAMBIGUOUS" (default), "ALWAYS_INCREASING", "BY_BRANCH"
 1. Add branch name selector to repository page
-1. Allow previewing with versioning mode on the repo page
+1. Respect versioning mode & target branch when rendering versions for Pull Requests
 1. Pass branch name & commit sha to dispatch hook
 1. Update example GitHub script to checkout correct commit/branch - consider migrating to the new even type
 
