@@ -69,9 +69,6 @@
     }
   },
   "jest": {
-    "setupFilesAfterEnv": [
-      "<rootDir>/packages/cli/src/services/__mock_services__/index.ts"
-    ],
     "moduleFileExtensions": [
       "ts",
       "tsx",
