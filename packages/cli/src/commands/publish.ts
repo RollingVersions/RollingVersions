@@ -67,7 +67,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   const headSha = await getHeadSha(config.dirname);
   const currentBranchName = await getCurrentBranchName(config.dirname);
   url.searchParams.set(`commit`, headSha);
-  url.searchParams.set(`deployBranch`, currentBranchName);
+  url.searchParams.set(`branch`, currentBranchName);
 
   const res = await fetch(url.href, {
     headers: {Authorization: `Bearer ${config.accessToken}`},
