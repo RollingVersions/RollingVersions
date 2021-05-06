@@ -1,6 +1,10 @@
 import {gt, prerelease} from 'semver';
 
-import {NpmPublishTargetConfig, PublishTarget} from '@rollingversions/types';
+import {
+  NpmPublishTargetConfig,
+  PublishTarget,
+  VersioningMode,
+} from '@rollingversions/types';
 import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
 
@@ -106,6 +110,26 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
         return null;
       }
 
+      const tagFormat = getConfigValue(`tag-format`, pkgData);
+      if (tagFormat !== undefined && typeof tagFormat !== 'string') {
+        throw new Error('Expected "tag-format" to be undefined or a string');
+      }
+      const versioning = getConfigValue(`versioning`, pkgData);
+      if (
+        versioning !== undefined &&
+        versioning !== VersioningMode.AlwaysIncreasing &&
+        versioning !== VersioningMode.ByBranch &&
+        versioning !== VersioningMode.Unambiguous
+      ) {
+        throw new Error(
+          `Expected "versioning" to be undefined or one of: ${Object.values(
+            VersioningMode,
+          )
+            .map((v) => JSON.stringify(v))
+            .join(`, `)}`,
+        );
+      }
+
       const required = [
         ...(isObject(pkgData) && isObject(pkgData.dependencies)
           ? Object.keys(pkgData.dependencies)
@@ -127,6 +151,8 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
 
       return {
         packageName: pkgName,
+        tagFormat,
+        versioning,
         targetConfigs: [
           {
             type: PublishTarget.npm,

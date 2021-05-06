@@ -31,7 +31,7 @@ appMiddleware.get(
   checkRepoPermissions(['view', 'edit']),
   async (req, res, next) => {
     try {
-      const {owner, repo, commit, branch, versioning} = parseRepoParams(req);
+      const {owner, repo, commit, branch} = parseRepoParams(req);
       const client = await getClientForRepo({owner, name: repo});
       const dbRepo = await getRepositoryFromRestParams(db, client, {
         owner,
@@ -43,7 +43,7 @@ appMiddleware.get(
       const response = await getRepository(
         client,
         {owner, name: repo},
-        {commit, branch, versioning},
+        {commit, branch},
         expressLogger(req, res),
       );
       if (!response) {

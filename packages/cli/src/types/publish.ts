@@ -1,6 +1,6 @@
 import {URL} from 'url';
 
-import {PublishTargetConfig, VersioningMode} from '@rollingversions/types';
+import {PublishTargetConfig} from '@rollingversions/types';
 
 import {NewVersionToBePublished, PackageStatusDetail} from './PackageStatus';
 
@@ -16,7 +16,6 @@ export interface PublishConfig {
   allowNonLatestCommit: boolean;
   allowAnyBranch: boolean;
   backend: URL;
-  versioning: VersioningMode;
 }
 
 export interface PublishEvents {

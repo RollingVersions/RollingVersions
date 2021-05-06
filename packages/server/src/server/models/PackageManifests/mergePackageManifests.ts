@@ -20,9 +20,19 @@ export default function mergePackageManifests(
       `Cannot use two different tag formats for "${a.packageName}": "${a.tagFormat}" and "${b.tagFormat}"`,
     );
   }
+  if (
+    a.versioning !== undefined &&
+    b.versioning !== undefined &&
+    a.versioning !== b.versioning
+  ) {
+    throw new Error(
+      `Cannot use two different versioning modes for "${a.packageName}": "${a.versioning}" and "${b.versioning}"`,
+    );
+  }
   return {
     packageName: a.packageName,
     tagFormat: a.tagFormat ?? b.tagFormat,
+    versioning: a.versioning ?? b.versioning,
     dependencies: mergePackageDependencies(a.dependencies, b.dependencies),
     targetConfigs: [...a.targetConfigs, ...b.targetConfigs],
   };

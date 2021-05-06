@@ -9,7 +9,7 @@
 1. Link to the change set editor from change set entries on the repo page
 1. Add option to override next version on the repo page (would be tied to current branch)
 1. Add option to add description to next release on the repo page (would be tied to current branch)
-1. Add CLI command/API to get current version of a package (supporting `--versioning BY_BRANCH`)
+1. Add CLI command/API to get current version of a package (optionally scope by sha, even when versioning mode is not BY_BRANCH)
 1. Add CLI command/API to get next version of a package
 1. Add CLI command/API to get change/versions set between two arbitrary commit shas
 1. Add CLI command/API to get all released versions & their release notes (optionally restricted to before a given sha)
@@ -30,7 +30,7 @@ For applications, version numbers should almost always be steadily increasing. S
 
 For libraries it may be common to release a patch for an old major version. This is often done by having a "main" branch that is used to generate releases for the current major version (e.g. 2.x.x) but have branches for older major versions, from which new patch releases can be created (e.g. a 1.x.x branch).
 
-1. **Done** allow specifying the `--versioning` mode on the CLI: "UNAMBIGUOUS" (default), "ALWAYS_INCREASING", "BY_BRANCH"
+1. **Done** allow specifying the `versioning` mode in the package manifest: "UNAMBIGUOUS" (default), "ALWAYS_INCREASING", "BY_BRANCH"
 1. Add branch name selector to repository page
 1. Allow previewing with versioning mode on the repo page
 1. Pass branch name & commit sha to dispatch hook

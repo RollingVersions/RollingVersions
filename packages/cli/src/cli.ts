@@ -6,7 +6,6 @@ import chalk from 'chalk';
 import {parse, startChain, param} from 'parameter-reducers';
 
 import {changesToMarkdown} from '@rollingversions/change-set';
-import {VersioningMode} from '@rollingversions/types';
 import {printString} from '@rollingversions/version-number';
 
 import printHelp from './commands/help';
@@ -34,27 +33,6 @@ switch (COMMAND) {
       .addParam(param.string(['-g', '--github-token'], 'githubToken'))
       .addParam(param.string(['-b', '--deploy-branch'], 'deployBranch'))
       .addParam(param.string(['--backend'], 'backend'))
-      .addParam(
-        param.parsedString([`--versioning`], `versioning`, (value) => {
-          switch (value) {
-            case VersioningMode.Unambiguous:
-              return {valid: true, value: VersioningMode.Unambiguous};
-            case VersioningMode.AlwaysIncreasing:
-              return {valid: true, value: VersioningMode.AlwaysIncreasing};
-            case VersioningMode.ByBranch:
-              return {valid: true, value: VersioningMode.ByBranch};
-            default:
-              return {
-                valid: false,
-                reason: `--versioning must be one of: ${Object.values(
-                  VersioningMode,
-                )
-                  .map((v) => JSON.stringify(v))
-                  .join(`, `)}`,
-              };
-          }
-        }),
-      )
       .addParam(param.flag([`--allow-any-branch`], `allowAnyBranch`))
       .addParam(
         param.flag([`--allow-non-latest-commit`], `allowNonLatestCommit`),
@@ -94,7 +72,6 @@ switch (COMMAND) {
       allowAnyBranch = false,
       allowNonLatestCommit = false,
       backend,
-      versioning = VersioningMode.Unambiguous,
     } = parserResult.parsed;
 
     if (!githubToken) {
@@ -129,7 +106,6 @@ switch (COMMAND) {
       canary: canary || null,
       allowAnyBranch,
       allowNonLatestCommit,
-      versioning,
       logger: {
         onValidatedPackages({packages}) {
           const hasUpdates = packages.some(

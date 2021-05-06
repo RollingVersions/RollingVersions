@@ -95,10 +95,10 @@ export default function Repository() {
               return (
                 <Alert key={pkg.manifest.packageName}>
                   {pkg.manifest.packageName} has an ambiguous version on the
-                  selected branch. The published version could be different
-                  depending on whether the CLI is called using{' '}
-                  <code>--versioning {VersioningMode.AlwaysIncreasing}</code> or{' '}
-                  <code>--versioning {VersioningMode.ByBranch}</code>.
+                  selected branch. You need to set the versioning in the package
+                  manifest to either:{' '}
+                  <code>{VersioningMode.AlwaysIncreasing}</code> or{' '}
+                  <code>{VersioningMode.ByBranch}</code>.
                 </Alert>
               );
             })}

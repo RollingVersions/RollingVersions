@@ -2,6 +2,7 @@ import * as t from 'funtypes';
 
 import {PackageDependenciesCodec} from './PackageDependencies';
 import {PublishTargetConfigCodec} from './PublishTarget';
+import {VersioningModeCodec} from './VersioningMode';
 
 export const PackageManifestCodec = t.Named(
   `PackageManifest`,
@@ -19,6 +20,7 @@ export const PackageManifestCodec = t.Named(
          * The tag format lets you override the tag that is generated in GitHub's releases
          */
         tagFormat: t.String,
+        versioning: VersioningModeCodec,
       }),
     ),
   ),

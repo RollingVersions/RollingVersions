@@ -7,6 +7,7 @@ import {
   CustomScriptTargetConfig,
   PackageManifest,
   PublishTarget,
+  VersioningMode,
 } from '@rollingversions/types';
 import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
@@ -99,9 +100,24 @@ export default createPublishTargetAPI<CustomScriptTargetConfig>({
       ) {
         throw new Error('Expected "tag_format" to be undefined or a string');
       }
+      if (
+        result.versioning !== undefined &&
+        result.versioning !== VersioningMode.AlwaysIncreasing &&
+        result.versioning !== VersioningMode.ByBranch &&
+        result.versioning !== VersioningMode.Unambiguous
+      ) {
+        throw new Error(
+          `Expected "versioning" to be undefined or one of: ${Object.values(
+            VersioningMode,
+          )
+            .map((v) => JSON.stringify(v))
+            .join(`, `)}`,
+        );
+      }
       return {
         packageName: result.name,
         tagFormat: result.tag_format,
+        versioning: result.versioning,
         targetConfigs: [
           {
             type: PublishTarget.custom_script,

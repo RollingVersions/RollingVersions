@@ -25,7 +25,7 @@ apiMiddleware.get(
       }
       const authToken = req.headers[`authorization`].substr(`Bearer `.length);
 
-      const {owner, repo, commit, branch, versioning} = parseRepoParams(req);
+      const {owner, repo, commit, branch} = parseRepoParams(req);
 
       const tokenClient = getClientForToken(authToken);
       const r = await tokenClient.rest.repos
@@ -53,7 +53,7 @@ apiMiddleware.get(
       const response = await getRepository(
         client,
         {owner, name: repo},
-        {commit, branch, versioning},
+        {commit, branch},
         expressLogger(req, res),
       );
       if (!response) {

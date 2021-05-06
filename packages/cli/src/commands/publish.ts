@@ -68,7 +68,6 @@ export default async function publish(config: PublishConfig): Promise<Result> {
   const currentBranchName = await getCurrentBranchName(config.dirname);
   url.searchParams.set(`commit`, headSha);
   url.searchParams.set(`deployBranch`, currentBranchName);
-  url.searchParams.set(`versioning`, config.versioning);
 
   const res = await fetch(url.href, {
     headers: {Authorization: `Bearer ${config.accessToken}`},
@@ -110,13 +109,13 @@ export default async function publish(config: PublishConfig): Promise<Result> {
           }`,
         );
         console.error(
-          `If you would like to base your next version number off the largest overall version, you can pass:`,
+          `If you would like to base your next version number off the largest overall version, you can add the following to your package manifest:`,
         );
-        console.error(`--versioning ${VersioningMode.AlwaysIncreasing}`);
+        console.error(`versioning="${VersioningMode.AlwaysIncreasing}"`);
         console.error(
-          `If you would like to be able to publish patch versions on branches, you can pass:`,
+          `If you would like to be able to publish patch versions on branches, you can add the following to your package manifest:`,
         );
-        console.error(`--versioning ${VersioningMode.ByBranch}`);
+        console.error(`versioning="${VersioningMode.ByBranch}"`);
         return process.exit(1);
       }
       const currentVersion: VersionTag | null = pkg.currentVersion?.ok

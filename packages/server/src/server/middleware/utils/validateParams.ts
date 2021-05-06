@@ -1,6 +1,6 @@
 import type {Response, Request} from 'express';
 
-import {PullRequest, VersioningMode} from '@rollingversions/types';
+import {PullRequest} from '@rollingversions/types';
 
 const validRequests = new WeakSet<Request>();
 export default function validateParams() {
@@ -39,17 +39,6 @@ export function validateRepoParams() {
     } else if (!repo) {
       res.status(400).send('Expected a repo parameter');
     } else if (
-      req.query.versioning !== undefined &&
-      req.query.versioning !== VersioningMode.Unambiguous &&
-      req.query.versioning !== VersioningMode.AlwaysIncreasing &&
-      req.query.versioning !== VersioningMode.ByBranch
-    ) {
-      res.status(400).send(
-        `Expected versioning to be one of: ${Object.values(VersioningMode)
-          .map((v) => JSON.stringify(v))
-          .join(`, `)}`,
-      );
-    } else if (
       req.query.commit !== undefined &&
       typeof req.query.commit !== 'string'
     ) {
@@ -72,7 +61,6 @@ export function parseRepoParams(
   repo: string;
   commit?: string;
   branch?: string;
-  versioning: VersioningMode;
 } {
   if (!validRepoRequests.has(req)) {
     throw new Error(
@@ -85,6 +73,5 @@ export function parseRepoParams(
     repo,
     commit: req.query.commit ?? undefined,
     branch: req.query.branch ?? undefined,
-    versioning: req.query.versioning ?? VersioningMode.Unambiguous,
   };
 }

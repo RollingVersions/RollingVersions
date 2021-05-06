@@ -63,11 +63,7 @@ export default async function getRepository(
     owner: string;
     name: string;
   },
-  {
-    commit,
-    versioning,
-    branch,
-  }: {commit?: string; versioning: VersioningMode; branch?: string},
+  {commit, branch}: {commit?: string; branch?: string},
   logger: Logger,
 ): Promise<GetRepositoryApiResponse | null> {
   const repo = await getRepositoryFromRestParams(db, client, repository);
@@ -153,7 +149,7 @@ export default async function getRepository(
           const currentVersion = getCurrentVersion({
             maxVersion: getMaxVersion(allVersions),
             branchVersion: getMaxVersion(branchVersions),
-            mode: versioning,
+            mode: manifest.versioning ?? VersioningMode.Unambiguous,
           });
           const changeSet: ChangeSet<{pr: number}> = (
             await getUnreleasedChanges(db, repo, {
