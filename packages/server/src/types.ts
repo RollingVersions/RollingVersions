@@ -1,8 +1,9 @@
 import * as t from 'funtypes';
 
-import {ChangeSetEntryBase, Markdown} from '@rollingversions/change-set';
 import {
+  ChangeSetEntry,
   ChangeTypeID,
+  MarkdownString,
   PackageManifestCodec,
   VersionTagCodec,
 } from '@rollingversions/types';
@@ -10,8 +11,8 @@ import {
 import {PermissionCodec} from './server/permissions/Permission';
 
 export const ChangeTypeIDCodec: t.Codec<ChangeTypeID> = t.String;
-export const MarkdownCodec: t.Codec<Markdown> = t.String;
-export const ChangeSetEntryCodec: t.Codec<ChangeSetEntryBase> = t.Named(
+export const MarkdownCodec: t.Codec<MarkdownString> = t.String;
+export const ChangeSetEntryCodec: t.Codec<ChangeSetEntry> = t.Named(
   `ChangeSetEntry`,
   t.Readonly(
     t.Object({

@@ -1,7 +1,6 @@
 import React, {useEffect} from 'react';
 
-import type ChangeSet from '@rollingversions/change-set';
-import type {ChangeTypeID} from '@rollingversions/config';
+import type {ChangeSet, ChangeTypeID} from '@rollingversions/types';
 
 import getLocalId from '../../utils/getLocalId';
 import ChangeInput, {ChangeInputList} from '../ChangeInput';

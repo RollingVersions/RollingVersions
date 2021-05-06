@@ -1,17 +1,14 @@
 import {DEFAULT_CHANGE_TYPES} from '@rollingversions/config';
-import type {ChangeTypeID, ChangeType} from '@rollingversions/types';
+import type {
+  ChangeTypeID,
+  ChangeType,
+  ChangeSetEntry,
+  ChangeSet,
+  MarkdownString,
+} from '@rollingversions/types';
 
-export type Markdown = string & {__brand?: 'Markdown'};
+export type {ChangeSetEntry};
 
-export interface ChangeSetEntryBase {
-  readonly type: ChangeTypeID;
-  readonly title: Markdown;
-  readonly body: Markdown;
-}
-
-export type ChangeSetEntry<TContext = {}> = ChangeSetEntryBase & TContext;
-
-type ChangeSet<TContext = {}> = readonly ChangeSetEntry<TContext>[];
 export default ChangeSet;
 
 export function createChangeSet<TContext = {}>(
@@ -53,7 +50,9 @@ export function changesToMarkdown<TContext = {}>(
   }: {
     changeTypes?: readonly ChangeType[];
     headingLevel: number;
-    renderContext?: (changeLogEntry: ChangeSetEntry<TContext>) => Markdown;
+    renderContext?: (
+      changeLogEntry: ChangeSetEntry<TContext>,
+    ) => MarkdownString;
   },
 ) {
   const headingPrefix = '#'.repeat(headingLevel);
