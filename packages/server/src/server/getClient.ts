@@ -89,6 +89,30 @@ export default function getClient(installationId?: number) {
   );
 }
 
+export const getTokenForRepo = withCache(
+  async function getTokenForRepo({owner, name}: Repository) {
+    const installation = await getClient().rest.apps.getRepoInstallation({
+      owner,
+      repo: name,
+    });
+    if (installation.status !== 200) {
+      throw new Error(
+        `Rolling Versions does not seem to be installed for ${owner}`,
+      );
+    }
+    const installationId = installation.data.id;
+    const appAuth = auth.createAppAuth({
+      id: APP_ID,
+      privateKey: PRIVATE_KEY,
+      installationId,
+    });
+    return {
+      result: (await appAuth({type: `installation`, installationId})).token,
+      expiry: Date.now() + 60 * 60_000,
+    };
+  },
+  ({owner, name}) => `${owner}/${name}`,
+);
 export const getClientForRepo = withCache(
   async function getClientForRepo({owner, name}: Repository) {
     const installation = await getClient().rest.apps.getRepoInstallation({
