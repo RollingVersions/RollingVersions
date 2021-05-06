@@ -18,7 +18,6 @@ import dedupeByKey from '../../utils/dedupeByKey';
 import groupByKey from '../../utils/groupByKey';
 import {getTokenForRepo} from '../getClient';
 import type {Logger} from '../logger';
-import {getGitHubAccessToken} from '../middleware/auth';
 import type {GitHubClient} from '../services/github';
 
 function notNull<T>(value: T | null | undefined): T {
