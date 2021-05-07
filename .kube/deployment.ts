@@ -19,7 +19,7 @@ export default createDeployment({
   namespace: 'rollingversions',
   name: 'rollingversions-' + process.env.ENVIRONMENT,
   containerPort: 3000,
-  replicaCount: 2,
+  replicaCount: 1,
   image: `${process.env.DOCKERHUB_USERNAME}/rollingversions:${process.env.CIRCLE_SHA1}`,
   container: {
     env: [{name: 'ENV_VAR', value: 'Hello Env Var'}],
