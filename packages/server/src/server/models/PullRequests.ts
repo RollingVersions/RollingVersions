@@ -1,4 +1,5 @@
 import * as ft from 'funtypes';
+import throat from 'throat';
 
 import type {Queryable} from '@rollingversions/db';
 import {tables} from '@rollingversions/db';
@@ -194,27 +195,32 @@ export async function refreshPullRequestMergeCommits(
 ) {
   const timer = logger.withTimer();
   const results = {successfullyAdded: 0, missing: 0};
-  for (const pr of await tables
+  const pullRequests = await tables
     .pull_requests(db)
     .find({
       git_repository_id: repo.id,
       is_merged: true,
       merge_commit_sha: null,
     })
-    .all()) {
-    const updated = await upsertPullRequestFromGraphQL(
-      db,
-      client,
-      repo,
-      pr.graphql_id,
-      logger,
-    );
-    if (updated.merge_commit_sha) {
-      results.successfullyAdded++;
-    } else {
-      results.missing++;
-    }
-  }
+    .all();
+  await Promise.all(
+    pullRequests.map(
+      throat(30, async (pr) => {
+        const updated = await upsertPullRequestFromGraphQL(
+          db,
+          client,
+          repo,
+          pr.graphql_id,
+          logger,
+        );
+        if (updated.merge_commit_sha) {
+          results.successfullyAdded++;
+        } else {
+          results.missing++;
+        }
+      }),
+    ),
+  );
   timer.info(
     'refresh_pr_merge_commits',
     `Added all missing merge commit references for ${repo.owner}/${repo.name}`,
