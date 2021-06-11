@@ -4,6 +4,7 @@ import {expressLogger} from '../../logger';
 import getPermissionLevel, {
   Permission,
   getRepoPermissionLevel,
+  getViewer,
 } from '../../permissions/getPermissionLevel';
 import {getGitHubAccessToken} from '../auth';
 import {parseParams, parseRepoParams} from './validateParams';
@@ -123,6 +124,38 @@ export function checkRepoPermissions(allowedPermissions: Permission[]) {
           .send(
             'Either this repository does not exist, you do not have access to it, or Rolling Versions is not installed on this repository.',
           );
+      } else {
+        next();
+      }
+    } catch (ex) {
+      next(ex || new Error('Permissions check failed'));
+    }
+  };
+}
+
+export function checkAdminPermissions() {
+  return async (req: Request, res: Response, next: (err?: any) => void) => {
+    try {
+      const userAuth = getGitHubAccessToken(req, res);
+      const logger = expressLogger(req, res);
+      const timer = logger.withTimer();
+      const {login} = await getViewer(userAuth);
+      timer.info('loaded_admin_permission_level', 'Loaded permission level', {
+        login,
+      });
+      repoPermissionInfoMap.set(req, {
+        login,
+        permission: login === 'ForbesLindesay' ? 'edit' : 'none',
+      });
+      if (login !== 'ForbesLindesay') {
+        logger.warning(
+          'permission_denied',
+          `${login} does not have access to access admin screens`,
+          {login},
+        );
+        res
+          .status(403)
+          .send('You do not have admin permissions on RollingVersions.');
       } else {
         next();
       }

@@ -60,7 +60,7 @@ const checkViewerPermissions = withCache(
     `${userAuth}/${repo.owner}/${repo.name}`,
 );
 
-const getViewer = withCache(
+export const getViewer = withCache(
   async (userAuth: string) => ({
     result: await gh.getViewer(getClientForToken(userAuth)),
     expiry: Date.now() + 60 * 60_000,

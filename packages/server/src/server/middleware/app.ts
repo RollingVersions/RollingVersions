@@ -16,6 +16,7 @@ import checkPermissions, {
   getPermission,
   getUser,
   checkRepoPermissions,
+  checkAdminPermissions,
 } from './utils/checkPermissions';
 import validateBody, {getBody} from './utils/validateBody';
 import validateParams, {
@@ -147,15 +148,11 @@ appMiddleware.post(
 appMiddleware.get(
   `/refresh-merge-commits`,
   requiresAuth(),
+  checkAdminPermissions(),
   async (req, res, next) => {
     let started = false;
     try {
       const start = Date.now();
-      const user = getUser(req);
-      if (user.login.toLowerCase() !== 'forbeslindesay') {
-        res.status(401).send('You do not have permission to call this API');
-        return;
-      }
       const repositories = await tables
         .git_repositories(db)
         .find(
@@ -164,7 +161,7 @@ appMiddleware.get(
             : {},
         )
         .orderByAsc(`id`)
-        .all();
+        .limit(50);
       started = true;
       res.write(`<ul>`);
       let greatest = null;
