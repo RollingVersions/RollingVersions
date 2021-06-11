@@ -163,6 +163,7 @@ appMiddleware.get(
         .orderByAsc(`id`)
         .limit(50);
       started = true;
+      res.setHeader(`Content-Type`, `text/html`);
       res.write(`<ul>`);
       let greatest = null;
       for (const repo of repositories) {
