@@ -1,10 +1,10 @@
 import * as ft from 'funtypes';
-import throat from 'throat';
 
 import type {Queryable} from '@rollingversions/db';
 import {tables} from '@rollingversions/db';
 import type DbGitRepository from '@rollingversions/db/git_repositories';
 
+import batchArray from '../../utils/batchArray';
 import {Logger} from '../logger';
 import {
   getPullRequestFromGraphID,
@@ -203,9 +203,9 @@ export async function refreshPullRequestMergeCommits(
       merge_commit_sha: null,
     })
     .all();
-  await Promise.all(
-    pullRequests.map(
-      throat(30, async (pr) => {
+  for (const batch of batchArray(pullRequests, {maxBatchSize: 30})) {
+    await Promise.all(
+      batch.map(async (pr) => {
         const updated = await upsertPullRequestFromGraphQL(
           db,
           client,
@@ -219,8 +219,8 @@ export async function refreshPullRequestMergeCommits(
           results.missing++;
         }
       }),
-    ),
-  );
+    );
+  }
   timer.info(
     'refresh_pr_merge_commits',
     `Added all missing merge commit references for ${repo.owner}/${repo.name}`,
