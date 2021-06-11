@@ -21,11 +21,18 @@ EXPLAIN WITH RECURSIVE
     INNER JOIN commits ON (c.git_repository_id = 259999622 AND c.commit_sha NOT IN (SELECT commit_sha FROM excluded_commits) AND c.commit_sha = ANY(commits.parents))
   )
 
-  
-  SELECT change.*, pr.pr_number
+  SELECT DISTINCT ON (change.id) change.*, pr.pr_number
   FROM change_log_entries AS change
   INNER JOIN pull_requests AS pr ON (
     pr.git_repository_id = 259999622 AND pr.id = change.pull_request_id
   )
-  INNER JOIN commits AS c ON (pr.merge_commit_sha = c.commit_sha)
+  LEFT OUTER JOIN git_refs AS ref ON (
+    ref.git_repository_id =259999622 AND ref.pr_number = pr.pr_number
+  )
+  INNER JOIN commits AS c ON (
+    pr.merge_commit_sha = c.commit_sha OR
+    ref.commit_sha = c.commit_sha
+  )
   WHERE change.package_name = '@rollingversions/test-single-npm-package-github-actions'
+
+  ORDER BY change.id ASC
