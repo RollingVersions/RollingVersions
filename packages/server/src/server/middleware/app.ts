@@ -168,12 +168,20 @@ appMiddleware.get(
       let greatest = null;
       for (const repo of repositories) {
         if (Date.now() - start > 10_000) break;
+        let client;
+        try {
+          client = await getClientForRepo(repo);
+        } catch (ex) {
+          // if we can't get a client, just move on to the next repo
+          greatest = repo.id;
+          continue;
+        }
         const {
           successfullyAdded,
           missing,
         } = await refreshPullRequestMergeCommits(
           db,
-          await getClientForRepo(repo),
+          client,
           repo,
           expressLogger(req, res),
         );
