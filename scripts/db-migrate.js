@@ -46,7 +46,8 @@ console.log('Starting');
       } else if (migrationName.endsWith(`.js`)) {
         console.log(`applying ${migrationName}`);
         await db.tx(async (tx) => {
-          await require(`${__dirname}/../db-migrations/${migrationName}`)(tx);
+          const fn = require(`${__dirname}/../db-migrations/${migrationName}`);
+          await fn(tx);
           await tx.query(
             sql`INSERT INTO db_migrations_applied (migration_name) VALUES (${migrationName})`,
           );

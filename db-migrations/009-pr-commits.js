@@ -6,7 +6,7 @@ module.exports = async function applyMigration(db) {
   );
   const updates = refs
     .map((ref) => {
-      const match = /^(\d+)\/(head|merge)$/.exec(ref.refName);
+      const match = /^(\d+)\/(head|merge)$/.exec(ref.name);
       return (
         match && {
           ...ref,
