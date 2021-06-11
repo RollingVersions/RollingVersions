@@ -61,14 +61,24 @@ export async function upsertPullRequestFromGraphQL(
   client: GitHubClient,
   repo: DbGitRepository,
   graphQlId: string,
-  _logger: Logger,
+  logger: Logger,
 ) {
   const pr = await getPullRequestFromGraphID(client, graphQlId);
   if (!pr) {
     throw new Error(`Could not find the PR for GraphQL ID ${graphQlId}`);
   }
   if (pr.is_merged && !pr.merge_commit_sha) {
-    throw new Error(`Merged PR should have a merge_commit_sha`);
+    logger.error(
+      `merged_without_merge_commit`,
+      `Merged PR should have a merge_commit_sha`,
+      {
+        repo_id: repo.id,
+        repo_owner: repo.owner,
+        repo_name: repo.name,
+        pull_number: pr.number,
+        pull_id: pr.id,
+      },
+    );
   }
   const [dbPR] = await tables.pull_requests(db).insertOrUpdate([`id`], {
     git_repository_id: repo.id,
