@@ -40,8 +40,8 @@ const db = connect({
   onError(err) {
     logger?.error(`db_error`, err.stack ?? err.message);
   },
-  onQueryStart(_query, {text}) {
-    logger?.info(`query_start`, text);
+  onQueryStart(_query, {text, values}) {
+    logger?.info(`query_start`, text, {values});
   },
   onQueryResults(_query, {text}, results) {
     logger?.info(`query_end`, text, {count: results.length});
