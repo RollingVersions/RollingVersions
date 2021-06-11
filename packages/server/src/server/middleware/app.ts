@@ -1,10 +1,12 @@
+import escape from 'escape-html';
 import {Router} from 'express';
 
-import db from '@rollingversions/db';
+import db, {q, tables} from '@rollingversions/db';
 
 import {PullRequestResponseCodec} from '../../types';
 import {getClientForRepo, getClientForToken} from '../getClient';
 import {expressLogger} from '../logger';
+import {refreshPullRequestMergeCommits} from '../models/PullRequests';
 import {getRepositoryFromRestParams} from '../models/Repositories';
 import getPullRequest from './api/getPullRequest';
 import getRepository from './api/getRepository';
@@ -138,6 +140,59 @@ appMiddleware.post(
       }
     } catch (ex) {
       next(ex);
+    }
+  },
+);
+
+appMiddleware.get(
+  `/refresh-merge-commits`,
+  requiresAuth(),
+  async (req, res, next) => {
+    let started = false;
+    try {
+      const start = Date.now();
+      const user = getUser(req);
+      if (user.login.toLowerCase() !== 'forbeslindesay') {
+        res.status(401).send('You do not have permission to call this API');
+        return;
+      }
+      const repositories = await tables
+        .git_repositories(db)
+        .find(
+          req.query.after
+            ? {id: q.greaterThan(parseInt(req.query.after, 10))}
+            : {},
+        )
+        .orderByAsc(`id`)
+        .all();
+      started = true;
+      res.write(`<ul>`);
+      let greatest = null;
+      for (const repo of repositories) {
+        if (Date.now() - start > 10_000) break;
+        await refreshPullRequestMergeCommits(
+          db,
+          await getClientForRepo(repo),
+          repo,
+          expressLogger(req, res),
+        );
+        greatest = repo.id;
+
+        res.write(`<li>${escape(repo.owner)}/${escape(repo.name)}</li>`);
+      }
+      res.write(`</ul>`);
+      if (greatest) {
+        res.write(
+          `<a href="/refresh-merge-commits?after=${greatest}">Next</a>`,
+        );
+      }
+      res.end();
+    } catch (ex) {
+      if (!started) {
+        next(ex);
+      } else {
+        res.end(`<pre>${escape(`${ex.stack || ex.message || ex}`)}</pre>`);
+      }
     }
   },
 );

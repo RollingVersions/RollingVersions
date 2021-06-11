@@ -1,5 +1,5 @@
 import connect, {sql, Queryable, SQLQuery} from '@databases/pg';
-import createTyped, {anyOf} from '@databases/pg-typed';
+import createTyped, {anyOf, greaterThan} from '@databases/pg-typed';
 
 import type DatabaseSchema from './__generated__';
 import {serializeValue} from './__generated__';
@@ -27,7 +27,7 @@ let logger: Logger | undefined;
 export function setDatabaseLogger(l: Logger) {
   logger = l;
 }
-export const q = {anyOf};
+export const q = {anyOf, greaterThan};
 export {sql};
 const db = connect({
   bigIntMode: 'number',

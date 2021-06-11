@@ -40,6 +40,7 @@
     "apex-logs-winston": "^1.1.0",
     "body-parser": "^1.19.0",
     "cuid": "^2.1.8",
+    "escape-html": "^1.0.3",
     "eventsource": "^1.0.7",
     "express": "^4.17.1",
     "funtypes": "^4.1.0",
