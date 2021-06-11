@@ -168,7 +168,10 @@ appMiddleware.get(
       let greatest = null;
       for (const repo of repositories) {
         if (Date.now() - start > 10_000) break;
-        await refreshPullRequestMergeCommits(
+        const {
+          successfullyAdded,
+          missing,
+        } = await refreshPullRequestMergeCommits(
           db,
           await getClientForRepo(repo),
           repo,
@@ -176,7 +179,13 @@ appMiddleware.get(
         );
         greatest = repo.id;
 
-        res.write(`<li>${escape(repo.owner)}/${escape(repo.name)}</li>`);
+        res.write(
+          `<li>${escape(repo.owner)}/${escape(
+            repo.name,
+          )} - <strong>successfully added:</strong> ${escape(
+            `${successfullyAdded}`,
+          )}, <strong>missing:</strong> ${escape(`${missing}`)}</li>`,
+        );
       }
       res.write(`</ul>`);
       if (greatest) {

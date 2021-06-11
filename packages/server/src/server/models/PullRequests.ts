@@ -193,6 +193,7 @@ export async function refreshPullRequestMergeCommits(
   logger: Logger,
 ) {
   const timer = logger.withTimer();
+  const results = {successfullyAdded: 0, missing: 0};
   for (const pr of await tables
     .pull_requests(db)
     .find({
@@ -201,10 +202,23 @@ export async function refreshPullRequestMergeCommits(
       merge_commit_sha: null,
     })
     .all()) {
-    await upsertPullRequestFromGraphQL(db, client, repo, pr.graphql_id, logger);
+    const updated = await upsertPullRequestFromGraphQL(
+      db,
+      client,
+      repo,
+      pr.graphql_id,
+      logger,
+    );
+    if (updated.merge_commit_sha) {
+      results.successfullyAdded++;
+    } else {
+      results.missing++;
+    }
   }
   timer.info(
     'refresh_pr_merge_commits',
     `Added all missing merge commit references for ${repo.owner}/${repo.name}`,
+    results,
   );
+  return results;
 }
