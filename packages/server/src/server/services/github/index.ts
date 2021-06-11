@@ -278,11 +278,11 @@ export async function getPullRequestFromGraphID(
   if (!result.databaseId) {
     throw new Error(`Got null for pull request databaseId`);
   }
-  if (result.merged && !result.mergeCommit) {
-    throw new Error(
-      `Unexpected pull request that is merged but has no merge commit`,
-    );
-  }
+  // if (result.merged && !result.mergeCommit) {
+  //   throw new Error(
+  //     `Unexpected pull request that is merged but has no merge commit`,
+  //   );
+  // }
   return {
     id: result.databaseId,
     graphql_id,
@@ -310,11 +310,11 @@ export async function getPullRequestFromNumber(
   if (!result.databaseId) {
     throw new Error(`Got null for pull request databaseId`);
   }
-  if (result.merged && !result.mergeCommit) {
-    throw new Error(
-      `Unexpected pull request that is merged but has no merge commit`,
-    );
-  }
+  // if (result.merged && !result.mergeCommit) {
+  //   throw new Error(
+  //     `Unexpected pull request that is merged but has no merge commit`,
+  //   );
+  // }
   return {
     id: result.databaseId,
     graphql_id: result.id,

@@ -32,17 +32,49 @@ const PayloadPullRequestSchema: ft.Runtype<PayloadPullRequest> = ft.Object({
   merge_commit_sha: ft.Union(ft.Null, ft.String),
 });
 
+function checkForMergeCommit(
+  repo: DbGitRepository,
+  pr: {
+    id: number;
+    number: number;
+    is_merged: boolean;
+    merge_commit_sha: string | null;
+  },
+  logger: Logger,
+) {
+  if (pr.is_merged && !pr.merge_commit_sha) {
+    logger.error(
+      `merged_without_merge_commit`,
+      `Merged PR should have a merge_commit_sha`,
+      {
+        repo_id: repo.id,
+        repo_owner: repo.owner,
+        repo_name: repo.name,
+        pull_number: pr.number,
+        pull_id: pr.id,
+      },
+    );
+  }
+}
+
 export async function upsertPullRequestFromPayload(
   db: Queryable,
   _client: GitHubClient,
   repo: DbGitRepository,
   pr: PayloadPullRequest,
-  _logger: Logger,
+  logger: Logger,
 ) {
   PayloadPullRequestSchema.parse(pr);
-  if (pr.merged_at && !pr.merge_commit_sha) {
-    throw new Error(`Merged PR should have a merge_commit_sha`);
-  }
+  checkForMergeCommit(
+    repo,
+    {
+      id: pr.id,
+      number: pr.number,
+      is_merged: !!pr.merged_at,
+      merge_commit_sha: pr.merge_commit_sha,
+    },
+    logger,
+  );
   const [dbPR] = await tables.pull_requests(db).insertOrUpdate([`id`], {
     git_repository_id: repo.id,
     id: pr.id,
@@ -67,19 +99,7 @@ export async function upsertPullRequestFromGraphQL(
   if (!pr) {
     throw new Error(`Could not find the PR for GraphQL ID ${graphQlId}`);
   }
-  if (pr.is_merged && !pr.merge_commit_sha) {
-    logger.error(
-      `merged_without_merge_commit`,
-      `Merged PR should have a merge_commit_sha`,
-      {
-        repo_id: repo.id,
-        repo_owner: repo.owner,
-        repo_name: repo.name,
-        pull_number: pr.number,
-        pull_id: pr.id,
-      },
-    );
-  }
+  checkForMergeCommit(repo, pr, logger);
   const [dbPR] = await tables.pull_requests(db).insertOrUpdate([`id`], {
     git_repository_id: repo.id,
     id: pr.id,
@@ -173,6 +193,7 @@ export async function refreshPullRequestMergeCommits(
   logger: Logger,
 ) {
   const timer = logger.withTimer();
+  const results = {successfullyAdded: 0, missing: 0};
   for (const pr of await tables
     .pull_requests(db)
     .find({
@@ -181,10 +202,23 @@ export async function refreshPullRequestMergeCommits(
       merge_commit_sha: null,
     })
     .all()) {
-    await upsertPullRequestFromGraphQL(db, client, repo, pr.graphql_id, logger);
+    const updated = await upsertPullRequestFromGraphQL(
+      db,
+      client,
+      repo,
+      pr.graphql_id,
+      logger,
+    );
+    if (updated.merge_commit_sha) {
+      results.successfullyAdded++;
+    } else {
+      results.missing++;
+    }
   }
   timer.info(
     'refresh_pr_merge_commits',
     `Added all missing merge commit references for ${repo.owner}/${repo.name}`,
+    results,
   );
+  return results;
 }
