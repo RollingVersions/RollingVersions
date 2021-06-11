@@ -140,11 +140,16 @@ export async function updateRepoIfChanged(
             if (!match) {
               throw new Error(`Invalid ref format "${ref.refName}"`);
             }
+            const prRefMatch = /^refs\/pull\/(\d+)\/(head|merge)$/.exec(
+              ref.refName,
+            );
             return {
               git_repository_id: repo.id,
               kind: match[1],
               name: match[2],
               commit_sha: ref.objectID,
+              pr_number: prRefMatch ? parseInt(prRefMatch[1], 10) : null,
+              pr_ref_kind: prRefMatch ? prRefMatch[2] : null,
             };
           },
         );
@@ -448,13 +453,20 @@ export async function getUnreleasedChanges(
       includedCommits: new Set([headCommitSha]),
       excludedCommits: releasedCommits,
     })}
-    SELECT change.*, pr.pr_number
+    SELECT DISTINCT ON (change.id) change.*, pr.pr_number
     FROM change_log_entries AS change
     INNER JOIN pull_requests AS pr ON (
       pr.git_repository_id = ${repo.id} AND pr.id = change.pull_request_id
     )
-    INNER JOIN commits AS c ON (pr.merge_commit_sha = c.commit_sha)
+    LEFT OUTER JOIN git_refs AS ref ON (
+      ref.git_repository_id = ${repo.id} AND ref.pr_number = pr.pr_number
+    )
+    INNER JOIN commits AS c ON (
+      pr.merge_commit_sha = c.commit_sha OR
+      ref.commit_sha = c.commit_sha
+    )
     WHERE change.package_name = ${packageName}
+    ORDER BY change.id ASC
   `);
 }
 

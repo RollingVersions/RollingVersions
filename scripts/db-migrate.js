@@ -1,4 +1,5 @@
 const {readdirSync} = require('fs');
+
 const {default: connect, sql} = require('@databases/pg');
 const interrogator = require('interrogator');
 
@@ -29,15 +30,23 @@ console.log('Starting');
     for (const migrationName of readdirSync(
       `${__dirname}/../db-migrations`,
     ).sort()) {
-      if (!/\.sql$/.test(migrationName)) continue;
+      if (migrationName.startsWith(`_`)) continue;
       if (alreadyRun.has(migrationName)) {
         console.log(`already applied ${migrationName}`);
-      } else {
+      } else if (migrationName.endsWith(`.sql`)) {
         console.log(`applying ${migrationName}`);
         await db.tx(async (tx) => {
           await tx.query(
             sql.file(`${__dirname}/../db-migrations/${migrationName}`),
           );
+          await tx.query(
+            sql`INSERT INTO db_migrations_applied (migration_name) VALUES (${migrationName})`,
+          );
+        });
+      } else if (migrationName.endsWith(`.js`)) {
+        console.log(`applying ${migrationName}`);
+        await db.tx(async (tx) => {
+          await require(`${__dirname}/../db-migrations/${migrationName}`)(tx);
           await tx.query(
             sql`INSERT INTO db_migrations_applied (migration_name) VALUES (${migrationName})`,
           );
