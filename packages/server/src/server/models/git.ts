@@ -1,3 +1,4 @@
+import {Writable} from 'stream';
 import {URL} from 'url';
 
 import type {SQLQuery} from '@rollingversions/db';
@@ -14,6 +15,7 @@ import type DbPullRequest from '@rollingversions/db/pull_requests';
 import * as git from '@rollingversions/git-http';
 import * as gitObj from '@rollingversions/git-objects';
 
+import BatchStream from '../../utils/BatchStream';
 import dedupeByKey from '../../utils/dedupeByKey';
 import groupByKey from '../../utils/groupByKey';
 import {getTokenForRepo} from '../getClient';
@@ -33,7 +35,7 @@ const CONFLICTING_UPDATES_ERROR = new Error(
 const dedupe = dedupeByKey<DbGitRepository['id'], void>();
 async function getHttpHandler(
   repo: DbGitRepository,
-): Promise<git.HttpInterface<Headers>> {
+): Promise<git.HttpInterface<Map<string, string>>> {
   const accessToken = await getTokenForRepo(repo);
   const headerValue = `Basic ${Buffer.from(
     `x-access-token:${accessToken}`,
@@ -98,20 +100,18 @@ export async function updateRepoIfChanged(
 
       logger.info(`git_lsrefs`, `Git ls refs request ${repoURL.href}`);
       const [remoteRefs, localRefs] = await Promise.all([
-        git.asyncIteratorToArray(
-          git.lsRefs(
-            repoURL,
-            {
-              // TODO: what do we need here?
-              // symrefs: true,
-              refPrefix: ['refs/heads/', 'refs/tags/', 'refs/pull/'],
-            },
-            {
-              http,
-              agent: 'rollingversions.com',
-              serverCapabilities,
-            },
-          ),
+        git.lsRefs(
+          repoURL,
+          {
+            // TODO: what do we need here?
+            // symrefs: true,
+            refPrefix: ['refs/heads/', 'refs/tags/', 'refs/pull/'],
+          },
+          {
+            http,
+            agent: 'rollingversions.com',
+            serverCapabilities,
+          },
         ),
         tables
           .git_refs(db)
@@ -161,10 +161,9 @@ export async function updateRepoIfChanged(
           .filter((objectID) => !localRefShas.has(objectID)),
       );
 
-      let newCommits: GitCommits_InsertParameters[] = [];
       if (missingShas.size) {
         logger.info(`git_fetch_objects`, `Git fetch request ${repoURL.href}`);
-        for await (const entry of git.fetchObjects(
+        const commits = await git.fetchObjects(
           repoURL,
           {
             want: [...missingShas],
@@ -176,26 +175,45 @@ export async function updateRepoIfChanged(
             agent: 'rollingversions.com',
             serverCapabilities,
           },
-        )) {
-          if (entry.kind === git.FetchResponseEntryKind.Object) {
-            if (gitObj.objectIsCommit(entry.body)) {
-              const commit = gitObj.decodeObject(entry.body);
-              newCommits.push({
-                git_repository_id: repo.id,
-                commit_sha: entry.hash,
-                message: commit.body.message,
-                parents: commit.body.parents,
-              });
-            }
-          }
-          if (newCommits.length >= 500) {
-            await tables.git_commits(db).insertOrIgnore(...newCommits);
-            newCommits = [];
-          }
-        }
-      }
-      if (newCommits.length) {
-        await tables.git_commits(db).insertOrIgnore(...newCommits);
+        );
+
+        await new Promise<void>((resolve, reject) => {
+          commits
+            .on(`error`, reject)
+            .pipe(new BatchStream({maxBatchSize: 500}))
+            .on(`error`, reject)
+            .pipe(
+              new Writable({
+                objectMode: true,
+                write(batch: git.FetchResponseEntryObject[], _encoding, cb) {
+                  const commits = batch
+                    .map((entry): GitCommits_InsertParameters | null => {
+                      if (gitObj.objectIsCommit(entry.body)) {
+                        const commit = gitObj.decodeObject(entry.body);
+                        return {
+                          git_repository_id: repo.id,
+                          commit_sha: entry.hash,
+                          message: commit.body.message,
+                          parents: commit.body.parents,
+                        };
+                      } else {
+                        return null;
+                      }
+                    })
+                    .filter(<T>(v: T): v is Exclude<T, null> => v !== null);
+                  tables
+                    .git_commits(db)
+                    .insertOrIgnore(...commits)
+                    .then(
+                      () => cb(),
+                      (err) => cb(err),
+                    );
+                },
+              }),
+            )
+            .on(`error`, reject)
+            .on(`finish`, () => resolve());
+        });
       }
 
       logger.info(`git_update_refs`, `Git update refs ${repoURL.href}`);

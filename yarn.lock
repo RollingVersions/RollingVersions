@@ -1467,27 +1467,6 @@
     ts-node "^8"
     tslib "^1"
 
-"@es-git/core@^0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@es-git/core/-/core-0.10.0.tgz#6c70a8ad95b7b8715e587c42a1da9b44b4b34f41"
-  integrity sha512-evBpDnjrJXci6TmQvpnx/sTUHCQEVikOreWxmBe+HdFZA5mHHbam5uh5egOiLyCEmJtE4MDiV91UuC0rTC1OEA==
-  dependencies:
-    "@es-git/mix" "^0.10.0"
-    text-encoding-utf-8 "^1.0.2"
-
-"@es-git/mix@^0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@es-git/mix/-/mix-0.10.0.tgz#d260c0fcb1ad63abca28f9d82f8a49cce2898283"
-  integrity sha512-306y/wg20d2V7i0k4HASvmn0W4O8JvI2X9Wx67VjEGs/xgFaeo7mnc3gG9GvXdLxv0QGQ1CYtveZF8QTYcS4jg==
-
-"@es-git/packfile@^0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@es-git/packfile/-/packfile-0.10.0.tgz#c5ac5673012ea810305581bf9f4648792c2356fa"
-  integrity sha512-Sk4irbhKP32K5QGN/cykpvisNCWpzHIU1sF+SKBitzfL6qmpSzuIfFbw/AXtjQkkocWcb5W7NWHi7LeKo2RVpw==
-  dependencies:
-    "@es-git/core" "^0.10.0"
-    pako "^1.0.5"
-
 "@eslint/eslintrc@^0.4.0":
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/@eslint/eslintrc/-/eslintrc-0.4.0.tgz#99cc0a0584d72f1df38b900fb062ba995f395547"
@@ -1947,36 +1926,44 @@
     prop-types "^15.6.1"
     react-lifecycles-compat "^3.0.4"
 
-"@rollingversions/git-http@^1.0.0":
+"@rollingversions/git-core@^1.0.0":
   version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@rollingversions/git-http/-/git-http-1.0.0.tgz#6a7c90cfff11f71854d1bdd6755235b9b9ee3f30"
-  integrity sha512-fcljdK5WJuf86dC08sfkoE+y0pA90Hc5ZDTvmxxbK3HdIEslW65nM+4i97zo8eG6DrTAK1mJZXuLAYhkYDf/Cw==
+  resolved "https://registry.yarnpkg.com/@rollingversions/git-core/-/git-core-1.0.0.tgz#f14d2f48890465aba713919c6e1c1091a8130712"
+  integrity sha512-hI8n1L88DzLPb/Mh1zt3mTWTSDa7lAv74UhCIlxFRZ211X2Ehpo8yI8t10GTypqTsBrGv9qdbg8Mv56kiN970Q==
+
+"@rollingversions/git-http@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@rollingversions/git-http/-/git-http-2.0.0.tgz#824b558d7ce65609a0ce26f6b7fa9d08330a912c"
+  integrity sha512-KW08uY1gclLlGqqcs6jK74Gz7Nfv8nVWjY/V0HBXmLLEvOynknlk+fsAL5xtr07y31JOzKXHA1dZp8HmVaNOXQ==
   dependencies:
-    "@rollingversions/git-protocol" "^1.0.0"
-    "@rollingversions/git-streams" "^1.0.0"
+    "@rollingversions/git-protocol" "^2.0.0"
     cross-fetch "^3.0.6"
+    http-basic "^8.1.3"
     https-proxy-agent "^5.0.0"
 
-"@rollingversions/git-objects@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@rollingversions/git-objects/-/git-objects-1.0.0.tgz#2806ee9f7565635e910890afac211322a58f8ff4"
-  integrity sha512-JfGwViUok/ZrtkhFwKQ9qG6fUlskgf2l87+KzmZHcl0EhfOVZw8CzhiZerMGUlAxWDEL0+r8hAMXWFBLGzBREA==
+"@rollingversions/git-objects@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@rollingversions/git-objects/-/git-objects-2.0.0.tgz#1862c4f2b1486e8dd87c9ffac0279e74c754b6cc"
+  integrity sha512-w0m4FhSm/cis2pgWeuQJxSnWG2qkNFMb8os8QhlyuSO3P4sqDdG3vpFmGIekvQWwr5zJPVC52dBRhEvZxW6G8A==
   dependencies:
-    "@es-git/core" "^0.10.0"
+    "@rollingversions/git-core" "^1.0.0"
 
-"@rollingversions/git-protocol@^1.0.0":
+"@rollingversions/git-packfile@^1.0.0":
   version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@rollingversions/git-protocol/-/git-protocol-1.0.0.tgz#70941e13a4ea5f7582ec9338bb5b8b57ff969fe6"
-  integrity sha512-o0GfBFt87BnDFjdo992JgZrG+AotE/40uvSHtsxcQUumgI3oadTiqrolxJZdJl+buYkHJZWBAufwKhDR//crvQ==
+  resolved "https://registry.yarnpkg.com/@rollingversions/git-packfile/-/git-packfile-1.0.0.tgz#126dc017f178ca98041a32dd73d53f4cdb844f94"
+  integrity sha512-aa15l6FVWQZQ9c+ELI3HBFoxBI9vgw7oanWENB+Xj9YGdFF0+EEAmE18mZyNOvED+cGOpxTDvi8dbIzBLUuhnA==
   dependencies:
-    "@es-git/core" "^0.10.0"
-    "@es-git/packfile" "^0.10.0"
-    "@rollingversions/git-streams" "^1.0.0"
+    "@rollingversions/git-core" "^1.0.0"
+    "@types/pako" "^1.0.2"
+    pako "^1.0.5"
 
-"@rollingversions/git-streams@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@rollingversions/git-streams/-/git-streams-1.0.0.tgz#1cbd62535a375dfa8a68ea09415d7b46c1045e7f"
-  integrity sha512-jGncKVQVsfzhoZYUcXCcenMW8SNFZv0iwEjwq/sV+pnYVqP3TZN4Q7YTTLn49XOkLrGX3lSroeakOWXE16I6jQ==
+"@rollingversions/git-protocol@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@rollingversions/git-protocol/-/git-protocol-2.0.0.tgz#0f5b13f1ac8fb0fd7f7027423ed4e65e6d667e11"
+  integrity sha512-ExODSaAhTtEHuOar6Zf2peV2zugCujDPP/Ad8VUT9Tsfbt08wPqkKHr9rwJro3Ua/hqRXCtAX6TrcTocsRr2Vw==
+  dependencies:
+    "@rollingversions/git-core" "^1.0.0"
+    "@rollingversions/git-packfile" "^1.0.0"
 
 "@samverschueren/stream-to-observable@^0.3.0":
   version "0.3.0"
@@ -2835,6 +2822,11 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.11.1.tgz#49a2a83df9d26daacead30d0ccc8762b128d53c7"
   integrity sha512-eWQGP3qtxwL8FGneRrC5DwrJLGN4/dH1clNTuLfN81HCrxVtxRjygDTUoZJ5ASlDEeo0ppYFQjQIlXhtXpOn6g==
 
+"@types/node@^10.0.3":
+  version "10.17.60"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.17.60.tgz#35f3d6213daed95da7f0f73e75bcc6980e90597b"
+  integrity sha512-F0KIgDJfy2nA3zMLmWGKxcH2ZVEtCZXHHdOQs2gSaQ27+lNeEfGxzkIw90aXswATX7AZ33tahPbzy6KAfUreVw==
+
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/@types/normalize-package-data/-/normalize-package-data-2.4.0.tgz#e486d0d97396d79beedd0a6e33f4534ff6b4973e"
@@ -2858,6 +2850,11 @@
   integrity sha512-m5LRgPZzWPHGoEQDbuVuduRMctCW5tDarxi9f7+rYZoJDy7nMHMMrODtqbwPpNjYc6Ilg4vL2NeYAwimJfku3w==
   dependencies:
     "@types/node" "*"
+
+"@types/pako@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@types/pako/-/pako-1.0.2.tgz#17c9b136877f33d9ecc8e73cd26944f1f6dd39a1"
+  integrity sha512-8UJl2MjkqqS6ncpLZqRZ5LmGiFBkbYxocD4e4jmBqGvfRG1RS23gKsBQbdtV9O9GvRyjFTiRHRByjSlKCLlmZw==
 
 "@types/parse-json@^4.0.0":
   version "4.0.0"
@@ -5063,7 +5060,7 @@ case-sensitive-paths-webpack-plugin@^2.2.0:
   resolved "https://registry.yarnpkg.com/case-sensitive-paths-webpack-plugin/-/case-sensitive-paths-webpack-plugin-2.3.0.tgz#23ac613cc9a856e4f88ff8bb73bbb5e989825cf7"
   integrity sha512-/4YgnZS8y1UXXmC02xD5rRrBEu6T5ub+mQHLNRj0fzTRbgdBYhsNo2V5EqwgqrExjxsjtF/OpAKAMkKsxbD5XQ==
 
-caseless@~0.12.0:
+caseless@^0.12.0, caseless@~0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
   integrity sha1-G2gcIf+EAzyCZUMJBolCDRhxUdw=
@@ -5518,7 +5515,7 @@ concat-map@0.0.1:
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
   integrity sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=
 
-concat-stream@^1.5.0:
+concat-stream@^1.5.0, concat-stream@^1.6.2:
   version "1.6.2"
   resolved "https://registry.yarnpkg.com/concat-stream/-/concat-stream-1.6.2.tgz#904bdf194cd3122fc675c77fc4ac3d4ff0fd1a34"
   integrity sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==
@@ -8410,6 +8407,16 @@ htmlparser2@^4.0:
     domutils "^2.0.0"
     entities "^2.0.0"
 
+http-basic@^8.1.3:
+  version "8.1.3"
+  resolved "https://registry.yarnpkg.com/http-basic/-/http-basic-8.1.3.tgz#a7cabee7526869b9b710136970805b1004261bbf"
+  integrity sha512-/EcDMwJZh3mABI2NhGfHOGOeOZITqfkEO4p/xK+l3NpyncIHUQBoMvCSF/b5GqvKtySC2srL/GGG3+EtlqlmCw==
+  dependencies:
+    caseless "^0.12.0"
+    concat-stream "^1.6.2"
+    http-response-object "^3.0.1"
+    parse-cache-control "^1.0.1"
+
 http-deceiver@^1.2.7:
   version "1.2.7"
   resolved "https://registry.yarnpkg.com/http-deceiver/-/http-deceiver-1.2.7.tgz#fa7168944ab9a519d337cb0bec7284dc3e723d87"
@@ -8470,6 +8477,13 @@ http-proxy@^1.17.0:
     eventemitter3 "^4.0.0"
     follow-redirects "^1.0.0"
     requires-port "^1.0.0"
+
+http-response-object@^3.0.1:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/http-response-object/-/http-response-object-3.0.2.tgz#7f435bb210454e4360d074ef1f989d5ea8aa9810"
+  integrity sha512-bqX0XTF6fnXSQcEJ2Iuyr75yVakyjIDCqroJQ/aHfSdlM743Cwqoi2nDYMzLGWUcuTWGWy8AAvOKXTfiv6q9RA==
+  dependencies:
+    "@types/node" "^10.0.3"
 
 http-signature@~1.2.0:
   version "1.2.0"
@@ -11667,6 +11681,11 @@ parse-asn1@^5.0.0:
     pbkdf2 "^3.0.3"
     safe-buffer "^5.1.1"
 
+parse-cache-control@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/parse-cache-control/-/parse-cache-control-1.0.1.tgz#8eeab3e54fa56920fe16ba38f77fa21aacc2d74e"
+  integrity sha1-juqz5U+laSD+Fro493+iGqzC104=
+
 parse-entities@^1.1.0, parse-entities@^1.1.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/parse-entities/-/parse-entities-1.2.2.tgz#c31bf0f653b6661354f8973559cb86dd1d5edf50"
@@ -14748,11 +14767,6 @@ test-exclude@^6.0.0:
     "@istanbuljs/schema" "^0.1.2"
     glob "^7.1.4"
     minimatch "^3.0.4"
-
-text-encoding-utf-8@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/text-encoding-utf-8/-/text-encoding-utf-8-1.0.2.tgz#585b62197b0ae437e3c7b5d0af27ac1021e10d13"
-  integrity sha512-8bw4MY9WjdsD2aMtO0OzOCY3pXGYNx2d2FfHRVUKkiCPDWjKuOlhLVASS+pD7VkLTVjW268LYJHwsnPFlBpbAg==
 
 text-hex@1.0.x:
   version "1.0.0"
