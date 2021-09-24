@@ -132,7 +132,55 @@ async function setComment(
     },
     commentBody,
     pr.comment_id ?? undefined,
-  );
+  ).catch(async (ex) => {
+    if (ex.status === 404 && pr.comment_id) {
+      // The comment may have been manually deleted
+      // if so, we should re-create it
+      const commentID = await writeComment(
+        client,
+        {
+          repo: {
+            owner: repo.owner,
+            name: repo.name,
+          },
+          number: pr.pr_number,
+        },
+        commentBody,
+        undefined,
+      );
+      const updated = await tables.pull_requests(db).update(
+        {id: pr.id, comment_id: pr.comment_id},
+        {
+          comment_id: commentID,
+          ...(headCommitSha
+            ? {comment_updated_at_commit_sha: headCommitSha}
+            : {}),
+        },
+      );
+      if (updated.length === 0) {
+        // delete the duplicate comment
+        await deleteComment(
+          client,
+          {
+            repo: {
+              owner: repo.owner,
+              name: repo.name,
+            },
+            number: pr.pr_number,
+          },
+          commentID,
+        );
+        return null;
+      } else {
+        return commentID;
+      }
+    }
+    throw ex;
+  });
+  if (commentID === null) {
+    // this was a duplicate comment, so we deleted it
+    return (await tables.pull_requests(db).findOne({id: pr.id})) ?? pr;
+  }
   if (pr.comment_id === null) {
     const updated = await tables.pull_requests(db).update(
       {id: pr.id, comment_id: null},
