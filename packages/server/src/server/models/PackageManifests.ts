@@ -14,8 +14,9 @@ import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 import {PullRequestPackage} from '../../types';
 import groupByKey from '../../utils/groupByKey';
 import type {Logger} from '../logger';
-import {getAllFiles, GitHubClient} from '../services/github';
+import {GitHubClient} from '../services/github';
 import {
+  fetchTree,
   getAllTags,
   getAllTagsOnBranch,
   getBranchHeadCommit,
@@ -38,33 +39,38 @@ const cache = new Cache<
   maxSize: 30,
 });
 async function getPackageManifestsUncached(
-  client: GitHubClient,
+  _client: GitHubClient,
   repo: DbGitRepository,
-  source:
+  _source:
     | {type: 'branch'; name: string}
     | {type: 'pull_request'; pullRequest: DbPullRequest}
     | {type: 'commit'; commit: DbGitCommit},
-  _logger: Logger,
+  commit: DbGitCommit,
+  logger: Logger,
 ): Promise<null | {oid: string; packages: Map<string, PackageManifest>}> {
-  const commitFiles = await getAllFiles(
-    client,
-    source.type === 'commit'
-      ? {
-          type: 'commit',
-          repositoryID: repo.graphql_id,
-          commitSha: source.commit.commit_sha,
-        }
-      : source.type === 'branch'
-      ? {
-          type: 'branch',
-          repositoryID: repo.graphql_id,
-          branchName: source.name,
-        }
-      : {type: 'pull_request', pullRequestID: source.pullRequest.graphql_id},
-  );
-  if (!commitFiles) {
-    return null;
-  }
+  // const commitFiles = await getAllFiles(
+  //   client,
+  //   source.type === 'commit'
+  //     ? {
+  //         type: 'commit',
+  //         repositoryID: repo.graphql_id,
+  //         commitSha: source.commit.commit_sha,
+  //       }
+  //     : source.type === 'branch'
+  //     ? {
+  //         type: 'branch',
+  //         repositoryID: repo.graphql_id,
+  //         branchName: source.name,
+  //       }
+  //     : {type: 'pull_request', pullRequestID: source.pullRequest.graphql_id},
+  // );
+  const commitFiles = {
+    entries: await fetchTree(repo, commit.commit_sha, logger),
+    oid: commit.commit_sha,
+  };
+  // if (!commitFiles) {
+  //   return null;
+  // }
   const packages = await listPackages(commitFiles.entries);
 
   return {oid: commitFiles.oid, packages};
@@ -101,7 +107,13 @@ export async function getPackageManifests(
     return (await cached)?.packages;
   }
   try {
-    const fresh = getPackageManifestsUncached(client, repo, source, logger);
+    const fresh = getPackageManifestsUncached(
+      client,
+      repo,
+      source,
+      commit,
+      logger,
+    );
     cache.set(id, fresh);
     const result = await fresh;
     if (result?.oid !== commit.commit_sha) {
