@@ -351,10 +351,10 @@ export async function fetchTree(
       throw new Error(`Could not find tree ${hash}`);
     }
     for (const [name, {mode, hash}] of Object.entries(tree)) {
-      const path = `${parentPath}/${name}`;
+      const path = parentPath + name;
 
       if (mode === gitObj.Mode.tree) {
-        walkTree(hash, path);
+        walkTree(hash, path + '/');
       } else if (mode === gitObj.Mode.file) {
         files.push({
           path,
