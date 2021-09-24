@@ -1,6 +1,8 @@
 import {Writable} from 'stream';
 import {URL} from 'url';
 
+import {batch} from '@mavenoid/dataloader';
+
 import type {SQLQuery} from '@rollingversions/db';
 import {Queryable, sql} from '@rollingversions/db';
 import {q} from '@rollingversions/db';
@@ -252,6 +254,130 @@ export async function updateRepoIfChanged(
       }
     }
   });
+}
+
+export async function fetchTree(
+  repo: DbGitRepository,
+  commitSha: string,
+  logger: Logger,
+): Promise<
+  {
+    path: string;
+    getContents: () => Promise<string>;
+  }[]
+> {
+  const http = await getHttpHandler(repo);
+  const repoURL = new URL(`https://github.com/${repo.owner}/${repo.name}.git`);
+
+  logger.info(`git_init`, `Git init request ${repoURL.href}`);
+  const {capabilities: serverCapabilities} = await git.initialRequest(repoURL, {
+    http,
+    agent: 'rollingversions.com',
+  });
+
+  logger.info(`git_fetch_objects`, `Git fetch request ${repoURL.href}`);
+  const objects = await git.fetchObjects(
+    repoURL,
+    {want: [commitSha], filter: [git.blobNone()], deepen: 1},
+    {http, agent: 'rollingversions.com', serverCapabilities},
+  );
+
+  const trees = new Map<string, gitObj.TreeBody>();
+  let rootCommit: gitObj.CommitBody | undefined;
+  await new Promise<void>((resolve, reject) => {
+    objects
+      .on(`error`, reject)
+      .pipe(
+        new Writable({
+          objectMode: true,
+          write(entry: git.FetchResponseEntryObject, _encoding, cb) {
+            if (gitObj.objectIsCommit(entry.body)) {
+              if (entry.hash === commitSha) {
+                rootCommit = gitObj.decodeObject(entry.body).body;
+              }
+            } else if (gitObj.objectIsTree(entry.body)) {
+              trees.set(entry.hash, gitObj.decodeObject(entry.body).body);
+            }
+            cb();
+          },
+        }),
+      )
+      .on(`error`, reject)
+      .on(`finish`, () => resolve());
+  });
+  if (!rootCommit) {
+    throw new Error(`Could not find commit ${commitSha}`);
+  }
+
+  const getObject = batch<string, git.FetchResponseEntryObject>(
+    async (want) => {
+      const fetchResponse = await git.fetchObjects(
+        repoURL,
+        {want: [...new Set(want)]},
+        {
+          http,
+          agent: 'rollingversions.com',
+          serverCapabilities,
+        },
+      );
+
+      const entries = new Map<string, git.FetchResponseEntryObject>();
+      await new Promise<void>((resolve, reject) => {
+        fetchResponse
+          .on(`error`, reject)
+          .pipe(
+            new Writable({
+              objectMode: true,
+              write(entry: git.FetchResponseEntryObject, _encoding, cb) {
+                entries.set(entry.hash, entry);
+                cb();
+              },
+            }),
+          )
+          .on(`error`, reject)
+          .on(`finish`, () => resolve());
+      });
+      return entries;
+    },
+  );
+
+  const files: {
+    path: string;
+    getContents: () => Promise<string>;
+  }[] = [];
+  const walkTree = (hash: string, parentPath: string) => {
+    const tree = trees.get(hash);
+    if (!tree) {
+      throw new Error(`Could not find tree ${hash}`);
+    }
+    for (const [name, {mode, hash}] of Object.entries(tree)) {
+      const path = `${parentPath}/${name}`;
+
+      if (mode === gitObj.Mode.tree) {
+        walkTree(hash, path);
+      } else if (mode === gitObj.Mode.file) {
+        files.push({
+          path,
+          getContents: async () => {
+            const entry = await getObject(hash);
+            if (!entry) {
+              throw new Error(`Unable to find object ${hash} at ${path}`);
+            }
+            if (!gitObj.objectIsBlob(entry.body)) {
+              throw new Error(
+                `Object ${hash} at ${path} is not a blob, but we expected a blob`,
+              );
+            }
+            const obj = gitObj.decodeObject(entry.body);
+            return Buffer.from(obj.body).toString(`utf8`);
+          },
+        });
+      }
+    }
+  };
+  walkTree(rootCommit.tree, ``);
+
+  return files;
 }
 
 async function getCommitByRef(
