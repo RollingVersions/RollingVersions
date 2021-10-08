@@ -1,4 +1,5 @@
-import React from 'react';
+import React, {useMemo} from 'react';
+import {useLocation} from 'react-router-dom';
 
 import type ChangeSet from '@rollingversions/change-set';
 import {changesToMarkdown} from '@rollingversions/change-set';
@@ -97,4 +98,14 @@ export function ReleaseButton() {
       <InstallIcon className="h-6 w-auto" />
     </button>
   );
+}
+
+export function useBranchState() {
+  const {search} = useLocation();
+  return useMemo(() => {
+    const searchParams = new URLSearchParams(search);
+    const branch = searchParams.get(`branch`);
+    const changingBranch = searchParams.get(`change-branch`) === `1`;
+    return {branch, changingBranch};
+  }, [search]);
 }

@@ -37,12 +37,16 @@ export interface AppNavBarLinkProps {
 }
 export function AppNavBarLink({children, to}: AppNavBarLinkProps) {
   if (!to) {
-    return <span className="font-popins flex-shrink-0">{children}</span>;
+    return (
+      <span className="flex items-center font-popins flex-shrink-0">
+        {children}
+      </span>
+    );
   }
   return (
     <Link
       to={to}
-      className="font-popins flex-shrink-0 focus:outline-none focus:shadow-orange"
+      className="flex items-center font-popins flex-shrink-0 focus:outline-none focus:shadow-orange"
     >
       {children}
     </Link>
