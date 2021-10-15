@@ -18,10 +18,8 @@ import {GitHubClient} from '../services/github';
 import {
   fetchTree,
   getAllTags,
-  getAllTagsOnBranch,
   getBranchHeadCommit,
   getPullRequestHeadCommit,
-  getUnreleasedChanges,
   isCommitReleased,
   updateRepoIfChanged,
 } from './git';
@@ -48,29 +46,10 @@ async function getPackageManifestsUncached(
   commit: DbGitCommit,
   logger: Logger,
 ): Promise<null | {oid: string; packages: Map<string, PackageManifest>}> {
-  // const commitFiles = await getAllFiles(
-  //   client,
-  //   source.type === 'commit'
-  //     ? {
-  //         type: 'commit',
-  //         repositoryID: repo.graphql_id,
-  //         commitSha: source.commit.commit_sha,
-  //       }
-  //     : source.type === 'branch'
-  //     ? {
-  //         type: 'branch',
-  //         repositoryID: repo.graphql_id,
-  //         branchName: source.name,
-  //       }
-  //     : {type: 'pull_request', pullRequestID: source.pullRequest.graphql_id},
-  // );
   const commitFiles = {
     entries: await fetchTree(repo, commit.commit_sha, logger),
     oid: commit.commit_sha,
   };
-  // if (!commitFiles) {
-  //   return null;
-  // }
   const packages = await listPackages(commitFiles.entries);
 
   return {oid: commitFiles.oid, packages};
@@ -188,12 +167,6 @@ export function getMaxVersion(versions: readonly VersionTag[]) {
   return max(versions, (tag) => tag.version) ?? null;
 }
 
-// function mapMapValues<TKey, TValue, TMappedValue>(
-//   map: Map<TKey, TValue>,
-//   fn: (value: TValue) => TMappedValue,
-// ): Map<TKey, TMappedValue> {
-//   return new Map([...map].map(([k, v]) => [k, fn(v)]));
-// }
 async function mapMapValuesAsync<TKey, TValue, TMappedValue>(
   map: Map<TKey, TValue>,
   fn: (value: TValue) => Promise<TMappedValue>,
@@ -272,68 +245,4 @@ export async function getDetailedPackageManifestsForPullRequest(
   }
 
   return detailedManifests;
-}
-
-export async function getDetailedPackageManifestsForBranch(
-  db: Queryable,
-  client: GitHubClient,
-  repo: DbGitRepository,
-  {
-    branchName,
-    versionByBranch,
-  }: {branchName: string; versionByBranch?: boolean},
-  logger: Logger,
-) {
-  await updateRepoIfChanged(db, client, repo.id, logger);
-
-  const headCommit = await getBranchHeadCommit(
-    db,
-    client,
-    repo,
-    branchName,
-    logger,
-  );
-  if (!headCommit) return null;
-  const [manifests, tags] = await Promise.all([
-    getPackageManifests(
-      db,
-      client,
-      repo,
-      {type: 'branch', name: branchName},
-      logger,
-    ),
-    versionByBranch
-      ? getAllTagsOnBranch(db, headCommit)
-      : getAllTags(db, client, repo, logger),
-  ]);
-  if (!manifests) {
-    return null;
-  }
-
-  return await mapMapValuesAsync(manifests, async (manifest) => {
-    const versions = getPackageVersions({
-      allowTagsWithoutPackageName: manifests.size <= 1,
-      allTags: tags,
-      manifest,
-    });
-    const changeSet: ChangeSet<{pr: number}> = (
-      await getUnreleasedChanges(db, repo, {
-        packageName: manifest.packageName,
-        headCommitSha: headCommit.commit_sha,
-        releasedCommits: new Set(versions.map((v) => v.commitSha)),
-      })
-    )
-      .sort((a, b) => a.sort_order_weight - b.sort_order_weight)
-      .map((c) => ({
-        type: c.kind,
-        title: c.title,
-        body: c.body,
-        pr: c.pr_number,
-      }));
-    return {
-      manifest,
-      currentVersion: getMaxVersion(versions),
-      changeSet,
-    };
-  });
 }
