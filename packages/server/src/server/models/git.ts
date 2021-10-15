@@ -535,7 +535,7 @@ function selectCommits({
         from: sql`git_commits c`,
         where: sql`c.git_repository_id = ${repositoryID}`,
         whereHead: sql`c.commit_sha = ${anyValue(excludedCommits)}`,
-        whereJoin: sql`c.commit_sha = ANY(excluded_commits.parents)`,
+        whereJoin: sql`c.commit_sha = ANY(excluded_commits_direct.parents)`,
       }),
     );
     queries.push(
@@ -555,7 +555,7 @@ function selectCommits({
         ? sql`c.git_repository_id = ${repositoryID} AND c.commit_sha NOT IN (SELECT commit_sha FROM excluded_commits)`
         : sql`c.git_repository_id = ${repositoryID}`,
       whereHead: sql`c.commit_sha = ${anyValue(includedCommits)}`,
-      whereJoin: sql`c.commit_sha = ANY(commits.parents)`,
+      whereJoin: sql`c.commit_sha = ANY(commits_direct.parents)`,
     }),
   );
   queries.push(
