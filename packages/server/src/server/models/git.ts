@@ -192,11 +192,33 @@ export async function updateRepoIfChanged(
                     .map((entry): GitCommits_InsertParameters | null => {
                       if (gitObj.objectIsCommit(entry.body)) {
                         const commit = gitObj.decodeObject(entry.body);
+                        // If you use the `-x` option when cherry picking
+                        // (see: https://git-scm.com/docs/git-cherry-pick)
+                        // it will append the following line to the
+                        // commit message:
+                        //
+                        // (cherry picked from commit <commit-sha>)
+                        //
+                        // If you repeat that process to cherry pick the
+                        // already cherry picked commit into another branch
+                        // it will add an additional cherry picked from ...
+                        // line
+                        const cherryPickedFrom: string[] = [];
+                        commit.body.message.replace(
+                          /\(cherry picked from commit ([0-9a-f]+)\)/g,
+                          (_, sha) => {
+                            cherryPickedFrom.push(sha);
+                            return _;
+                          },
+                        );
                         return {
                           git_repository_id: repo.id,
                           commit_sha: entry.hash,
                           message: commit.body.message,
                           parents: commit.body.parents,
+                          cherry_picked_from: cherryPickedFrom.length
+                            ? cherryPickedFrom
+                            : null,
                         };
                       } else {
                         return null;

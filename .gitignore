@@ -11,3 +11,5 @@ dist/
 yarn-error.log
 
 .storybook-dist
+
+/experiments
