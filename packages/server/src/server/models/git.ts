@@ -497,6 +497,26 @@ function selectRecursiveUnion(q: {
     )
   `;
 }
+const anyValue = (value: Set<string>) =>
+  value.size === 1 ? sql`${[...value][0]}` : sql`ANY(${[...value]})`;
+function withCherryPickedCommits(q: {
+  name: SQLQuery;
+  fields: SQLQuery;
+  nameWithoutCherryPicked: SQLQuery;
+}) {
+  return sql`
+    ${q.name} AS (
+      SELECT ${q.fields} FROM ${q.nameWithoutCherryPicked} c
+      UNION
+      SELECT ${q.fields} FROM git_commits c
+      INNER JOIN ${q.nameWithoutCherryPicked} d
+      ON (
+        (c.cherry_picked_from IS NOT NULL AND d.commit_sha = ANY(c.cherry_picked_from)) OR
+        (d.cherry_picked_from IS NOT NULL AND c.commit_sha = ANY(d.cherry_picked_from))
+      )
+    )
+  `;
+}
 function selectCommits({
   repositoryID,
   includedCommits,
@@ -506,44 +526,47 @@ function selectCommits({
   includedCommits: Set<string>;
   excludedCommits: Set<string>;
 }) {
-  const includedCommitsQuery =
-    includedCommits.size === 1
-      ? sql`${[...includedCommits][0]}`
-      : sql`ANY(${[...includedCommits]})`;
-  if (excludedCommits.size === 0) {
-    return sql`WITH RECURSIVE ${selectRecursiveUnion({
-      name: sql`commits`,
-      fields: sql`c.*`,
-      from: sql`git_commits c`,
-      where: sql`c.git_repository_id = ${repositoryID}`,
-      whereHead: sql`c.commit_sha = ${includedCommitsQuery}`,
-      whereJoin: sql`c.commit_sha = ANY(commits.parents)`,
-    })}`;
-  }
-  const excludedCommitsQuery =
-    excludedCommits.size === 1
-      ? sql`${[...excludedCommits][0]}`
-      : sql`ANY(${[...excludedCommits]})`;
-
-  return sql`
-    WITH RECURSIVE
-      ${selectRecursiveUnion({
-        name: sql`excluded_commits`,
-        fields: sql`c.commit_sha, c.parents`,
+  const queries = [];
+  if (excludedCommits.size) {
+    queries.push(
+      selectRecursiveUnion({
+        name: sql`excluded_commits_direct`,
+        fields: sql`c.commit_sha, c.parents, c.cherry_picked_from`,
         from: sql`git_commits c`,
         where: sql`c.git_repository_id = ${repositoryID}`,
-        whereHead: sql`c.commit_sha = ${excludedCommitsQuery}`,
+        whereHead: sql`c.commit_sha = ${anyValue(excludedCommits)}`,
         whereJoin: sql`c.commit_sha = ANY(excluded_commits.parents)`,
-      })},
-      ${selectRecursiveUnion({
-        name: sql`commits`,
-        fields: sql`c.*`,
-        from: sql`git_commits c`,
-        where: sql`c.git_repository_id = ${repositoryID} AND c.commit_sha NOT IN (SELECT commit_sha FROM excluded_commits)`,
-        whereHead: sql`c.commit_sha = ${includedCommitsQuery}`,
-        whereJoin: sql`c.commit_sha = ANY(commits.parents)`,
-      })}
-    `;
+      }),
+    );
+    queries.push(
+      withCherryPickedCommits({
+        name: sql`excluded_commits`,
+        fields: sql`c.commit_sha`,
+        nameWithoutCherryPicked: sql`excluded_commits_direct`,
+      }),
+    );
+  }
+  queries.push(
+    selectRecursiveUnion({
+      name: sql`commits_direct`,
+      fields: sql`c.*`,
+      from: sql`git_commits c`,
+      where: excludedCommits.size
+        ? sql`c.git_repository_id = ${repositoryID} AND c.commit_sha NOT IN (SELECT commit_sha FROM excluded_commits)`
+        : sql`c.git_repository_id = ${repositoryID}`,
+      whereHead: sql`c.commit_sha = ${anyValue(includedCommits)}`,
+      whereJoin: sql`c.commit_sha = ANY(commits.parents)`,
+    }),
+  );
+  queries.push(
+    withCherryPickedCommits({
+      name: sql`commits`,
+      fields: sql`c.*`,
+      nameWithoutCherryPicked: sql`commits_direct`,
+    }),
+  );
+  return sql`
+    WITH RECURSIVE ${sql.join(queries, `, `)}`;
 }
 
 export async function getAllBranches(
