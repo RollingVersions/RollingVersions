@@ -26,6 +26,7 @@ export enum PublishResultKind {
   CircularPackageDependencies = 2,
   GitHubAuthCheckFail = 3,
   PrepublishFailures = 4,
+  PackageManifestErrors = 5,
 }
 export interface NoUpdatesRequired {
   readonly kind: PublishResultKind.NoUpdatesRequired;
@@ -43,6 +44,10 @@ export interface GitHubAuthCheckFail {
   readonly kind: PublishResultKind.GitHubAuthCheckFail;
   readonly reason: string;
 }
+export interface PackageManifestErrors {
+  readonly kind: PublishResultKind.PackageManifestErrors;
+  readonly errors: {filename: string; error: string}[];
+}
 export interface PrepublishFailures {
   readonly kind: PublishResultKind.PrepublishFailures;
   readonly failures: readonly {
@@ -56,7 +61,8 @@ export type Result =
   | UpdatesPublished
   | CircularPackageDependencies
   | GitHubAuthCheckFail
-  | PrepublishFailures;
+  | PrepublishFailures
+  | PackageManifestErrors;
 
 export default async function publish(config: PublishConfig): Promise<Result> {
   const client = new GitHubClient({
@@ -84,6 +90,13 @@ export default async function publish(config: PublishConfig): Promise<Result> {
     return {
       kind: PublishResultKind.CircularPackageDependencies,
       packageNames: response.cycleDetected,
+    };
+  }
+
+  if (response.packageErrors?.length) {
+    return {
+      kind: PublishResultKind.PackageManifestErrors,
+      errors: response.packageErrors,
     };
   }
 

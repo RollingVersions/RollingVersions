@@ -1,8 +1,15 @@
-import ChangeTypeID from './ChangeTypeID';
-import VersionBumpType from './VersionBumpType';
+import * as t from 'funtypes';
 
-export default interface ChangeType {
-  readonly id: ChangeTypeID;
-  readonly plural: string;
-  readonly bumps: VersionBumpType | null;
-}
+import {ChangeTypeIdCodec} from './ChangeTypeID';
+import {StringDescription} from './Strings';
+import {VersionBumpTypeCodec} from './VersionBumpType';
+
+export const ChangeTypeCodec = t.Readonly(
+  t.Object({
+    id: ChangeTypeIdCodec,
+    bumps: t.Union(VersionBumpTypeCodec, t.Null),
+    plural: StringDescription,
+  }),
+);
+type ChangeType = t.Static<typeof ChangeTypeCodec>;
+export default ChangeType;

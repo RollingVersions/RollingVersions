@@ -1,9 +1,11 @@
 import {gt, prerelease} from 'semver';
 
+import {parseRollingConfigOptions} from '@rollingversions/config';
 import {
   NpmPublishTargetConfig,
+  PackageManifest,
   PublishTarget,
-  VersioningMode,
+  RollingConfigOptions,
 } from '@rollingversions/types';
 import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
@@ -23,6 +25,14 @@ import createPublishTargetAPI from './baseTarget';
 const detectIndent = require('detect-indent');
 const detectNewline = require('detect-newline').graceful;
 const stringifyPackage = require('stringify-package');
+
+const KEYS_TO_CONFIG: [keyof RollingConfigOptions, string][] = [
+  ['baseVersion', 'base-version'],
+  ['changeTypes', 'change-types'],
+  ['tagFormat', 'tag-format'],
+  ['versioningMode', 'versioning'],
+  ['versionSchema', 'version-schema'],
+];
 
 function versionPrefix(oldVersion: string, {canary}: {canary: boolean}) {
   if (canary) return '';
@@ -91,68 +101,102 @@ function getConfigValue(
   return undefined;
 }
 
+function getConfigName(
+  name: string,
+  config: {
+    [key: string]: unknown;
+  },
+) {
+  if (config[`@rollingversions/${name}`] !== undefined) {
+    return `pkg["@rollingversions/${name}"]`;
+  }
+  return `pkg["@rollingversions"]["${name}"]`;
+}
+
+const failed = (reason: string): {ok: false; reason: string} => ({
+  ok: false,
+  reason,
+});
+
 export default createPublishTargetAPI<NpmPublishTargetConfig>({
   type: PublishTarget.npm,
   pathMayContainPackage(filename) {
     return filename === 'package.json' || filename.endsWith('/package.json');
   },
-  async getPackageManifest(path, content) {
+  async getPackageManifest(
+    path,
+    content,
+  ): Promise<
+    {ok: true; manifest: PackageManifest | null} | {ok: false; reason: string}
+  > {
     let pkgData: unknown;
     try {
       pkgData = JSON.parse(content);
-    } catch (ex) {
-      // ignore
+    } catch (ex: any) {
+      return failed(ex.message);
+    }
+    if (!isObject(pkgData)) {
+      return failed(`Expected package.json to be an object`);
     }
 
-    if (isObject(pkgData) && typeof pkgData.name === 'string') {
-      const pkgName = pkgData.name;
-      if (getConfigValue('ignore', pkgData)) {
-        return null;
+    if (!pkgData.name) {
+      return {ok: true, manifest: null};
+    }
+
+    if (typeof pkgData.name !== 'string') {
+      return failed(`Expected "name" to be a string`);
+    }
+
+    const pkgName = pkgData.name;
+    if (getConfigValue('ignore', pkgData)) {
+      return {ok: true, manifest: null};
+    }
+
+    const customized: (keyof RollingConfigOptions)[] = [];
+    const rawConfig: any = {};
+    for (const [configKey, pkgKey] of KEYS_TO_CONFIG) {
+      const value = getConfigValue(pkgKey, pkgData);
+      if (value !== undefined) {
+        rawConfig[configKey] = value;
+        customized.push(configKey);
       }
+    }
 
-      const tagFormat = getConfigValue(`tag-format`, pkgData);
-      if (tagFormat !== undefined && typeof tagFormat !== 'string') {
-        throw new Error('Expected "tag-format" to be undefined or a string');
+    const config = parseRollingConfigOptions(rawConfig);
+
+    if (!config.success) {
+      let reason = config.reason;
+      for (const [configKey, pkgKey] of KEYS_TO_CONFIG) {
+        reason = reason.split(configKey).join(getConfigName(pkgKey, pkgData));
       }
-      const versioning = getConfigValue(`versioning`, pkgData);
-      if (
-        versioning !== undefined &&
-        versioning !== VersioningMode.AlwaysIncreasing &&
-        versioning !== VersioningMode.ByBranch &&
-        versioning !== VersioningMode.Unambiguous
-      ) {
-        throw new Error(
-          `Expected "versioning" to be undefined or one of: ${Object.values(
-            VersioningMode,
-          )
-            .map((v) => JSON.stringify(v))
-            .join(`, `)}`,
-        );
-      }
+      return fail(reason);
+    }
 
-      const required = [
-        ...(isObject(pkgData) && isObject(pkgData.dependencies)
-          ? Object.keys(pkgData.dependencies)
-          : []),
-        ...(isObject(pkgData) && isObject(pkgData.peerDependencies)
-          ? Object.keys(pkgData.peerDependencies)
-          : []),
-      ];
+    const required = [
+      ...(isObject(pkgData) && isObject(pkgData.dependencies)
+        ? Object.keys(pkgData.dependencies)
+        : []),
+      ...(isObject(pkgData) && isObject(pkgData.peerDependencies)
+        ? Object.keys(pkgData.peerDependencies)
+        : []),
+    ];
 
-      const optional =
-        isObject(pkgData) && isObject(pkgData.optionalDependencies)
-          ? Object.keys(pkgData.optionalDependencies)
-          : [];
+    const optional =
+      isObject(pkgData) && isObject(pkgData.optionalDependencies)
+        ? Object.keys(pkgData.optionalDependencies)
+        : [];
 
-      const development =
-        isObject(pkgData) && isObject(pkgData.devDependencies)
-          ? Object.keys(pkgData.devDependencies)
-          : [];
+    const development =
+      isObject(pkgData) && isObject(pkgData.devDependencies)
+        ? Object.keys(pkgData.devDependencies)
+        : [];
 
-      return {
+    return {
+      ok: true,
+      manifest: {
         packageName: pkgName,
-        tagFormat,
-        versioning,
+        ...config.value,
+        customized,
         targetConfigs: [
           {
             type: PublishTarget.npm,
@@ -168,10 +212,8 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
           },
         ],
         dependencies: {required, optional, development},
-      };
-    } else {
-      return null;
-    }
+      },
+    };
   },
   async prepublish(config, pkg, targetConfig, packageVersions) {
     if (targetConfig.private) return {ok: true};

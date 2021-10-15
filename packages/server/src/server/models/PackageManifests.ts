@@ -1,6 +1,7 @@
 import Cache from 'quick-lru';
 
 import ChangeSet from '@rollingversions/change-set';
+import {DEFAULT_CONFIG} from '@rollingversions/config';
 import {Queryable, tables} from '@rollingversions/db';
 import DbGitCommit from '@rollingversions/db/git_commits';
 import DbGitRef from '@rollingversions/db/git_refs';
@@ -30,10 +31,12 @@ export type PackageManifests = Map<string, PackageManifest>;
 // `${git_repository_id}:${commit_sha}`
 type CommitID = string;
 
-const cache = new Cache<
-  CommitID,
-  Promise<{oid: string; packages: Map<string, PackageManifest>} | null>
->({
+type GetPackageManifestsResult = {
+  oid: string;
+  packages: Map<string, PackageManifest>;
+  packageErrors: {filename: string; error: string}[];
+};
+const cache = new Cache<CommitID, Promise<GetPackageManifestsResult | null>>({
   maxSize: 30,
 });
 async function getPackageManifestsUncached(
@@ -45,14 +48,14 @@ async function getPackageManifestsUncached(
     | {type: 'commit'; commit: DbGitCommit},
   commit: DbGitCommit,
   logger: Logger,
-): Promise<null | {oid: string; packages: Map<string, PackageManifest>}> {
+): Promise<null | GetPackageManifestsResult> {
   const commitFiles = {
     entries: await fetchTree(repo, commit.commit_sha, logger),
     oid: commit.commit_sha,
   };
-  const packages = await listPackages(commitFiles.entries);
+  const {packages, packageErrors} = await listPackages(commitFiles.entries);
 
-  return {oid: commitFiles.oid, packages};
+  return {oid: commitFiles.oid, packages, packageErrors};
 }
 
 export async function getPackageManifests(
@@ -83,7 +86,7 @@ export async function getPackageManifests(
   const id: CommitID = `${repo.id}:${commit.commit_sha}`;
   const cached = cache.get(id);
   if (cached) {
-    return (await cached)?.packages;
+    return await cached;
   }
   try {
     const fresh = getPackageManifestsUncached(
@@ -98,7 +101,7 @@ export async function getPackageManifests(
     if (result?.oid !== commit.commit_sha) {
       cache.delete(id);
     }
-    return result?.packages;
+    return result;
   } catch (ex) {
     cache.delete(id);
     throw ex;
@@ -155,6 +158,7 @@ export function getPackageVersions({
         allowTagsWithoutPackageName,
         packageName: manifest.packageName,
         tagFormat: manifest.tagFormat,
+        versionSchema: manifest.versionSchema,
       });
       return version && !isPrerelease(version)
         ? {commitSha: tag.commit_sha, name: tag.name, version}
@@ -184,17 +188,26 @@ export async function getDetailedPackageManifestsForPullRequest(
   repo: DbGitRepository,
   pullRequest: DbPullRequest,
   logger: Logger,
-): Promise<null | Map<string, PullRequestPackage>> {
+): Promise<null | {
+  packageErrors: {filename: string; error: string}[];
+  packages: Map<string, PullRequestPackage>;
+}> {
   await updateRepoIfChanged(db, client, repo.id, logger);
 
-  const [manifests, allTags, changeLogEntries] = await Promise.all([
+  const [
+    getPackageManifestsResult,
+    allTags,
+    changeLogEntries,
+  ] = await Promise.all([
     getPackageManifestsForPullRequest(db, client, repo, pullRequest, logger),
     getAllTags(db, client, repo, logger),
     getChangeLogEntriesForPR(db, pullRequest),
   ]);
-  if (!manifests) {
+  if (!getPackageManifestsResult) {
     return null;
   }
+
+  const {packages: manifests, packageErrors} = getPackageManifestsResult;
 
   const changes = groupByKey(changeLogEntries, (e) => e.package_name);
 
@@ -233,6 +246,8 @@ export async function getDetailedPackageManifestsForPullRequest(
       }));
       detailedManifests.set(packageName, {
         manifest: {
+          ...DEFAULT_CONFIG,
+          customized: [],
           packageName,
           targetConfigs: [],
           dependencies: {development: [], required: [], optional: []},
@@ -244,5 +259,5 @@ export async function getDetailedPackageManifestsForPullRequest(
     }
   }
 
-  return detailedManifests;
+  return {packageErrors, packages: detailedManifests};
 }

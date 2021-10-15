@@ -90,7 +90,12 @@ export default async function getRepository(
     return null;
   }
 
-  const [allBranches, allTags, branchTags, packagesByName] = await Promise.all([
+  const [
+    allBranches,
+    allTags,
+    branchTags,
+    getPackageManifestsResult,
+  ] = await Promise.all([
     getAllBranches(db, client, repo, logger),
     getAllTags(db, client, repo, logger),
     getAllTagsOnBranch(db, headCommit),
@@ -103,7 +108,9 @@ export default async function getRepository(
     ),
   ]);
 
-  if (!packagesByName) return null;
+  if (!getPackageManifestsResult) return null;
+
+  const {packages: packagesByName, packageErrors} = getPackageManifestsResult;
 
   const sortResult = sortPackagesByDependencies(
     packagesByName,
@@ -149,7 +156,7 @@ export default async function getRepository(
           const currentVersion = getCurrentVersion({
             maxVersion: getMaxVersion(allVersions),
             branchVersion: getMaxVersion(branchVersions),
-            mode: manifest.versioning ?? VersioningMode.Unambiguous,
+            mode: manifest.versioningMode,
           });
           const changeSet: ChangeSet<{pr: number}> = (
             await getUnreleasedChanges(db, repo, {
@@ -172,11 +179,17 @@ export default async function getRepository(
             newVersion: getNextVersion(
               currentVersion?.ok ? currentVersion.version : null,
               changeSet,
+              {
+                changeTypes: manifest.changeTypes,
+                versionSchema: manifest.versionSchema,
+                baseVersion: manifest.baseVersion,
+              },
             ),
           };
         },
       ),
     ),
     cycleDetected: sortResult.circular ? sortResult.packageNames : null,
+    packageErrors,
   };
 }

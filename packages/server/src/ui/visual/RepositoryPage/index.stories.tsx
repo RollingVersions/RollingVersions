@@ -2,6 +2,7 @@ import * as React from 'react';
 import {MemoryRouter} from 'react-router-dom';
 
 import {createChangeSet} from '@rollingversions/change-set';
+import {DEFAULT_CHANGE_TYPES} from '@rollingversions/config';
 
 import {RepositoryPageProps, useBranchState} from '.';
 import RepositoryPage, {
@@ -89,6 +90,7 @@ export const UpdateRequired = () => {
           body: '',
           pr: 42,
         })}
+        changeTypes={DEFAULT_CHANGE_TYPES}
       />
       <PackageWithChanges
         packageName="@database/mysql"
@@ -100,6 +102,7 @@ export const UpdateRequired = () => {
           body: '',
           pr: 42,
         })}
+        changeTypes={DEFAULT_CHANGE_TYPES}
       />
     </Template>
   );
@@ -121,6 +124,7 @@ export const CircularDependency = () => {
           body: '',
           pr: 42,
         })}
+        changeTypes={DEFAULT_CHANGE_TYPES}
       />
       <PackageWithChanges
         packageName="@database/mysql"
@@ -132,6 +136,7 @@ export const CircularDependency = () => {
           body: '',
           pr: 42,
         })}
+        changeTypes={DEFAULT_CHANGE_TYPES}
       />
     </Template>
   );

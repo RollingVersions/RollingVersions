@@ -11,7 +11,9 @@ export interface BaseTargetConfig<T extends PublishTargetConfig> {
   getPackageManifest(
     path: string,
     content: string,
-  ): Promise<PackageManifest | null>;
+  ): Promise<
+    {ok: true; manifest: PackageManifest | null} | {ok: false; reason: string}
+  >;
   prepublish(
     config: PublishConfig,
     pkg: NewVersionToBePublished,
@@ -31,7 +33,9 @@ export interface BaseTarget {
   getPackageManifest(
     path: string,
     content: string,
-  ): Promise<PackageManifest | null>;
+  ): Promise<
+    {ok: true; manifest: PackageManifest | null} | {ok: false; reason: string}
+  >;
   prepublish(
     config: PublishConfig,
     pkg: NewVersionToBePublished,

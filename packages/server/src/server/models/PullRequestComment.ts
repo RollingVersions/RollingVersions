@@ -33,14 +33,14 @@ async function getPullRequestComment(
   headCommit: DbGitCommit | null,
   logger: Logger,
 ): Promise<string> {
-  const packages = await getDetailedPackageManifestsForPullRequest(
+  const getPackagesResult = await getDetailedPackageManifestsForPullRequest(
     db,
     client,
     repo,
     pullRequest,
     logger,
   );
-  if (!packages) {
+  if (!getPackagesResult) {
     throw new Error(
       `Cannot load package manifests for ${repo.owner}/${repo.name}`,
     );
@@ -52,7 +52,7 @@ async function getPullRequestComment(
       headSha: headCommit?.commit_sha ?? null,
     },
     pullRequest.change_set_submitted_at_git_commit_sha,
-    packages,
+    getPackagesResult,
     APP_URL,
   );
 

@@ -16,5 +16,6 @@ export interface GetRepositoryApiResponse {
   allBranchNames: string[];
   allTagNames: string[];
   packages: ApiPackageResponse[];
+  packageErrors: {filename: string; error: string}[];
   cycleDetected: string[] | null;
 }

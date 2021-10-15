@@ -3,11 +3,12 @@ import {dirname, resolve} from 'path';
 import {execBuffered} from 'modern-spawn';
 import * as toml from 'toml';
 
+import {parseRollingConfigOptions} from '@rollingversions/config';
 import {
   CustomScriptTargetConfig,
   PackageManifest,
   PublishTarget,
-  VersioningMode,
+  RollingConfigOptions,
 } from '@rollingversions/types';
 import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
@@ -16,11 +17,36 @@ import isObject from '../ts-utils/isObject';
 import {PublishConfig} from '../types/publish';
 import createPublishTargetAPI from './baseTarget';
 
+const KEYS_TO_CONFIG: [keyof RollingConfigOptions, string][] = [
+  ['baseVersion', 'base_version'],
+  ['changeTypes', 'change_types'],
+  ['tagFormat', 'tag_format'],
+  ['versioningMode', 'versioning'],
+  ['versionSchema', 'version_schema'],
+];
+
 const MANIFEST_NAME = 'rolling-package';
 // TODO: better error messages
+type ParseResult = {ok: true; value: unknown} | {ok: false; reason: string};
+const failed = (reason: string): {ok: false; reason: string} => ({
+  ok: false,
+  reason,
+});
 const MANIFEST_EXTENSIONS = {
-  '.json': (str: string): unknown => JSON.parse(str),
-  '.toml': (str: string): unknown => toml.parse(str),
+  '.json': (str: string): ParseResult => {
+    try {
+      return {ok: true, value: JSON.parse(str)};
+    } catch (ex: any) {
+      return failed(ex.message);
+    }
+  },
+  '.toml': (str: string): ParseResult => {
+    try {
+      return {ok: true, value: toml.parse(str)};
+    } catch (ex: any) {
+      return failed(ex.message);
+    }
+  },
 };
 const filenames = Object.keys(MANIFEST_EXTENSIONS).map(
   (ext) => `${MANIFEST_NAME}${ext}`,
@@ -48,76 +74,87 @@ export default createPublishTargetAPI<CustomScriptTargetConfig>({
     return filenames.some((f) => filename === f || filename.endsWith(`/${f}`));
   },
 
-  async getPackageManifest(path, content): Promise<PackageManifest | null> {
-    let result: unknown;
-    try {
-      result = parsePackage(path, content);
-    } catch (ex) {
-      // ignore
+  async getPackageManifest(
+    path,
+    content,
+  ): Promise<
+    {ok: true; manifest: PackageManifest | null} | {ok: false; reason: string}
+  > {
+    const parseResult = parsePackage(path, content);
+    if (!parseResult) return {ok: true, manifest: null};
+    if (!parseResult.ok) return parseResult;
+
+    const result = parseResult.value;
+
+    if (!isObject(result)) {
+      return failed(`Expected config to be an object`);
+    }
+    if (typeof result.name !== 'string') {
+      return failed('Expected "name" to be a string');
     }
 
-    if (isObject(result) && typeof result.name === 'string') {
-      if (!isObject(result.scripts)) {
-        throw new Error('Expected "scripts" to be an object');
-      }
-      if (
-        result.scripts.prepublish !== undefined &&
-        typeof result.scripts.prepublish !== 'string'
-      ) {
-        throw new Error(
-          'Expected "scripts"."prepublish" to be a string or undefined',
-        );
-      }
+    if (!isObject(result.scripts)) {
+      return failed('Expected "scripts" to be an object');
+    }
+    if (
+      result.scripts.prepublish !== undefined &&
+      typeof result.scripts.prepublish !== 'string'
+    ) {
+      return failed(
+        'Expected "scripts"."prepublish" to be a string or undefined',
+      );
+    }
 
-      if (
-        result.scripts.publish_dry_run !== undefined &&
-        typeof result.scripts.publish_dry_run !== 'string'
-      ) {
-        throw new Error(
-          'Expected "scripts"."publish_dry_run" to be a string or undefined',
-        );
-      }
+    if (
+      result.scripts.publish_dry_run !== undefined &&
+      typeof result.scripts.publish_dry_run !== 'string'
+    ) {
+      return failed(
+        'Expected "scripts"."publish_dry_run" to be a string or undefined',
+      );
+    }
 
-      if (typeof result.scripts.publish !== 'string') {
-        throw new Error('Expected "scripts"."publish" to be a string');
-      }
+    if (typeof result.scripts.publish !== 'string') {
+      return failed('Expected "scripts"."publish" to be a string');
+    }
 
-      if (
-        result.dependencies !== undefined &&
-        !(
-          Array.isArray(result.dependencies) &&
-          result.dependencies.every((value) => typeof value === 'string')
-        )
-      ) {
-        throw new Error(
-          'Expected "dependencies" to be undefined or an array of strings',
-        );
-      }
+    if (
+      result.dependencies !== undefined &&
+      !(
+        Array.isArray(result.dependencies) &&
+        result.dependencies.every((value) => typeof value === 'string')
+      )
+    ) {
+      return failed(
+        'Expected "dependencies" to be undefined or an array of strings',
+      );
+    }
 
-      if (
-        result.tag_format !== undefined &&
-        typeof result.tag_format !== 'string'
-      ) {
-        throw new Error('Expected "tag_format" to be undefined or a string');
+    const customized: (keyof RollingConfigOptions)[] = [];
+    const rawConfig: any = {};
+    for (const [configKey, pkgKey] of KEYS_TO_CONFIG) {
+      const value = result[pkgKey];
+      if (value !== undefined) {
+        rawConfig[configKey] = value;
+        customized.push(configKey);
       }
-      if (
-        result.versioning !== undefined &&
-        result.versioning !== VersioningMode.AlwaysIncreasing &&
-        result.versioning !== VersioningMode.ByBranch &&
-        result.versioning !== VersioningMode.Unambiguous
-      ) {
-        throw new Error(
-          `Expected "versioning" to be undefined or one of: ${Object.values(
-            VersioningMode,
-          )
-            .map((v) => JSON.stringify(v))
-            .join(`, `)}`,
-        );
+    }
+    const config = parseRollingConfigOptions(rawConfig);
+
+    if (!config.success) {
+      let reason = config.reason;
+      for (const [configKey, pkgKey] of KEYS_TO_CONFIG) {
+        reason = reason.split(configKey).join(pkgKey);
       }
-      return {
+      return fail(reason);
+    }
+
+    return {
+      ok: true,
+      manifest: {
         packageName: result.name,
-        tagFormat: result.tag_format,
-        versioning: result.versioning,
+        ...config.value,
+        customized,
         targetConfigs: [
           {
             type: PublishTarget.custom_script,
@@ -132,10 +169,8 @@ export default createPublishTargetAPI<CustomScriptTargetConfig>({
           optional: [],
           development: [],
         },
-      };
-    } else {
-      return null;
-    }
+      },
+    };
   },
 
   async prepublish(config, pkg, targetConfig, packageVersions) {

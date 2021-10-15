@@ -31,16 +31,17 @@ export default async function getPullRequest(
   if (!pr) {
     return null;
   }
-  const packages = await getDetailedPackageManifestsForPullRequest(
+  const getPackagesResult = await getDetailedPackageManifestsForPullRequest(
     db,
     client,
     repo,
     pr,
     logger,
   );
-  if (!packages) {
+  if (!getPackagesResult) {
     return null;
   }
+  const {packages, packageErrors} = getPackagesResult;
   const headCommit = await getPullRequestHeadCommit(
     db,
     client,
@@ -62,6 +63,7 @@ export default async function getPullRequest(
     permission,
     headSha: headCommit?.commit_sha ?? `unknown_commit`,
     packages,
+    packageErrors,
     closed: pr.is_closed,
     merged: pr.is_merged,
   };

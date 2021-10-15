@@ -156,6 +156,7 @@ switch (COMMAND) {
                 changesToMarkdown(p.changeSet, {
                   headingLevel: 3,
                   renderContext: ({pr}) => ` (#${pr})`,
+                  changeTypes: p.manifest.changeTypes,
                 }),
               );
               console.warn(``);
@@ -200,6 +201,21 @@ switch (COMMAND) {
             console.error(
               `There is no safe order to publish packages in when there is a circular dependency, therefore none of your packages were published.`,
             );
+            console.error(``);
+            return process.exit(supressErrors ? 0 : 1);
+          case PublishResultKind.PackageManifestErrors:
+            console.error(
+              `Errors were encountered while parsing some package manifests:`,
+            );
+            console.error(``);
+            for (const {filename, error} of result.errors) {
+              console.error(filename);
+              console.error(``);
+              for (const line of error.split(`\n`)) {
+                console.error(`  ${line}`);
+              }
+              console.error(``);
+            }
             return process.exit(supressErrors ? 0 : 1);
           case PublishResultKind.GitHubAuthCheckFail:
             console.error(`GitHub pre-release steps failed:`);

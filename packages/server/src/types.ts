@@ -54,6 +54,9 @@ export const PullRequestResponseCodec = t.Named(
       closed: t.Boolean,
       merged: t.Boolean,
       packages: PullRequestPackagesCodec,
+      packageErrors: t.Readonly(
+        t.Array(t.Readonly(t.Object({filename: t.String, error: t.String}))),
+      ),
     }),
   ),
 );

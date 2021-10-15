@@ -1,5 +1,7 @@
 import {URL} from 'url';
 
+import {DEFAULT_CONFIG} from '@rollingversions/config';
+
 import type {PullRequestPackage} from '../../types';
 import {renderCommentWithoutState} from '../Rendering';
 
@@ -16,6 +18,8 @@ function mockPackage(
 ): PullRequestPackage {
   return {
     manifest: {
+      ...DEFAULT_CONFIG,
+      customized: [],
       packageName: packageName,
       targetConfigs: [],
       dependencies: {required: [], optional: [], development: []},
@@ -51,6 +55,7 @@ test('renderCommentWithoutState', () => {
           mockPackage('changelogversion-server'),
         ],
       ]),
+      [],
       new URL('https://example.com'),
     ),
   ).toMatchInlineSnapshot(`

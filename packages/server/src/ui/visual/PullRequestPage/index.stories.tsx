@@ -3,6 +3,7 @@ import * as React from 'react';
 import {MemoryRouter} from 'react-router-dom';
 
 import {createChangeSet} from '@rollingversions/change-set';
+import {DEFAULT_CONFIG} from '@rollingversions/config';
 import {PackageManifest, PublishTarget} from '@rollingversions/types';
 
 import PullRequestPage from '.';
@@ -16,6 +17,8 @@ function packageManifest(
   manifest: Pick<PackageManifest, 'packageName'> & Partial<PackageManifest>,
 ): PackageManifest {
   return {
+    ...DEFAULT_CONFIG,
+    customized: [],
     targetConfigs: [
       {
         type: PublishTarget.npm,
@@ -69,6 +72,7 @@ const Template = (props: Partial<PullRequestPageProps>) => {
               ],
             ])
           }
+          packageErrors={[]}
           onSave={async (...args) => {
             action('save')(...args);
             setSaving(true);

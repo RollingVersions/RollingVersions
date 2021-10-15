@@ -13,6 +13,7 @@ import ChangeBranchDialog, {
 import ChangeBranchLink from '../visual/ChangeBranchLink';
 import RepositoryPage, {
   CycleWarning,
+  ManifestWarning,
   PackageWithChanges,
   PackageWithNoChanges,
   ReleaseButton,
@@ -105,6 +106,9 @@ export default function Repository() {
               {state.cycleDetected ? (
                 <CycleWarning cycle={state.cycleDetected} />
               ) : null}
+              {state.packageErrors.map(({filename, error}, i) => (
+                <ManifestWarning key={i} filename={filename} error={error} />
+              ))}
               {state.packages.map((pkg) => {
                 if (pkg.currentVersion?.ok !== false) {
                   return null;
@@ -135,6 +139,7 @@ export default function Repository() {
                     }
                     newVersion={printString(pkg.newVersion)}
                     changeSet={pkg.changeSet}
+                    changeTypes={pkg.manifest.changeTypes}
                   />
                 );
               })}
