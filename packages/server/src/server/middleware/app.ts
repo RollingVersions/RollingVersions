@@ -1,12 +1,10 @@
-import escape from 'escape-html';
 import {Router} from 'express';
 
-import db, {q, tables} from '@rollingversions/db';
+import db from '@rollingversions/db';
 
 import {PullRequestResponseCodec} from '../../types';
 import {getClientForRepo, getClientForToken} from '../getClient';
 import {expressLogger} from '../logger';
-import {refreshPullRequestMergeCommits} from '../models/PullRequests';
 import {getRepositoryFromRestParams} from '../models/Repositories';
 import getPullRequest from './api/getPullRequest';
 import getRepository from './api/getRepository';
@@ -16,7 +14,6 @@ import checkPermissions, {
   getPermission,
   getUser,
   checkRepoPermissions,
-  checkAdminPermissions,
 } from './utils/checkPermissions';
 import validateBody, {getBody} from './utils/validateBody';
 import validateParams, {
@@ -141,73 +138,6 @@ appMiddleware.post(
       }
     } catch (ex) {
       next(ex);
-    }
-  },
-);
-
-appMiddleware.get(
-  `/refresh-merge-commits`,
-  requiresAuth(),
-  checkAdminPermissions(),
-  async (req, res, next) => {
-    let started = false;
-    try {
-      const start = Date.now();
-      const repositories = await tables
-        .git_repositories(db)
-        .find(
-          req.query.after
-            ? {id: q.greaterThan(parseInt(req.query.after, 10))}
-            : {},
-        )
-        .orderByAsc(`id`)
-        .limit(50);
-      started = true;
-      res.setHeader(`Content-Type`, `text/html`);
-      res.write(`<ul>`);
-      let greatest = null;
-      for (const repo of repositories) {
-        if (Date.now() - start > 10_000) break;
-        let client;
-        try {
-          client = await getClientForRepo(repo);
-        } catch (ex) {
-          // if we can't get a client, just move on to the next repo
-          greatest = repo.id;
-          continue;
-        }
-        const {
-          successfullyAdded,
-          missing,
-        } = await refreshPullRequestMergeCommits(
-          db,
-          client,
-          repo,
-          expressLogger(req, res),
-        );
-        greatest = repo.id;
-
-        res.write(
-          `<li>${escape(repo.owner)}/${escape(
-            repo.name,
-          )} - <strong>successfully added:</strong> ${escape(
-            `${successfullyAdded}`,
-          )}, <strong>missing:</strong> ${escape(`${missing}`)}</li>`,
-        );
-      }
-      res.write(`</ul>`);
-      if (greatest) {
-        res.write(
-          `<a href="/refresh-merge-commits?after=${greatest}">Next</a>`,
-        );
-      }
-      res.end();
-    } catch (ex) {
-      if (!started) {
-        next(ex);
-      } else {
-        res.end(`<pre>${escape(`${ex.stack || ex.message || ex}`)}</pre>`);
-      }
     }
   },
 );

@@ -3,7 +3,7 @@ import {MemoryRouter} from 'react-router-dom';
 
 import {createChangeSet} from '@rollingversions/change-set';
 
-import type {RepositoryPageProps} from '.';
+import {RepositoryPageProps, useBranchState} from '.';
 import RepositoryPage, {
   CycleWarning,
   PackageWithChanges,
@@ -12,19 +12,54 @@ import RepositoryPage, {
 } from '.';
 import AppContainer from '../AppContainer';
 import AppNavBar, {AppNavBarLink} from '../AppNavBar';
+import ChangeBranchDialog, {ChangeBranchButton} from '../ChangeBranchDialog';
+import ChangeBranchLink from '../ChangeBranchLink';
 
 export default {title: 'pages/RepositoryPage'};
 
-const Template = (props: RepositoryPageProps) => {
+const TemplateInner = ({
+  dialog,
+  ...props
+}: RepositoryPageProps & {dialog?: React.ReactNode}) => {
+  const {branch, changingBranch} = useBranchState();
   return (
-    <MemoryRouter>
+    <>
       <AppContainer>
         <AppNavBar>
           <AppNavBarLink to={`#`}>ForbesLindesay</AppNavBarLink>
           <AppNavBarLink>atdatabases</AppNavBarLink>
+          <AppNavBarLink>
+            {branch ?? `main`}
+            <ChangeBranchLink currentBranch={branch} />
+          </AppNavBarLink>
         </AppNavBar>
         <RepositoryPage {...props} />
       </AppContainer>
+
+      <ChangeBranchDialog open={changingBranch} currentBranch={branch}>
+        <ChangeBranchButton to={{search: `?branch=main`}}>
+          main
+        </ChangeBranchButton>
+        {Array.from({length: 20}).map((_, i) => (
+          <ChangeBranchButton
+            key={i}
+            to={{
+              search: `?branch=${encodeURIComponent(
+                `feat/${String.fromCharCode(97 + i)}`,
+              )}`,
+            }}
+          >
+            feat/{String.fromCharCode(97 + i)}
+          </ChangeBranchButton>
+        ))}
+      </ChangeBranchDialog>
+    </>
+  );
+};
+const Template = (props: RepositoryPageProps & {dialog?: React.ReactNode}) => {
+  return (
+    <MemoryRouter>
+      <TemplateInner {...props} />
     </MemoryRouter>
   );
 };
