@@ -93,3 +93,34 @@ test('Custom tag format', () => {
     build: [],
   });
 });
+
+test('Custom tag format with optional sections', () => {
+  expect(
+    parseTag('1.2.3', {
+      ...baseContext,
+      tagFormat: '{{MAJOR}}.{{MINOR}}{{?.{{PATCH}}}}',
+    }),
+  ).toEqual({
+    numerical: [1, 2, 3],
+    prerelease: [],
+    build: [],
+  });
+
+  expect(
+    parseTag('1.2', {
+      ...baseContext,
+      tagFormat: '{{MAJOR}}.{{MINOR}}.{{PATCH}}',
+    }),
+  ).toEqual(null);
+
+  expect(
+    parseTag('1.2', {
+      ...baseContext,
+      tagFormat: '{{MAJOR}}.{{MINOR}}{{?.{{PATCH}}}}',
+    }),
+  ).toEqual({
+    numerical: [1, 2, 0],
+    prerelease: [],
+    build: [],
+  });
+});

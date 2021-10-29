@@ -20,7 +20,7 @@ export function printTag(
   }: PrintTagContext,
 ): string {
   if (tagFormat) {
-    return parseTemplate(tagFormat).applyTemplate((variableName: string) => {
+    return parseTemplate(tagFormat).print((variableName: string) => {
       if (variableName === 'PACKAGE_NAME') {
         return packageName;
       }
@@ -58,24 +58,34 @@ export function parseTag(
 ): VersionNumber | null {
   if (tagFormat) {
     const numerical = versionSchema.map(() => 0);
-    const isValid = parseTemplate(tagFormat).parse(
+    const values = parseTemplate(tagFormat).parse<[string, number]>(
       tagName,
-      (variableName: string, str: string) => {
+      (state, variableName) => {
         if (variableName === 'PACKAGE_NAME') {
-          return str.startsWith(packageName) ? packageName : null;
+          if (!state.rest.startsWith(packageName)) return null;
+
+          state.rest = state.rest.substr(packageName.length);
+
+          return state;
+        } else {
+          const match = /^\d+/.exec(state.rest);
+          if (!match) return null;
+
+          state.values.push([variableName, parseInt(match[0], 10)]);
+          state.rest = state.rest.substr(match[0].length);
+
+          return state;
         }
-        const i = versionSchema.indexOf(variableName);
-        if (i !== -1) {
-          const match = /^\d+/.exec(str);
-          if (match) {
-            numerical[i] = parseInt(match[0], 10);
-            return match[0];
-          }
-        }
-        throw new Error(`Unsupported variable: "${variableName}"`);
       },
     );
-    if (isValid) {
+    if (values) {
+      for (const [variableName, value] of values) {
+        const i = versionSchema.indexOf(variableName);
+        if (i === -1) {
+          throw new Error(`Unsupported variable: "${variableName}"`);
+        }
+        numerical[i] = value;
+      }
       return {
         numerical,
         prerelease: [],
