@@ -499,25 +499,7 @@ function selectRecursiveUnion(q: {
 }
 const anyValue = (value: Set<string>) =>
   value.size === 1 ? sql`${[...value][0]}` : sql`ANY(${[...value]})`;
-function withCherryPickedCommits(q: {
-  fields: SQLQuery;
-  nameWithoutCherryPicked: SQLQuery;
-  repositoryID: DbGitRepository['id'];
-  filter?: SQLQuery;
-}) {
-  return sql`(
-    SELECT ${q.fields} FROM ${q.nameWithoutCherryPicked} c
-    ${q.filter ? sql`` : sql`WHERE ${q.filter}`}
-    UNION
-    SELECT ${q.fields} FROM git_commits c
-    INNER JOIN ${q.nameWithoutCherryPicked} d
-    ON (c.git_repository_id = ${q.repositoryID} AND (
-      (c.cherry_picked_from IS NOT NULL AND d.commit_sha = ANY(c.cherry_picked_from)) OR
-      (d.cherry_picked_from IS NOT NULL AND c.commit_sha = ANY(d.cherry_picked_from))
-    ))
-    ${q.filter ? sql`` : sql`WHERE ${q.filter}`}
-  )`;
-}
+
 function selectCommits({
   repositoryID,
   includedCommits,
@@ -637,18 +619,7 @@ export async function getUnreleasedChanges(
     LEFT OUTER JOIN git_refs AS ref ON (
       ref.git_repository_id = ${repo.id} AND ref.pr_number = pr.pr_number
     )
-    INNER JOIN ${withCherryPickedCommits({
-      fields: sql`c.commit_sha`,
-      nameWithoutCherryPicked: sql`commits`,
-      repositoryID: repo.id,
-      filter: releasedCommits.size
-        ? sql`c.commit_sha NOT IN ${withCherryPickedCommits({
-            fields: sql`c.commit_sha`,
-            nameWithoutCherryPicked: sql`excluded_commits`,
-            repositoryID: repo.id,
-          })}`
-        : undefined,
-    })} AS c ON (
+    INNER JOIN commits AS c ON (
       pr.merge_commit_sha = c.commit_sha OR
       ref.commit_sha = c.commit_sha
     )
@@ -675,12 +646,8 @@ export async function isCommitReleased(
       excludedCommits: new Set(),
     })}
     SELECT COUNT(*) as result
-    FROM ${withCherryPickedCommits({
-      fields: sql`c.commit_sha`,
-      nameWithoutCherryPicked: sql`commits`,
-      repositoryID: repo.id,
-      filter: sql`c.commit_sha = ${commitShaToCheck}`,
-    })} AS c
+    FROM commits AS c
+    WHERE c.commit_sha = ${commitShaToCheck}
   `);
   return parseInt(`${result}`, 10) === 1;
 }
