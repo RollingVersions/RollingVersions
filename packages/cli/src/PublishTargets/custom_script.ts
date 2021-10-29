@@ -21,7 +21,7 @@ const KEYS_TO_CONFIG: [keyof RollingConfigOptions, string][] = [
   ['baseVersion', 'base_version'],
   ['changeTypes', 'change_types'],
   ['tagFormat', 'tag_format'],
-  ['versioningMode', 'versioning'],
+  ['versioningMode', 'versioning_mode'],
   ['versionSchema', 'version_schema'],
 ];
 
@@ -131,12 +131,21 @@ export default createPublishTargetAPI<CustomScriptTargetConfig>({
     }
 
     const customized: (keyof RollingConfigOptions)[] = [];
-    const rawConfig: any = {};
+    const rawConfig: {
+      -readonly [k in keyof RollingConfigOptions]?: unknown;
+    } = {};
     for (const [configKey, pkgKey] of KEYS_TO_CONFIG) {
       const value = result[pkgKey];
       if (value !== undefined) {
         rawConfig[configKey] = value;
         customized.push(configKey);
+      }
+    }
+    if (rawConfig.versioningMode === undefined) {
+      const value = result.versioning;
+      if (value !== undefined) {
+        rawConfig.versioningMode = value;
+        customized.push(`versioningMode`);
       }
     }
     const config = parseRollingConfigOptions(rawConfig);

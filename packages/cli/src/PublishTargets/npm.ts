@@ -26,12 +26,12 @@ const detectIndent = require('detect-indent');
 const detectNewline = require('detect-newline').graceful;
 const stringifyPackage = require('stringify-package');
 
-const KEYS_TO_CONFIG: [keyof RollingConfigOptions, string][] = [
-  ['baseVersion', 'base-version'],
-  ['changeTypes', 'change-types'],
-  ['tagFormat', 'tag-format'],
-  ['versioningMode', 'versioning'],
-  ['versionSchema', 'version-schema'],
+const CONFIG_KEYS: (keyof RollingConfigOptions)[] = [
+  'baseVersion',
+  'changeTypes',
+  'tagFormat',
+  'versioningMode',
+  'versionSchema',
 ];
 
 function versionPrefix(oldVersion: string, {canary}: {canary: boolean}) {
@@ -153,12 +153,21 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
     }
 
     const customized: (keyof RollingConfigOptions)[] = [];
-    const rawConfig: any = {};
-    for (const [configKey, pkgKey] of KEYS_TO_CONFIG) {
-      const value = getConfigValue(pkgKey, pkgData);
+    const rawConfig: {
+      -readonly [k in keyof RollingConfigOptions]?: unknown;
+    } = {};
+    for (const configKey of CONFIG_KEYS) {
+      const value = getConfigValue(configKey, pkgData);
       if (value !== undefined) {
         rawConfig[configKey] = value;
         customized.push(configKey);
+      }
+    }
+    if (rawConfig.versioningMode === undefined) {
+      const value = getConfigValue(`versioning`, pkgData);
+      if (value !== undefined) {
+        rawConfig.versioningMode = value;
+        customized.push(`versioningMode`);
       }
     }
 
@@ -166,8 +175,10 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
 
     if (!config.success) {
       let reason = config.reason;
-      for (const [configKey, pkgKey] of KEYS_TO_CONFIG) {
-        reason = reason.split(configKey).join(getConfigName(pkgKey, pkgData));
+      for (const configKey of CONFIG_KEYS) {
+        reason = reason
+          .split(configKey)
+          .join(getConfigName(configKey, pkgData));
       }
       return fail(reason);
     }
