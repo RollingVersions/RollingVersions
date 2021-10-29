@@ -108,28 +108,28 @@ commands:
           command: node -v && npm -v && yarn -v
       - run:
           name: Combine package.json files to single file for cache key
-          command: cat packages/*/package.json > cat all-packages.txt
+          command: cat packages/*/package.json > all-packages.txt
       - restore_cache:
           name: Restore Yarn Cache
           keys:
             - yarn-{{ checksum "yarn.lock" }}-{{ checksum "all-packages.txt" }}
       - run:
           name: Install Dependencies
-          command: '[[ -f ~/node_modules/.yarn-integrity ]] && echo skipping || yarn install --frozen-lockfile'
+          command: '[[ -f node_modules/.yarn-integrity ]] && echo skipping || yarn install --frozen-lockfile'
       - save_cache:
           name: Save Yarn Cache
           key: yarn-{{ checksum "yarn.lock" }}-{{ checksum "all-packages.txt" }}
           paths:
-            - ~/node_modules
-            - ~/change-set/node_modules
-            - ~/cli/node_modules
-            - ~/config/node_modules
-            - ~/db/node_modules
-            - ~/server/node_modules
-            - ~/sort-by-dependencies/node_modules
-            - ~/tag-format/node_modules
-            - ~/types/node_modules
-            - ~/version-number/node_modules
+            - node_modules
+            - change-set/node_modules
+            - cli/node_modules
+            - config/node_modules
+            - db/node_modules
+            - server/node_modules
+            - sort-by-dependencies/node_modules
+            - tag-format/node_modules
+            - types/node_modules
+            - version-number/node_modules
 
   npm_auth:
     description: 'Authenticate with the npm registry'
@@ -155,15 +155,15 @@ commands:
           name: Save TypeScript Cache
           key: typescript-{{ checksum "yarn.lock" }}-{{ checksum "all-typescript.txt" }}
           paths:
-            - ~/change-set/lib
-            - ~/cli/lib
-            - ~/config/lib
-            - ~/db/lib
-            - ~/server/lib
-            - ~/sort-by-dependencies/lib
-            - ~/tag-format/lib
-            - ~/types/lib
-            - ~/version-number/lib
+            - change-set/lib
+            - cli/lib
+            - config/lib
+            - db/lib
+            - server/lib
+            - sort-by-dependencies/lib
+            - tag-format/lib
+            - types/lib
+            - version-number/lib
 
   test:
     steps:
