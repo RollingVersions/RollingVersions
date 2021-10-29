@@ -112,24 +112,24 @@ commands:
       - restore_cache:
           name: Restore Yarn Cache
           keys:
-            - yarn-{{ checksum "yarn.lock" }}-{{ checksum "all-packages.txt" }}
+            - v1-yarn-{{ checksum "yarn.lock" }}-{{ checksum "all-packages.txt" }}
       - run:
           name: Install Dependencies
           command: '[[ -f node_modules/.yarn-integrity ]] && echo skipping || yarn install --frozen-lockfile'
       - save_cache:
           name: Save Yarn Cache
-          key: yarn-{{ checksum "yarn.lock" }}-{{ checksum "all-packages.txt" }}
+          key: v1-yarn-{{ checksum "yarn.lock" }}-{{ checksum "all-packages.txt" }}
           paths:
             - node_modules
-            - change-set/node_modules
-            - cli/node_modules
-            - config/node_modules
-            - db/node_modules
-            - server/node_modules
-            - sort-by-dependencies/node_modules
-            - tag-format/node_modules
-            - types/node_modules
-            - version-number/node_modules
+            - packages/change-set/node_modules
+            - packages/cli/node_modules
+            - packages/config/node_modules
+            - packages/db/node_modules
+            - packages/server/node_modules
+            - packages/sort-by-dependencies/node_modules
+            - packages/tag-format/node_modules
+            - packages/types/node_modules
+            - packages/version-number/node_modules
 
   npm_auth:
     description: 'Authenticate with the npm registry'
@@ -146,24 +146,24 @@ commands:
       - restore_cache:
           name: Restore TypeScript Cache
           keys:
-            - typescript-{{ checksum "yarn.lock" }}-{{ checksum "all-typescript.txt" }}
-            - typescript-{{ checksum "yarn.lock" }}-
+            - v1-typescript-{{ checksum "yarn.lock" }}-{{ checksum "all-typescript.txt" }}
+            - v1-typescript-{{ checksum "yarn.lock" }}-
       - run:
           name: Build
           command: yarn build
       - save_cache:
           name: Save TypeScript Cache
-          key: typescript-{{ checksum "yarn.lock" }}-{{ checksum "all-typescript.txt" }}
+          key: v1-typescript-{{ checksum "yarn.lock" }}-{{ checksum "all-typescript.txt" }}
           paths:
-            - change-set/lib
-            - cli/lib
-            - config/lib
-            - db/lib
-            - server/lib
-            - sort-by-dependencies/lib
-            - tag-format/lib
-            - types/lib
-            - version-number/lib
+            - packages/change-set/lib
+            - packages/cli/lib
+            - packages/config/lib
+            - packages/db/lib
+            - packages/server/lib
+            - packages/sort-by-dependencies/lib
+            - packages/tag-format/lib
+            - packages/types/lib
+            - packages/version-number/lib
 
   test:
     steps:
