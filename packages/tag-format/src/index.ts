@@ -2,7 +2,7 @@ import {DEFAULT_VERSION_SCHEMA} from '@rollingversions/config';
 import type {VersionNumber, VersionSchema} from '@rollingversions/types';
 import {parseString, printString} from '@rollingversions/version-number';
 
-import parseTemplate from './Template';
+import parseTemplate from './TemplateCache';
 
 export interface PrintTagContext {
   packageName: string;
