@@ -47,6 +47,7 @@ workflows:
   hotfix:
     jobs:
       - hotfix-approval:
+          <<: *only_master
           type: approval
 
       - deploy-hotfix:
