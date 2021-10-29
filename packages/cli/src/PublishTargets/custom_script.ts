@@ -155,7 +155,7 @@ export default createPublishTargetAPI<CustomScriptTargetConfig>({
       for (const [configKey, pkgKey] of KEYS_TO_CONFIG) {
         reason = reason.split(configKey).join(pkgKey);
       }
-      return fail(reason);
+      return failed(reason);
     }
 
     return {

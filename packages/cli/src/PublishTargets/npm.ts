@@ -180,7 +180,7 @@ export default createPublishTargetAPI<NpmPublishTargetConfig>({
           .split(configKey)
           .join(getConfigName(configKey, pkgData));
       }
-      return fail(reason);
+      return failed(reason);
     }
 
     const required = [
