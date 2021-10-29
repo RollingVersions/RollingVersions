@@ -503,6 +503,7 @@ function withCherryPickedCommits(q: {
   name: SQLQuery;
   fields: SQLQuery;
   nameWithoutCherryPicked: SQLQuery;
+  repositoryID: DbGitRepository['id'];
 }) {
   return sql`
     ${q.name} AS (
@@ -510,10 +511,10 @@ function withCherryPickedCommits(q: {
       UNION
       SELECT ${q.fields} FROM git_commits c
       INNER JOIN ${q.nameWithoutCherryPicked} d
-      ON (
+      ON (c.git_repository_id = ${q.repositoryID} AND (
         (c.cherry_picked_from IS NOT NULL AND d.commit_sha = ANY(c.cherry_picked_from)) OR
         (d.cherry_picked_from IS NOT NULL AND c.commit_sha = ANY(d.cherry_picked_from))
-      )
+      ))
     )
   `;
 }
@@ -543,6 +544,7 @@ function selectCommits({
         name: sql`excluded_commits`,
         fields: sql`c.commit_sha`,
         nameWithoutCherryPicked: sql`excluded_commits_direct`,
+        repositoryID,
       }),
     );
   }
@@ -563,6 +565,7 @@ function selectCommits({
       name: sql`commits`,
       fields: sql`c.*`,
       nameWithoutCherryPicked: sql`commits_direct`,
+      repositoryID,
     }),
   );
   return sql`

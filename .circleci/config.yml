@@ -44,6 +44,16 @@ workflows:
           requires:
             - production-approval
 
+  hotfix:
+    jobs:
+      - hotfix-approval:
+          type: approval
+
+      - deploy-hotfix:
+          <<: *only_master
+          requires:
+            - hotfix-approval
+
 jobs:
   unit-tests:
     docker:
@@ -98,6 +108,16 @@ jobs:
       - deploy:
           environment: production
 
+  deploy-hotfix:
+    docker:
+      - image: circleci/node:14
+    steps:
+      - setup
+      - npm_auth
+      - build
+      - push
+      - deploy:
+          environment: production
 commands:
   setup:
     description: 'Checkout and install dependencies'
