@@ -3,12 +3,7 @@ import {URL} from 'url';
 import type ChangeSet from '@rollingversions/change-set';
 import {changesToMarkdown, isEmptyChangeSet} from '@rollingversions/change-set';
 import {printTag} from '@rollingversions/tag-format';
-import {
-  PackageManifest,
-  PullRequest,
-  VersionNumber,
-  VersionTag,
-} from '@rollingversions/types';
+import {PackageManifest, PullRequest, VersionTag} from '@rollingversions/types';
 import {getNextVersion, printString} from '@rollingversions/version-number';
 
 import type {PullRequestPackage} from '../types';
