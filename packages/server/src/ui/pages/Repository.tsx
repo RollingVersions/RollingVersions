@@ -1,6 +1,7 @@
 import React from 'react';
 import {useParams} from 'react-router-dom';
 
+import {printTag} from '@rollingversions/tag-format';
 import {GetRepositoryApiResponse, VersioningMode} from '@rollingversions/types';
 import {printString} from '@rollingversions/version-number';
 
@@ -134,10 +135,21 @@ export default function Repository() {
                     packageName={pkg.manifest.packageName}
                     currentVersion={
                       currentVersion?.ok
-                        ? printString(currentVersion.version)
+                        ? pkg.manifest.tagFormat
+                          ? currentVersion.name
+                          : printString(currentVersion.version)
                         : null
                     }
-                    newVersion={printString(pkg.newVersion)}
+                    newVersion={
+                      pkg.manifest.tagFormat
+                        ? printTag(pkg.newVersion, {
+                            packageName: pkg.manifest.packageName,
+                            oldTagName: null,
+                            tagFormat: pkg.manifest.tagFormat,
+                            versionSchema: pkg.manifest.versionSchema,
+                          })
+                        : printString(pkg.newVersion)
+                    }
                     changeSet={pkg.changeSet}
                     changeTypes={pkg.manifest.changeTypes}
                   />

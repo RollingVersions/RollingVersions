@@ -4,6 +4,7 @@ import {execBuffered} from 'modern-spawn';
 import * as toml from 'toml';
 
 import {parseRollingConfigOptions} from '@rollingversions/config';
+import {printTag} from '@rollingversions/tag-format';
 import {
   CustomScriptTargetConfig,
   PackageManifest,
@@ -14,6 +15,7 @@ import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
 
 import isObject from '../ts-utils/isObject';
+import {NewVersionToBePublished} from '../types/PackageStatus';
 import {PublishConfig} from '../types/publish';
 import createPublishTargetAPI from './baseTarget';
 
@@ -183,7 +185,7 @@ export default createPublishTargetAPI<CustomScriptTargetConfig>({
   },
 
   async prepublish(config, pkg, targetConfig, packageVersions) {
-    const env = getEnv(config, pkg.newVersion, packageVersions);
+    const env = getEnv(config, pkg, packageVersions);
 
     if (targetConfig.prepublish) {
       const result = await execBuffered(targetConfig.prepublish, {
@@ -199,7 +201,7 @@ export default createPublishTargetAPI<CustomScriptTargetConfig>({
   },
 
   async publish(config, pkg, targetConfig, packageVersions) {
-    const env = getEnv(config, pkg.newVersion, packageVersions);
+    const env = getEnv(config, pkg, packageVersions);
     if (config.dryRun) {
       if (targetConfig.publish_dry_run) {
         const result = await execBuffered(targetConfig.publish_dry_run, {
@@ -223,7 +225,7 @@ export default createPublishTargetAPI<CustomScriptTargetConfig>({
 
 function getEnv(
   config: PublishConfig,
-  newVersion: VersionNumber,
+  pkg: NewVersionToBePublished,
   packageVersions: Map<string, VersionNumber | null>,
 ) {
   const env: {[key: string]: string | undefined} = {...process.env};
@@ -240,7 +242,17 @@ function getEnv(
   env.GITHUB_REPOSITORY_OWNER = config.owner;
   env.GITHUB_REPOSITORY_NAME = config.name;
 
-  env.NEW_VERSION = printString(newVersion);
+  if (pkg.currentVersion) env.CURRENT_VERSION = printString(pkg.currentVersion);
+  if (pkg.currentTagName) env.CURRENT_TAG = pkg.currentTagName;
+
+  env.NEW_VERSION = printString(pkg.newVersion);
+  env.NEW_TAG = printTag(pkg.newVersion, {
+    packageName: pkg.packageName,
+    oldTagName: pkg.currentTagName,
+    tagFormat: pkg.manifest.tagFormat,
+    versionSchema: pkg.manifest.versionSchema,
+  });
+
   for (const [name, version] of packageVersions) {
     if (version !== null) {
       env[dependencyNameToEnvVar(name)] = printString(version);
