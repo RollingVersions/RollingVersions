@@ -3,15 +3,9 @@ import db from '@rollingversions/db';
 import sortPackagesByDependencies from '@rollingversions/sort-by-dependencies';
 import {
   ApiPackageResponse,
-  CurrentVersionTag,
   GetRepositoryApiResponse,
-  VersioningMode,
-  VersionTag,
 } from '@rollingversions/types';
-import {
-  getNextVersion,
-  eq as versionsEqual,
-} from '@rollingversions/version-number';
+import {getNextVersion} from '@rollingversions/version-number';
 
 import type {Logger} from '../../logger';
 import {
@@ -23,40 +17,13 @@ import {
   getAllBranches,
 } from '../../models/git';
 import {
-  getMaxVersion,
+  getCurrentVersion,
   getPackageManifests,
   getPackageVersions,
 } from '../../models/PackageManifests';
 import {getRepositoryFromRestParams} from '../../models/Repositories';
 import type {GitHubClient} from '../../services/github';
 
-function getCurrentVersion({
-  maxVersion,
-  branchVersion,
-  mode,
-}: {
-  maxVersion: null | VersionTag;
-  branchVersion: null | VersionTag;
-  mode: VersioningMode;
-}): CurrentVersionTag | null {
-  switch (mode) {
-    case VersioningMode.AlwaysIncreasing:
-      return maxVersion && {ok: true, ...maxVersion};
-    case VersioningMode.ByBranch:
-      return branchVersion && {ok: true, ...branchVersion};
-    case VersioningMode.Unambiguous:
-      if (
-        branchVersion === maxVersion ||
-        (branchVersion &&
-          maxVersion &&
-          versionsEqual(branchVersion.version, maxVersion.version))
-      ) {
-        return maxVersion && {ok: true, ...maxVersion};
-      } else {
-        return {ok: false, maxVersion, branchVersion};
-      }
-  }
-}
 export default async function getRepository(
   client: GitHubClient,
   repository: {
@@ -154,9 +121,10 @@ export default async function getRepository(
             manifest,
           });
           const currentVersion = getCurrentVersion({
-            maxVersion: getMaxVersion(allVersions),
-            branchVersion: getMaxVersion(branchVersions),
-            mode: manifest.versioningMode,
+            allVersions,
+            branchVersions,
+            versioningMode: manifest.versioningMode,
+            branchName: branch ?? repo.default_branch_name,
           });
           const changeSet: ChangeSet<{pr: number}> = (
             await getUnreleasedChanges(db, repo, {

@@ -6,4 +6,18 @@ enum VersioningMode {
 }
 export default VersioningMode;
 
-export const VersioningModeCodec = t.Enum(`VersioningMode`, VersioningMode);
+const LiteralVersioningModeCodec = t.Enum(`VersioningMode`, VersioningMode);
+export const VersioningModeCodec = t.Union(
+  LiteralVersioningModeCodec,
+  t.Readonly(
+    t.Array(
+      t.Readonly(
+        t.Object({
+          branch: t.String,
+          mode: LiteralVersioningModeCodec,
+        }),
+      ),
+    ),
+  ),
+);
+export type VersioningModeConfig = t.Static<typeof VersioningModeCodec>;

@@ -277,11 +277,6 @@ export async function getPullRequestFromGraphID(
   if (!result.databaseId) {
     throw new Error(`Got null for pull request databaseId`);
   }
-  // if (result.merged && !result.mergeCommit) {
-  //   throw new Error(
-  //     `Unexpected pull request that is merged but has no merge commit`,
-  //   );
-  // }
   return {
     id: result.databaseId,
     graphql_id,
@@ -290,6 +285,8 @@ export async function getPullRequestFromGraphID(
     is_merged: result.merged,
     is_closed: result.closed || result.merged,
     merge_commit_sha: result.mergeCommit?.oid ?? null,
+    head_ref_name: result.headRefName,
+    base_ref_name: result.baseRefName,
   };
 }
 
@@ -309,11 +306,6 @@ export async function getPullRequestFromNumber(
   if (!result.databaseId) {
     throw new Error(`Got null for pull request databaseId`);
   }
-  // if (result.merged && !result.mergeCommit) {
-  //   throw new Error(
-  //     `Unexpected pull request that is merged but has no merge commit`,
-  //   );
-  // }
   return {
     id: result.databaseId,
     graphql_id: result.id,
@@ -322,6 +314,8 @@ export async function getPullRequestFromNumber(
     is_merged: result.merged,
     is_closed: result.closed || result.merged,
     merge_commit_sha: result.mergeCommit?.oid ?? null,
+    head_ref_name: result.headRefName,
+    base_ref_name: result.baseRefName,
   };
 }
 export async function* getAllPullRequestCommits(
@@ -365,6 +359,8 @@ export interface PullRequestDetail {
   is_merged: boolean;
   is_closed: boolean;
   merge_commit_sha: string | null;
+  head_ref_name: string;
+  base_ref_name: string;
 }
 
 export const updateCommitStatus = withRetry(

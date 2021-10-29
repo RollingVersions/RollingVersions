@@ -170,6 +170,8 @@ query GetPullRequestFromGraphID($id: ID!) {
       mergeCommit {
         oid
       }
+      headRefName
+      baseRefName
     }
   }
 }
@@ -185,6 +187,8 @@ query GetPullRequestFromNumber($owner: String!, $name: String!, $number: Int!) {
       mergeCommit {
         oid
       }
+      headRefName
+      baseRefName
     }
   }
 }

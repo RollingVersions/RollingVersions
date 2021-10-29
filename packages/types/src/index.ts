@@ -15,6 +15,7 @@ export type {
 } from './PublishTarget';
 export type {default as RollingConfigOptions} from './RollingConfigOptions';
 export type {default as VersionBumpType} from './VersionBumpType';
+export type {VersioningModeConfig} from './VersioningMode';
 export type {default as VersionNumber} from './VersionNumber';
 export type {default as VersionSchema} from './VersionSchema';
 export type {default as VersionTag, CurrentVersionTag} from './VersionTag';

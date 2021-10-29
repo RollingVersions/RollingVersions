@@ -1,3 +1,4 @@
+import minimatch from 'minimatch';
 import Cache from 'quick-lru';
 
 import ChangeSet from '@rollingversions/change-set';
@@ -8,8 +9,15 @@ import DbGitRef from '@rollingversions/db/git_refs';
 import DbGitRepository from '@rollingversions/db/git_repositories';
 import DbPullRequest from '@rollingversions/db/pull_requests';
 import {parseTag} from '@rollingversions/tag-format';
-import {PackageManifest, VersionTag} from '@rollingversions/types';
+import {
+  CurrentVersionTag,
+  PackageManifest,
+  VersioningMode,
+  VersioningModeConfig,
+  VersionTag,
+} from '@rollingversions/types';
 import {isPrerelease, max} from '@rollingversions/version-number';
+import {eq as versionsEqual} from '@rollingversions/version-number';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 
 import {PullRequestPackage} from '../../types';
@@ -19,6 +27,7 @@ import {GitHubClient} from '../services/github';
 import {
   fetchTree,
   getAllTags,
+  getAllTagsOnBranch,
   getBranchHeadCommit,
   getPullRequestHeadCommit,
   isCommitReleased,
@@ -167,10 +176,6 @@ export function getPackageVersions({
     .filter(isTruthy);
 }
 
-export function getMaxVersion(versions: readonly VersionTag[]) {
-  return max(versions, (tag) => tag.version) ?? null;
-}
-
 async function mapMapValuesAsync<TKey, TValue, TMappedValue>(
   map: Map<TKey, TValue>,
   fn: (value: TValue) => Promise<TMappedValue>,
@@ -197,10 +202,22 @@ export async function getDetailedPackageManifestsForPullRequest(
   const [
     getPackageManifestsResult,
     allTags,
+    branchTags,
     changeLogEntries,
   ] = await Promise.all([
     getPackageManifestsForPullRequest(db, client, repo, pullRequest, logger),
     getAllTags(db, client, repo, logger),
+    pullRequest.base_ref_name
+      ? getBranchHeadCommit(
+          db,
+          client,
+          repo,
+          pullRequest.base_ref_name,
+          logger,
+        ).then(async (headCommit) =>
+          headCommit ? await getAllTagsOnBranch(db, headCommit) : null,
+        )
+      : null,
     getChangeLogEntriesForPR(db, pullRequest),
   ]);
   if (!getPackageManifestsResult) {
@@ -214,23 +231,45 @@ export async function getDetailedPackageManifestsForPullRequest(
   const detailedManifests = await mapMapValuesAsync(
     manifests,
     async (manifest): Promise<PullRequestPackage> => {
-      const versions = getPackageVersions({
+      const allVersions = getPackageVersions({
         allowTagsWithoutPackageName: manifests.size <= 1,
         allTags,
         manifest,
       });
+      const branchVersions = branchTags
+        ? getPackageVersions({
+            allowTagsWithoutPackageName: manifests.size <= 1,
+            allTags: branchTags,
+            manifest,
+          })
+        : null;
       const released =
         pullRequest.merge_commit_sha !== null &&
         (await isCommitReleased(db, repo, {
           commitShaToCheck: pullRequest.merge_commit_sha,
-          releasedCommits: new Set(versions.map((v) => v.commitSha)),
+          releasedCommits: new Set(allVersions.map((v) => v.commitSha)),
         }));
       const changeSet: ChangeSet = (
         changes.get(manifest.packageName) ?? []
       ).map((c) => ({type: c.kind, title: c.title, body: c.body}));
+
+      const currentVersion =
+        branchVersions && pullRequest.base_ref_name
+          ? getCurrentVersion({
+              allVersions,
+              branchVersions,
+              versioningMode: manifest.versioningMode,
+              branchName: pullRequest.base_ref_name,
+            })
+          : {ok: false as const};
       return {
         manifest: {...manifest},
-        currentVersion: getMaxVersion(versions),
+        currentVersion:
+          currentVersion === null
+            ? null
+            : currentVersion.ok
+            ? currentVersion
+            : getMaxVersion(allVersions),
         changeSet,
         released,
       };
@@ -260,4 +299,58 @@ export async function getDetailedPackageManifestsForPullRequest(
   }
 
   return {packageErrors, packages: detailedManifests};
+}
+
+function getVersioningMode(
+  versioningMode: VersioningModeConfig,
+  branchName: string,
+): VersioningMode {
+  if (typeof versioningMode === 'string') {
+    return versioningMode;
+  }
+
+  for (const {branch: branchPattern, mode} of versioningMode) {
+    if (minimatch(branchName, branchPattern)) {
+      return mode;
+    }
+  }
+
+  return VersioningMode.Unambiguous;
+}
+
+function getMaxVersion(versions: readonly VersionTag[]) {
+  return max(versions, (tag) => tag.version) ?? null;
+}
+
+export function getCurrentVersion({
+  allVersions,
+  branchVersions,
+  branchName,
+  versioningMode,
+}: {
+  allVersions: VersionTag[];
+  branchVersions: VersionTag[];
+  branchName: string;
+  versioningMode: VersioningModeConfig;
+}): CurrentVersionTag | null {
+  const mode = getVersioningMode(versioningMode, branchName);
+  const maxVersion = getMaxVersion(allVersions);
+  const branchVersion = getMaxVersion(branchVersions);
+  switch (mode) {
+    case VersioningMode.AlwaysIncreasing:
+      return maxVersion && {ok: true, ...maxVersion};
+    case VersioningMode.ByBranch:
+      return branchVersion && {ok: true, ...branchVersion};
+    case VersioningMode.Unambiguous:
+      if (
+        branchVersion === maxVersion ||
+        (branchVersion &&
+          maxVersion &&
+          versionsEqual(branchVersion.version, maxVersion.version))
+      ) {
+        return maxVersion && {ok: true, ...maxVersion};
+      } else {
+        return {ok: false, maxVersion, branchVersion};
+      }
+  }
 }
