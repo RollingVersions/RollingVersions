@@ -2,7 +2,13 @@ import {URL} from 'url';
 
 import type ChangeSet from '@rollingversions/change-set';
 import {changesToMarkdown, isEmptyChangeSet} from '@rollingversions/change-set';
-import {PackageManifest, PullRequest, VersionTag} from '@rollingversions/types';
+import {printTag} from '@rollingversions/tag-format';
+import {
+  PackageManifest,
+  PullRequest,
+  VersionNumber,
+  VersionTag,
+} from '@rollingversions/types';
 import {getNextVersion, printString} from '@rollingversions/version-number';
 
 import type {PullRequestPackage} from '../types';
@@ -21,9 +27,25 @@ export function getVersionShift(
     versionSchema: manifest.versionSchema,
     baseVersion: manifest.baseVersion,
   });
+
   return `(${
-    currentVersion?.version ? printString(currentVersion.version) : 'unreleased'
-  } → ${newVersion ? printString(newVersion) : 'no new release'})`;
+    currentVersion?.version
+      ? manifest.tagFormat
+        ? currentVersion.name
+        : printString(currentVersion.version)
+      : 'unreleased'
+  } → ${
+    newVersion
+      ? manifest.tagFormat
+        ? printTag(newVersion, {
+            packageName: manifest.packageName,
+            versionSchema: manifest.versionSchema,
+            tagFormat: manifest.tagFormat,
+            oldTagName: null,
+          })
+        : printString(newVersion)
+      : 'no new release'
+  })`;
 }
 
 export function getUrlForChangeLog(pr: PullRequest, rollingVersionsUrl: URL) {
