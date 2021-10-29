@@ -165,7 +165,9 @@ export default function Repository() {
                     packageName={pkg.manifest.packageName}
                     currentVersion={
                       pkg.currentVersion?.ok
-                        ? printString(pkg.currentVersion.version)
+                        ? pkg.manifest.tagFormat
+                          ? pkg.currentVersion.name
+                          : printString(pkg.currentVersion.version)
                         : null
                     }
                   />
