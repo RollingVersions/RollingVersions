@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import {createChangeSet} from '@rollingversions/change-set';
+import {DEFAULT_CHANGE_TYPES} from '@rollingversions/config';
 import {PublishTarget} from '@rollingversions/types';
 
 import PackageChangeSet from '.';
@@ -25,6 +26,7 @@ export const Default = () => {
           },
         ]}
         changes={changes}
+        changeTypes={DEFAULT_CHANGE_TYPES}
         disabled={false}
         readOnly={false}
         onChange={(_packageName, update) => setChanges(update)}

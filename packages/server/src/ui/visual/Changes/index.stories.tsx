@@ -76,6 +76,7 @@ console.log(await resultB);
         disabled={false}
         readOnly={false}
         type="breaking"
+        bumps="MAJOR"
         changes={extractChanges(changes, 'breaking')}
         onChange={setChanges}
       />
@@ -84,7 +85,17 @@ console.log(await resultB);
         disabled={false}
         readOnly={false}
         type="feat"
+        bumps="MINOR"
         changes={extractChanges(changes, 'feat')}
+        onChange={setChanges}
+      />
+      <Changes
+        title="Internal Changes"
+        disabled={false}
+        readOnly={false}
+        type="internal"
+        bumps={null}
+        changes={extractChanges(changes, 'internal')}
         onChange={setChanges}
       />
     </div>

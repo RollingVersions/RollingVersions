@@ -1,4 +1,5 @@
 export type {ApiPackageResponse, GetRepositoryApiResponse} from './ApiResponse';
+export type {default as BaseVersion} from './BaseVersion';
 export type {ChangeSetEntry, default as ChangeSet} from './ChangeSet';
 export type {default as ChangeType} from './ChangeType';
 export type {default as ChangeTypeID} from './ChangeTypeID';
@@ -14,10 +15,18 @@ export type {
 } from './PublishTarget';
 export type {default as RollingConfigOptions} from './RollingConfigOptions';
 export type {default as VersionBumpType} from './VersionBumpType';
+export type {VersioningModeConfig} from './VersioningMode';
 export type {default as VersionNumber} from './VersionNumber';
 export type {default as VersionSchema} from './VersionSchema';
 export type {default as VersionTag, CurrentVersionTag} from './VersionTag';
 
+export {default as withMaxLength} from './withMaxLength';
+
+export {BaseVersionCodec} from './BaseVersion';
+export {TagFormatCodec} from './Strings';
+export {ChangeTypeCodec} from './ChangeType';
+export {VersioningModeCodec} from './VersioningMode';
+export {VersionSchemaCodec} from './VersionSchema';
 export {VersionTagCodec} from './VersionTag';
 export {default as VersioningMode} from './VersioningMode';
 export {default as PublishTarget} from './PublishTarget';

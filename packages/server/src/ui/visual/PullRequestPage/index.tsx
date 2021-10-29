@@ -9,6 +9,7 @@ import getLocalId from '../../utils/getLocalId';
 import Alert from '../Alert';
 import type {PackageChangeSetProps} from '../PackageChangeSet';
 import PackageChangeSet from '../PackageChangeSet';
+import {ManifestWarning} from '../RepositoryPage';
 import SaveChangeLogFooter from '../SaveChangeLogFooter';
 
 function getState(
@@ -38,6 +39,10 @@ export interface PullRequestPageProps {
   closed: boolean;
   merged: boolean;
   permission: Permission;
+  packageErrors: readonly {
+    readonly filename: string;
+    readonly error: string;
+  }[];
   onSave: (changes: {packageName: string; changes: ChangeSet}[]) => void;
 }
 
@@ -55,6 +60,7 @@ export default function PullRequestPage({
   closed,
   merged,
   permission,
+  packageErrors,
   onSave,
 }: PullRequestPageProps) {
   const [initialState] = React.useState(() => getState(packages));
@@ -97,6 +103,12 @@ export default function PullRequestPage({
             edit the release notes.
           </Alert>
         ) : null}
+
+        {packageErrors
+          ? packageErrors.map(({filename, error}, i) => (
+              <ManifestWarning key={i} filename={filename} error={error} />
+            ))
+          : null}
         {state.map(({packageName, changes, manifest, released}, i) => (
           <React.Fragment key={packageName}>
             {i === 0 ? null : <hr className="my-16" />}
@@ -111,6 +123,7 @@ export default function PullRequestPage({
               packageName={packageName}
               targetConfigs={manifest.targetConfigs}
               changes={changes}
+              changeTypes={manifest.changeTypes}
               onChange={onChange}
             />
           </React.Fragment>

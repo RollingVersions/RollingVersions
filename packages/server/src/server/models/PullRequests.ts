@@ -13,17 +13,7 @@ import {
   GitHubClient,
 } from '../services/github';
 
-export interface PayloadPullRequest {
-  id: number;
-  node_id: string;
-  number: number;
-  title: string;
-  closed_at: null | string;
-  merged_at: null | string;
-  merge_commit_sha: null | string;
-}
-
-const PayloadPullRequestSchema: ft.Runtype<PayloadPullRequest> = ft.Object({
+const PayloadPullRequestSchema = ft.Object({
   id: ft.Number,
   node_id: ft.String,
   number: ft.Number,
@@ -31,7 +21,10 @@ const PayloadPullRequestSchema: ft.Runtype<PayloadPullRequest> = ft.Object({
   closed_at: ft.Union(ft.Null, ft.String),
   merged_at: ft.Union(ft.Null, ft.String),
   merge_commit_sha: ft.Union(ft.Null, ft.String),
+  head: ft.Object({ref: ft.String}),
+  base: ft.Object({ref: ft.String}),
 });
+export type PayloadPullRequest = ft.Static<typeof PayloadPullRequestSchema>;
 
 function checkForMergeCommit(
   repo: DbGitRepository,
@@ -85,6 +78,8 @@ export async function upsertPullRequestFromPayload(
     is_closed: pr.closed_at !== null || pr.merged_at !== null,
     is_merged: pr.merged_at !== null,
     merge_commit_sha: pr.merge_commit_sha,
+    head_ref_name: pr.head.ref,
+    base_ref_name: pr.base.ref,
   });
   return dbPR;
 }
@@ -110,6 +105,8 @@ export async function upsertPullRequestFromGraphQL(
     is_closed: pr.is_closed || pr.is_merged,
     is_merged: pr.is_merged,
     merge_commit_sha: pr.merge_commit_sha,
+    head_ref_name: pr.head_ref_name,
+    base_ref_name: pr.base_ref_name,
   });
   return dbPR;
 }
@@ -148,6 +145,8 @@ export async function getPullRequestFromRestParams(
     is_closed: pr.is_closed || pr.is_merged,
     is_merged: pr.is_merged,
     merge_commit_sha: pr.merge_commit_sha,
+    head_ref_name: pr.head_ref_name,
+    base_ref_name: pr.base_ref_name,
   });
   return dbPR;
 }

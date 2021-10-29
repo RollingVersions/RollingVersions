@@ -41,6 +41,7 @@ export default function PullChangeLog() {
             merged={pr.pullRequest.merged}
             saving={pr.updating || saving}
             packages={pr.pullRequest.packages}
+            packageErrors={pr.pullRequest.packageErrors}
             onSave={async (updates) => {
               setSaving(true);
               if (

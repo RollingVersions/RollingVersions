@@ -1,6 +1,10 @@
 import React, {useEffect} from 'react';
 
-import type {ChangeSet, ChangeTypeID} from '@rollingversions/types';
+import type {
+  ChangeSet,
+  ChangeTypeID,
+  VersionBumpType,
+} from '@rollingversions/types';
 
 import getLocalId from '../../utils/getLocalId';
 import ChangeInput, {ChangeInputList} from '../ChangeInput';
@@ -25,6 +29,7 @@ function useIsMouseDownRef() {
 }
 export interface ChangesProps {
   type: ChangeTypeID;
+  bumps: VersionBumpType | null;
   title: string;
   changes: ChangeSet<{localId: number}>;
   disabled: boolean;
@@ -37,6 +42,7 @@ export interface ChangesProps {
 }
 function Changes({
   type,
+  bumps,
   title,
   changes,
   disabled,
@@ -77,6 +83,11 @@ function Changes({
             Add
           </button>
         )}
+      </div>
+      <div className="pt-2 font-sans text-sm text-gray-700 font-light">
+        {bumps
+          ? `(bumps the ${bumps} version)`
+          : `(does not trigger a release)`}
       </div>
       <div className="pt-2">
         <ChangeInputList>

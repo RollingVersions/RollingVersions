@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import {parse, startChain, param} from 'parameter-reducers';
 
 import {changesToMarkdown} from '@rollingversions/change-set';
+import {printTag} from '@rollingversions/tag-format';
 import {printString} from '@rollingversions/version-number';
 
 import printHelp from './commands/help';
@@ -145,10 +146,21 @@ switch (COMMAND) {
               console.warn(
                 chalk.yellow(
                   `## ${p.packageName} (${
-                    p.currentVersion
-                      ? printString(p.currentVersion)
+                    p.currentVersion && p.currentTagName
+                      ? p.manifest.tagFormat
+                        ? p.currentTagName
+                        : printString(p.currentVersion)
                       : 'unreleased'
-                  } → ${printString(p.newVersion)})`,
+                  } → ${
+                    p.manifest.tagFormat
+                      ? printTag(p.newVersion, {
+                          packageName: p.packageName,
+                          oldTagName: p.currentTagName,
+                          tagFormat: p.manifest.tagFormat,
+                          versionSchema: p.manifest.versionSchema,
+                        })
+                      : printString(p.newVersion)
+                  })`,
                 ),
               );
               console.warn(``);
@@ -156,6 +168,7 @@ switch (COMMAND) {
                 changesToMarkdown(p.changeSet, {
                   headingLevel: 3,
                   renderContext: ({pr}) => ` (#${pr})`,
+                  changeTypes: p.manifest.changeTypes,
                 }),
               );
               console.warn(``);
@@ -165,18 +178,30 @@ switch (COMMAND) {
         },
         onCanaryGitHubRelease({pkg}) {
           console.warn(
-            `not publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
-              'GitHub Release',
+            `not publishing ${chalk.yellow(pkg.packageName)} to ${chalk.blue(
+              'GitHub Releases',
+            )} as ${chalk.yellow(
+              printTag(pkg.newVersion, {
+                packageName: pkg.packageName,
+                oldTagName: pkg.currentTagName,
+                tagFormat: pkg.manifest.tagFormat,
+                versionSchema: pkg.manifest.versionSchema,
+              }),
             )} in ${chalk.red(`canary mode`)}`,
           );
         },
         onPublishGitHubRelease({pkg, dryRun}) {
           console.warn(
-            `publishing ${chalk.yellow(pkg.packageName)} as ${chalk.blue(
-              'GitHub Release',
-            )} @ ${chalk.yellow(printString(pkg.newVersion))}${
-              dryRun ? ` ${chalk.red(`(dry run)`)}` : ''
-            }`,
+            `publishing ${chalk.yellow(pkg.packageName)} to ${chalk.blue(
+              'GitHub Releases',
+            )} as ${chalk.yellow(
+              printTag(pkg.newVersion, {
+                packageName: pkg.packageName,
+                oldTagName: pkg.currentTagName,
+                tagFormat: pkg.manifest.tagFormat,
+                versionSchema: pkg.manifest.versionSchema,
+              }),
+            )}${dryRun ? ` ${chalk.red(`(dry run)`)}` : ''}`,
           );
         },
         onPublishTargetRelease({pkg, target, dryRun}) {
@@ -200,6 +225,21 @@ switch (COMMAND) {
             console.error(
               `There is no safe order to publish packages in when there is a circular dependency, therefore none of your packages were published.`,
             );
+            console.error(``);
+            return process.exit(supressErrors ? 0 : 1);
+          case PublishResultKind.PackageManifestErrors:
+            console.error(
+              `Errors were encountered while parsing some package manifests:`,
+            );
+            console.error(``);
+            for (const {filename, error} of result.errors) {
+              console.error(filename);
+              console.error(``);
+              for (const line of error.split(`\n`)) {
+                console.error(`  ${line}`);
+              }
+              console.error(``);
+            }
             return process.exit(supressErrors ? 0 : 1);
           case PublishResultKind.GitHubAuthCheckFail:
             console.error(`GitHub pre-release steps failed:`);

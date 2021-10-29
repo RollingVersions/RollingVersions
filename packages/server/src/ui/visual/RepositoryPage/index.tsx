@@ -3,6 +3,7 @@ import {useLocation} from 'react-router-dom';
 
 import type ChangeSet from '@rollingversions/change-set';
 import {changesToMarkdown} from '@rollingversions/change-set';
+import {ChangeType} from '@rollingversions/types';
 
 import Alert from '../Alert';
 import GitHubMarkdownAsync from '../GitHubMarkdown/async';
@@ -41,17 +42,34 @@ export default function RepositoryPage({
 export function CycleWarning({cycle}: {cycle: readonly string[]}) {
   return <Alert className="mb-4">Cycle Detected: {cycle.join(' -> ')}</Alert>;
 }
+export function ManifestWarning({
+  filename,
+  error,
+}: {
+  filename: string;
+  error: string;
+}) {
+  return (
+    <Alert className="mb-4">
+      An error was encountered while parsing the package manifest at "{filename}
+      ":
+      <pre>{error}</pre>
+    </Alert>
+  );
+}
 
 export function PackageWithChanges({
   packageName,
   currentVersion,
   newVersion,
   changeSet,
+  changeTypes,
 }: {
   packageName: string;
   currentVersion: string | null;
   newVersion: string;
   changeSet: ChangeSet<{pr: number}>;
+  changeTypes: readonly ChangeType[];
 }) {
   return (
     <React.Fragment key={packageName}>
@@ -64,6 +82,7 @@ export function PackageWithChanges({
         {changesToMarkdown(changeSet, {
           headingLevel: 3,
           renderContext: ({pr}) => ` (#${pr})`,
+          changeTypes,
         })}
       </GitHubMarkdownAsync>
     </React.Fragment>

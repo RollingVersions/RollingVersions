@@ -107,8 +107,29 @@ commands:
           name: Versions
           command: node -v && npm -v && yarn -v
       - run:
+          name: Combine package.json files to single file for cache key
+          command: cat packages/*/package.json > all-packages.txt
+      - restore_cache:
+          name: Restore Yarn Cache
+          keys:
+            - v1-yarn-{{ checksum "yarn.lock" }}-{{ checksum "all-packages.txt" }}
+      - run:
           name: Install Dependencies
-          command: yarn install --frozen-lockfile
+          command: '[[ -f node_modules/.yarn-integrity ]] && echo skipping || yarn install --frozen-lockfile'
+      - save_cache:
+          name: Save Yarn Cache
+          key: v1-yarn-{{ checksum "yarn.lock" }}-{{ checksum "all-packages.txt" }}
+          paths:
+            - node_modules
+            - packages/change-set/node_modules
+            - packages/cli/node_modules
+            - packages/config/node_modules
+            - packages/db/node_modules
+            - packages/server/node_modules
+            - packages/sort-by-dependencies/node_modules
+            - packages/tag-format/node_modules
+            - packages/types/node_modules
+            - packages/version-number/node_modules
 
   npm_auth:
     description: 'Authenticate with the npm registry'
@@ -120,8 +141,29 @@ commands:
   build:
     steps:
       - run:
+          name: Combine TypeScript files to single file for cache key
+          command: cat packages/*/src/**/*.{ts,tsx} > all-typescript.txt
+      - restore_cache:
+          name: Restore TypeScript Cache
+          keys:
+            - v1-typescript-{{ checksum "yarn.lock" }}-{{ checksum "all-typescript.txt" }}
+            - v1-typescript-{{ checksum "yarn.lock" }}-
+      - run:
           name: Build
           command: yarn build
+      - save_cache:
+          name: Save TypeScript Cache
+          key: v1-typescript-{{ checksum "yarn.lock" }}-{{ checksum "all-typescript.txt" }}
+          paths:
+            - packages/change-set/lib
+            - packages/cli/lib
+            - packages/config/lib
+            - packages/db/lib
+            - packages/server/lib
+            - packages/sort-by-dependencies/lib
+            - packages/tag-format/lib
+            - packages/types/lib
+            - packages/version-number/lib
 
   test:
     steps:

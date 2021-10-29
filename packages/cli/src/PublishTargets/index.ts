@@ -19,16 +19,25 @@ export function pathMayContainPackage(filename: string): boolean {
 export async function getPackageManifests(
   filename: string,
   content: string,
-): Promise<PackageManifest[]> {
-  return (
-    await Promise.all(
-      targets
-        .filter((p) => p.pathMayContainPackage(filename))
-        .map(async (p) => {
-          return await p.getPackageManifest(filename, content);
-        }),
-    )
-  ).filter(isTruthy);
+): Promise<{
+  manifests: PackageManifest[];
+  errors: string[];
+}> {
+  const manifests: PackageManifest[] = [];
+  const errors: string[] = [];
+  await Promise.all(
+    targets
+      .filter((p) => p.pathMayContainPackage(filename))
+      .map(async (p) => {
+        const result = await p.getPackageManifest(filename, content);
+        if (result.ok && result.manifest) {
+          manifests.push(result.manifest);
+        } else if (!result.ok) {
+          errors.push(result.reason);
+        }
+      }),
+  );
+  return {manifests, errors};
 }
 
 export async function prepublish(

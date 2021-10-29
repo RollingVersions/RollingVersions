@@ -77,6 +77,7 @@ export function checkGitHubTagAvailable(
       packageName: pkg.packageName,
       oldTagName: pkg.currentTagName,
       tagFormat: pkg.manifest.tagFormat,
+      versionSchema: pkg.manifest.versionSchema,
     });
     if (allTagNames.has(tagName)) {
       return {ok: false, reason: `The tag name ${tagName} already exists.`};
@@ -98,6 +99,7 @@ export async function createGitHubRelease(
       packageName: pkg.packageName,
       oldTagName: pkg.currentTagName,
       tagFormat: pkg.manifest.tagFormat,
+      versionSchema: pkg.manifest.versionSchema,
     });
     logger.onPublishGitHubRelease?.({pkg, tagName, dryRun});
     let response;
@@ -112,6 +114,7 @@ export async function createGitHubRelease(
           body: changesToMarkdown(pkg.changeSet, {
             headingLevel: 2,
             renderContext: ({pr}) => ` (#${pr})`,
+            changeTypes: pkg.manifest.changeTypes,
           }),
           name: tagName,
           tag_name: tagName,

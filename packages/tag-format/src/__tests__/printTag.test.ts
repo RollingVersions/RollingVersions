@@ -95,3 +95,53 @@ test('printTag', () => {
     ),
   ).toBe(`0001/000/000000`);
 });
+
+test('Custom tag format with optional sections', () => {
+  expect(
+    printTag(
+      {
+        numerical: [1, 2, 3],
+        prerelease: [],
+        build: [],
+      },
+      {
+        packageName: 'my-package-name',
+        versionSchema: ['MAJOR', 'MINOR', 'PATCH'],
+        oldTagName: null,
+        tagFormat: '{{MAJOR}}.{{MINOR}}{{?.{{PATCH}}}}',
+      },
+    ),
+  ).toEqual(`1.2.3`);
+
+  expect(
+    printTag(
+      {
+        numerical: [1, 2, 0],
+        prerelease: [],
+        build: [],
+      },
+      {
+        packageName: 'my-package-name',
+        versionSchema: ['MAJOR', 'MINOR', 'PATCH'],
+        oldTagName: null,
+        tagFormat: '{{MAJOR}}.{{MINOR}}.{{PATCH}}',
+      },
+    ),
+  ).toEqual(`1.2.0`);
+
+  expect(
+    printTag(
+      {
+        numerical: [1, 2, 0],
+        prerelease: [],
+        build: [],
+      },
+      {
+        packageName: 'my-package-name',
+        versionSchema: ['MAJOR', 'MINOR', 'PATCH'],
+        oldTagName: null,
+        tagFormat: '{{MAJOR}}.{{MINOR}}{{?.{{PATCH}}}}',
+      },
+    ),
+  ).toEqual(`1.2`);
+});

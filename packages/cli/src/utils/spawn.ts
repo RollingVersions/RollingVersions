@@ -1,4 +1,4 @@
-// TODO: extract this into its own NPM package
+// TODO: replace with execa if possible
 
 import type {ChildProcess, SpawnOptionsWithoutStdio} from 'child_process';
 import {spawn} from 'child_process';

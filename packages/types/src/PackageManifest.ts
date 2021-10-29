@@ -1,8 +1,12 @@
 import * as t from 'funtypes';
 
+import {BaseVersionCodec} from './BaseVersion';
+import {ChangeTypeCodec} from './ChangeType';
 import {PackageDependenciesCodec} from './PackageDependencies';
 import {PublishTargetConfigCodec} from './PublishTarget';
+import {TagFormatCodec} from './Strings';
 import {VersioningModeCodec} from './VersioningMode';
+import {VersionSchemaCodec} from './VersionSchema';
 
 export const PackageManifestCodec = t.Named(
   `PackageManifest`,
@@ -12,15 +16,23 @@ export const PackageManifestCodec = t.Named(
         packageName: t.String,
         dependencies: PackageDependenciesCodec,
         targetConfigs: t.Readonly(t.Array(PublishTargetConfigCodec)),
-      }),
-    ),
-    t.Readonly(
-      t.Partial({
-        /**
-         * The tag format lets you override the tag that is generated in GitHub's releases
-         */
-        tagFormat: t.String,
-        versioning: VersioningModeCodec,
+
+        tagFormat: t.Union(TagFormatCodec, t.Undefined),
+        changeTypes: t.ReadonlyArray(ChangeTypeCodec),
+        versioningMode: VersioningModeCodec,
+        versionSchema: VersionSchemaCodec,
+        baseVersion: BaseVersionCodec,
+        customized: t.Readonly(
+          t.Array(
+            t.Union(
+              t.Literal(`tagFormat`),
+              t.Literal(`changeTypes`),
+              t.Literal(`versioningMode`),
+              t.Literal(`versionSchema`),
+              t.Literal(`baseVersion`),
+            ),
+          ),
+        ),
       }),
     ),
   ),

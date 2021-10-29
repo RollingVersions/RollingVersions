@@ -2,7 +2,8 @@ import {URL} from 'url';
 
 import type ChangeSet from '@rollingversions/change-set';
 import {changesToMarkdown, isEmptyChangeSet} from '@rollingversions/change-set';
-import {PullRequest, VersionTag} from '@rollingversions/types';
+import {printTag} from '@rollingversions/tag-format';
+import {PackageManifest, PullRequest, VersionTag} from '@rollingversions/types';
 import {getNextVersion, printString} from '@rollingversions/version-number';
 
 import type {PullRequestPackage} from '../types';
@@ -14,11 +15,32 @@ const COMMENT_PREFIX = `<!-- This comment is maintained by Rolling Versions. Do 
 export function getVersionShift(
   currentVersion: VersionTag | null,
   changes: ChangeSet,
+  manifest: PackageManifest,
 ) {
-  const newVersion = getNextVersion(currentVersion?.version ?? null, changes);
+  const newVersion = getNextVersion(currentVersion?.version ?? null, changes, {
+    changeTypes: manifest.changeTypes,
+    versionSchema: manifest.versionSchema,
+    baseVersion: manifest.baseVersion,
+  });
+
   return `(${
-    currentVersion?.version ? printString(currentVersion.version) : 'unreleased'
-  } → ${newVersion ? printString(newVersion) : 'no new release'})`;
+    currentVersion?.version
+      ? manifest.tagFormat
+        ? currentVersion.name
+        : printString(currentVersion.version)
+      : 'unreleased'
+  } → ${
+    newVersion
+      ? manifest.tagFormat
+        ? printTag(newVersion, {
+            packageName: manifest.packageName,
+            versionSchema: manifest.versionSchema,
+            tagFormat: manifest.tagFormat,
+            oldTagName: null,
+          })
+        : printString(newVersion)
+      : 'no new release'
+  })`;
 }
 
 export function getUrlForChangeLog(pr: PullRequest, rollingVersionsUrl: URL) {
@@ -54,26 +76,35 @@ export function renderCommentWithoutState(
   pullRequest: Omit<PullRequest, 'headSha'> & {headSha: string | null},
   submittedAtCommitSha: string | null,
   packagesMap: Map<string, PullRequestPackage>,
+  packageErrors: {filename: string; error: string}[],
   rollingVersionsUrl: URL,
 ) {
   const url = getUrlForChangeLog(pullRequest, rollingVersionsUrl);
-  const outdated =
-    pullRequest.headSha === submittedAtCommitSha
+  const warnings =
+    (packageErrors.length === 0
       ? ``
-      : `\n\n> **Change log has not been updated since latest commit** [Update Changelog](${url.href})`;
+      : [
+          `\n\n> Errors were encountered while parsing:`,
+          ...packageErrors.map((e) => `>  - ${e.filename}`),
+        ].join(`\n`)) +
+    (pullRequest.headSha === submittedAtCommitSha
+      ? ``
+      : `\n\n> **Change log has not been updated since latest commit** [Update Changelog](${url.href})`);
 
   const packages = [...packagesMap].sort(([a], [b]) => (a < b ? -1 : 1));
   if (packages.length === 1) {
-    const [packageName, {changeSet, currentVersion}] = packages[0];
+    const [packageName, {changeSet, currentVersion, manifest}] = packages[0];
     if (isEmptyChangeSet(changeSet)) {
-      return `This PR will **not** result in a new version of ${packageName} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${outdated}`;
+      return `This PR will **not** result in a new version of ${packageName} as there are no user facing changes.\n\n[Add changes to trigger a release](${url.href})${warnings}`;
     }
     return `### Change Log for ${packageName} ${getVersionShift(
       currentVersion,
       changeSet,
+      manifest,
     )}\n\n${changesToMarkdown(changeSet, {
       headingLevel: 4,
-    })}\n\n[Edit changelog](${url.href})${outdated}`;
+      changeTypes: manifest.changeTypes,
+    })}\n\n[Edit changelog](${url.href})${warnings}`;
   }
 
   const packagesWithChanges = packages.filter(([, {changeSet}]) => {
@@ -87,14 +118,18 @@ export function renderCommentWithoutState(
       .map(([packageName]) => `- ${packageName}`)
       .join('\n')}\n\n[Add changes to trigger a release](${
       url.href
-    })${outdated}`;
+    })${warnings}`;
   }
   return `${packagesWithChanges
-    .map(([packageName, {changeSet, currentVersion}]) => {
+    .map(([packageName, {changeSet, currentVersion, manifest}]) => {
       return `### ${packageName} ${getVersionShift(
         currentVersion,
         changeSet,
-      )}\n\n${changesToMarkdown(changeSet, {headingLevel: 4})}`;
+        manifest,
+      )}\n\n${changesToMarkdown(changeSet, {
+        headingLevel: 4,
+        changeTypes: manifest.changeTypes,
+      })}`;
     })
     .join('\n\n')}${
     packagesWithoutChanges.length
@@ -102,7 +137,7 @@ export function renderCommentWithoutState(
           .map(([packageName]) => `- ${packageName}`)
           .join('\n')}`
       : ``
-  }\n\n[Edit changelogs](${url.href})${outdated}`;
+  }\n\n[Edit changelogs](${url.href})${warnings}`;
 }
 
 export function renderInitialComment(
@@ -117,13 +152,17 @@ export function renderInitialComment(
 export function renderComment(
   pullRequest: Omit<PullRequest, 'headSha'> & {headSha: string | null},
   submittedAtCommitSha: string | null,
-  packages: Map<string, PullRequestPackage>,
+  manifests: {
+    packages: Map<string, PullRequestPackage>;
+    packageErrors: {filename: string; error: string}[];
+  },
   rollingVersionsUrl: URL,
 ) {
   return `${COMMENT_PREFIX}${renderCommentWithoutState(
     pullRequest,
     submittedAtCommitSha,
-    packages,
+    manifests.packages,
+    manifests.packageErrors,
     rollingVersionsUrl,
   )}`;
 }
