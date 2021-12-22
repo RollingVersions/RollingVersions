@@ -82,6 +82,7 @@ export default async function getPastReleases(
         <T>(v: T): v is Exclude<T, undefined> => v !== undefined,
       )
     : [...packagesByName.values()];
+  packageManifests.sort((a, b) => (a.packageName < b.packageName ? -1 : 1));
   let nextPageToken: string | null = null;
   const packageReleases = await Promise.all(
     packageManifests.map(async (manifest, _, manifests) => {
