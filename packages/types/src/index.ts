@@ -1,4 +1,8 @@
-export type {ApiPackageResponse, GetRepositoryApiResponse} from './ApiResponse';
+export type {
+  ApiPackageResponse,
+  GetRepositoryApiResponse,
+  PastReleasesApiResponse,
+} from './ApiResponse';
 export type {default as BaseVersion} from './BaseVersion';
 export type {ChangeSetEntry, default as ChangeSet} from './ChangeSet';
 export type {default as ChangeType} from './ChangeType';

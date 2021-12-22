@@ -289,3 +289,14 @@ query GetRepositoryIsPrivate($owner: String!, $name: String!) {
     isPrivate
   }
 }
+
+query GetRelease($owner: String!, $name: String!, $tagName: String!) {
+  repository(owner: $owner, name: $name) {
+    release(tagName: $tagName) {
+      createdAt
+      name
+      description
+      # descriptionHTML
+    }
+  }
+}

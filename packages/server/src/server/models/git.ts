@@ -628,6 +628,43 @@ export async function getUnreleasedChanges(
   `);
 }
 
+export async function getUnreleasedPullRequests(
+  db: Queryable,
+  repo: DbGitRepository,
+  {
+    headCommitSha,
+    releasedCommits,
+    pullRequestsWithChanges,
+  }: {
+    headCommitSha: string;
+    releasedCommits: Set<string>;
+    pullRequestsWithChanges: Set<number>;
+  },
+): Promise<DbPullRequest[]> {
+  return await db.query(sql`
+    ${selectCommits({
+      repositoryID: repo.id,
+      includedCommits: new Set([headCommitSha]),
+      excludedCommits: releasedCommits,
+    })}
+    SELECT DISTINCT ON (pr.pr_number) pr.*
+    FROM pull_requests AS pr
+    LEFT OUTER JOIN git_refs AS ref ON (
+      ref.git_repository_id = ${repo.id} AND ref.pr_number = pr.pr_number
+    )
+    LEFT OUTER JOIN commits AS c ON (
+      pr.merge_commit_sha = c.commit_sha OR
+      ref.commit_sha = c.commit_sha
+    )
+    WHERE pr.git_repository_id = ${repo.id}
+    AND (
+      c.commit_sha IS NOT NULL
+      OR pr.pr_number = ANY(${[...pullRequestsWithChanges]})
+    )
+    ORDER BY pr.pr_number ASC
+  `);
+}
+
 export async function isCommitReleased(
   db: Queryable,
   repo: DbGitRepository,

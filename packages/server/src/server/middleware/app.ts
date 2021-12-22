@@ -6,16 +6,23 @@ import {PullRequestResponseCodec} from '../../types';
 import {getClientForRepo, getClientForToken} from '../getClient';
 import {expressLogger} from '../logger';
 import {getRepositoryFromRestParams} from '../models/Repositories';
+import getPastReleases from './api/getPastReleases';
 import getPullRequest from './api/getPullRequest';
 import getRepository from './api/getRepository';
+import setReleaseDescription from './api/setReleaseDescription';
 import updatePullRequest from './api/updatePullRequest';
 import {requiresAuth, getGitHubAccessToken} from './auth';
 import checkPermissions, {
   getPermission,
   getUser,
   checkRepoPermissions,
+  getRepoPermission,
 } from './utils/checkPermissions';
-import validateBody, {getBody} from './utils/validateBody';
+import validateBody, {
+  getBody,
+  getSetReleaseDescriptionBody,
+  validateSetReleaseDescriptionBody,
+} from './utils/validateBody';
 import validateParams, {
   parseParams,
   validateRepoParams,
@@ -57,6 +64,41 @@ appMiddleware.get(
   },
 );
 
+appMiddleware.get(
+  `/:owner/:repo/past-releases`,
+  requiresAuth({api: true}),
+  validateRepoParams(),
+  checkRepoPermissions(['view', 'edit']),
+  async (req, res, next) => {
+    try {
+      const permission = getRepoPermission(req);
+      const {owner, repo, commit, branch} = parseRepoParams(req);
+      const packageName: string | undefined = req.query[`package-name`];
+      const before: string | undefined = req.query[`before`];
+      const client = await getClientForRepo({owner, name: repo});
+      const dbRepo = await getRepositoryFromRestParams(db, client, {
+        owner,
+        name: repo,
+      });
+      if (!dbRepo) {
+        res.status(404).send(`Unable to find the repository/branch`);
+      }
+      const response = await getPastReleases(
+        client,
+        {owner, name: repo},
+        {commit, branch, packageName, before, permission},
+        expressLogger(req, res),
+      );
+      if (!response) {
+        res.status(404).send(`Unable to find the repository/branch`);
+      } else {
+        res.json(response);
+      }
+    } catch (ex) {
+      next(ex);
+    }
+  },
+);
 appMiddleware.post(
   `/:owner/:repo/dispatch/rollingversions_publish_approved`,
   requiresAuth({api: true}),
@@ -77,6 +119,31 @@ appMiddleware.post(
       res.redirect(
         `https://github.com/${repo.owner}/${repo.repo}/actions?query=event%3Arepository_dispatch`,
       );
+    } catch (ex) {
+      next(ex);
+    }
+  },
+);
+appMiddleware.post(
+  `/:owner/:repo/set_release_description`,
+  requiresAuth({api: true}),
+  validateRepoParams(),
+  checkRepoPermissions(['edit']),
+  validateSetReleaseDescriptionBody(),
+  async (req, res, next) => {
+    try {
+      const token = getGitHubAccessToken(req, res);
+      const client = getClientForToken(token);
+      const {owner, repo} = parseRepoParams(req);
+      const body = getSetReleaseDescriptionBody(req);
+      await setReleaseDescription(
+        client,
+        getUser(req),
+        {owner, name: repo},
+        body,
+        expressLogger(req, res),
+      );
+      res.json({ok: true});
     } catch (ex) {
       next(ex);
     }

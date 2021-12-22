@@ -85,3 +85,18 @@ export const UpdatePullRequestBodyCodec = t.Named(
 );
 
 export type UpdatePullRequestBody = t.Static<typeof UpdatePullRequestBodyCodec>;
+
+export const SetReleaseDescriptionBodyCodec = t.Named(
+  `SetReleaseDescriptionBody`,
+  t.Readonly(
+    t.Object({
+      packageName: t.String,
+      currentVersion: t.String,
+      releaseDescription: t.String,
+    }),
+  ),
+);
+
+export type SetReleaseDescriptionBody = t.Static<
+  typeof SetReleaseDescriptionBodyCodec
+>;

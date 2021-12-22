@@ -40,6 +40,7 @@
     "@types/on-finished": "^2.3.1",
     "@types/on-headers": "^1.0.0",
     "apex-logs-winston": "^1.1.0",
+    "assert-never": "^1.2.1",
     "body-parser": "^1.19.0",
     "cuid": "^2.1.8",
     "deep-equal": "^2.0.5",

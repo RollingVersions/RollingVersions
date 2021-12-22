@@ -24,6 +24,6 @@ export type CurrentVersionTag =
     }
   | {
       ok: false;
-      maxVersion: VersionTag | null;
+      maxVersion: VersionTag;
       branchVersion: VersionTag | null;
     };

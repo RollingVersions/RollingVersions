@@ -4,7 +4,18 @@ import {MemoryRouter} from 'react-router-dom';
 import {createChangeSet} from '@rollingversions/change-set';
 import {DEFAULT_CHANGE_TYPES} from '@rollingversions/config';
 
-import {RepositoryPageProps, useBranchState} from '.';
+import {
+  ExistingRelease,
+  LoadMoreButton,
+  NextReleaseHeading,
+  NoPastReleasesMessage,
+  PackagesWithoutChanges,
+  PastReleasesHeading,
+  RepositoryQueryState,
+  UnreleasedPullRequest,
+  UnreleasedPullRequestList,
+  useRepositoryQueryState,
+} from '.';
 import RepositoryPage, {
   CycleWarning,
   PackageWithChanges,
@@ -13,16 +24,35 @@ import RepositoryPage, {
 } from '.';
 import AppContainer from '../AppContainer';
 import AppNavBar, {AppNavBarLink} from '../AppNavBar';
-import ChangeBranchDialog, {ChangeBranchButton} from '../ChangeBranchDialog';
 import ChangeBranchLink from '../ChangeBranchLink';
+import ModalDialogButtonList, {
+  ModalDialogLinkButton,
+} from '../ModalDialogButtonList';
+import ModalDialogSetReleaseNotes from '../ModalDialogSetReleaseNotes';
 
 export default {title: 'pages/RepositoryPage'};
 
+interface TemplateProps {
+  children: (s: RepositoryQueryState) => React.ReactNode;
+  noPastReleases?: boolean;
+  allowEditPastReleases?: boolean;
+}
 const TemplateInner = ({
-  dialog,
-  ...props
-}: RepositoryPageProps & {dialog?: React.ReactNode}) => {
-  const {branch, changingBranch} = useBranchState();
+  children,
+  noPastReleases,
+  allowEditPastReleases,
+}: TemplateProps) => {
+  const s = useRepositoryQueryState();
+  const {
+    branch,
+    packageName,
+    openDialog,
+    closeDialogLink,
+    closeDialog,
+    getOpenDialogLink,
+    getBranchLink,
+    getPackageLink,
+  } = s;
   return (
     <>
       <AppContainer>
@@ -31,33 +61,85 @@ const TemplateInner = ({
           <AppNavBarLink>atdatabases</AppNavBarLink>
           <AppNavBarLink>
             {branch ?? `main`}
-            <ChangeBranchLink currentBranch={branch} />
+            <ChangeBranchLink to={getOpenDialogLink({name: 'branch'})} />
           </AppNavBarLink>
         </AppNavBar>
-        <RepositoryPage {...props} />
+        <RepositoryPage>
+          {children(s)}
+          <PastReleasesHeading
+            hasMultiplePackages
+            to={getOpenDialogLink({name: 'package'})}
+            packageName={packageName}
+          />
+          {noPastReleases ? (
+            <NoPastReleasesMessage />
+          ) : (
+            <>
+              <ExistingRelease
+                packageName="@databases/mysql"
+                version="1.0.0"
+                body={[`## Features`, `- Initial Release (#40)`].join(`\n`)}
+                editLink={
+                  allowEditPastReleases ? `https://github.com` : undefined
+                }
+              />
+              <LoadMoreButton
+                onClick={() => {
+                  // do nothing in storybook
+                }}
+              />
+            </>
+          )}
+        </RepositoryPage>
       </AppContainer>
 
-      <ChangeBranchDialog open={changingBranch} currentBranch={branch}>
-        <ChangeBranchButton to={{search: `?branch=main`}}>
+      <ModalDialogButtonList
+        title="Choose a branch"
+        open={openDialog?.name === 'branch'}
+        closeLink={closeDialogLink}
+      >
+        <ModalDialogLinkButton to={{search: `?branch=main`}}>
           main
-        </ChangeBranchButton>
+        </ModalDialogLinkButton>
         {Array.from({length: 20}).map((_, i) => (
-          <ChangeBranchButton
+          <ModalDialogLinkButton
             key={i}
-            to={{
-              search: `?branch=${encodeURIComponent(
-                `feat/${String.fromCharCode(97 + i)}`,
-              )}`,
-            }}
+            to={getBranchLink(`feat/${String.fromCharCode(97 + i)}`)}
           >
             feat/{String.fromCharCode(97 + i)}
-          </ChangeBranchButton>
+          </ModalDialogLinkButton>
         ))}
-      </ChangeBranchDialog>
+      </ModalDialogButtonList>
+      <ModalDialogButtonList
+        title="Choose a package"
+        open={openDialog?.name === 'package'}
+        closeLink={closeDialogLink}
+      >
+        <ModalDialogLinkButton to={getPackageLink('@databases/mysql')}>
+          @databases/mysql
+        </ModalDialogLinkButton>
+        <ModalDialogLinkButton to={getPackageLink('@databases/pg')}>
+          @databases/pg
+        </ModalDialogLinkButton>
+      </ModalDialogButtonList>
+      <ModalDialogSetReleaseNotes
+        open={openDialog?.name === 'release_description'}
+        closeLink={closeDialogLink}
+        releaseNotes={
+          openDialog?.name === 'release_description'
+            ? openDialog.packageName === '@database/pg'
+              ? `This will be the **first** release of @databases/pg`
+              : ``
+            : undefined
+        }
+        onSave={() => {
+          closeDialog();
+        }}
+      />
     </>
   );
 };
-const Template = (props: RepositoryPageProps & {dialog?: React.ReactNode}) => {
+const Template = (props: TemplateProps) => {
   return (
     <MemoryRouter>
       <TemplateInner {...props} />
@@ -67,43 +149,84 @@ const Template = (props: RepositoryPageProps & {dialog?: React.ReactNode}) => {
 
 export const NoUpdateRequired = () => {
   return (
-    <Template>
-      <PackageWithNoChanges packageName="@database/pg" currentVersion={null} />
-      <PackageWithNoChanges
-        packageName="@database/mysql"
-        currentVersion={null}
-      />
+    <Template noPastReleases>
+      {() => (
+        <>
+          <NextReleaseHeading />
+          <PackagesWithoutChanges>
+            <PackageWithNoChanges
+              packageName="@database/pg"
+              currentVersion={null}
+            />
+            <PackageWithNoChanges
+              packageName="@database/mysql"
+              currentVersion={null}
+            />
+          </PackagesWithoutChanges>
+        </>
+      )}
     </Template>
   );
 };
 
 export const UpdateRequired = () => {
   return (
-    <Template releaseButton={<ReleaseButton />}>
-      <PackageWithChanges
-        packageName="@database/pg"
-        currentVersion={null}
-        newVersion="1.0.0"
-        changeSet={createChangeSet({
-          type: 'feat',
-          title: 'Initial release',
-          body: '',
-          pr: 42,
-        })}
-        changeTypes={DEFAULT_CHANGE_TYPES}
-      />
-      <PackageWithChanges
-        packageName="@database/mysql"
-        currentVersion="1.0.0"
-        newVersion="2.0.0"
-        changeSet={createChangeSet({
-          type: 'breaking',
-          title: 'Renamed queryStream to queryIterable',
-          body: '',
-          pr: 42,
-        })}
-        changeTypes={DEFAULT_CHANGE_TYPES}
-      />
+    <Template allowEditPastReleases>
+      {({getOpenDialogLink}) => (
+        <>
+          <NextReleaseHeading>
+            <ReleaseButton />
+          </NextReleaseHeading>
+          <UnreleasedPullRequestList>
+            <UnreleasedPullRequest
+              href="/42"
+              number={42}
+              title="feat: add a pull request"
+            />
+            <UnreleasedPullRequest
+              href="/41"
+              number={41}
+              title="fix: remove a bug"
+            />
+          </UnreleasedPullRequestList>
+          <PackageWithChanges
+            packageName="@database/pg"
+            currentVersion={null}
+            newVersion="1.0.0"
+            changeSet={createChangeSet({
+              type: 'feat',
+              title: 'Initial release',
+              body: '',
+              pr: 42,
+            })}
+            changeTypes={DEFAULT_CHANGE_TYPES}
+            path="/ForbesLindesay/atdatabases"
+            releaseDescription="This will be the **first** release of @databases/pg"
+            setReleaseDescriptionLink={getOpenDialogLink({
+              name: 'release_description',
+              packageName: '@database/pg',
+            })}
+          />
+          <PackageWithChanges
+            packageName="@database/mysql"
+            currentVersion="1.0.0"
+            newVersion="2.0.0"
+            changeSet={createChangeSet({
+              type: 'breaking',
+              title: 'Renamed queryStream to queryIterable',
+              body: '',
+              pr: 42,
+            })}
+            changeTypes={DEFAULT_CHANGE_TYPES}
+            path="/ForbesLindesay/atdatabases"
+            releaseDescription=""
+            setReleaseDescriptionLink={getOpenDialogLink({
+              name: 'release_description',
+              packageName: '@database/mysql',
+            })}
+          />
+        </>
+      )}
     </Template>
   );
 };
@@ -111,33 +234,50 @@ export const UpdateRequired = () => {
 export const CircularDependency = () => {
   return (
     <Template>
-      <CycleWarning
-        cycle={['@datbases/pg', '@databases/mysl', '@databases/pg']}
-      />
-      <PackageWithChanges
-        packageName="@database/pg"
-        currentVersion={null}
-        newVersion="1.0.0"
-        changeSet={createChangeSet({
-          type: 'feat',
-          title: 'Initial release',
-          body: '',
-          pr: 42,
-        })}
-        changeTypes={DEFAULT_CHANGE_TYPES}
-      />
-      <PackageWithChanges
-        packageName="@database/mysql"
-        currentVersion="1.0.0"
-        newVersion="2.0.0"
-        changeSet={createChangeSet({
-          type: 'breaking',
-          title: 'Renamed queryStream to queryIterable',
-          body: '',
-          pr: 42,
-        })}
-        changeTypes={DEFAULT_CHANGE_TYPES}
-      />
+      {({getOpenDialogLink}) => (
+        <>
+          <NextReleaseHeading />
+          <CycleWarning
+            cycle={['@datbases/pg', '@databases/mysl', '@databases/pg']}
+          />
+          <PackageWithChanges
+            packageName="@database/pg"
+            currentVersion={null}
+            newVersion="1.0.0"
+            changeSet={createChangeSet({
+              type: 'feat',
+              title: 'Initial release',
+              body: '',
+              pr: 42,
+            })}
+            changeTypes={DEFAULT_CHANGE_TYPES}
+            path="/ForbesLindesay/atdatabases"
+            releaseDescription=""
+            setReleaseDescriptionLink={getOpenDialogLink({
+              name: 'release_description',
+              packageName: '@database/pg',
+            })}
+          />
+          <PackageWithChanges
+            packageName="@database/mysql"
+            currentVersion="1.0.0"
+            newVersion="2.0.0"
+            changeSet={createChangeSet({
+              type: 'breaking',
+              title: 'Renamed queryStream to queryIterable',
+              body: '',
+              pr: 42,
+            })}
+            changeTypes={DEFAULT_CHANGE_TYPES}
+            path="/ForbesLindesay/atdatabases"
+            releaseDescription=""
+            setReleaseDescriptionLink={getOpenDialogLink({
+              name: 'release_description',
+              packageName: '@database/pg',
+            })}
+          />
+        </>
+      )}
     </Template>
   );
 };

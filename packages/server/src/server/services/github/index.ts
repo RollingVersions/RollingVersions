@@ -519,3 +519,31 @@ export const getRepositoryViewerPermissions = withRetry(
     retryDelay: () => 100,
   },
 );
+
+export async function getRelease(
+  client: GitHubClient,
+  params: {
+    owner: string;
+    name: string;
+    tagName: string;
+  },
+): Promise<{
+  createdAt: Date;
+  name: string;
+  description: string;
+} | null> {
+  const result = (
+    await queries.getRelease(client, {
+      owner: params.owner,
+      name: params.name,
+      tagName: params.tagName,
+    })
+  ).repository?.release;
+  return result
+    ? {
+        createdAt: new Date(result.createdAt),
+        name: result.name ?? params.tagName,
+        description: result.description ?? ``,
+      }
+    : null;
+}

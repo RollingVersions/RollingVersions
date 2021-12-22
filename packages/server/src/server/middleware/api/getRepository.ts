@@ -5,7 +5,7 @@ import {
   ApiPackageResponse,
   GetRepositoryApiResponse,
 } from '@rollingversions/types';
-import {getNextVersion} from '@rollingversions/version-number';
+import {getNextVersion, printString} from '@rollingversions/version-number';
 
 import type {Logger} from '../../logger';
 import {
@@ -15,12 +15,14 @@ import {
   getAllTagsOnBranch,
   getUnreleasedChanges,
   getAllBranches,
+  getUnreleasedPullRequests,
 } from '../../models/git';
 import {
   getCurrentVersion,
   getPackageManifests,
   getPackageVersions,
 } from '../../models/PackageManifests';
+import {getReleaseDescription} from '../../models/ReleaseDescriptions';
 import {getRepositoryFromRestParams} from '../../models/Repositories';
 import type {GitHubClient} from '../../services/github';
 
@@ -84,11 +86,81 @@ export default async function getRepository(
     (pkg) => pkg.dependencies,
   );
 
-  const packages = sortResult.circular
+  const sortedPackages = sortResult.circular
     ? [...packagesByName.values()].sort((a, b) =>
         a.packageName < b.packageName ? -1 : 1,
       )
     : sortResult.packages;
+
+  const packages = await Promise.all(
+    sortedPackages.map(
+      async (manifest, _, manifests): Promise<ApiPackageResponse> => {
+        const allVersions = getPackageVersions({
+          allowTagsWithoutPackageName: manifests.length <= 1,
+          allTags,
+          manifest,
+        });
+        const branchVersions = getPackageVersions({
+          allowTagsWithoutPackageName: manifests.length <= 1,
+          allTags: branchTags,
+          manifest,
+        });
+        const currentVersion = getCurrentVersion({
+          allVersions,
+          branchVersions,
+          versioningMode: manifest.versioningMode,
+          branchName: branch ?? repo.default_branch_name,
+        });
+        const [unreleasedChanges, releaseDescription] = await Promise.all([
+          getUnreleasedChanges(db, repo, {
+            packageName: manifest.packageName,
+            headCommitSha: headCommit.commit_sha,
+            releasedCommits: new Set(allVersions.map((v) => v.commitSha)),
+          }),
+          getReleaseDescription(db, repo, {
+            packageName: manifest.packageName,
+            currentVersion: !currentVersion
+              ? `unreleased`
+              : currentVersion.ok
+              ? printString(currentVersion.version)
+              : printString(currentVersion.maxVersion.version),
+          }),
+        ]);
+        const changeSet: ChangeSet<{pr: number}> = unreleasedChanges
+          .sort((a, b) => a.sort_order_weight - b.sort_order_weight)
+          .map((c) => ({
+            type: c.kind,
+            title: c.title,
+            body: c.body,
+            pr: c.pr_number,
+          }));
+        return {
+          manifest,
+          releaseDescription,
+          changeSet,
+          currentVersion,
+          newVersion: getNextVersion(
+            currentVersion?.ok ? currentVersion.version : null,
+            changeSet,
+            {
+              changeTypes: manifest.changeTypes,
+              versionSchema: manifest.versionSchema,
+              baseVersion: manifest.baseVersion,
+            },
+          ),
+        };
+      },
+    ),
+  );
+  const unreleasedPullRequests = (
+    await getUnreleasedPullRequests(db, repo, {
+      headCommitSha: headCommit.commit_sha,
+      releasedCommits: new Set(allTags.map((t) => t.commit_sha)),
+      pullRequestsWithChanges: new Set(
+        packages.flatMap((p) => p.changeSet.map((c) => c.pr)),
+      ),
+    })
+  ).map((pr) => ({number: pr.pr_number, title: pr.title}));
 
   return {
     headSha: headCommit.commit_sha,
@@ -107,57 +179,9 @@ export default async function getRepository(
         },
     allBranchNames: allBranches.map((b) => b.name),
     allTagNames: allTags.map((t) => t.name),
-    packages: await Promise.all(
-      packages.map(
-        async (manifest, _, manifests): Promise<ApiPackageResponse> => {
-          const allVersions = getPackageVersions({
-            allowTagsWithoutPackageName: manifests.length <= 1,
-            allTags,
-            manifest,
-          });
-          const branchVersions = getPackageVersions({
-            allowTagsWithoutPackageName: manifests.length <= 1,
-            allTags: branchTags,
-            manifest,
-          });
-          const currentVersion = getCurrentVersion({
-            allVersions,
-            branchVersions,
-            versioningMode: manifest.versioningMode,
-            branchName: branch ?? repo.default_branch_name,
-          });
-          const changeSet: ChangeSet<{pr: number}> = (
-            await getUnreleasedChanges(db, repo, {
-              packageName: manifest.packageName,
-              headCommitSha: headCommit.commit_sha,
-              releasedCommits: new Set(allVersions.map((v) => v.commitSha)),
-            })
-          )
-            .sort((a, b) => a.sort_order_weight - b.sort_order_weight)
-            .map((c) => ({
-              type: c.kind,
-              title: c.title,
-              body: c.body,
-              pr: c.pr_number,
-            }));
-          return {
-            manifest,
-            changeSet,
-            currentVersion,
-            newVersion: getNextVersion(
-              currentVersion?.ok ? currentVersion.version : null,
-              changeSet,
-              {
-                changeTypes: manifest.changeTypes,
-                versionSchema: manifest.versionSchema,
-                baseVersion: manifest.baseVersion,
-              },
-            ),
-          };
-        },
-      ),
-    ),
+    packages,
     cycleDetected: sortResult.circular ? sortResult.packageNames : null,
     packageErrors,
+    unreleasedPullRequests,
   };
 }

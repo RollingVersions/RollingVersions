@@ -29,15 +29,18 @@ function dialogAnimation(state: Exclude<State, 'closed'>): string {
       return `ease-in duration-200 opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95`;
   }
 }
-export default function ChangeBranchDialog({
-  children,
-  currentBranch,
-  open,
-}: {
+export interface ModalDialogProps {
+  title: React.ReactNode;
   children: React.ReactNode;
-  currentBranch: string | null;
   open: boolean;
-}) {
+  closeLink: LinkProps['to'];
+}
+export default function ModalDialog({
+  title,
+  children,
+  open,
+  closeLink,
+}: ModalDialogProps) {
   const [state, setState] = useState<State>(open ? 'open' : 'closed');
   useEffect(() => {
     let cancelled = false;
@@ -91,15 +94,12 @@ export default function ChangeBranchDialog({
     >
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <Link
-          to={{
-            search: currentBranch
-              ? `?branch=${encodeURIComponent(currentBranch)}`
-              : ``,
-          }}
+          to={closeLink}
           className={`fixed inset-0 bg-gray-500 transition-opacity ${backgroundAnimation(
             state,
           )}`}
           aria-hidden="true"
+          replace
         ></Link>
 
         {/* This element is to trick the browser into centering the modal contents. */}
@@ -121,32 +121,13 @@ export default function ChangeBranchDialog({
                 className="text-lg leading-6 font-medium text-gray-900"
                 id="modal-title"
               >
-                Choose a branch
+                {title}
               </h3>
             </div>
           </div>
-          <ul className="mt-5 sm:mt-6">{children}</ul>
+          {children}
         </div>
       </div>
     </div>
-  );
-}
-
-export function ChangeBranchButton({
-  children,
-  to,
-}: {
-  children: React.ReactNode;
-  to: LinkProps['to'];
-}) {
-  return (
-    <li className="mt-2">
-      <Link
-        to={to}
-        className="inline-flex justify-center w-full rounded-md border shadow-sm px-4 py-2 border-indigo-600 text-base font-medium text-indigo-600 hover:bg-indigo-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
-      >
-        {children}
-      </Link>
-    </li>
   );
 }
