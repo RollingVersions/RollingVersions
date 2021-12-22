@@ -283,16 +283,26 @@ export function ExistingRelease({
   packageName,
   version,
   body,
+  editLink,
 }: {
   packageName: string;
   version: string;
   body: string;
+  editLink?: string;
 }) {
   return (
     <div className="mb-8">
       <PackageName>
         {packageName} ({version})
       </PackageName>
+      {editLink ? (
+        <a
+          className="mb-4 text-sm text-gray-600 hover:text-gray-900 hover:underline"
+          href={editLink}
+        >
+          Edit
+        </a>
+      ) : null}
       <GitHubMarkdownAsync>{body}</GitHubMarkdownAsync>
     </div>
   );

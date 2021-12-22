@@ -18,6 +18,7 @@ import {
 } from '../../models/PackageManifests';
 import {getRepositoryFromRestParams} from '../../models/Repositories';
 import {getRelease, GitHubClient} from '../../services/github';
+import {Permission} from '../utils/checkPermissions';
 
 const MAX_PAGE_SIZE = 10;
 export default async function getPastReleases(
@@ -31,7 +32,14 @@ export default async function getPastReleases(
     branch,
     packageName,
     before,
-  }: {commit?: string; branch?: string; packageName?: string; before?: string},
+    permission,
+  }: {
+    commit?: string;
+    branch?: string;
+    packageName?: string;
+    before?: string;
+    permission: Permission;
+  },
   logger: Logger,
 ): Promise<{
   nextPageToken: string | null;
@@ -39,6 +47,7 @@ export default async function getPastReleases(
     packageName: string;
     version: string;
     body: string;
+    editLink?: string;
   }[];
 } | null> {
   const repo = await getRepositoryFromRestParams(db, client, repository);
@@ -107,6 +116,14 @@ export default async function getPastReleases(
             packageName: manifest.packageName,
             version: printString(v.version),
             body: release?.description ?? `_No Change Log Provided_`,
+            editLink:
+              permission === 'edit'
+                ? `https://github.com/${encodeURIComponent(
+                    repo.owner,
+                  )}/${encodeURIComponent(
+                    repo.name,
+                  )}/releases/edit/${encodeURIComponent(v.name)}`
+                : undefined,
           };
         }),
       );

@@ -41,6 +41,7 @@ interface PastReleasesState {
     packageName: string;
     version: string;
     body: string;
+    editLink?: string;
   }[];
 }
 export default function Repository() {
@@ -321,6 +322,7 @@ export default function Repository() {
                       packageName={release.packageName}
                       version={release.version}
                       body={release.body}
+                      editLink={release.editLink}
                     />
                   ))}
                   {pastReleasesState.nextPageToken ? (

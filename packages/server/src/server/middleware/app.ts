@@ -15,6 +15,7 @@ import checkPermissions, {
   getPermission,
   getUser,
   checkRepoPermissions,
+  getRepoPermission,
 } from './utils/checkPermissions';
 import validateBody, {getBody} from './utils/validateBody';
 import validateParams, {
@@ -65,6 +66,7 @@ appMiddleware.get(
   checkRepoPermissions(['view', 'edit']),
   async (req, res, next) => {
     try {
+      const permission = getRepoPermission(req);
       const {owner, repo, commit, branch} = parseRepoParams(req);
       const packageName: string | undefined = req.query[`package-name`];
       const before: string | undefined = req.query[`before`];
@@ -79,7 +81,7 @@ appMiddleware.get(
       const response = await getPastReleases(
         client,
         {owner, name: repo},
-        {commit, branch, packageName, before},
+        {commit, branch, packageName, before, permission},
         expressLogger(req, res),
       );
       if (!response) {
