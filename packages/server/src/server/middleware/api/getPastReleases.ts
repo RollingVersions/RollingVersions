@@ -19,6 +19,7 @@ import {
 import {getRepositoryFromRestParams} from '../../models/Repositories';
 import {getRelease, GitHubClient} from '../../services/github';
 
+const MAX_PAGE_SIZE = 10;
 export default async function getPastReleases(
   client: GitHubClient,
   repository: {
@@ -91,9 +92,9 @@ export default async function getPastReleases(
       if (beforeVersion) {
         allVersions = allVersions.filter((v) => lt(v.version, beforeVersion));
       }
-      if (allVersions.length > 5) {
-        nextPageToken = printString(allVersions[4].version);
-        allVersions = allVersions.slice(0, 5);
+      if (allVersions.length > MAX_PAGE_SIZE) {
+        nextPageToken = printString(allVersions[MAX_PAGE_SIZE - 1].version);
+        allVersions = allVersions.slice(0, MAX_PAGE_SIZE);
       }
 
       const releases = await Promise.all(
