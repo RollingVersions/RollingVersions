@@ -11,7 +11,7 @@ import InstallIcon from '../HeroBar/install-icon.svg';
 
 function PackageName({children}: {children: React.ReactNode}) {
   return (
-    <h2 className="font-sans text-2xl text-gray-900 font-light mb-4">
+    <h2 className="flex items-end font-sans text-2xl text-gray-900 font-light mb-4">
       {children}
     </h2>
   );
@@ -294,15 +294,16 @@ export function ExistingRelease({
     <div className="mb-8">
       <PackageName>
         {packageName} ({version})
+        <div className="flex-grow" />
+        {editLink ? (
+          <a
+            className="text-sm text-gray-600 hover:text-gray-900 hover:underline"
+            href={editLink}
+          >
+            Edit Release
+          </a>
+        ) : null}
       </PackageName>
-      {editLink ? (
-        <a
-          className="mb-4 text-sm text-gray-600 hover:text-gray-900 hover:underline"
-          href={editLink}
-        >
-          Edit
-        </a>
-      ) : null}
       <GitHubMarkdownAsync>{body}</GitHubMarkdownAsync>
     </div>
   );

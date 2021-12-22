@@ -28,13 +28,16 @@ import ChangeBranchLink from '../ChangeBranchLink';
 
 export default {title: 'pages/RepositoryPage'};
 
+interface TemplateProps {
+  children: React.ReactNode;
+  noPastReleases?: boolean;
+  allowEditPastReleases?: boolean;
+}
 const TemplateInner = ({
   children,
   noPastReleases,
-}: {
-  children: React.ReactNode;
-  noPastReleases?: boolean;
-}) => {
+  allowEditPastReleases,
+}: TemplateProps) => {
   const {
     branch,
     packageName,
@@ -70,6 +73,9 @@ const TemplateInner = ({
                 packageName="@databases/mysql"
                 version="1.0.0"
                 body={[`## Features`, `- Initial Release (#40)`].join(`\n`)}
+                editLink={
+                  allowEditPastReleases ? `https://github.com` : undefined
+                }
               />
               <LoadMoreButton
                 onClick={() => {
@@ -113,10 +119,7 @@ const TemplateInner = ({
     </>
   );
 };
-const Template = (props: {
-  children: React.ReactNode;
-  noPastReleases?: boolean;
-}) => {
+const Template = (props: TemplateProps) => {
   return (
     <MemoryRouter>
       <TemplateInner {...props} />
@@ -144,7 +147,7 @@ export const NoUpdateRequired = () => {
 
 export const UpdateRequired = () => {
   return (
-    <Template>
+    <Template allowEditPastReleases>
       <NextReleaseHeading>
         <ReleaseButton />
       </NextReleaseHeading>
