@@ -2,7 +2,11 @@ import React from 'react';
 import {useParams} from 'react-router-dom';
 
 import {printTag} from '@rollingversions/tag-format';
-import {GetRepositoryApiResponse, VersioningMode} from '@rollingversions/types';
+import {
+  GetRepositoryApiResponse,
+  PastReleasesApiResponse,
+  VersioningMode,
+} from '@rollingversions/types';
 import {printString} from '@rollingversions/version-number';
 
 import Alert from '../visual/Alert';
@@ -35,15 +39,6 @@ interface Params {
   repo: string;
 }
 
-interface PastReleasesState {
-  nextPageToken: string | null;
-  releases: {
-    packageName: string;
-    version: string;
-    body: string;
-    editLink?: string;
-  }[];
-}
 export default function Repository() {
   const params = useParams<Params>();
   const [error, setError] = React.useState<Error | undefined>();
@@ -54,10 +49,10 @@ export default function Repository() {
     Error | undefined
   >();
   const [pastReleasesState, setPastReleasesState] = React.useState<
-    PastReleasesState | undefined
+    PastReleasesApiResponse | undefined
   >();
   const [loadMoreRequested, setLoadMoreRequested] = React.useState<
-    PastReleasesState | undefined
+    PastReleasesApiResponse | undefined
   >();
   const path = `/${params.owner}/${params.repo}`;
   const {
@@ -144,7 +139,7 @@ export default function Repository() {
         if (!res.ok) {
           throw new Error(`${res.statusText}: ${await res.text()}`);
         }
-        const data: PastReleasesState = await res.json();
+        const data: PastReleasesApiResponse = await res.json();
         if (!cancelled) {
           setPastReleasesState((oldState) =>
             oldState

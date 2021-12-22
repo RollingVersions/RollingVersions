@@ -23,3 +23,13 @@ export interface GetRepositoryApiResponse {
     title: string;
   }[];
 }
+
+export interface PastReleasesApiResponse {
+  nextPageToken: string | null;
+  releases: {
+    packageName: string;
+    version: string;
+    body: string;
+    editLink?: string;
+  }[];
+}

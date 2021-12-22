@@ -1,4 +1,5 @@
 import db from '@rollingversions/db';
+import {PastReleasesApiResponse} from '@rollingversions/types';
 import {
   lt,
   parseString,
@@ -41,15 +42,7 @@ export default async function getPastReleases(
     permission: Permission;
   },
   logger: Logger,
-): Promise<{
-  nextPageToken: string | null;
-  releases: {
-    packageName: string;
-    version: string;
-    body: string;
-    editLink?: string;
-  }[];
-} | null> {
+): Promise<PastReleasesApiResponse | null> {
   const repo = await getRepositoryFromRestParams(db, client, repository);
   if (!repo) return null;
 
