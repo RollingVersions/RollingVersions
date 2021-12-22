@@ -37,18 +37,24 @@ export function NextReleaseHeading({children}: {children?: React.ReactNode}) {
 export function PastReleasesHeading({
   to,
   packageName,
+  hasMultiplePackages,
 }: {
   to: LinkProps['to'];
   packageName: string | null;
+  hasMultiplePackages: boolean;
 }) {
   return (
     <h1 className="flex items-center mb-2 mt-12 font-sans text-3xl text-gray-900 font-normal">
-      <Link to={to}>
-        Past Releases for {packageName || 'All Packages'}
-        <span className="ml-2 text-sm text-gray-600">
-          ({packageName ? `change` : `filter`} package)
-        </span>
-      </Link>
+      {hasMultiplePackages ? (
+        <Link to={to}>
+          Past Releases for {packageName || 'All Packages'}
+          <span className="ml-2 text-sm text-gray-600">
+            ({packageName ? `change` : `filter`} package)
+          </span>
+        </Link>
+      ) : (
+        `Past Releases`
+      )}
     </h1>
   );
 }
@@ -101,23 +107,6 @@ export function PackageWithChanges({
           changeTypes,
         })}
       </GitHubMarkdownAsync>
-    </React.Fragment>
-  );
-}
-
-export function PackageWithNoChanges({
-  packageName,
-  currentVersion,
-}: {
-  packageName: string;
-  currentVersion: string | null;
-}) {
-  return (
-    <React.Fragment key={packageName}>
-      <PackageName>
-        {packageName} ({currentVersion || 'unreleased'})
-      </PackageName>
-      <p className="mb-8">No updates merged</p>
     </React.Fragment>
   );
 }
@@ -256,6 +245,37 @@ export function UnreleasedPullRequest(props: {
   );
 }
 
+export function PackagesWithoutChanges({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <>
+      <h2 className="font-sans text-sm list-square mb-1 text-gray-800">
+        Packages with no merged changes to release:
+      </h2>
+      <ul className="font-sans text-sm list-square ml-8 mb-5 text-gray-800">
+        {children}
+      </ul>
+    </>
+  );
+}
+
+export function PackageWithNoChanges({
+  packageName,
+  currentVersion,
+}: {
+  packageName: string;
+  currentVersion: string | null;
+}) {
+  return (
+    <li>
+      {packageName} ({currentVersion || 'unreleased'})
+    </li>
+  );
+}
+
 export function NoPastReleasesMessage() {
   return <p>No past releases found</p>;
 }
@@ -269,11 +289,11 @@ export function ExistingRelease({
   body: string;
 }) {
   return (
-    <>
+    <div className="mb-8">
       <PackageName>
         {packageName} ({version})
       </PackageName>
       <GitHubMarkdownAsync>{body}</GitHubMarkdownAsync>
-    </>
+    </div>
   );
 }

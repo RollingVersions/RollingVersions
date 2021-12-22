@@ -66,8 +66,8 @@ appMiddleware.get(
   async (req, res, next) => {
     try {
       const {owner, repo, commit, branch} = parseRepoParams(req);
-      const packageName: string | undefined = req.params[`package-name`];
-      const before: string | undefined = req.params[`before`];
+      const packageName: string | undefined = req.query[`package-name`];
+      const before: string | undefined = req.query[`before`];
       const client = await getClientForRepo({owner, name: repo});
       const dbRepo = await getRepositoryFromRestParams(db, client, {
         owner,

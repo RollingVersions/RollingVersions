@@ -9,6 +9,7 @@ import {
   LoadMoreButton,
   NextReleaseHeading,
   NoPastReleasesMessage,
+  PackagesWithoutChanges,
   PastReleasesHeading,
   UnreleasedPullRequest,
   UnreleasedPullRequestList,
@@ -57,6 +58,7 @@ const TemplateInner = ({
         <RepositoryPage>
           {children}
           <PastReleasesHeading
+            hasMultiplePackages
             to={getOpenDialogLink('package')}
             packageName={packageName}
           />
@@ -126,11 +128,16 @@ export const NoUpdateRequired = () => {
   return (
     <Template noPastReleases>
       <NextReleaseHeading />
-      <PackageWithNoChanges packageName="@database/pg" currentVersion={null} />
-      <PackageWithNoChanges
-        packageName="@database/mysql"
-        currentVersion={null}
-      />
+      <PackagesWithoutChanges>
+        <PackageWithNoChanges
+          packageName="@database/pg"
+          currentVersion={null}
+        />
+        <PackageWithNoChanges
+          packageName="@database/mysql"
+          currentVersion={null}
+        />
+      </PackagesWithoutChanges>
     </Template>
   );
 };

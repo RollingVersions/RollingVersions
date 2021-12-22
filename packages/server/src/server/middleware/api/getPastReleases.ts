@@ -30,7 +30,7 @@ export default async function getPastReleases(
     branch,
     packageName,
     before,
-  }: {commit?: string; branch?: string; packageName?: string; before: string},
+  }: {commit?: string; branch?: string; packageName?: string; before?: string},
   logger: Logger,
 ): Promise<{
   nextPageToken: string | null;

@@ -20,6 +20,7 @@ import RepositoryPage, {
   ManifestWarning,
   NextReleaseHeading,
   NoPastReleasesMessage,
+  PackagesWithoutChanges,
   PackageWithChanges,
   PackageWithNoChanges,
   PastReleasesHeading,
@@ -277,25 +278,30 @@ export default function Repository() {
                   />
                 );
               })}
-              {state.packages.map((pkg) => {
-                if (pkg.newVersion) {
-                  return null;
-                }
-                return (
-                  <PackageWithNoChanges
-                    key={pkg.manifest.packageName}
-                    packageName={pkg.manifest.packageName}
-                    currentVersion={
-                      pkg.currentVersion?.ok
-                        ? pkg.manifest.tagFormat
-                          ? pkg.currentVersion.name
-                          : printString(pkg.currentVersion.version)
-                        : null
+              {state.packages.some((pkg) => !pkg.newVersion) ? (
+                <PackagesWithoutChanges>
+                  {state.packages.map((pkg) => {
+                    if (pkg.newVersion) {
+                      return null;
                     }
-                  />
-                );
-              })}
+                    return (
+                      <PackageWithNoChanges
+                        key={pkg.manifest.packageName}
+                        packageName={pkg.manifest.packageName}
+                        currentVersion={
+                          pkg.currentVersion?.ok
+                            ? pkg.manifest.tagFormat
+                              ? pkg.currentVersion.name
+                              : printString(pkg.currentVersion.version)
+                            : null
+                        }
+                      />
+                    );
+                  })}
+                </PackagesWithoutChanges>
+              ) : null}
               <PastReleasesHeading
+                hasMultiplePackages={state.packages.length > 1}
                 to={getOpenDialogLink('package')}
                 packageName={packageName}
               />
@@ -319,6 +325,7 @@ export default function Repository() {
                   ))}
                   {pastReleasesState.nextPageToken ? (
                     <LoadMoreButton
+                      key={pastReleasesState.releases.length}
                       onClick={() => setLoadMoreRequested(pastReleasesState)}
                     />
                   ) : !packageName && state.packages.length > 1 ? (
