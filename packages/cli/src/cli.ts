@@ -164,6 +164,10 @@ switch (COMMAND) {
                 ),
               );
               console.warn(``);
+              if (p.releaseDescription?.trim()) {
+                console.warn(p.releaseDescription.trim());
+                console.warn(``);
+              }
               console.warn(
                 changesToMarkdown(p.changeSet, {
                   headingLevel: 3,
