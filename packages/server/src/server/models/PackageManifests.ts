@@ -349,8 +349,12 @@ export function getCurrentVersion({
           versionsEqual(branchVersion.version, maxVersion.version))
       ) {
         return maxVersion && {ok: true, ...maxVersion};
-      } else {
+      } else if (maxVersion) {
         return {ok: false, maxVersion, branchVersion};
+      } else {
+        throw new Error(
+          `A branch version was found but no max version. This should never happen.`,
+        );
       }
   }
 }

@@ -138,6 +138,7 @@ export default async function publish(config: PublishConfig): Promise<Result> {
         return {
           status: PackageStatus.NewVersionToBePublished,
           packageName: pkg.manifest.packageName,
+          releaseDescription: pkg.releaseDescription,
           currentTagName: currentVersion?.name ?? null,
           currentVersion: currentVersion?.version ?? null,
           newVersion: pkg.newVersion,

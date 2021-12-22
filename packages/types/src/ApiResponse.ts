@@ -5,6 +5,7 @@ import {CurrentVersionTag} from './VersionTag';
 
 export interface ApiPackageResponse {
   manifest: PackageManifest;
+  releaseDescription: string;
   changeSet: ChangeSet<{pr: number}>;
   currentVersion: CurrentVersionTag | null;
   newVersion: VersionNumber | null;

@@ -111,11 +111,15 @@ export async function createGitHubRelease(
           owner,
           repo,
 
-          body: changesToMarkdown(pkg.changeSet, {
-            headingLevel: 2,
-            renderContext: ({pr}) => ` (#${pr})`,
-            changeTypes: pkg.manifest.changeTypes,
-          }),
+          body:
+            (pkg.releaseDescription?.trim()
+              ? `${pkg.releaseDescription.trim()}\n\n`
+              : ``) +
+            changesToMarkdown(pkg.changeSet, {
+              headingLevel: 2,
+              renderContext: ({pr}) => ` (#${pr})`,
+              changeTypes: pkg.manifest.changeTypes,
+            }),
           name: tagName,
           tag_name: tagName,
           target_commitish: headSha,

@@ -5,7 +5,7 @@ import {
   ApiPackageResponse,
   GetRepositoryApiResponse,
 } from '@rollingversions/types';
-import {getNextVersion} from '@rollingversions/version-number';
+import {getNextVersion, printString} from '@rollingversions/version-number';
 
 import type {Logger} from '../../logger';
 import {
@@ -22,6 +22,7 @@ import {
   getPackageManifests,
   getPackageVersions,
 } from '../../models/PackageManifests';
+import {getReleaseDescription} from '../../models/ReleaseDescriptions';
 import {getRepositoryFromRestParams} from '../../models/Repositories';
 import type {GitHubClient} from '../../services/github';
 
@@ -110,13 +111,22 @@ export default async function getRepository(
           versioningMode: manifest.versioningMode,
           branchName: branch ?? repo.default_branch_name,
         });
-        const changeSet: ChangeSet<{pr: number}> = (
-          await getUnreleasedChanges(db, repo, {
+        const [unreleasedChanges, releaseDescription] = await Promise.all([
+          getUnreleasedChanges(db, repo, {
             packageName: manifest.packageName,
             headCommitSha: headCommit.commit_sha,
             releasedCommits: new Set(allVersions.map((v) => v.commitSha)),
-          })
-        )
+          }),
+          getReleaseDescription(db, repo, {
+            packageName: manifest.packageName,
+            currentVersion: !currentVersion
+              ? `unreleased`
+              : currentVersion.ok
+              ? printString(currentVersion.version)
+              : printString(currentVersion.maxVersion.version),
+          }),
+        ]);
+        const changeSet: ChangeSet<{pr: number}> = unreleasedChanges
           .sort((a, b) => a.sort_order_weight - b.sort_order_weight)
           .map((c) => ({
             type: c.kind,
@@ -126,6 +136,7 @@ export default async function getRepository(
           }));
         return {
           manifest,
+          releaseDescription,
           changeSet,
           currentVersion,
           newVersion: getNextVersion(

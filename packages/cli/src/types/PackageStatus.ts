@@ -22,6 +22,7 @@ export interface NewVersionToBePublished {
   currentTagName: string | null;
   currentVersion: VersionNumber | null;
   newVersion: VersionNumber;
+  releaseDescription?: string;
   changeSet: ChangeSet<{pr: number}>;
   manifest: PackageManifest;
 }

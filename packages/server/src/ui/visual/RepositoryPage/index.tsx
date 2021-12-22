@@ -1,5 +1,6 @@
+import assertNever from 'assert-never';
 import React, {useMemo} from 'react';
-import {Link, LinkProps, useLocation} from 'react-router-dom';
+import {Link, LinkProps, useHistory, useLocation} from 'react-router-dom';
 
 import type ChangeSet from '@rollingversions/change-set';
 import {changesToMarkdown} from '@rollingversions/change-set';
@@ -46,7 +47,7 @@ export function PastReleasesHeading({
   return (
     <h1 className="flex items-center mb-2 mt-12 font-sans text-3xl text-gray-900 font-normal">
       {hasMultiplePackages ? (
-        <Link to={to}>
+        <Link to={to} replace>
           Past Releases for {packageName || 'All Packages'}
           <span className="ml-2 text-sm text-gray-600">
             ({packageName ? `change` : `filter`} package)
@@ -85,6 +86,8 @@ export function PackageWithChanges({
   changeSet,
   changeTypes,
   path,
+  releaseDescription,
+  setReleaseDescriptionLink,
 }: {
   packageName: string;
   currentVersion: string | null;
@@ -92,6 +95,8 @@ export function PackageWithChanges({
   changeSet: ChangeSet<{pr: number}>;
   changeTypes: readonly ChangeType[];
   path: string;
+  releaseDescription: string;
+  setReleaseDescriptionLink: LinkProps['to'];
 }) {
   return (
     <React.Fragment key={packageName}>
@@ -100,6 +105,26 @@ export function PackageWithChanges({
         {' -> '}
         {newVersion})
       </PackageName>
+      {releaseDescription ? (
+        <>
+          <GitHubMarkdownAsync>{releaseDescription}</GitHubMarkdownAsync>
+          <Link
+            className="block -mt-4 text-sm text-gray-700 hover:text-gray-900 italic hover:underline"
+            to={setReleaseDescriptionLink}
+            replace
+          >
+            Edit Release Description
+          </Link>
+        </>
+      ) : (
+        <Link
+          className="text-sm text-gray-700 hover:text-gray-900 italic hover:underline"
+          to={setReleaseDescriptionLink}
+          replace
+        >
+          Add Release Description
+        </Link>
+      )}
       <GitHubMarkdownAsync>
         {changesToMarkdown(changeSet, {
           headingLevel: 3,
@@ -143,33 +168,57 @@ export function ChoosePackageButton({to}: {to: LinkProps['to']}) {
     <Link
       to={to}
       className="flex items-center justify-center bg-black text-white font-poppins font-black h-8 px-4 text-lg focus:outline-none focus:shadow-gray"
+      replace
     >
       Choose a package to see more releases
     </Link>
   );
 }
 
-export type DialogName = 'branch' | 'package';
-function asDialogName(str: string | null): DialogName | null {
+export type DialogParam =
+  | {name: 'branch'}
+  | {name: 'package'}
+  | {name: 'release_description'; packageName: string};
+function parseDialogParam(str: string | null): DialogParam | null {
   switch (str) {
     case 'branch':
     case 'package':
-      return str;
-    default:
+      return {name: str};
+    default: {
+      const match = str && /^release_description:(.+)$/.exec(str);
+      if (match) {
+        return {name: `release_description`, packageName: match[1]};
+      }
       return null;
+    }
   }
 }
-export function useRepositoryQueryState(): {
+function stringifyDialogParam(param: DialogParam): string {
+  switch (param.name) {
+    case 'branch':
+    case 'package':
+      return param.name;
+    case 'release_description':
+      return `${param.name}:${param.packageName}`;
+    default:
+      return assertNever(param);
+  }
+}
+export interface RepositoryQueryState {
   branch: string | null;
   packageName: string | null;
-  openDialog: DialogName | null;
+  openDialog: DialogParam | null;
   closeDialogLink: LinkProps['to'];
+  closeDialog: () => void;
   getBranchLink: (branch: string | null) => LinkProps['to'];
   getPackageLink: (packageName: string | null) => LinkProps['to'];
-  getOpenDialogLink: (dialogName: DialogName) => LinkProps['to'];
-} {
+  getOpenDialogLink: (dialogParam: DialogParam) => LinkProps['to'];
+}
+export function useRepositoryQueryState(): RepositoryQueryState {
+  const history = useHistory();
   const {search} = useLocation();
-  return useMemo(() => {
+
+  const parsedParams = useMemo(() => {
     const searchParams = new URLSearchParams(search);
     const branch = searchParams.get(`branch`);
     const packageName = searchParams.get(`package-name`);
@@ -192,10 +241,9 @@ export function useRepositoryQueryState(): {
       const s = p.toString();
       return {search: s ? `?${s}` : ``};
     };
-    const getOpenDialogLink = (dialogName: DialogName) => {
+    const getOpenDialogLink = (dialogParam: DialogParam) => {
       const p = new URLSearchParams(searchParams);
-      p.set(`dialog`, dialogName);
-
+      p.set(`dialog`, stringifyDialogParam(dialogParam));
       const s = p.toString();
       return {search: s ? `?${s}` : ``};
     };
@@ -203,13 +251,19 @@ export function useRepositoryQueryState(): {
     return {
       branch,
       packageName,
-      openDialog: asDialogName(openDialog),
+      openDialog: parseDialogParam(openDialog),
       closeDialogLink: {search: closeDialogStr ? `?${closeDialogStr}` : ``},
       getBranchLink,
       getPackageLink,
       getOpenDialogLink,
     };
   }, [search]);
+  return {
+    ...parsedParams,
+    closeDialog: () => {
+      history.replace({...history.location, ...parsedParams.closeDialogLink});
+    },
+  };
 }
 
 export function UnreleasedPullRequestList({

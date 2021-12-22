@@ -9,6 +9,7 @@ import {getRepositoryFromRestParams} from '../models/Repositories';
 import getPastReleases from './api/getPastReleases';
 import getPullRequest from './api/getPullRequest';
 import getRepository from './api/getRepository';
+import setReleaseDescription from './api/setReleaseDescription';
 import updatePullRequest from './api/updatePullRequest';
 import {requiresAuth, getGitHubAccessToken} from './auth';
 import checkPermissions, {
@@ -17,7 +18,11 @@ import checkPermissions, {
   checkRepoPermissions,
   getRepoPermission,
 } from './utils/checkPermissions';
-import validateBody, {getBody} from './utils/validateBody';
+import validateBody, {
+  getBody,
+  getSetReleaseDescriptionBody,
+  validateSetReleaseDescriptionBody,
+} from './utils/validateBody';
 import validateParams, {
   parseParams,
   validateRepoParams,
@@ -114,6 +119,31 @@ appMiddleware.post(
       res.redirect(
         `https://github.com/${repo.owner}/${repo.repo}/actions?query=event%3Arepository_dispatch`,
       );
+    } catch (ex) {
+      next(ex);
+    }
+  },
+);
+appMiddleware.post(
+  `/:owner/:repo/set_release_description`,
+  requiresAuth({api: true}),
+  validateRepoParams(),
+  checkRepoPermissions(['edit']),
+  validateSetReleaseDescriptionBody(),
+  async (req, res, next) => {
+    try {
+      const token = getGitHubAccessToken(req, res);
+      const client = getClientForToken(token);
+      const {owner, repo} = parseRepoParams(req);
+      const body = getSetReleaseDescriptionBody(req);
+      await setReleaseDescription(
+        client,
+        getUser(req),
+        {owner, name: repo},
+        body,
+        expressLogger(req, res),
+      );
+      res.json({ok: true});
     } catch (ex) {
       next(ex);
     }

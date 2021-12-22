@@ -9,13 +9,15 @@ import {
 } from '@rollingversions/types';
 import {printString} from '@rollingversions/version-number';
 
+import {SetReleaseDescriptionBodyCodec} from '../../types';
 import Alert from '../visual/Alert';
 import AppContainer from '../visual/AppContainer';
 import AppNavBar, {AppNavBarLink} from '../visual/AppNavBar';
-import ChangeBranchDialog, {
-  ChangeBranchButton,
-} from '../visual/ChangeBranchDialog';
 import ChangeBranchLink from '../visual/ChangeBranchLink';
+import ModalDialogButtonList, {
+  ModalDialogLinkButton,
+} from '../visual/ModalDialogButtonList';
+import ModalDialogSetReleaseNotes from '../visual/ModalDialogSetReleaseNotes';
 import RepositoryPage, {
   ChoosePackageButton,
   CycleWarning,
@@ -60,6 +62,7 @@ export default function Repository() {
     packageName,
     openDialog,
     closeDialogLink,
+    closeDialog,
     getBranchLink,
     getPackageLink,
     getOpenDialogLink,
@@ -178,7 +181,7 @@ export default function Repository() {
           <AppNavBarLink>{params.repo}</AppNavBarLink>
           <AppNavBarLink>
             {state?.deployBranch?.name ?? (error ? `Error` : `Loading`)}
-            <ChangeBranchLink to={getOpenDialogLink('branch')} />
+            <ChangeBranchLink to={getOpenDialogLink({name: 'branch'})} />
           </AppNavBarLink>
         </AppNavBar>
         {(() => {
@@ -271,6 +274,11 @@ export default function Repository() {
                     changeSet={pkg.changeSet}
                     changeTypes={pkg.manifest.changeTypes}
                     path={path}
+                    releaseDescription={pkg.releaseDescription}
+                    setReleaseDescriptionLink={getOpenDialogLink({
+                      name: `release_description`,
+                      packageName: pkg.manifest.packageName,
+                    })}
                   />
                 );
               })}
@@ -298,7 +306,7 @@ export default function Repository() {
               ) : null}
               <PastReleasesHeading
                 hasMultiplePackages={state.packages.length > 1}
-                to={getOpenDialogLink('package')}
+                to={getOpenDialogLink({name: 'package'})}
                 packageName={packageName}
               />
               {pastReleasesError ? (
@@ -326,7 +334,9 @@ export default function Repository() {
                       onClick={() => setLoadMoreRequested(pastReleasesState)}
                     />
                   ) : !packageName && state.packages.length > 1 ? (
-                    <ChoosePackageButton to={getOpenDialogLink('package')} />
+                    <ChoosePackageButton
+                      to={getOpenDialogLink({name: 'package'})}
+                    />
                   ) : null}
                 </>
               )}
@@ -334,34 +344,96 @@ export default function Repository() {
           );
         })()}
       </AppContainer>
-      <ChangeBranchDialog
+      <ModalDialogButtonList
         title="Choose a branch"
-        open={!!(openDialog === 'branch' && state)}
+        open={!!(openDialog?.name === 'branch' && state)}
         closeLink={closeDialogLink}
       >
         {state?.allBranchNames.map((branchName) => (
-          <ChangeBranchButton key={branchName} to={getBranchLink(branchName)}>
+          <ModalDialogLinkButton
+            key={branchName}
+            to={getBranchLink(branchName)}
+          >
             {branchName}
-          </ChangeBranchButton>
+          </ModalDialogLinkButton>
         ))}
-      </ChangeBranchDialog>
-      <ChangeBranchDialog
+      </ModalDialogButtonList>
+      <ModalDialogButtonList
         title="Choose a package"
-        open={!!(openDialog === 'package' && state)}
+        open={!!(openDialog?.name === 'package' && state)}
         closeLink={closeDialogLink}
       >
         {state?.packages
           .map((pkg) => pkg.manifest.packageName)
           .sort()
           .map((packageName) => (
-            <ChangeBranchButton
+            <ModalDialogLinkButton
               key={packageName}
               to={getPackageLink(packageName)}
             >
               {packageName}
-            </ChangeBranchButton>
+            </ModalDialogLinkButton>
           ))}
-      </ChangeBranchDialog>
+      </ModalDialogButtonList>
+      <ModalDialogSetReleaseNotes
+        open={!!(openDialog?.name === 'release_description' && state)}
+        releaseNotes={
+          openDialog?.name === 'release_description'
+            ? state?.packages.find(
+                (p) => p.manifest.packageName === openDialog.packageName,
+              )?.releaseDescription
+            : undefined
+        }
+        closeLink={closeDialogLink}
+        onSave={(releaseDescription) => {
+          const pkg =
+            openDialog?.name === 'release_description'
+              ? state?.packages.find(
+                  (p) => p.manifest.packageName === openDialog.packageName,
+                )
+              : undefined;
+          if (pkg) {
+            closeDialog();
+            setState((s) =>
+              s
+                ? {
+                    ...s,
+                    packages: s.packages.map((p) => {
+                      if (p.manifest.packageName === pkg.manifest.packageName) {
+                        return {...p, releaseDescription};
+                      }
+                      return p;
+                    }),
+                  }
+                : s,
+            );
+            const currentVersion = pkg.currentVersion;
+            fetch(`${path}/set_release_description`, {
+              method: 'POST',
+              body: JSON.stringify(
+                SetReleaseDescriptionBodyCodec.serialize({
+                  packageName: pkg.manifest.packageName,
+                  currentVersion: !currentVersion
+                    ? `unreleased`
+                    : currentVersion.ok
+                    ? printString(currentVersion.version)
+                    : printString(currentVersion.maxVersion.version),
+                  releaseDescription,
+                }),
+              ),
+              headers: {'Content-Type': 'application/json'},
+            })
+              .then(async (res) => {
+                if (!res.ok) {
+                  throw new Error(`${res.statusText}: ${await res.text()}`);
+                }
+              })
+              .catch((err) => {
+                setError(err);
+              });
+          }
+        }}
+      />
     </>
   );
 }
