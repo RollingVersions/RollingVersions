@@ -4,7 +4,16 @@ import {MemoryRouter} from 'react-router-dom';
 import {createChangeSet} from '@rollingversions/change-set';
 import {DEFAULT_CHANGE_TYPES} from '@rollingversions/config';
 
-import {RepositoryPageProps, useBranchState} from '.';
+import {
+  ExistingRelease,
+  LoadMoreButton,
+  NextReleaseHeading,
+  NoPastReleasesMessage,
+  PastReleasesHeading,
+  UnreleasedPullRequest,
+  UnreleasedPullRequestList,
+  useRepositoryQueryState,
+} from '.';
 import RepositoryPage, {
   CycleWarning,
   PackageWithChanges,
@@ -19,10 +28,21 @@ import ChangeBranchLink from '../ChangeBranchLink';
 export default {title: 'pages/RepositoryPage'};
 
 const TemplateInner = ({
-  dialog,
-  ...props
-}: RepositoryPageProps & {dialog?: React.ReactNode}) => {
-  const {branch, changingBranch} = useBranchState();
+  children,
+  noPastReleases,
+}: {
+  children: React.ReactNode;
+  noPastReleases?: boolean;
+}) => {
+  const {
+    branch,
+    packageName,
+    openDialog,
+    closeDialogLink,
+    getOpenDialogLink,
+    getBranchLink,
+    getPackageLink,
+  } = useRepositoryQueryState();
   return (
     <>
       <AppContainer>
@@ -31,33 +51,70 @@ const TemplateInner = ({
           <AppNavBarLink>atdatabases</AppNavBarLink>
           <AppNavBarLink>
             {branch ?? `main`}
-            <ChangeBranchLink currentBranch={branch} />
+            <ChangeBranchLink to={getOpenDialogLink('branch')} />
           </AppNavBarLink>
         </AppNavBar>
-        <RepositoryPage {...props} />
+        <RepositoryPage>
+          {children}
+          <PastReleasesHeading
+            to={getOpenDialogLink('package')}
+            packageName={packageName}
+          />
+          {noPastReleases ? (
+            <NoPastReleasesMessage />
+          ) : (
+            <>
+              <ExistingRelease
+                packageName="@databases/mysql"
+                version="1.0.0"
+                body={[`## Features`, `- Initial Release (#40)`].join(`\n`)}
+              />
+              <LoadMoreButton
+                onClick={() => {
+                  // do nothing in storybook
+                }}
+              />
+            </>
+          )}
+        </RepositoryPage>
       </AppContainer>
 
-      <ChangeBranchDialog open={changingBranch} currentBranch={branch}>
+      <ChangeBranchDialog
+        title="Choose a branch"
+        open={openDialog === 'branch'}
+        closeLink={closeDialogLink}
+      >
         <ChangeBranchButton to={{search: `?branch=main`}}>
           main
         </ChangeBranchButton>
         {Array.from({length: 20}).map((_, i) => (
           <ChangeBranchButton
             key={i}
-            to={{
-              search: `?branch=${encodeURIComponent(
-                `feat/${String.fromCharCode(97 + i)}`,
-              )}`,
-            }}
+            to={getBranchLink(`feat/${String.fromCharCode(97 + i)}`)}
           >
             feat/{String.fromCharCode(97 + i)}
           </ChangeBranchButton>
         ))}
       </ChangeBranchDialog>
+      <ChangeBranchDialog
+        title="Choose a package"
+        open={openDialog === 'package'}
+        closeLink={closeDialogLink}
+      >
+        <ChangeBranchButton to={getPackageLink('@databases/mysql')}>
+          @databases/mysql
+        </ChangeBranchButton>
+        <ChangeBranchButton to={getPackageLink('@databases/pg')}>
+          @databases/pg
+        </ChangeBranchButton>
+      </ChangeBranchDialog>
     </>
   );
 };
-const Template = (props: RepositoryPageProps & {dialog?: React.ReactNode}) => {
+const Template = (props: {
+  children: React.ReactNode;
+  noPastReleases?: boolean;
+}) => {
   return (
     <MemoryRouter>
       <TemplateInner {...props} />
@@ -67,7 +124,8 @@ const Template = (props: RepositoryPageProps & {dialog?: React.ReactNode}) => {
 
 export const NoUpdateRequired = () => {
   return (
-    <Template>
+    <Template noPastReleases>
+      <NextReleaseHeading />
       <PackageWithNoChanges packageName="@database/pg" currentVersion={null} />
       <PackageWithNoChanges
         packageName="@database/mysql"
@@ -79,7 +137,22 @@ export const NoUpdateRequired = () => {
 
 export const UpdateRequired = () => {
   return (
-    <Template releaseButton={<ReleaseButton />}>
+    <Template>
+      <NextReleaseHeading>
+        <ReleaseButton />
+      </NextReleaseHeading>
+      <UnreleasedPullRequestList>
+        <UnreleasedPullRequest
+          href="/42"
+          number={42}
+          title="feat: add a pull request"
+        />
+        <UnreleasedPullRequest
+          href="/41"
+          number={41}
+          title="fix: remove a bug"
+        />
+      </UnreleasedPullRequestList>
       <PackageWithChanges
         packageName="@database/pg"
         currentVersion={null}
@@ -91,6 +164,7 @@ export const UpdateRequired = () => {
           pr: 42,
         })}
         changeTypes={DEFAULT_CHANGE_TYPES}
+        path="/ForbesLindesay/atdatabases"
       />
       <PackageWithChanges
         packageName="@database/mysql"
@@ -103,6 +177,7 @@ export const UpdateRequired = () => {
           pr: 42,
         })}
         changeTypes={DEFAULT_CHANGE_TYPES}
+        path="/ForbesLindesay/atdatabases"
       />
     </Template>
   );
@@ -111,6 +186,7 @@ export const UpdateRequired = () => {
 export const CircularDependency = () => {
   return (
     <Template>
+      <NextReleaseHeading />
       <CycleWarning
         cycle={['@datbases/pg', '@databases/mysl', '@databases/pg']}
       />
@@ -125,6 +201,7 @@ export const CircularDependency = () => {
           pr: 42,
         })}
         changeTypes={DEFAULT_CHANGE_TYPES}
+        path="/ForbesLindesay/atdatabases"
       />
       <PackageWithChanges
         packageName="@database/mysql"
@@ -137,6 +214,7 @@ export const CircularDependency = () => {
           pr: 42,
         })}
         changeTypes={DEFAULT_CHANGE_TYPES}
+        path="/ForbesLindesay/atdatabases"
       />
     </Template>
   );

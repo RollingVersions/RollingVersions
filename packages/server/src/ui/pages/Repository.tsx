@@ -13,12 +13,20 @@ import ChangeBranchDialog, {
 } from '../visual/ChangeBranchDialog';
 import ChangeBranchLink from '../visual/ChangeBranchLink';
 import RepositoryPage, {
+  ChoosePackageButton,
   CycleWarning,
+  ExistingRelease,
+  LoadMoreButton,
   ManifestWarning,
+  NextReleaseHeading,
+  NoPastReleasesMessage,
   PackageWithChanges,
   PackageWithNoChanges,
+  PastReleasesHeading,
   ReleaseButton,
-  useBranchState,
+  UnreleasedPullRequest,
+  UnreleasedPullRequestList,
+  useRepositoryQueryState,
 } from '../visual/RepositoryPage';
 
 interface Params {
@@ -26,15 +34,41 @@ interface Params {
   repo: string;
 }
 
+interface PastReleasesState {
+  nextPageToken: string | null;
+  releases: {
+    packageName: string;
+    version: string;
+    body: string;
+  }[];
+}
 export default function Repository() {
   const params = useParams<Params>();
   const [error, setError] = React.useState<Error | undefined>();
   const [state, setState] = React.useState<
     GetRepositoryApiResponse | undefined
   >();
+  const [pastReleasesError, setPastReleasesError] = React.useState<
+    Error | undefined
+  >();
+  const [pastReleasesState, setPastReleasesState] = React.useState<
+    PastReleasesState | undefined
+  >();
+  const [loadMoreRequested, setLoadMoreRequested] = React.useState<
+    PastReleasesState | undefined
+  >();
   const path = `/${params.owner}/${params.repo}`;
-  const {branch, changingBranch} = useBranchState();
+  const {
+    branch,
+    packageName,
+    openDialog,
+    closeDialogLink,
+    getBranchLink,
+    getPackageLink,
+    getOpenDialogLink,
+  } = useRepositoryQueryState();
 
+  const loadedPrimaryState = !!state;
   React.useEffect(() => {
     let cancelled = false;
     async function run() {
@@ -62,6 +96,83 @@ export default function Repository() {
     };
   }, [path, branch]);
 
+  React.useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      if (!loadedPrimaryState) return;
+      try {
+        setPastReleasesError(undefined);
+        const search = new URLSearchParams();
+        if (branch) search.append(`branch`, branch);
+        if (packageName) search.append(`package-name`, packageName);
+        const res = await fetch(`${path}/past-releases?${search.toString()}`);
+        if (!res.ok) {
+          throw new Error(`${res.statusText}: ${await res.text()}`);
+        }
+        const data = await res.json();
+        if (!cancelled) setPastReleasesState(data);
+      } catch (ex: any) {
+        if (!cancelled) {
+          setPastReleasesError(ex);
+        }
+      }
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadedPrimaryState, path, branch, packageName]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      if (
+        !loadedPrimaryState ||
+        pastReleasesState !== loadMoreRequested ||
+        !loadMoreRequested?.nextPageToken
+      )
+        return;
+      try {
+        setPastReleasesError(undefined);
+        const search = new URLSearchParams();
+        if (branch) search.append(`branch`, branch);
+        if (packageName) search.append(`package-name`, packageName);
+        search.append(`before`, loadMoreRequested.nextPageToken);
+        const res = await fetch(`${path}/past-releases?${search.toString()}`);
+        if (!res.ok) {
+          throw new Error(`${res.statusText}: ${await res.text()}`);
+        }
+        const data: PastReleasesState = await res.json();
+        if (!cancelled) {
+          setPastReleasesState((oldState) =>
+            oldState
+              ? {
+                  releases: [...oldState.releases, ...data.releases],
+                  nextPageToken: data.nextPageToken,
+                }
+              : undefined,
+          );
+          setLoadMoreRequested(undefined);
+        }
+      } catch (ex: any) {
+        if (!cancelled) {
+          setPastReleasesError(ex);
+        }
+      }
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    loadedPrimaryState,
+    path,
+    branch,
+    packageName,
+    pastReleasesState,
+    loadMoreRequested,
+  ]);
+
   return (
     <>
       <AppContainer>
@@ -70,7 +181,7 @@ export default function Repository() {
           <AppNavBarLink>{params.repo}</AppNavBarLink>
           <AppNavBarLink>
             {state?.deployBranch?.name ?? (error ? `Error` : `Loading`)}
-            <ChangeBranchLink currentBranch={branch} />
+            <ChangeBranchLink to={getOpenDialogLink('branch')} />
           </AppNavBarLink>
         </AppNavBar>
         {(() => {
@@ -90,10 +201,9 @@ export default function Repository() {
             state.packages.some((pkg) => pkg.newVersion);
 
           return (
-            <RepositoryPage
-              {...state}
-              releaseButton={
-                updateRequired &&
+            <RepositoryPage {...state}>
+              <NextReleaseHeading>
+                {updateRequired &&
                 (branch === state?.defaultBranch?.name || branch === null) ? (
                   <form
                     method="POST"
@@ -101,9 +211,8 @@ export default function Repository() {
                   >
                     <ReleaseButton />
                   </form>
-                ) : null
-              }
-            >
+                ) : null}
+              </NextReleaseHeading>
               {state.cycleDetected ? (
                 <CycleWarning cycle={state.cycleDetected} />
               ) : null}
@@ -124,6 +233,18 @@ export default function Repository() {
                   </Alert>
                 );
               })}
+              {state.unreleasedPullRequests.length ? (
+                <UnreleasedPullRequestList>
+                  {state.unreleasedPullRequests.map((pr) => (
+                    <UnreleasedPullRequest
+                      key={pr.number}
+                      href={`${path}/pull/${pr.number}`}
+                      number={pr.number}
+                      title={pr.title}
+                    />
+                  ))}
+                </UnreleasedPullRequestList>
+              ) : null}
               {state.packages.map((pkg) => {
                 const currentVersion = pkg.currentVersion;
                 if (!pkg.newVersion) {
@@ -152,6 +273,7 @@ export default function Repository() {
                     }
                     changeSet={pkg.changeSet}
                     changeTypes={pkg.manifest.changeTypes}
+                    path={path}
                   />
                 );
               })}
@@ -173,21 +295,68 @@ export default function Repository() {
                   />
                 );
               })}
+              <PastReleasesHeading
+                to={getOpenDialogLink('package')}
+                packageName={packageName}
+              />
+              {pastReleasesError ? (
+                <div>
+                  Failed to load past releases:{' '}
+                  <pre>{pastReleasesError.stack}</pre>
+                </div>
+              ) : !pastReleasesState ? null : !pastReleasesState.releases
+                  .length ? (
+                <NoPastReleasesMessage />
+              ) : (
+                <>
+                  {pastReleasesState.releases.map((release) => (
+                    <ExistingRelease
+                      key={`${release.packageName}@${release.version}`}
+                      packageName={release.packageName}
+                      version={release.version}
+                      body={release.body}
+                    />
+                  ))}
+                  {pastReleasesState.nextPageToken ? (
+                    <LoadMoreButton
+                      onClick={() => setLoadMoreRequested(pastReleasesState)}
+                    />
+                  ) : !packageName && state.packages.length > 1 ? (
+                    <ChoosePackageButton to={getOpenDialogLink('package')} />
+                  ) : null}
+                </>
+              )}
             </RepositoryPage>
           );
         })()}
       </AppContainer>
       <ChangeBranchDialog
-        open={!!(changingBranch && state)}
-        currentBranch={branch}
+        title="Choose a branch"
+        open={!!(openDialog === 'branch' && state)}
+        closeLink={closeDialogLink}
       >
         {state?.allBranchNames.map((branchName) => (
-          <ChangeBranchButton
-            to={{search: `?branch=${encodeURIComponent(branchName)}`}}
-          >
+          <ChangeBranchButton key={branchName} to={getBranchLink(branchName)}>
             {branchName}
           </ChangeBranchButton>
         ))}
+      </ChangeBranchDialog>
+      <ChangeBranchDialog
+        title="Choose a package"
+        open={!!(openDialog === 'package' && state)}
+        closeLink={closeDialogLink}
+      >
+        {state?.packages
+          .map((pkg) => pkg.manifest.packageName)
+          .sort()
+          .map((packageName) => (
+            <ChangeBranchButton
+              key={packageName}
+              to={getPackageLink(packageName)}
+            >
+              {packageName}
+            </ChangeBranchButton>
+          ))}
       </ChangeBranchDialog>
     </>
   );

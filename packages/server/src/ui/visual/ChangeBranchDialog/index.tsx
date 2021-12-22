@@ -30,13 +30,15 @@ function dialogAnimation(state: Exclude<State, 'closed'>): string {
   }
 }
 export default function ChangeBranchDialog({
+  title,
   children,
-  currentBranch,
   open,
+  closeLink,
 }: {
+  title: React.ReactNode;
   children: React.ReactNode;
-  currentBranch: string | null;
   open: boolean;
+  closeLink: LinkProps['to'];
 }) {
   const [state, setState] = useState<State>(open ? 'open' : 'closed');
   useEffect(() => {
@@ -91,11 +93,7 @@ export default function ChangeBranchDialog({
     >
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <Link
-          to={{
-            search: currentBranch
-              ? `?branch=${encodeURIComponent(currentBranch)}`
-              : ``,
-          }}
+          to={closeLink}
           className={`fixed inset-0 bg-gray-500 transition-opacity ${backgroundAnimation(
             state,
           )}`}
@@ -121,7 +119,7 @@ export default function ChangeBranchDialog({
                 className="text-lg leading-6 font-medium text-gray-900"
                 id="modal-title"
               >
-                Choose a branch
+                {title}
               </h3>
             </div>
           </div>

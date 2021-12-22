@@ -6,6 +6,7 @@ import {PullRequestResponseCodec} from '../../types';
 import {getClientForRepo, getClientForToken} from '../getClient';
 import {expressLogger} from '../logger';
 import {getRepositoryFromRestParams} from '../models/Repositories';
+import getPastReleases from './api/getPastReleases';
 import getPullRequest from './api/getPullRequest';
 import getRepository from './api/getRepository';
 import updatePullRequest from './api/updatePullRequest';
@@ -57,6 +58,40 @@ appMiddleware.get(
   },
 );
 
+appMiddleware.get(
+  `/:owner/:repo/past-releases`,
+  requiresAuth({api: true}),
+  validateRepoParams(),
+  checkRepoPermissions(['view', 'edit']),
+  async (req, res, next) => {
+    try {
+      const {owner, repo, commit, branch} = parseRepoParams(req);
+      const packageName: string | undefined = req.params[`package-name`];
+      const before: string | undefined = req.params[`before`];
+      const client = await getClientForRepo({owner, name: repo});
+      const dbRepo = await getRepositoryFromRestParams(db, client, {
+        owner,
+        name: repo,
+      });
+      if (!dbRepo) {
+        res.status(404).send(`Unable to find the repository/branch`);
+      }
+      const response = await getPastReleases(
+        client,
+        {owner, name: repo},
+        {commit, branch, packageName, before},
+        expressLogger(req, res),
+      );
+      if (!response) {
+        res.status(404).send(`Unable to find the repository/branch`);
+      } else {
+        res.json(response);
+      }
+    } catch (ex) {
+      next(ex);
+    }
+  },
+);
 appMiddleware.post(
   `/:owner/:repo/dispatch/rollingversions_publish_approved`,
   requiresAuth({api: true}),
