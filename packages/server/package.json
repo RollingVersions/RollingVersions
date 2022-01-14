@@ -23,6 +23,7 @@
     "@authentication/github": "^0.2.0",
     "@authentication/lock-by-id": "^0.0.2",
     "@github-graph/api": "^2.2.1",
+    "@google-cloud/pubsub": "^2.18.4",
     "@mavenoid/dataloader": "^3.1.0",
     "@octokit/webhooks": "^7.1.0",
     "@rollingversions/change-set": "^0.0.0",

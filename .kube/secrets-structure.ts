@@ -6,6 +6,7 @@ import createSecret from './createSecrets';
 //   - delete `secrets.ts`
 // The code for `secrets.ts` is in 1password
 interface Secrets {
+  GOOGLE_SERVICE_ACCOUNT_JSON: string;
   PRIVATE_KEY: string;
   // Generate using node -e "console.log(require('crypto').randomBytes(20).toString('hex'))"
   WEBHOOK_SECRET: string;
