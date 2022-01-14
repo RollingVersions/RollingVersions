@@ -4,28 +4,34 @@ import {getClientForRepo} from '../../getClient';
 import logger from '../../logger';
 import {getRepositoryPullRequestIDs} from '../../services/github';
 
-export default async function fixupForkPullRequests(lastOwner?: string) {
+export default async function fixupForkPullRequests(after?: string) {
   const start = Date.now();
-  const repositories = await tables
+  let repositories = await tables
     .git_repositories(db)
-    .find(
-      lastOwner
-        ? {owner: q.greaterThan(lastOwner), uninstalled_at: null}
-        : {uninstalled_at: null},
-    )
-    .orderByAsc(`owner`)
+    .find({uninstalled_at: null})
+    .orderByAsc('owner')
+    .orderByAsc('name')
     .all();
 
+  if (after) {
+    const [owner, name] = after.split(`/`);
+    repositories = repositories.filter(
+      (r) => r.owner > owner || (r.owner === owner && r.name > name),
+    );
+  }
+
+  const checkedRepos: string[] = [];
   const errors: string[] = [];
   const pullRequestsToRemove: {url: string; title: string}[] = [];
   let currentOwner = null;
+  let currentRepo = null;
   for (const repo of repositories) {
-    if (currentOwner !== repo.owner) {
-      if (Date.now() - start > 10_000) {
-        break;
-      }
-      currentOwner = repo.owner;
+    if (Date.now() - start > 10_000) {
+      break;
     }
+    currentOwner = repo.owner;
+    currentRepo = repo.name;
+    checkedRepos.push(`${repo.owner}/${repo.name}`);
 
     const client = await getClientForRepo({
       owner: repo.owner,
@@ -92,5 +98,11 @@ export default async function fixupForkPullRequests(lastOwner?: string) {
       })),
     );
   }
-  return {errors, pullRequestsToRemove, currentOwner};
+  return {
+    checkedRepos,
+    errors,
+    pullRequestsToRemove,
+    lastRepo:
+      currentOwner && currentRepo ? `${currentOwner}/${currentRepo}` : null,
+  };
 }

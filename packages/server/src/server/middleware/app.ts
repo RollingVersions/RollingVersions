@@ -221,7 +221,9 @@ appMiddleware.get(
       const after = `${req.query.after || ``}`.trim() || undefined;
       const results = await fixupForkPullRequests(after);
       res.send(
-        `<p>Errors:</p><ul>${results.errors
+        `<p>Checked Repositories:</p><ul>${results.checkedRepos
+          .map((r) => `<li>${escapeHTML(r)}</li>`)
+          .join(``)}</ul><p>Errors:</p><ul>${results.errors
           .map((e) => `<li>${escapeHTML(e)}</li>`)
           .join(
             ``,
@@ -233,9 +235,9 @@ appMiddleware.get(
               )}</a></li>`,
           )
           .join(``)}</ul>${
-          results.currentOwner
-            ? `<p><a href="/fixup?after=${escapeHTML(
-                results.currentOwner,
+          results.lastRepo
+            ? `<p><a href="/fixup?after=${encodeURIComponent(
+                escapeHTML(results.lastRepo),
               )}">Next</a></p>`
             : ``
         }`,
