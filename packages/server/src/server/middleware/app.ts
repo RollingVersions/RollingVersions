@@ -221,7 +221,11 @@ appMiddleware.get(
       const after = `${req.query.after || ``}`.trim() || undefined;
       const results = await fixupForkPullRequests(after);
       res.send(
-        `<ul>${results.pullRequestsToRemove
+        `<p>Errors:</p><ul>${results.errors
+          .map((e) => `<li>${escapeHTML(e)}</li>`)
+          .join(
+            ``,
+          )}</ul><p>Pull requests to remove:</p><ul>${results.pullRequestsToRemove
           .map(
             (pr) =>
               `<li><a href="${escapeHTML(pr.url)}">${escapeHTML(
