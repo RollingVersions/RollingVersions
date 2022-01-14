@@ -87,7 +87,7 @@ export default async function getPastReleases(
         }),
         (v) => v.version,
       );
-      if (manifests.length > 1) {
+      if (manifests.length > 1 && allVersions.length) {
         // If there are multiple packages, just return the latest version for each package
         allVersions = [allVersions[0]];
       }
