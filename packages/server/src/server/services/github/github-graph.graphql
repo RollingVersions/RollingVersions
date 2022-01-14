@@ -33,6 +33,7 @@ query GetRepositoryPullRequests(
   $after: String
 ) {
   repository(owner: $owner, name: $name) {
+    id
     pullRequests(first: 100, after: $after, states: [CLOSED, MERGED, OPEN]) {
       pageInfo {
         hasNextPage
@@ -42,7 +43,7 @@ query GetRepositoryPullRequests(
         id
         databaseId
         baseRepository {
-          nameWithOwner
+          id
         }
       }
     }

@@ -38,7 +38,6 @@ export function getRepositoryPullRequestIDs(
   client: GitHubClient,
   repo: Repository,
 ) {
-  const nameWithOwner = `${repo.owner}/${repo.name}`;
   return paginateBatched(
     (token) =>
       queries.getRepositoryPullRequests(client, {
@@ -49,7 +48,7 @@ export function getRepositoryPullRequestIDs(
     (page) =>
       page.repository?.pullRequests.nodes
         ?.filter(isTruthy)
-        .filter((n) => n.baseRepository?.nameWithOwner === nameWithOwner)
+        .filter((n) => n.baseRepository?.id === page.repository?.id)
         .map((n) => ({
           id: n.databaseId!,
           graphql_id: n.id,
