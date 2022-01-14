@@ -11,6 +11,7 @@ export default async function fixupForkPullRequests(lastOwner?: string) {
     .orderByAsc(`owner`)
     .all();
 
+  const errors: string[] = [];
   const pullRequestsToRemove: {url: string; title: string}[] = [];
   let currentOwner = null;
   for (const repo of repositories) {
@@ -21,15 +22,33 @@ export default async function fixupForkPullRequests(lastOwner?: string) {
       currentOwner = repo.owner;
     }
 
-    const client = await getClientForRepo({owner: repo.owner, name: repo.name});
-    const expectedIds = new Set<number>();
-    for await (const ids of getRepositoryPullRequestIDs(client, {
+    const client = await getClientForRepo({
       owner: repo.owner,
       name: repo.name,
-    })) {
-      for (const {id} of ids) {
-        expectedIds.add(id);
+    }).catch((ex: any) => {
+      errors.push(
+        `Error getting client for ${repo.owner}/${repo.name}: ${ex.message}`,
+      );
+      return null;
+    });
+    if (!client) {
+      continue;
+    }
+    const expectedIds = new Set<number>();
+    try {
+      for await (const ids of getRepositoryPullRequestIDs(client, {
+        owner: repo.owner,
+        name: repo.name,
+      })) {
+        for (const {id} of ids) {
+          expectedIds.add(id);
+        }
       }
+    } catch (ex: any) {
+      errors.push(
+        `Error fetching PRs for ${repo.owner}/${repo.name}: ${ex.message}`,
+      );
+      continue;
     }
 
     const unexpectedPullRequests = await tables
@@ -48,5 +67,5 @@ export default async function fixupForkPullRequests(lastOwner?: string) {
       })),
     );
   }
-  return {pullRequestsToRemove, currentOwner};
+  return {errors, pullRequestsToRemove, currentOwner};
 }
