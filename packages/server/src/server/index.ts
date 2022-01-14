@@ -1,3 +1,5 @@
+import {writeFileSync} from 'fs';
+
 import {json} from 'body-parser';
 import express from 'express';
 
@@ -6,7 +8,7 @@ import apiMiddleware from './middleware/api';
 import appMiddleware from './middleware/app';
 import authMiddleware from './middleware/auth';
 import staticMiddleware from './middleware/static';
-import webhooks from './webhooks';
+import webhooks, {pullWebhookEvents} from './webhooks';
 
 const app = express();
 type EventSource = typeof EventSource;
@@ -26,6 +28,14 @@ if (WEBHOOK_PROXY_URL) {
       })
       .catch((err) => console.error(err.stack || err));
   };
+}
+if (
+  process.env.GOOGLE_SERVICE_ACCOUNT_JSON &&
+  process.env.WEBHOOK_SUBSCRIPTION_NAME
+) {
+  const AUTH_FILENAME = `google-service-account.json`;
+  writeFileSync(AUTH_FILENAME, process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+  pullWebhookEvents(AUTH_FILENAME, process.env.WEBHOOK_SUBSCRIPTION_NAME);
 }
 
 webhooks.on('error', (error) => {

@@ -1,5 +1,9 @@
+import {readFileSync} from 'fs';
+
+import {PubSub} from '@google-cloud/pubsub';
 import type {WebhookEvent} from '@octokit/webhooks';
 import WebhooksApi from '@octokit/webhooks';
+import * as t from 'funtypes';
 
 import {WEBHOOK_SECRET} from '../environment';
 import logger from '../logger';
@@ -29,7 +33,7 @@ async function withLog(
   try {
     await fn(txLogger);
     timer.info(`${event.name}:handled`, `${message} Handled`);
-  } catch (ex) {
+  } catch (ex: any) {
     timer.error(
       `${event.name}:errored`,
       `${ex.stack || ex.message || ex}`,
@@ -146,3 +150,82 @@ webhooks.on('push', async (e) => {
 });
 
 export default webhooks;
+
+const WebhookEventSchema = t.Object({
+  environment: t.String,
+  id: t.String,
+  name: t.String,
+  payload: t.Unknown,
+  signature: t.String,
+});
+
+export function pullWebhookEvents(
+  keyFilename: string,
+  subscriptionName: string,
+) {
+  const projectId = JSON.parse(readFileSync(keyFilename, 'utf8')).project_id;
+  const pubsub = new PubSub({
+    projectId,
+    keyFilename,
+  });
+  pubsub
+    .subscription(subscriptionName)
+    .on(
+      `message`,
+      (message: {
+        id: string;
+        data: Buffer;
+        attributes: {[key: string]: string};
+        deliveryAttempt: number;
+        publishTime: Date;
+        received: Date;
+        ack(): void;
+        nack(): void;
+      }) => {
+        void (async () => {
+          try {
+            let messageData: unknown;
+            try {
+              messageData = JSON.parse(message.data.toString(`utf8`));
+            } catch (ex: any) {
+              logger.error(
+                `failed_to_parse_pubsub_event`,
+                `Failed to parse pubsub event`,
+                {
+                  error_message: ex.message,
+                },
+              );
+              // there is no point retrying if the message is not valid JSON
+              message.ack();
+              return;
+            }
+            const parsedEvent = WebhookEventSchema.safeParse(messageData);
+            if (!parsedEvent.success) {
+              logger.error(
+                `failed_to_parse_pubsub_event`,
+                `Failed to parse pubsub event`,
+                {error_message: t.showError(parsedEvent)},
+              );
+              // there is no point retrying if the message doesn't match the schema
+              message.ack();
+              return;
+            }
+            const e = parsedEvent.value;
+            await webhooks.verifyAndReceive({
+              id: e.id,
+              name: e.name,
+              payload: e.payload,
+              signature: e.signature,
+            });
+            message.ack();
+          } catch (ex: any) {
+            logger.error(`failed_to_process_pubsub_event`, ex.message, {
+              message: {...message, data: message.data.toString(`utf8`)},
+              stack: ex.stack,
+            });
+            message.nack();
+          }
+        })();
+      },
+    );
+}

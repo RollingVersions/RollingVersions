@@ -30,6 +30,7 @@ export default [
       BASE_URL: 'https://staging.rollingversions.com',
       ENVIRONMENT: 'staging',
       APEX_LOGS_PROJECT_ID: 'rolling_versions',
+      WEBHOOK_SUBSCRIPTION_NAME: `rv-github-events-app-staging`,
     },
   }),
   createConfigMap({
@@ -41,6 +42,7 @@ export default [
       BASE_URL: 'https://rollingversions.com',
       ENVIRONMENT: 'production',
       APEX_LOGS_PROJECT_ID: 'rolling_versions',
+      WEBHOOK_SUBSCRIPTION_NAME: `rv-github-events-app-prod`,
     },
   }),
 ];
