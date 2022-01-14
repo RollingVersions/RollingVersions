@@ -52,6 +52,7 @@ export async function getRepositoryFromRestParams(
   const existingRepo = await tables.git_repositories(db).findOne({
     owner: repo.owner,
     name: repo.name,
+    uninstalled_at: null,
   });
   if (existingRepo) return existingRepo;
 
@@ -68,6 +69,7 @@ export async function getRepositoryFromRestParams(
     owner: repo.owner,
     name: repo.name,
     default_branch_name: graphRepo.defaultBranch,
+    uninstalled_at: null,
   });
   return dbRepo;
 }
@@ -84,6 +86,7 @@ export async function upsertRepositoryFromEventPayload(
     owner,
     name,
     default_branch_name: repo.default_branch,
+    uninstalled_at: null,
   });
   return dbRepo;
 }

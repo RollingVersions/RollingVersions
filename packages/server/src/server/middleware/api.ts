@@ -41,7 +41,7 @@ apiMiddleware.get(
       }
       const dbRepo = await tables
         .git_repositories(db)
-        .findOne({owner, name: repo});
+        .findOne({owner, name: repo, uninstalled_at: null});
       if (!dbRepo) {
         res
           .status(404)
