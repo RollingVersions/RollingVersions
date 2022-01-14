@@ -1,3 +1,4 @@
+import escapeHTML from 'escape-html';
 import {Router} from 'express';
 
 import db from '@rollingversions/db';
@@ -6,6 +7,7 @@ import {PullRequestResponseCodec} from '../../types';
 import {getClientForRepo, getClientForToken} from '../getClient';
 import {expressLogger} from '../logger';
 import {getRepositoryFromRestParams} from '../models/Repositories';
+import fixupForkPullRequests from './api/fixupForkPullRequests';
 import getPastReleases from './api/getPastReleases';
 import getPullRequest from './api/getPullRequest';
 import getRepository from './api/getRepository';
@@ -17,6 +19,7 @@ import checkPermissions, {
   getUser,
   checkRepoPermissions,
   getRepoPermission,
+  checkAdminPermissions,
 } from './utils/checkPermissions';
 import validateBody, {
   getBody,
@@ -203,6 +206,36 @@ appMiddleware.post(
       } else {
         res.status(200).send('ok');
       }
+    } catch (ex) {
+      next(ex);
+    }
+  },
+);
+
+appMiddleware.get(
+  `/fixup`,
+  requiresAuth(),
+  checkAdminPermissions(),
+  async (req, res, next) => {
+    try {
+      const after = `${req.query.after || ``}`.trim() || undefined;
+      const results = await fixupForkPullRequests(after);
+      res.send(
+        `<ul>${results.pullRequestsToRemove
+          .map(
+            (pr) =>
+              `<li><a href="${escapeHTML(pr.url)}">${escapeHTML(
+                pr.title,
+              )}</a></li>`,
+          )
+          .join(``)}</ul>${
+          results.currentOwner
+            ? `<p><a href="/fixup?after=${escapeHTML(
+                results.currentOwner,
+              )}">Next</a></p>`
+            : ``
+        }`,
+      );
     } catch (ex) {
       next(ex);
     }

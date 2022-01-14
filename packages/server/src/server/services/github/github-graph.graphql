@@ -41,6 +41,9 @@ query GetRepositoryPullRequests(
       nodes {
         id
         databaseId
+        baseRepository {
+          nameWithOwner
+        }
       }
     }
   }
