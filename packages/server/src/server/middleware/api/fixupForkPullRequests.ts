@@ -67,10 +67,10 @@ export default async function fixupForkPullRequests(after?: string) {
     }
     const expectedIds = new Set<number>();
     try {
-      for await (const ids of getRepositoryPullRequestIDs(client, {
-        owner: repo.owner,
-        name: repo.name,
-      })) {
+      for await (const ids of getRepositoryPullRequestIDs(
+        client,
+        repo.graphql_id,
+      )) {
         for (const {id} of ids) {
           expectedIds.add(id);
         }

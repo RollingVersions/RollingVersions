@@ -36,26 +36,29 @@ export async function getRepository(client: GitHubClient, repo: Repository) {
 
 export function getRepositoryPullRequestIDs(
   client: GitHubClient,
-  repo: Repository,
+  repoId: string,
 ) {
   return paginateBatched(
     (token) =>
       queries.getRepositoryPullRequests(client, {
-        owner: repo.owner,
-        name: repo.name,
+        id: repoId,
         after: token,
       }),
     (page) =>
-      page.repository?.pullRequests.nodes
-        ?.filter(isTruthy)
-        .filter((n) => n.baseRepository?.id === page.repository?.id)
+      asTypeName('Repository', page.node)
+        ?.pullRequests?.nodes?.filter(isTruthy)
+        .filter(
+          (n) =>
+            n.baseRepository?.id === asTypeName('Repository', page.node)?.id,
+        )
         .map((n) => ({
           id: n.databaseId!,
           graphql_id: n.id,
         })) || [],
     (page) =>
-      page.repository?.pullRequests.pageInfo.hasNextPage
-        ? page.repository.pullRequests.pageInfo.endCursor || undefined
+      asTypeName('Repository', page.node)?.pullRequests?.pageInfo?.hasNextPage
+        ? asTypeName('Repository', page.node)?.pullRequests?.pageInfo
+            ?.endCursor || undefined
         : undefined,
   );
 }
@@ -89,16 +92,18 @@ export async function getPullRequestFromGraphID(
 
 export async function getPullRequestFromNumber(
   client: GitHubClient,
-  repo: Repository,
+  repoId: string,
   prNumber: number,
 ): Promise<PullRequestDetail | null> {
-  const result = (
-    await queries.getPullRequestFromNumber(client, {
-      owner: repo.owner,
-      name: repo.name,
-      number: prNumber,
-    })
-  ).repository?.pullRequest;
+  const result = asTypeName(
+    `Repository`,
+    (
+      await queries.getPullRequestFromNumber(client, {
+        repoId,
+        number: prNumber,
+      })
+    ).node,
+  )?.pullRequest;
   if (!result) return null;
   if (!result.databaseId) {
     throw new Error(`Got null for pull request databaseId`);
@@ -288,8 +293,7 @@ export const getRepositoryViewerPermissions = withRetry(
 export async function getRelease(
   client: GitHubClient,
   params: {
-    owner: string;
-    name: string;
+    repoId: string;
     tagName: string;
   },
 ): Promise<{
@@ -297,13 +301,15 @@ export async function getRelease(
   name: string;
   description: string;
 } | null> {
-  const result = (
-    await queries.getRelease(client, {
-      owner: params.owner,
-      name: params.name,
-      tagName: params.tagName,
-    })
-  ).repository?.release;
+  const result = asTypeName(
+    `Repository`,
+    (
+      await queries.getRelease(client, {
+        repoId: params.repoId,
+        tagName: params.tagName,
+      })
+    ).node,
+  )?.release;
   return result
     ? {
         createdAt: new Date(result.createdAt),
@@ -311,4 +317,11 @@ export async function getRelease(
         description: result.description ?? ``,
       }
     : null;
+}
+
+function asTypeName<TName extends string, TObject>(
+  typeName: TName,
+  obj: TObject,
+): Extract<TObject, {readonly __typename: TName}> | undefined {
+  return (obj as any)?.__typename === typeName ? (obj as any) : undefined;
 }

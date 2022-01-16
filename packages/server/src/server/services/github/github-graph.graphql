@@ -9,23 +9,22 @@ query GetRepository($owner: String!, $name: String!) {
   }
 }
 
-query GetRepositoryPullRequests(
-  $owner: String!
-  $name: String!
-  $after: String
-) {
-  repository(owner: $owner, name: $name) {
-    id
-    pullRequests(first: 100, after: $after, states: [CLOSED, MERGED, OPEN]) {
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-      nodes {
-        id
-        databaseId
-        baseRepository {
+query GetRepositoryPullRequests($id: ID!, $after: String) {
+  node(id: $id) {
+    __typename
+    ... on Repository {
+      id
+      pullRequests(first: 100, after: $after, states: [CLOSED, MERGED, OPEN]) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
           id
+          databaseId
+          baseRepository {
+            id
+          }
         }
       }
     }
@@ -50,20 +49,23 @@ query GetPullRequestFromGraphID($id: ID!) {
   }
 }
 
-query GetPullRequestFromNumber($owner: String!, $name: String!, $number: Int!) {
-  repository(owner: $owner, name: $name) {
-    pullRequest(number: $number) {
-      id
-      databaseId
-      number
-      title
-      merged
-      closed
-      mergeCommit {
-        oid
+query GetPullRequestFromNumber($repoId: ID!, $number: Int!) {
+  node(id: $repoId) {
+    __typename
+    ... on Repository {
+      pullRequest(number: $number) {
+        id
+        databaseId
+        number
+        title
+        merged
+        closed
+        mergeCommit {
+          oid
+        }
+        headRefName
+        baseRefName
       }
-      headRefName
-      baseRefName
     }
   }
 }
@@ -107,13 +109,16 @@ query GetRepositoryIsPrivate($owner: String!, $name: String!) {
   }
 }
 
-query GetRelease($owner: String!, $name: String!, $tagName: String!) {
-  repository(owner: $owner, name: $name) {
-    release(tagName: $tagName) {
-      createdAt
-      name
-      description
-      # descriptionHTML
+query GetRelease($repoId: ID!, $tagName: String!) {
+  node(id: $repoId) {
+    __typename
+    ... on Repository {
+      release(tagName: $tagName) {
+        createdAt
+        name
+        description
+        # descriptionHTML
+      }
     }
   }
 }
