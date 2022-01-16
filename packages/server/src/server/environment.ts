@@ -47,7 +47,6 @@ function oneOf<T extends readonly [string, ...string[]]>(
 export const APP_ID = integer('APP_ID');
 export const APP_URL = url('APP_URL');
 export const PRIVATE_KEY = string('PRIVATE_KEY').replace(/\\n/gm, '\n');
-export const WEBHOOK_SECRET = string('WEBHOOK_SECRET');
 export const ENVIRONMENT = oneOf('ENVIRONMENT', [
   'development',
   'staging',
