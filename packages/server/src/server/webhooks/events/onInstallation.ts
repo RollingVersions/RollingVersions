@@ -1,4 +1,4 @@
-import type WebhooksApi from '@octokit/webhooks';
+import assertNever from 'assert-never';
 
 import db, {tables} from '@rollingversions/db';
 
@@ -8,11 +8,21 @@ import {updatePullRequestComment} from '../../models/PullRequestComment';
 import {refreshPullRequests} from '../../models/PullRequests';
 import {updatePullRequestStatus} from '../../models/PullRequestStatus';
 import {getRepositoryFromRestParams} from '../../models/Repositories';
+import {InstallationEvent} from '../event-types';
 
 export default async function onInstallation(
-  e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadInstallation>,
+  e: InstallationEvent,
   logger: Logger,
 ) {
+  switch (e.payload.action) {
+    case 'created':
+      return await onInstallationCreated(e, logger);
+    default:
+      return assertNever(e.payload.action);
+  }
+}
+
+async function onInstallationCreated(e: InstallationEvent, logger: Logger) {
   const client = getClientForEvent(e);
 
   const repos = await Promise.all(

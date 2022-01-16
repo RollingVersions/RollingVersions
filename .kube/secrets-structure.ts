@@ -8,8 +8,6 @@ import createSecret from './createSecrets';
 interface Secrets {
   GOOGLE_SERVICE_ACCOUNT_JSON: string;
   PRIVATE_KEY: string;
-  // Generate using node -e "console.log(require('crypto').randomBytes(20).toString('hex'))"
-  WEBHOOK_SECRET: string;
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
   SECURE_KEY: string;

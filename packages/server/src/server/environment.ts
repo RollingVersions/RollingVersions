@@ -1,3 +1,4 @@
+import {writeFileSync} from 'fs';
 import {URL} from 'url';
 
 function string(name: string) {
@@ -46,12 +47,18 @@ function oneOf<T extends readonly [string, ...string[]]>(
 export const APP_ID = integer('APP_ID');
 export const APP_URL = url('APP_URL');
 export const PRIVATE_KEY = string('PRIVATE_KEY').replace(/\\n/gm, '\n');
-export const WEBHOOK_SECRET = string('WEBHOOK_SECRET');
 export const ENVIRONMENT = oneOf('ENVIRONMENT', [
   'development',
   'staging',
   'production',
 ] as const);
+
+export const AUTH_FILENAME = `google-service-account.json`;
+
+const GOOGLE_SERVICE_ACCOUNT_JSON = string(`GOOGLE_SERVICE_ACCOUNT_JSON`);
+writeFileSync(AUTH_FILENAME, GOOGLE_SERVICE_ACCOUNT_JSON);
+
+export const WEBHOOK_SUBSCRIPTION_NAME = string(`WEBHOOK_SUBSCRIPTION_NAME`);
 
 const APEX_LOGS_URL = optional('APEX_LOGS_URL', url);
 export const APEX_LOGS_CONFIG = APEX_LOGS_URL

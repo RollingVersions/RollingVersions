@@ -127,10 +127,7 @@ export async function getPullRequestFromRestParams(
   }
   const pr = await getPullRequestFromNumber(
     client,
-    {
-      owner: repo.owner,
-      name: repo.name,
-    },
+    repo.graphql_id,
     pullRequestNumber,
   );
   if (!pr) {
@@ -171,7 +168,7 @@ export async function refreshPullRequests(
   );
   for await (const pullRequestIDs of getRepositoryPullRequestIDs(
     client,
-    repo,
+    repo.graphql_id,
   )) {
     const newPullRequests = pullRequestIDs.filter(
       ({id}) => !existingPullRequests.has(id),

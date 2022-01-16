@@ -36,234 +36,31 @@ export async function getRepository(client: GitHubClient, repo: Repository) {
 
 export function getRepositoryPullRequestIDs(
   client: GitHubClient,
-  repo: Repository,
+  repoId: string,
 ) {
   return paginateBatched(
     (token) =>
       queries.getRepositoryPullRequests(client, {
-        owner: repo.owner,
-        name: repo.name,
+        id: repoId,
         after: token,
       }),
     (page) =>
-      page.repository?.pullRequests.nodes
-        ?.filter(isTruthy)
-        .filter((n) => n.baseRepository?.id === page.repository?.id)
+      asTypeName('Repository', page.node)
+        ?.pullRequests?.nodes?.filter(isTruthy)
+        .filter(
+          (n) =>
+            n.baseRepository?.id === asTypeName('Repository', page.node)?.id,
+        )
         .map((n) => ({
           id: n.databaseId!,
           graphql_id: n.id,
         })) || [],
     (page) =>
-      page.repository?.pullRequests.pageInfo.hasNextPage
-        ? page.repository.pullRequests.pageInfo.endCursor || undefined
+      asTypeName('Repository', page.node)?.pullRequests?.pageInfo?.hasNextPage
+        ? asTypeName('Repository', page.node)?.pullRequests?.pageInfo
+            ?.endCursor || undefined
         : undefined,
   );
-}
-export async function getDefaultBranch(client: GitHubClient, repo: Repository) {
-  const branch = (await queries.getDefaultBranch(client, repo)).repository
-    ?.branch;
-  if (!branch) {
-    return null;
-  }
-  if (branch.target.__typename !== 'Commit') {
-    throw new Error(
-      `Expected branch target to be "Commit" but got "${branch.target.__typename}"`,
-    );
-  }
-  return {
-    name: branch.name,
-    target: {
-      graphql_id: branch.target.id,
-      commit_sha: branch.target.oid,
-    },
-    graphql_id: branch.id,
-  };
-}
-
-export async function getRef(
-  client: GitHubClient,
-  repo: Repository,
-  ref: GitReference,
-) {
-  const gitRef = (
-    await queries.getRef(client, {
-      ...repo,
-      qualifiedName: getQualifiedName(ref),
-    })
-  ).repository?.ref;
-  if (!gitRef) {
-    return null;
-  }
-  const target =
-    gitRef.target.__typename === 'Commit'
-      ? gitRef.target
-      : gitRef.target.__typename === 'Tag'
-      ? gitRef.target.target.__typename === 'Commit'
-        ? gitRef.target.target
-        : null
-      : null;
-  if (target?.__typename !== 'Commit') {
-    throw new Error(`Expected ${ref.type} target to be "Commit".`);
-  }
-  return {
-    name: gitRef.name,
-    target: target.oid,
-    targetGraphID: target.id,
-    graphql_id: gitRef.id,
-  };
-}
-
-export type GitReference = {type: 'head' | 'tag'; name: string};
-function getQualifiedName({type, name}: GitReference): string {
-  switch (type) {
-    case 'head':
-      return `refs/heads/${name}`;
-    case 'tag':
-      return `refs/tags/${name}`;
-  }
-}
-export async function* getCommitHistory(
-  client: GitHubClient,
-  commitID: string,
-) {
-  let pageSize = 5;
-  for await (const result of paginateBatched(
-    async (token) => {
-      const currentPageSize = pageSize;
-      pageSize = Math.min(100, pageSize + 20);
-      return await retry(() =>
-        queries.getAllCommitHistory(client, {
-          commitID,
-          pageSize: currentPageSize,
-          after: token,
-        }),
-      );
-    },
-    (page) => {
-      if (page.node?.__typename !== 'Commit') {
-        throw new Error(
-          `Expected a Commit but got ${page.node?.__typename || 'undefined'}`,
-        );
-      }
-      return page.node.__typename === 'Commit'
-        ? page.node.history.nodes || []
-        : [];
-    },
-    (page) =>
-      page.node?.__typename === 'Commit' &&
-      page.node.history.pageInfo.hasNextPage
-        ? page.node.history.pageInfo.endCursor || undefined
-        : undefined,
-  )) {
-    yield result.filter(isTruthy).map(formatCommit);
-  }
-}
-export async function* getAllRefCommits(
-  client: GitHubClient,
-  repo: Repository,
-  ref: GitReference,
-) {
-  let pageSize = 5;
-  for await (const result of paginateBatched(
-    async (token) => {
-      const currentPageSize = pageSize;
-      pageSize = Math.min(100, pageSize + 20);
-      return await retry(() =>
-        queries.getAllRefCommits(client, {
-          owner: repo.owner,
-          name: repo.name,
-          qualifiedName: getQualifiedName(ref),
-          pageSize: currentPageSize,
-          after: token,
-        }),
-      );
-    },
-    (page) =>
-      page.repository?.ref?.target.__typename === 'Commit'
-        ? page.repository.ref.target.history.nodes || []
-        : [],
-    (page) =>
-      page.repository?.ref?.target.__typename === 'Commit' &&
-      page.repository.ref.target.history.pageInfo.hasNextPage
-        ? page.repository.ref.target.history.pageInfo.endCursor || undefined
-        : undefined,
-  )) {
-    yield result.filter(isTruthy).map(formatCommit);
-  }
-}
-export async function* getAllDefaultBranchCommits(
-  client: GitHubClient,
-  repo: Repository,
-) {
-  let pageSize = 5;
-  for await (const result of paginateBatched(
-    async (token) => {
-      const currentPageSize = pageSize;
-      pageSize = Math.min(100, pageSize + 20);
-      return await queries.getAllDefaultBranchCommits(client, {
-        ...repo,
-        pageSize: currentPageSize,
-        after: token,
-      });
-    },
-    (page) =>
-      page.repository?.branch?.target.__typename === 'Commit'
-        ? page.repository.branch.target.history.nodes || []
-        : [],
-    (page) =>
-      page.repository?.branch?.target.__typename === 'Commit' &&
-      page.repository.branch.target.history.pageInfo.hasNextPage
-        ? page.repository.branch.target.history.pageInfo.endCursor || undefined
-        : undefined,
-  )) {
-    yield result.filter(isTruthy).map(formatCommit);
-  }
-}
-export type GitHubCommit = {
-  graphql_id: string;
-  commit_sha: string;
-  parents: string[];
-  associatedPullRequests: {
-    id: number;
-    graphql_id: string;
-    repositoryId: number | null;
-  }[];
-};
-function formatCommit(result: {
-  id: string;
-  oid: string;
-  parents: {nodes: null | ({oid: string} | null)[]};
-  associatedPullRequests: null | {
-    nodes:
-      | null
-      | (null | {
-          databaseId: number | null;
-          id: string;
-          repository: {databaseId: number | null};
-        })[];
-  };
-}): GitHubCommit {
-  return {
-    graphql_id: result.id,
-    commit_sha: result.oid,
-    parents: result.parents.nodes?.map((n) => n?.oid).filter(isTruthy) || [],
-    associatedPullRequests:
-      result.associatedPullRequests?.nodes
-        ?.map((p) => {
-          if (!p) return null;
-          if (!p.databaseId) {
-            throw new Error(
-              `Expected pull request ${p.id} to have a databaseId`,
-            );
-          }
-          return {
-            id: p.databaseId,
-            graphql_id: p.id,
-            repositoryId: p.repository.databaseId,
-          };
-        })
-        .filter(isTruthy) || [],
-  };
 }
 
 export async function getPullRequestFromGraphID(
@@ -295,16 +92,18 @@ export async function getPullRequestFromGraphID(
 
 export async function getPullRequestFromNumber(
   client: GitHubClient,
-  repo: Repository,
+  repoId: string,
   prNumber: number,
 ): Promise<PullRequestDetail | null> {
-  const result = (
-    await queries.getPullRequestFromNumber(client, {
-      owner: repo.owner,
-      name: repo.name,
-      number: prNumber,
-    })
-  ).repository?.pullRequest;
+  const result = asTypeName(
+    `Repository`,
+    (
+      await queries.getPullRequestFromNumber(client, {
+        repoId,
+        number: prNumber,
+      })
+    ).node,
+  )?.pullRequest;
   if (!result) return null;
   if (!result.databaseId) {
     throw new Error(`Got null for pull request databaseId`);
@@ -320,38 +119,6 @@ export async function getPullRequestFromNumber(
     head_ref_name: result.headRefName,
     base_ref_name: result.baseRefName,
   };
-}
-export async function* getAllPullRequestCommits(
-  client: GitHubClient,
-  repo: Repository,
-  prNumber: number,
-) {
-  let pageSize = 5;
-  for await (const result of paginateBatched(
-    async (token) => {
-      const currentPagesize = pageSize;
-      pageSize = Math.min(100, pageSize + 5);
-      return await queries.getAllPullRequestCommits(client, {
-        owner: repo.owner,
-        name: repo.name,
-        number: prNumber,
-        pageSize: currentPagesize,
-        after: token,
-      });
-    },
-    (page) =>
-      page.repository?.pullRequest?.headRef?.target.__typename === 'Commit'
-        ? page.repository.pullRequest.headRef.target.history.nodes || []
-        : [],
-    (page) =>
-      page.repository?.pullRequest?.headRef?.target.__typename === 'Commit' &&
-      page.repository.pullRequest.headRef.target.history.pageInfo.hasNextPage
-        ? page.repository.pullRequest.headRef.target.history.pageInfo
-            .endCursor || undefined
-        : undefined,
-  )) {
-    yield result.filter(isTruthy).map(formatCommit);
-  }
 }
 
 export interface PullRequestDetail {
@@ -526,8 +293,7 @@ export const getRepositoryViewerPermissions = withRetry(
 export async function getRelease(
   client: GitHubClient,
   params: {
-    owner: string;
-    name: string;
+    repoId: string;
     tagName: string;
   },
 ): Promise<{
@@ -535,13 +301,15 @@ export async function getRelease(
   name: string;
   description: string;
 } | null> {
-  const result = (
-    await queries.getRelease(client, {
-      owner: params.owner,
-      name: params.name,
-      tagName: params.tagName,
-    })
-  ).repository?.release;
+  const result = asTypeName(
+    `Repository`,
+    (
+      await queries.getRelease(client, {
+        repoId: params.repoId,
+        tagName: params.tagName,
+      })
+    ).node,
+  )?.release;
   return result
     ? {
         createdAt: new Date(result.createdAt),
@@ -549,4 +317,11 @@ export async function getRelease(
         description: result.description ?? ``,
       }
     : null;
+}
+
+function asTypeName<TName extends string, TObject>(
+  typeName: TName,
+  obj: TObject,
+): Extract<TObject, {readonly __typename: TName}> | undefined {
+  return (obj as any)?.__typename === typeName ? (obj as any) : undefined;
 }

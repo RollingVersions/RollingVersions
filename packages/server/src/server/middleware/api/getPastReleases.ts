@@ -103,7 +103,7 @@ export default async function getPastReleases(
       const releases = await Promise.all(
         allVersions.map(async (v) => {
           const release = await getRelease(client, {
-            ...repo,
+            repoId: repo.graphql_id,
             tagName: v.name,
           });
           return {

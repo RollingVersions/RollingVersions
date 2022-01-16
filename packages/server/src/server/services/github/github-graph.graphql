@@ -1,21 +1,3 @@
-query GetTags($owner: String!, $name: String!, $after: String) {
-  repository(owner: $owner, name: $name) {
-    refs(first: 100, after: $after, refPrefix: "refs/tags/") {
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-      nodes {
-        name
-        target {
-          # __typename: Commit
-          oid
-        }
-      }
-    }
-  }
-}
-
 query GetRepository($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     databaseId
@@ -27,135 +9,22 @@ query GetRepository($owner: String!, $name: String!) {
   }
 }
 
-query GetRepositoryPullRequests(
-  $owner: String!
-  $name: String!
-  $after: String
-) {
-  repository(owner: $owner, name: $name) {
-    id
-    pullRequests(first: 100, after: $after, states: [CLOSED, MERGED, OPEN]) {
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-      nodes {
-        id
-        databaseId
-        baseRepository {
-          id
-        }
-      }
-    }
-  }
-}
-
-query GetDefaultBranch($owner: String!, $name: String!) {
-  repository(owner: $owner, name: $name) {
-    branch: defaultBranchRef {
-      id
-      name
-      target {
-        __typename # Commit
-        id
-        oid
-      }
-    }
-  }
-}
-
-query GetAllDefaultBranchCommits(
-  $owner: String!
-  $name: String!
-  $pageSize: Int!
-  $after: String
-) {
-  repository(owner: $owner, name: $name) {
-    branch: defaultBranchRef {
-      target {
-        __typename # Commit
-        oid
-        ... on Commit {
-          id
-          history(first: $pageSize, after: $after) {
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              ...CommitDetail
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-query GetRef($owner: String!, $name: String!, $qualifiedName: String!) {
-  repository(owner: $owner, name: $name) {
-    ref(qualifiedName: $qualifiedName) {
-      id
-      name
-      target {
-        __typename
-        ... on Commit {
-          id
-          oid
-        }
-        ... on Tag {
-          target {
-            __typename
-            ... on Commit {
-              id
-              oid
-            }
-          }
-        }
-      }
-    }
-  }
-}
-query GetAllRefCommits(
-  $owner: String!
-  $name: String!
-  $qualifiedName: String!
-  $pageSize: Int!
-  $after: String
-) {
-  repository(owner: $owner, name: $name) {
-    ref(qualifiedName: $qualifiedName) {
-      target {
-        __typename # N.B. this won't always be Commit on Tags, but is always Commit on Branch
-        oid
-        ... on Commit {
-          id
-          history(first: $pageSize, after: $after) {
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              ...CommitDetail
-            }
-          }
-        }
-      }
-    }
-  }
-}
-query GetAllCommitHistory($commitID: ID!, $pageSize: Int!, $after: String) {
-  node(id: $commitID) {
+query GetRepositoryPullRequests($id: ID!, $after: String) {
+  node(id: $id) {
     __typename
-    ... on Commit {
+    ... on Repository {
       id
-      history(first: $pageSize, after: $after) {
+      pullRequests(first: 100, after: $after, states: [CLOSED, MERGED, OPEN]) {
         pageInfo {
           hasNextPage
           endCursor
         }
         nodes {
-          ...CommitDetail
+          id
+          databaseId
+          baseRepository {
+            id
+          }
         }
       }
     }
@@ -179,78 +48,24 @@ query GetPullRequestFromGraphID($id: ID!) {
     }
   }
 }
-query GetPullRequestFromNumber($owner: String!, $name: String!, $number: Int!) {
-  repository(owner: $owner, name: $name) {
-    pullRequest(number: $number) {
-      id
-      databaseId
-      number
-      title
-      merged
-      closed
-      mergeCommit {
-        oid
-      }
-      headRefName
-      baseRefName
-    }
-  }
-}
-query GetAllPullRequestCommits(
-  $owner: String!
-  $name: String!
-  $number: Int!
-  $pageSize: Int!
-  $after: String
-) {
-  repository(owner: $owner, name: $name) {
-    pullRequest(number: $number) {
-      headRef {
-        target {
-          __typename # Commit
-          oid
-          ... on Commit {
-            id
-            history(first: $pageSize, after: $after) {
-              pageInfo {
-                hasNextPage
-                endCursor
-              }
-              nodes {
-                ...CommitDetail
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
 
-fragment CommitDetail on Commit {
-  id
-  oid
-  parents(first: 100) {
-    nodes {
-      oid
-    }
-  }
-  associatedPullRequests(first: 100) {
-    nodes {
-      id
-      databaseId
-      repository {
-        databaseId
-      }
-    }
-  }
-}
-
-query GetBlobContents($id: ID!) {
-  node(id: $id) {
+query GetPullRequestFromNumber($repoId: ID!, $number: Int!) {
+  node(id: $repoId) {
     __typename
-    ... on Blob {
-      text
+    ... on Repository {
+      pullRequest(number: $number) {
+        id
+        databaseId
+        number
+        title
+        merged
+        closed
+        mergeCommit {
+          oid
+        }
+        headRefName
+        baseRefName
+      }
     }
   }
 }
@@ -294,13 +109,16 @@ query GetRepositoryIsPrivate($owner: String!, $name: String!) {
   }
 }
 
-query GetRelease($owner: String!, $name: String!, $tagName: String!) {
-  repository(owner: $owner, name: $name) {
-    release(tagName: $tagName) {
-      createdAt
-      name
-      description
-      # descriptionHTML
+query GetRelease($repoId: ID!, $tagName: String!) {
+  node(id: $repoId) {
+    __typename
+    ... on Repository {
+      release(tagName: $tagName) {
+        createdAt
+        name
+        description
+        # descriptionHTML
+      }
     }
   }
 }

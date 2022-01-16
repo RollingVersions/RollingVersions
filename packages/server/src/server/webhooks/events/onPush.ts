@@ -1,16 +1,12 @@
-import type WebhooksApi from '@octokit/webhooks';
-
 import db from '@rollingversions/db';
 
 import {getClientForEvent} from '../../getClient';
 import type {Logger} from '../../logger';
 import {markRepoAsUpdated, updateRepoIfChanged} from '../../models/git';
 import {upsertRepositoryFromEventPayload} from '../../models/Repositories';
+import {PushEvent} from '../event-types';
 
-export default async function onPush(
-  e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadPush>,
-  logger: Logger,
-) {
+export default async function onPush(e: PushEvent, logger: Logger) {
   const repo = await upsertRepositoryFromEventPayload(db, e.payload.repository);
   await markRepoAsUpdated(db, repo);
   const client = getClientForEvent(e);
