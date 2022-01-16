@@ -1,3 +1,4 @@
+import {writeFileSync} from 'fs';
 import {URL} from 'url';
 
 function string(name: string) {
@@ -52,6 +53,13 @@ export const ENVIRONMENT = oneOf('ENVIRONMENT', [
   'staging',
   'production',
 ] as const);
+
+export const AUTH_FILENAME = `google-service-account.json`;
+
+const GOOGLE_SERVICE_ACCOUNT_JSON = string(`GOOGLE_SERVICE_ACCOUNT_JSON`);
+writeFileSync(AUTH_FILENAME, GOOGLE_SERVICE_ACCOUNT_JSON);
+
+export const WEBHOOK_SUBSCRIPTION_NAME = string(`WEBHOOK_SUBSCRIPTION_NAME`);
 
 const APEX_LOGS_URL = optional('APEX_LOGS_URL', url);
 export const APEX_LOGS_CONFIG = APEX_LOGS_URL

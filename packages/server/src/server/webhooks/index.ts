@@ -149,6 +149,14 @@ webhooks.on('push', async (e) => {
   );
 });
 
+webhooks.on('error', (error) => {
+  console.error(
+    `Error occured in "${
+      (error as {event?: {name: string}}).event?.name
+    } handler: ${error.stack}"`,
+  );
+});
+
 export default webhooks;
 
 const WebhookEventSchema = t.Object({
