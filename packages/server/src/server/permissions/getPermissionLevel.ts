@@ -48,7 +48,7 @@ const checkViewerPermissions = withCache(
         return {result: 'view', expiry: Date.now() + 60_000};
       }
       return {result: 'none', expiry: Date.now() + 60_000};
-    } catch (ex) {
+    } catch (ex: any) {
       logger.warning('failed_to_get_repository_viewer_permissions', ex.stack, {
         repo_owner: repo.owner,
         repo_name: repo.name,
@@ -76,7 +76,7 @@ const getRepositoryIsPublic = withCache(
         result: await gh.getRepositoryIsPublic(client, repo),
         expiry: Date.now() + 60_000,
       };
-    } catch (ex) {
+    } catch (ex: any) {
       logger.warning('failed_to_get_repo', ex.stack, {
         repo_owner: repo.owner,
         repo_name: repo.name,
@@ -100,7 +100,7 @@ const getPullRequestAuthor = withCache(
         result: author,
         expiry: author ? Date.now() + 60 * 60_000 : 0,
       };
-    } catch (ex) {
+    } catch (ex: any) {
       logger.warning('failed_to_get_pull_request', ex.stack, {
         repo_owner: pr.repo.owner,
         repo_name: pr.repo.name,

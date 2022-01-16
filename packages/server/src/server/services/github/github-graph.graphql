@@ -1,21 +1,3 @@
-query GetTags($owner: String!, $name: String!, $after: String) {
-  repository(owner: $owner, name: $name) {
-    refs(first: 100, after: $after, refPrefix: "refs/tags/") {
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-      nodes {
-        name
-        target {
-          # __typename: Commit
-          oid
-        }
-      }
-    }
-  }
-}
-
 query GetRepository($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     databaseId
@@ -50,118 +32,6 @@ query GetRepositoryPullRequests(
   }
 }
 
-query GetDefaultBranch($owner: String!, $name: String!) {
-  repository(owner: $owner, name: $name) {
-    branch: defaultBranchRef {
-      id
-      name
-      target {
-        __typename # Commit
-        id
-        oid
-      }
-    }
-  }
-}
-
-query GetAllDefaultBranchCommits(
-  $owner: String!
-  $name: String!
-  $pageSize: Int!
-  $after: String
-) {
-  repository(owner: $owner, name: $name) {
-    branch: defaultBranchRef {
-      target {
-        __typename # Commit
-        oid
-        ... on Commit {
-          id
-          history(first: $pageSize, after: $after) {
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              ...CommitDetail
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-query GetRef($owner: String!, $name: String!, $qualifiedName: String!) {
-  repository(owner: $owner, name: $name) {
-    ref(qualifiedName: $qualifiedName) {
-      id
-      name
-      target {
-        __typename
-        ... on Commit {
-          id
-          oid
-        }
-        ... on Tag {
-          target {
-            __typename
-            ... on Commit {
-              id
-              oid
-            }
-          }
-        }
-      }
-    }
-  }
-}
-query GetAllRefCommits(
-  $owner: String!
-  $name: String!
-  $qualifiedName: String!
-  $pageSize: Int!
-  $after: String
-) {
-  repository(owner: $owner, name: $name) {
-    ref(qualifiedName: $qualifiedName) {
-      target {
-        __typename # N.B. this won't always be Commit on Tags, but is always Commit on Branch
-        oid
-        ... on Commit {
-          id
-          history(first: $pageSize, after: $after) {
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              ...CommitDetail
-            }
-          }
-        }
-      }
-    }
-  }
-}
-query GetAllCommitHistory($commitID: ID!, $pageSize: Int!, $after: String) {
-  node(id: $commitID) {
-    __typename
-    ... on Commit {
-      id
-      history(first: $pageSize, after: $after) {
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-        nodes {
-          ...CommitDetail
-        }
-      }
-    }
-  }
-}
-
 query GetPullRequestFromGraphID($id: ID!) {
   node(id: $id) {
     __typename
@@ -179,6 +49,7 @@ query GetPullRequestFromGraphID($id: ID!) {
     }
   }
 }
+
 query GetPullRequestFromNumber($owner: String!, $name: String!, $number: Int!) {
   repository(owner: $owner, name: $name) {
     pullRequest(number: $number) {
@@ -193,64 +64,6 @@ query GetPullRequestFromNumber($owner: String!, $name: String!, $number: Int!) {
       }
       headRefName
       baseRefName
-    }
-  }
-}
-query GetAllPullRequestCommits(
-  $owner: String!
-  $name: String!
-  $number: Int!
-  $pageSize: Int!
-  $after: String
-) {
-  repository(owner: $owner, name: $name) {
-    pullRequest(number: $number) {
-      headRef {
-        target {
-          __typename # Commit
-          oid
-          ... on Commit {
-            id
-            history(first: $pageSize, after: $after) {
-              pageInfo {
-                hasNextPage
-                endCursor
-              }
-              nodes {
-                ...CommitDetail
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-fragment CommitDetail on Commit {
-  id
-  oid
-  parents(first: 100) {
-    nodes {
-      oid
-    }
-  }
-  associatedPullRequests(first: 100) {
-    nodes {
-      id
-      databaseId
-      repository {
-        databaseId
-      }
-    }
-  }
-}
-
-query GetBlobContents($id: ID!) {
-  node(id: $id) {
-    __typename
-    ... on Blob {
-      text
     }
   }
 }
