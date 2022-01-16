@@ -1,4 +1,4 @@
-import type WebhooksApi from '@octokit/webhooks';
+import assertNever from 'assert-never';
 
 import db, {tables} from '@rollingversions/db';
 
@@ -8,9 +8,22 @@ import {updatePullRequestComment} from '../../models/PullRequestComment';
 import {refreshPullRequests} from '../../models/PullRequests';
 import {updatePullRequestStatus} from '../../models/PullRequestStatus';
 import {getRepositoryFromRestParams} from '../../models/Repositories';
+import {InstallationRepositoriesEvent} from '../event-types';
 
-export default async function onInstallationRepositoriesAdded(
-  e: WebhooksApi.WebhookEvent<WebhooksApi.WebhookPayloadInstallationRepositories>,
+export default async function onInstallationRepositories(
+  e: InstallationRepositoriesEvent,
+  logger: Logger,
+) {
+  switch (e.payload.action) {
+    case 'added':
+      return await onInstallationRepositoriesAdded(e, logger);
+    default:
+      return assertNever(e.payload.action);
+  }
+}
+
+async function onInstallationRepositoriesAdded(
+  e: InstallationRepositoriesEvent,
   logger: Logger,
 ) {
   const client = getClientForEvent(e);

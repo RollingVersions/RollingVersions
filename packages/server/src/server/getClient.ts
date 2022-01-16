@@ -1,12 +1,12 @@
 import {Repository} from '@rollingversions/types';
 
-import isObject from '../utils/isObject';
 import withCache from '../utils/withCache';
 import {APP_ID, PRIVATE_KEY} from './environment';
 import type {Logger} from './logger';
 import logger from './logger';
 import {GitHubClient, auth} from './services/github';
 import type {GitHubOptions} from './services/github';
+import {Installation} from './webhooks/event-types';
 
 function addLogging(
   options: Omit<
@@ -64,18 +64,15 @@ function addLogging(
 export function getClientForEvent(event: {
   readonly id: string;
   readonly name: string;
-  readonly payload: unknown;
+  readonly payload: {
+    readonly action?: string;
+    readonly installation: Installation;
+  };
 }) {
-  if (
-    isObject(event.payload) &&
-    isObject(event.payload.installation) &&
-    typeof event.payload.installation.id === 'number' &&
-    (event.name !== 'installation' || event.payload.action !== 'deleted')
-  ) {
-    return getClient(event.payload.installation.id);
-  } else {
+  if (event.name === 'installation' && event.payload.action === 'deleted') {
     return getClient();
   }
+  return getClient(event.payload.installation.id);
 }
 export default function getClient(installationId?: number) {
   return new GitHubClient(

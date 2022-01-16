@@ -85,26 +85,6 @@ class Logger {
     return new Logger(this._win, this._txids, Date.now());
   }
 
-  public async withLogging<T>(
-    fn: Promise<T> | ((logger: Logger) => Promise<T>),
-    {
-      success,
-      successMessage,
-      failure,
-    }: {success: string; successMessage: string; failure: string},
-  ): Promise<T> {
-    const timer = this.withTimer();
-    let result;
-    try {
-      result = await (typeof fn === 'function' ? fn(this) : fn);
-      timer.info(success, successMessage);
-    } catch (ex) {
-      timer.error(failure, ex.stack);
-      throw ex;
-    }
-    return result;
-  }
-
   public readonly debug = this._getMethod('debug');
   public readonly info = this._getMethod('info');
   public readonly notice = this._getMethod('notice');
