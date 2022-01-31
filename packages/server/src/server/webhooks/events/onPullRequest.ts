@@ -30,6 +30,7 @@ export default async function onPullRequest(
 }
 
 async function onPullRequestUpdate(e: PullRequestEvent, logger: Logger) {
+  if (e.payload.repository.owner.login === 'sitedata') return;
   const repo = await upsertRepositoryFromEventPayload(db, e.payload.repository);
   await markRepoAsUpdated(db, repo);
 
@@ -48,6 +49,7 @@ async function onPullRequestUpdate(e: PullRequestEvent, logger: Logger) {
 }
 
 async function onPullRequestClosed(e: PullRequestEvent, logger: Logger) {
+  if (e.payload.repository.owner.login === 'sitedata') return;
   const repo = await upsertRepositoryFromEventPayload(db, e.payload.repository);
   await markRepoAsUpdated(db, repo);
 

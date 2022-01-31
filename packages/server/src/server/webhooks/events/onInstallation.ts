@@ -26,20 +26,29 @@ async function onInstallationCreated(e: InstallationEvent, logger: Logger) {
   const client = getClientForEvent(e);
 
   const repos = await Promise.all(
-    e.payload.repositories.map(async (repository) => {
-      const [owner, name] = repository.full_name.split('/');
-      const repo = await getRepositoryFromRestParams(db, client, {
-        owner,
-        name,
-      });
-      if (repo) {
-        logger.info('added_repository', `Added repository: ${owner}/${name}`, {
-          repo_owner: owner,
-          repo_name: name,
+    e.payload.repositories
+      .filter((repository) => {
+        const [owner] = repository.full_name.split('/');
+        return owner !== 'sitedata';
+      })
+      .map(async (repository) => {
+        const [owner, name] = repository.full_name.split('/');
+        const repo = await getRepositoryFromRestParams(db, client, {
+          owner,
+          name,
         });
-      }
-      return repo;
-    }),
+        if (repo) {
+          logger.info(
+            'added_repository',
+            `Added repository: ${owner}/${name}`,
+            {
+              repo_owner: owner,
+              repo_name: name,
+            },
+          );
+        }
+        return repo;
+      }),
   );
 
   await Promise.all(

@@ -7,6 +7,7 @@ import {upsertRepositoryFromEventPayload} from '../../models/Repositories';
 import {PushEvent} from '../event-types';
 
 export default async function onPush(e: PushEvent, logger: Logger) {
+  if (e.payload.repository.owner.login === 'sitedata') return;
   const repo = await upsertRepositoryFromEventPayload(db, e.payload.repository);
   await markRepoAsUpdated(db, repo);
   const client = getClientForEvent(e);
