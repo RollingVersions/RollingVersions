@@ -7,6 +7,7 @@ import {upsertRepositoryFromEventPayload} from '../../models/Repositories';
 import {DeleteEvent} from '../event-types';
 
 export default async function onDelete(e: DeleteEvent, logger: Logger) {
+  if (e.payload.repository.owner.login === 'sitedata') return;
   const repo = await upsertRepositoryFromEventPayload(db, e.payload.repository);
   await markRepoAsUpdated(db, repo);
   const client = getClientForEvent(e);

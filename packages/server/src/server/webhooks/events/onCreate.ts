@@ -7,6 +7,7 @@ import {upsertRepositoryFromEventPayload} from '../../models/Repositories';
 import {CreateEvent} from '../event-types';
 
 export default async function onCreate(e: CreateEvent, logger: Logger) {
+  if (e.payload.repository.owner.login === 'sitedata') return;
   const repo = await upsertRepositoryFromEventPayload(db, e.payload.repository);
   await markRepoAsUpdated(db, repo);
 
