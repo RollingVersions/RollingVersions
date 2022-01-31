@@ -47,11 +47,11 @@ workflows:
   hotfix:
     jobs:
       - hotfix-approval:
-          <<: *only_master
+          # <<: *only_master
           type: approval
 
       - deploy-hotfix:
-          <<: *only_master
+          # <<: *only_master
           requires:
             - hotfix-approval
 
