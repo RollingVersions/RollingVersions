@@ -20,21 +20,33 @@ type levels =
   | 'alert'
   | 'emerg';
 const levels = winston.config.syslog.levels;
-const transport =
+const transports =
   ENVIRONMENT === 'development'
-    ? new winston.transports.Console({
-        format: winston.format.combine(
-          winston.format.colorize({level: true}),
-          winston.format.printf((info) => {
-            return `${info.level} ${info.message}`;
-          }),
-        ),
-      })
-    : new ApexLogsTransport(APEX_LOGS_CONFIG);
+    ? [
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.colorize({level: true}),
+            winston.format.printf((info) => {
+              return `${info.level} ${info.message}`;
+            }),
+          ),
+        }),
+      ]
+    : [
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.colorize({level: true}),
+            winston.format.printf((info) => {
+              return `${info.level} ${info.message}`;
+            }),
+          ),
+        }),
+        new ApexLogsTransport(APEX_LOGS_CONFIG),
+      ];
 
 const winLogger = winston.createLogger({
   levels: winston.config.syslog.levels,
-  transports: [transport],
+  transports,
   defaultMeta: {
     environment: ENVIRONMENT,
   },
