@@ -8,7 +8,7 @@ import {updatePullRequestComment} from '../../models/PullRequestComment';
 import {refreshPullRequests} from '../../models/PullRequests';
 import {updatePullRequestStatus} from '../../models/PullRequestStatus';
 import {getRepositoryFromRestParams} from '../../models/Repositories';
-import {InstallationEvent} from '../event-types';
+import {InstallationCreated, InstallationEvent} from '../event-types';
 
 export default async function onInstallation(
   e: InstallationEvent,
@@ -16,17 +16,24 @@ export default async function onInstallation(
 ) {
   switch (e.payload.action) {
     case 'created':
-      return await onInstallationCreated(e, logger);
+      return await onInstallationCreated(e, e.payload, logger);
+    case 'suspend':
+      // TODO
+      break;
     default:
-      return assertNever(e.payload.action);
+      return assertNever(e.payload);
   }
 }
 
-async function onInstallationCreated(e: InstallationEvent, logger: Logger) {
+async function onInstallationCreated(
+  e: InstallationEvent,
+  payload: InstallationCreated,
+  logger: Logger,
+) {
   const client = getClientForEvent(e);
 
   const repos = await Promise.all(
-    e.payload.repositories
+    payload.repositories
       .filter((repository) => {
         const [owner] = repository.full_name.split('/');
         return owner !== 'sitedata';

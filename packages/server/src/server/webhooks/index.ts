@@ -31,6 +31,9 @@ const eventHandlers: {
   installation: onInstallation,
   pull_request: onPullRequest,
   push: onPush,
+  github_app_authorization: async () => {
+    // TODO
+  },
 };
 
 const WebhookEventSchema = t.Object({
@@ -170,6 +173,16 @@ function getEventContext(
   count?: number;
 } {
   switch (e.name) {
+    case 'github_app_authorization':
+      switch (e.payload.action) {
+        case 'revoked':
+          return {
+            message: 'GitHub App Authorization Revoked',
+            repo_owner: e.payload.sender.login,
+          };
+        default:
+          return assertNever(e.payload.action);
+      }
     case 'installation_repositories':
       switch (e.payload.action) {
         case 'added':
@@ -189,8 +202,13 @@ function getEventContext(
             repo_owner: e.payload.sender.login,
             count: e.payload.repositories.length,
           };
+        case 'suspend':
+          return {
+            message: 'Installation Suspended',
+            repo_owner: e.payload.sender.login,
+          };
         default:
-          return assertNever(e.payload.action);
+          return assertNever(e.payload);
       }
     case 'create':
       return {
@@ -237,10 +255,26 @@ function getPullRequestEventMessage(e: PullRequestEvent): string {
       return 'Pull Request Opened';
     case 'closed':
       return 'Pull Request Closed';
+    case 'edited':
+      return 'Pull Request Edited';
     case 'labeled':
       return 'Pull Request Labeled';
+    case 'unlabeled':
+      return 'Pull Request Unlabeled';
     case 'synchronize':
       return 'Pull Request Synchronized';
+    case 'auto_merge_enabled':
+      return 'Auto-Merge Enabled for Pull Request';
+    case 'auto_merge_disabled':
+      return 'Auto-Merge Disabled for Pull Request';
+    case 'review_requested':
+      return 'Review Requested for Pull Request';
+    case 'review_request_removed':
+      return 'Review Request Removed for Pull Request';
+    case 'ready_for_review':
+      return 'Pull Request Ready for Review';
+    case 'assigned':
+      return 'Pull Request Assigned';
     default:
       return assertNever(e.payload.action);
   }
