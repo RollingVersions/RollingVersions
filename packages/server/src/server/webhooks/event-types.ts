@@ -77,15 +77,27 @@ export type InstallationRepositoriesEvent = t.Static<
   typeof InstallationRepositoriesEventSchema
 >;
 
-const InstallationCreatedSchema = t.Object({
-  action: t.Literal(`created`),
-  repositories: t.Array(t.Object({full_name: FullNameSchema})),
-  sender: t.Object({login: t.String}),
-  installation: InstallationSchema,
-});
+const InstallationCreatedSchema = t.Named(
+  `InstallationCreated`,
+  t.Object({
+    action: t.Literal(`created`),
+    repositories: t.Array(t.Object({full_name: FullNameSchema})),
+    sender: t.Object({login: t.String}),
+    installation: InstallationSchema,
+  }),
+);
+export type InstallationCreated = t.Static<typeof InstallationCreatedSchema>;
+const InstallationSuspendedSchema = t.Named(
+  `InstallationSuspended`,
+  t.Object({
+    action: t.Literal(`suspend`),
+    sender: t.Object({login: t.String}),
+    installation: InstallationSchema,
+  }),
+);
 const InstallationEventSchema = createEventSchema(
   `installation`,
-  InstallationCreatedSchema,
+  t.Union(InstallationCreatedSchema, InstallationSuspendedSchema),
 );
 export type InstallationEvent = t.Static<typeof InstallationEventSchema>;
 
@@ -116,9 +128,17 @@ const PullRequestEventSchema = createEventSchema(
   t.Object({
     action: t.Union(
       t.Literal('labeled'),
+      t.Literal('unlabeled'),
       t.Literal('opened'),
       t.Literal('synchronize'),
       t.Literal('closed'),
+      t.Literal('auto_merge_enabled'),
+      t.Literal('auto_merge_disabled'),
+      t.Literal('review_requested'),
+      t.Literal('review_request_removed'),
+      t.Literal('ready_for_review'),
+      t.Literal('edited'),
+      t.Literal('assigned'),
     ),
     repository: RepositorySchema,
     pull_request: PullRequestSchema,
@@ -136,6 +156,14 @@ const PushEventSchema = createEventSchema(
 );
 export type PushEvent = t.Static<typeof PushEventSchema>;
 
+const GitHubAppAuthorizationEventSchema = createEventSchema(
+  `github_app_authorization`,
+  t.Object({
+    action: t.Literal(`revoked`),
+    sender: t.Object({login: t.String}),
+  }),
+);
+
 export const GitHubEventSchema = t.Union(
   CreateEventSchema,
   DeleteEventSchema,
@@ -143,6 +171,7 @@ export const GitHubEventSchema = t.Union(
   InstallationRepositoriesEventSchema,
   PullRequestEventSchema,
   PushEventSchema,
+  GitHubAppAuthorizationEventSchema,
 );
 
 export type GitHubEvent = t.Static<typeof GitHubEventSchema>;

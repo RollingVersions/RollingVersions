@@ -18,10 +18,18 @@ export default async function onPullRequest(
   switch (e.payload.action) {
     case 'opened':
     case 'synchronize':
+    case 'edited':
       return await onPullRequestUpdate(e, logger);
     case 'closed':
       return await onPullRequestClosed(e, logger);
+    case 'auto_merge_enabled':
+    case 'auto_merge_disabled':
+    case 'review_requested':
+    case 'review_request_removed':
+    case 'ready_for_review':
     case 'labeled':
+    case 'unlabeled':
+    case 'assigned':
       // We don't use pull request labels at the moment
       return;
     default:
