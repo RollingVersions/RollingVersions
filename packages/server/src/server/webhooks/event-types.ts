@@ -139,6 +139,7 @@ const PullRequestEventSchema = createEventSchema(
       t.Literal('ready_for_review'),
       t.Literal('edited'),
       t.Literal('assigned'),
+      t.Literal('unassigned'),
     ),
     repository: RepositorySchema,
     pull_request: PullRequestSchema,

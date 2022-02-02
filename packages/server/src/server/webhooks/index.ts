@@ -275,6 +275,8 @@ function getPullRequestEventMessage(e: PullRequestEvent): string {
       return 'Pull Request Ready for Review';
     case 'assigned':
       return 'Pull Request Assigned';
+    case 'unassigned':
+      return 'Pull Request Unassigned';
     default:
       return assertNever(e.payload.action);
   }

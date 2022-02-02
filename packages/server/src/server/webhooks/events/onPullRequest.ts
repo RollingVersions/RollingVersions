@@ -30,6 +30,7 @@ export default async function onPullRequest(
     case 'labeled':
     case 'unlabeled':
     case 'assigned':
+    case 'unassigned':
       // We don't use pull request labels at the moment
       return;
     default:
