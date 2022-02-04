@@ -60,7 +60,7 @@ async function onInstallationRepositoriesAdded(
         await refreshPullRequests(db, client, repo, logger);
         const pullRequests = await tables
           .pull_requests(db)
-          .find({is_closed: false})
+          .find({git_repository_id: repo.id, is_closed: false})
           .all();
         for (const pullRequest of pullRequests) {
           await updatePullRequestComment(db, client, repo, pullRequest, logger);
@@ -78,7 +78,7 @@ async function onInstallationRepositoriesAdded(
     if (repo) {
       const pullRequests = await tables
         .pull_requests(db)
-        .find({is_closed: false})
+        .find({git_repository_id: repo.id, is_closed: false})
         .all();
       for (const pullRequest of pullRequests) {
         await updatePullRequestStatus(db, client, repo, pullRequest, logger);
