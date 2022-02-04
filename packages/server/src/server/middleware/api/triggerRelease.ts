@@ -1,4 +1,5 @@
 import assertNever from 'assert-never';
+import fetch from 'cross-fetch';
 
 import {Queryable} from '@rollingversions/db';
 
