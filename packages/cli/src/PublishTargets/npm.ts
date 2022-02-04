@@ -323,7 +323,15 @@ export default createPublishTargetAPI<PublishTarget.npm>({
       semverVersion,
       packageVersions,
       async () => {
-        const versions = await getVersions(config.dirname, targetConfig.path);
+        const versions = await getVersions(
+          config.dirname,
+          targetConfig.path,
+        ).catch(() => {
+          console.warn(
+            `Unable to list past versions for ${targetConfig.packageName}`,
+          );
+          return null;
+        });
         const semverVersion = printString(pkg.newVersion);
         if (versions) {
           const max = [...versions]
