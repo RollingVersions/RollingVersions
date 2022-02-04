@@ -3,6 +3,7 @@ import fetch from 'cross-fetch';
 
 import {Queryable} from '@rollingversions/db';
 
+import {getTokenForRepo} from '../../getClient';
 import type {Logger} from '../../logger';
 import {getRollingVersionsConfigForBranch} from '../../models/PackageManifests';
 import {getRepositoryFromRestParams} from '../../models/Repositories';
@@ -56,7 +57,13 @@ export default async function triggerRelease(
         }/actions/workflows/${encodeURIComponent(trigger.name)}.yml/dispatches`,
         {
           method: `POST`,
-          headers: {},
+          headers: {
+            Authorization: `token ${await getTokenForRepo({
+              owner: dbRepo.owner,
+              name: dbRepo.name,
+            })}`,
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             ref: params.branch ?? dbRepo.default_branch_name,
             inputs: {},
