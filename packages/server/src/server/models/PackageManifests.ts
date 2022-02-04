@@ -35,22 +35,39 @@ import {
   isCommitReleased,
   updateRepoIfChanged,
 } from './git';
-import listPackages from './PackageManifests/listPackages';
+import getRollingVersionsConfig from './PackageManifests/getRollingVersionsConfig';
+import listPackages, {
+  GetPackageManifestsResult,
+} from './PackageManifests/listPackages';
 
 export type PackageManifests = Map<string, PackageManifest>;
 
 // `${git_repository_id}:${commit_sha}`
 type CommitID = string;
 
-type GetPackageManifestsResult = {
-  oid: string;
-  packages: Map<string, PackageManifest>;
-  packageErrors: {filename: string; error: string}[];
-};
 const cache = new Cache<CommitID, Promise<GetPackageManifestsResult | null>>({
   maxSize: 30,
 });
 
+export async function getRollingVersionsConfigForBranch(
+  db: Queryable,
+  client: GitHubClient,
+  repo: DbGitRepository,
+  source: {type: 'branch'; name: string},
+  logger: Logger,
+) {
+  const commit = await getBranchHeadCommit(
+    db,
+    client,
+    repo,
+    source.name,
+    logger,
+  );
+  if (!commit) {
+    return null;
+  }
+  return await getRollingVersionsConfig(client, repo, commit.commit_sha);
+}
 export async function getPackageManifests(
   db: Queryable,
   client: GitHubClient,

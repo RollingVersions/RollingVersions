@@ -42,6 +42,7 @@
     "apex-logs-winston": "^1.1.0",
     "assert-never": "^1.2.1",
     "body-parser": "^1.19.0",
+    "cross-fetch": "^3.1.4",
     "cuid": "^2.1.8",
     "deep-equal": "^2.0.5",
     "escape-html": "^1.0.3",

@@ -144,6 +144,7 @@ const PackageConfigCodec = t.Union(
 export type PackageConfig = t.Static<typeof PackageConfigCodec>;
 export interface RollingConfig extends RollingConfigOptions {
   readonly packages: readonly PackageConfig[];
+  readonly release_trigger?: ReleaseTrigger;
 }
 
 export function completeConfig<TObject extends Partial<RollingConfigOptions>>(
@@ -206,12 +207,23 @@ export function completeConfig<TObject extends Partial<RollingConfigOptions>>(
     },
   };
 }
+
+const ReleaseTriggerCodec = t.Named(
+  `GitHubDispatchTrigger`,
+  t.Readonly(
+    t.Object({
+      type: t.Literal(`github_workflow_trigger`),
+      name: t.String,
+    }),
+  ),
+);
+export type ReleaseTrigger = t.Static<typeof ReleaseTriggerCodec>;
 const RollingConfigCodec: t.Codec<RollingConfig> = t.Named(
   `RollingConfig`,
   t
     .Intersect(
       t.Object({packages: t.Array(PackageConfigCodec)}),
-      t.Partial(GLOBAL_OPTIONS),
+      t.Partial({...GLOBAL_OPTIONS, release_trigger: ReleaseTriggerCodec}),
     )
     .withParser<RollingConfig>({
       parse(config) {

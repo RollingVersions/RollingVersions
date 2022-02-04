@@ -183,5 +183,6 @@ export default async function getRepository(
     cycleDetected: sortResult.circular ? sortResult.packageNames : null,
     packageErrors,
     unreleasedPullRequests,
+    hasReleaseTrigger: getPackageManifestsResult.hasReleaseTrigger,
   };
 }

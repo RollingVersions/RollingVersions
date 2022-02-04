@@ -1,8 +1,6 @@
 import assertNever from 'assert-never';
 import minimatch from 'minimatch';
-import * as toml from 'toml';
 
-import {parseRollingConfig} from '@rollingversions/config';
 import {DbGitRepository} from '@rollingversions/db';
 import type {PackageManifest} from '@rollingversions/types';
 import {
@@ -12,14 +10,16 @@ import {
 import {GetManifestsResult} from 'rollingversions/src/PublishTargets/baseTarget';
 
 import type {Logger} from '../../logger';
-import {getFileContents, GitHubClient} from '../../services/github';
+import {GitHubClient} from '../../services/github';
 import {fetchTree} from '../git';
+import getRollingVersionsConfig from './getRollingVersionsConfig';
 import mergePackageManifests from './mergePackageManifests';
 
-type GetPackageManifestsResult = {
+export type GetPackageManifestsResult = {
   oid: string;
   packages: Map<string, PackageManifest>;
   packageErrors: {filename: string; error: string}[];
+  hasReleaseTrigger: boolean;
 };
 
 const CONFIG_FILENAME = `.github/rolling-versions.toml`;
@@ -29,29 +29,22 @@ export default async function listPackages(
   commitSha: string,
   logger: Logger,
 ): Promise<GetPackageManifestsResult> {
-  const configFileContents = await getFileContents(client, {
-    repoId: repo.graphql_id,
-    commitSha,
-    filePath: CONFIG_FILENAME,
-  });
-  if (configFileContents === null) {
+  const config = await getRollingVersionsConfig(client, repo, commitSha);
+
+  if (!config.ok) {
+    const builder = makePackageManifestsResultBuilder(commitSha, false);
+    builder.pushError({filename: CONFIG_FILENAME, error: config.reason});
+    return builder.getResult();
+  }
+
+  if (!config.value) {
     return await listPackagesLegacy(repo, commitSha, logger);
   }
 
-  const builder = makePackageManifestsResultBuilder(commitSha);
-
-  const parsed = parseToml(configFileContents);
-  if (!parsed.ok) {
-    builder.pushError({filename: CONFIG_FILENAME, error: parsed.reason});
-    return builder.getResult();
-  }
-
-  const validated = parseRollingConfig(parsed.value);
-  if (!validated.success) {
-    builder.pushError({filename: CONFIG_FILENAME, error: validated.reason});
-    return builder.getResult();
-  }
-
+  const builder = makePackageManifestsResultBuilder(
+    commitSha,
+    !!config.value.release_trigger,
+  );
   const patterns: {
     status: 'pattern';
     path: string;
@@ -61,7 +54,7 @@ export default async function listPackages(
     ) => GetManifestsResult[];
   }[] = [];
 
-  for (const result of getPackageManifests(validated.value)) {
+  for (const result of getPackageManifests(config.value)) {
     switch (result.status) {
       case 'error':
         builder.pushError({filename: CONFIG_FILENAME, error: result.reason});
@@ -118,7 +111,7 @@ async function listPackagesLegacy(
   commitSha: string,
   logger: Logger,
 ): Promise<GetPackageManifestsResult> {
-  const builder = makePackageManifestsResultBuilder(commitSha);
+  const builder = makePackageManifestsResultBuilder(commitSha, true);
   const files = await fetchTree(repo, commitSha, logger);
 
   async function pushFile(file: {
@@ -149,7 +142,10 @@ async function listPackagesLegacy(
   return builder.getResult();
 }
 
-function makePackageManifestsResultBuilder(commitSha: string) {
+function makePackageManifestsResultBuilder(
+  commitSha: string,
+  hasReleaseTrigger: boolean,
+) {
   const packageErrors: {filename: string; error: string}[] = [];
   const packagesWithErrors = new Set<string>();
   const packages = new Map<string, PackageManifest>();
@@ -178,15 +174,7 @@ function makePackageManifestsResultBuilder(commitSha: string) {
     }
   }
   function getResult(): GetPackageManifestsResult {
-    return {oid: commitSha, packages, packageErrors};
+    return {oid: commitSha, packages, packageErrors, hasReleaseTrigger};
   }
   return {pushError, pushManifest, getResult};
-}
-
-function parseToml(str: string) {
-  try {
-    return {ok: true as const, value: toml.parse(str)};
-  } catch (ex: any) {
-    return {ok: false as const, reason: ex.message};
-  }
 }

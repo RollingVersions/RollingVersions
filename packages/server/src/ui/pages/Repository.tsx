@@ -204,7 +204,8 @@ export default function Repository() {
             <RepositoryPage {...state}>
               <NextReleaseHeading>
                 {updateRequired &&
-                (branch === state?.defaultBranch?.name || branch === null) ? (
+                (branch === state?.defaultBranch?.name || branch === null) &&
+                state.hasReleaseTrigger ? (
                   <form
                     method="POST"
                     action={`/${params.owner}/${params.repo}/dispatch/rollingversions_publish_approved`}
