@@ -148,7 +148,7 @@ function getCommandExecuter(
   packageVersions: Map<string, VersionNumber | null>,
 ): CommandExecutor {
   const env = getEnv(config, pkg, packageVersions);
-  return async ({command, directory}, {debug = false} = {}) => {
+  return async ({command, directory}, {debug = true} = {}) => {
     // TODO: Maybe spawn with sh? Maybe replace env vars in command?
     return await execBuffered(command, {
       env,
