@@ -122,3 +122,17 @@ query GetRelease($repoId: ID!, $tagName: String!) {
     }
   }
 }
+
+query GetFileContents($repoId: ID!, $expression: String!) {
+  node(id: $repoId) {
+    __typename
+    ... on Repository {
+      object(expression: $expression) {
+        __typename
+        ... on Blob {
+          text
+        }
+      }
+    }
+  }
+}

@@ -12,11 +12,7 @@ export type {default as PackageDependencies} from './PackageDependencies';
 export type {default as PackageManifest} from './PackageManifest';
 export {PackageManifestCodec} from './PackageManifest';
 export type {default as PublishConfigAccess} from './PublishConfigAccess';
-export type {
-  PublishTargetConfig,
-  NpmPublishTargetConfig,
-  CustomScriptTargetConfig,
-} from './PublishTarget';
+export type {PublishTargetConfig, NpmRegistry} from './PublishTarget';
 export type {default as RollingConfigOptions} from './RollingConfigOptions';
 export type {default as VersionBumpType} from './VersionBumpType';
 export type {VersioningModeConfig} from './VersioningMode';
@@ -33,7 +29,7 @@ export {VersioningModeCodec} from './VersioningMode';
 export {VersionSchemaCodec} from './VersionSchema';
 export {VersionTagCodec} from './VersionTag';
 export {default as VersioningMode} from './VersioningMode';
-export {default as PublishTarget} from './PublishTarget';
+export {default as PublishTarget, NpmRegistryCodec} from './PublishTarget';
 
 export interface Repository {
   owner: string;

@@ -2,7 +2,8 @@
 FROM node:14-alpine AS base
 
 WORKDIR /app
-ENV NODE_ENV=production
+ENV NODE_ENV=production \
+  DATABASE_SCHEMA_JSON=/app/database-schema.json
 
 FROM base AS deps
 
@@ -23,9 +24,8 @@ RUN yarn install --production \
 
 FROM base AS code
 
+ADD packages/db/src/__generated__/schema.json /app/database-schema.json
 ADD packages/db/lib /app/packages/db/lib
-ADD scripts/db-post-introspect.js /app/scripts/db-post-introspect.js
-RUN node /app/scripts/db-post-introspect.js
 
 ADD packages/change-set/lib /app/packages/change-set/lib
 ADD packages/cli/lib /app/packages/cli/lib

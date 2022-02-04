@@ -1,5 +1,8 @@
-import db, {q, tables} from '@rollingversions/db';
-import {ChangeLogEntries_InsertParameters} from '@rollingversions/db/change_log_entries';
+import db, {
+  q,
+  tables,
+  DbChangeLogEntry_InsertParameters,
+} from '@rollingversions/db';
 import {PullRequest} from '@rollingversions/types';
 
 import type {UpdatePullRequestBody} from '../../../types';
@@ -55,7 +58,7 @@ export default async function updatePullRequest(
             (
               change,
             ): Omit<
-              ChangeLogEntries_InsertParameters,
+              DbChangeLogEntry_InsertParameters,
               'sort_order_weight'
             > => ({
               kind: change.type,

@@ -147,17 +147,17 @@ switch (COMMAND) {
                 chalk.yellow(
                   `## ${p.packageName} (${
                     p.currentVersion && p.currentTagName
-                      ? p.manifest.tagFormat
+                      ? p.manifest.tag_format
                         ? p.currentTagName
                         : printString(p.currentVersion)
                       : 'unreleased'
                   } → ${
-                    p.manifest.tagFormat
+                    p.manifest.tag_format
                       ? printTag(p.newVersion, {
                           packageName: p.packageName,
                           oldTagName: p.currentTagName,
-                          tagFormat: p.manifest.tagFormat,
-                          versionSchema: p.manifest.versionSchema,
+                          tagFormat: p.manifest.tag_format,
+                          versionSchema: p.manifest.version_schema,
                         })
                       : printString(p.newVersion)
                   })`,
@@ -172,7 +172,7 @@ switch (COMMAND) {
                 changesToMarkdown(p.changeSet, {
                   headingLevel: 3,
                   renderContext: ({pr}) => ` (#${pr})`,
-                  changeTypes: p.manifest.changeTypes,
+                  changeTypes: p.manifest.change_types,
                 }),
               );
               console.warn(``);
@@ -188,8 +188,8 @@ switch (COMMAND) {
               printTag(pkg.newVersion, {
                 packageName: pkg.packageName,
                 oldTagName: pkg.currentTagName,
-                tagFormat: pkg.manifest.tagFormat,
-                versionSchema: pkg.manifest.versionSchema,
+                tagFormat: pkg.manifest.tag_format,
+                versionSchema: pkg.manifest.version_schema,
               }),
             )} in ${chalk.red(`canary mode`)}`,
           );
@@ -202,8 +202,8 @@ switch (COMMAND) {
               printTag(pkg.newVersion, {
                 packageName: pkg.packageName,
                 oldTagName: pkg.currentTagName,
-                tagFormat: pkg.manifest.tagFormat,
-                versionSchema: pkg.manifest.versionSchema,
+                tagFormat: pkg.manifest.tag_format,
+                versionSchema: pkg.manifest.version_schema,
               }),
             )}${dryRun ? ` ${chalk.red(`(dry run)`)}` : ''}`,
           );

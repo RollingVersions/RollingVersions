@@ -1,7 +1,10 @@
-import {Queryable, tables} from '@rollingversions/db';
-import DbGitCommit from '@rollingversions/db/git_commits';
-import DbGitRepository from '@rollingversions/db/git_repositories';
-import DbPullRequest from '@rollingversions/db/pull_requests';
+import {
+  Queryable,
+  tables,
+  DbGitCommit,
+  DbGitRepository,
+  DbPullRequest,
+} from '@rollingversions/db';
 
 import {getUrlForChangeLog} from '../../utils/Rendering';
 import {APP_URL} from '../environment';

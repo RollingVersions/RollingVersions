@@ -1,83 +1,103 @@
 import * as t from 'funtypes';
 
 import {PublishConfigAccessCodec} from './PublishConfigAccess';
+import {TagFormatCodec} from './Strings';
 
 // N.B. this enum **must** be kept in sync with the publish_targets table in the database
 enum PublishTarget {
+  custom = 'custom',
+  docker = 'docker',
   npm = 'npm',
-  custom_script = 'custom_script',
 }
 export default PublishTarget;
 
-export const NpmPublishTargetConfigCodec = t.Named(
-  `NpmPublishTarget`,
-  t.Readonly(
-    t.Object({
-      type: t.Literal(PublishTarget.npm),
-      /**
-       * The filename of the package.json file
-       */
-      path: t.String,
-      /**
-       * The "name" field in package.json
-       */
-      packageName: t.String,
-      /**
-       * The "private" field in package.json (defaults to false)
-       */
-      private: t.Boolean,
-      /**
-       * The "publishConfig"."access" field in package.json (defaults to "restricted" if package name stars with "@", otherwise defaults to "public")
-       */
-      publishConfigAccess: PublishConfigAccessCodec,
+export const NpmRegistryCodec = t.Named(
+  `NpmRegistry`,
+  t.Intersect(
+    t.Object({url: t.String, token_env: t.String}),
+    t.Partial({
+      package_overrides: t.Record(t.String, t.Unknown),
     }),
   ),
 );
-export type NpmPublishTargetConfig = t.Static<
-  typeof NpmPublishTargetConfigCodec
->;
-
-export const CustomScriptTargetConfigCodec = t.Named(
-  `CustomScriptTarget`,
+export type NpmRegistry = t.Static<typeof NpmRegistryCodec>;
+export const NpmPublishTargetConfigCodec = t.Named(
+  `NpmPublishTarget`,
   t.Intersect(
     t.Readonly(
       t.Object({
-        type: t.Literal(PublishTarget.custom_script),
+        type: t.Literal(PublishTarget.npm),
         /**
-         * The filename of the rolling-package.* file
+         * The filename of the package.json file
          */
         path: t.String,
         /**
-         * The command to run in order to publish a new version of the package
+         * The "name" field in package.json
          */
-        publish: t.String,
+        packageName: t.String,
+        /**
+         * The "private" field in package.json (defaults to false)
+         */
+        private: t.Boolean,
+        /**
+         * The "publishConfig"."access" field in package.json (defaults to "restricted" if package name stars with "@", otherwise defaults to "public")
+         */
+        publishConfigAccess: PublishConfigAccessCodec,
+      }),
+    ),
+    t.Readonly(
+      t.Partial({
+        registry: NpmRegistryCodec,
+      }),
+    ),
+  ),
+);
+
+export const ScriptCodec = t.Intersect(
+  t.Readonly(t.Object({command: t.String})),
+  t.Readonly(t.Partial({directory: t.String})),
+);
+export const CustomTargetConfigCodec = t.Named(
+  `CustomTarget`,
+  t.Intersect(
+    t.Readonly(
+      t.Object({
+        type: t.Literal(PublishTarget.custom),
       }),
     ),
     t.Readonly(
       t.Partial({
         /**
-         * A command to execute before publish/prepublish
-         *
-         * Use this to check permissions are configured correctly
+         * The command to run in order to publish a new version of the package
          */
-        prepublish: t.String,
+        release: ScriptCodec,
         /**
-         * A command to run instead of `publish` when in dry run mode
-         *
-         * Publish is never called in dry run
+         * A command to run instead of `release` when in dry run mode
          */
-        publish_dry_run: t.String,
+        release_dry_run: ScriptCodec,
       }),
     ),
   ),
 );
-export type CustomScriptTargetConfig = t.Static<
-  typeof CustomScriptTargetConfigCodec
->;
+
+export const DockerTargetConfigCodec = t.Named(
+  `DockerTarget`,
+  t.Readonly(
+    t.Object({
+      type: t.Literal(PublishTarget.docker),
+      image_name: t.Object({local: t.String, remote: t.String}),
+      docker_tag_formats: t.Array(TagFormatCodec),
+    }),
+  ),
+);
 
 export const PublishTargetConfigCodec = t.Named(
   `PublishTarget`,
-  t.Union(NpmPublishTargetConfigCodec, CustomScriptTargetConfigCodec),
+  t.Union(
+    CustomTargetConfigCodec,
+    DockerTargetConfigCodec,
+    NpmPublishTargetConfigCodec,
+  ),
 );
 
 export type PublishTargetConfig = t.Static<typeof PublishTargetConfigCodec>;

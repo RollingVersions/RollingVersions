@@ -66,7 +66,7 @@ export default function usePullRequest({
             throw new Error(`${res.statusText}: ${await res.text()}`);
           }
           return true;
-        } catch (ex) {
+        } catch (ex: any) {
           if (ref.current === path) {
             setError(ex);
           }

@@ -3,10 +3,13 @@ import {
   transformMapKey,
 } from '@mavenoid/dataloader';
 
-import {Queryable, sql} from '@rollingversions/db';
-import {tables} from '@rollingversions/db';
-import DbGitRepository from '@rollingversions/db/git_repositories';
-import DbReleaseDescription from '@rollingversions/db/release_descriptions';
+import {
+  Queryable,
+  sql,
+  tables,
+  DbGitRepository,
+  DbReleaseDescription,
+} from '@rollingversions/db';
 
 const {batchWithoutCache} = getDataLoadersForContextType<Queryable>();
 type Key = {

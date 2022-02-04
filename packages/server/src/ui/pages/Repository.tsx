@@ -256,23 +256,23 @@ export default function Repository() {
                     packageName={pkg.manifest.packageName}
                     currentVersion={
                       currentVersion?.ok
-                        ? pkg.manifest.tagFormat
+                        ? pkg.manifest.tag_format
                           ? currentVersion.name
                           : printString(currentVersion.version)
                         : null
                     }
                     newVersion={
-                      pkg.manifest.tagFormat
+                      pkg.manifest.tag_format
                         ? printTag(pkg.newVersion, {
                             packageName: pkg.manifest.packageName,
                             oldTagName: null,
-                            tagFormat: pkg.manifest.tagFormat,
-                            versionSchema: pkg.manifest.versionSchema,
+                            tagFormat: pkg.manifest.tag_format,
+                            versionSchema: pkg.manifest.version_schema,
                           })
                         : printString(pkg.newVersion)
                     }
                     changeSet={pkg.changeSet}
-                    changeTypes={pkg.manifest.changeTypes}
+                    changeTypes={pkg.manifest.change_types}
                     path={path}
                     releaseDescription={pkg.releaseDescription}
                     setReleaseDescriptionLink={getOpenDialogLink({
@@ -294,7 +294,7 @@ export default function Repository() {
                         packageName={pkg.manifest.packageName}
                         currentVersion={
                           pkg.currentVersion?.ok
-                            ? pkg.manifest.tagFormat
+                            ? pkg.manifest.tag_format
                               ? pkg.currentVersion.name
                               : printString(pkg.currentVersion.version)
                             : null

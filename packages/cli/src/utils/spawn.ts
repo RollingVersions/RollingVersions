@@ -25,11 +25,7 @@ export async function spawnBuffered(
   options: SpawnOptionsWithoutStdio,
 ) {
   const childProcess = spawn(command, args, options);
-  const [stdout, stderr, status] = await Promise.all<
-    Buffer,
-    Buffer,
-    number | null
-  >([
+  const [stdout, stderr, status] = await Promise.all([
     getBuffer(childProcess.stdout),
     getBuffer(childProcess.stderr),
     getStatusCode(childProcess),
