@@ -83,7 +83,7 @@ export default async function listPackages(
       files.map(async (file) => {
         await Promise.all(
           patterns.map(async ({path, getPackageManifests}) => {
-            if (minimatch(`/${file.path}`, path, {matchBase: true})) {
+            if (minimatch(file.path, path)) {
               for (const result of getPackageManifests(
                 file.path,
                 await file.getContents(),
