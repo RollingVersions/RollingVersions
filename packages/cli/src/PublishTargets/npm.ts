@@ -3,7 +3,6 @@ import {gt, prerelease} from 'semver';
 
 import {parseRollingConfigOptions} from '@rollingversions/config';
 import {
-  NpmRegistry,
   PackageManifest,
   PublishTarget,
   RollingConfigOptions,
@@ -41,7 +40,7 @@ function versionPrefix(oldVersion: string, {canary}: {canary: boolean}) {
 
 async function withNpmVersion<T>(
   config: PublishConfig,
-  target: {packageName: string; path: string; registry?: NpmRegistry},
+  target: {packageName: string; path: string},
   newVersion: string,
   packageVersions: Map<string, VersionNumber | null>,
   fn: () => Promise<T>,
@@ -90,37 +89,11 @@ async function withNpmVersion<T>(
     detectNewline(original),
   );
 
-  const npmRcFilename = target.path.replace(/package\.json$/, `.npmrc`);
-  const originalNpmRc = target.registry
-    ? await readRepoFile(config.dirname, npmRcFilename).catch(() => null)
-    : null;
   try {
     await writeRepoFile(config.dirname, target.path, str);
-    if (target.registry) {
-      await writeRepoFile(
-        config.dirname,
-        npmRcFilename,
-        [
-          `${target.registry.url.replace(/^https?\:\/\//, '//')}:_authToken=${
-            process.env[target.registry.token_env]
-          }`,
-          target.packageName.startsWith(`@`)
-            ? `${target.packageName.split(`/`)[0]}:registry=${
-                target.registry.url
-              }`
-            : `registry=${target.registry.url}`,
-          `always-auth=true`,
-        ].join(`\n`),
-      );
-    }
     return await fn();
   } finally {
     await writeRepoFile(config.dirname, target.path, original);
-    if (originalNpmRc) {
-      await writeRepoFile(config.dirname, npmRcFilename, originalNpmRc);
-    } else if (target.registry) {
-      await deleteRepoFile(config.dirname, npmRcFilename);
-    }
   }
 }
 
@@ -223,7 +196,6 @@ export default createPublishTargetAPI<PublishTarget.npm>({
                         ? 'public'
                         : 'restricted'
                       : 'public',
-                    registry: config.registry,
                   },
                 ],
                 dependencies: {

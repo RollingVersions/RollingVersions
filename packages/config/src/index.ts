@@ -5,7 +5,6 @@ import {
   ChangeType,
   ChangeTypeCodec,
   ChangeTypeID,
-  NpmRegistryCodec,
   PublishTarget,
   RollingConfigOptions,
   TagFormatCodec,
@@ -123,10 +122,6 @@ const NpmPackageCodec = t.Named(
        * Name in Rolling Versions if different from in package.json
        */
       name: t.String,
-      /**
-       * Registry to publish to if not relying on `.npmrc`
-       */
-      registry: NpmRegistryCodec,
       /**
        * Packages to treat as dependencies even though they are not in package.json
        */

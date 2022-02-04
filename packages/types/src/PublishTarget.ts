@@ -11,45 +11,29 @@ enum PublishTarget {
 }
 export default PublishTarget;
 
-export const NpmRegistryCodec = t.Named(
-  `NpmRegistry`,
-  t.Intersect(
-    t.Object({url: t.String, token_env: t.String}),
-    t.Partial({
-      package_overrides: t.Record(t.String, t.Unknown),
-    }),
-  ),
-);
-export type NpmRegistry = t.Static<typeof NpmRegistryCodec>;
 export const NpmPublishTargetConfigCodec = t.Named(
   `NpmPublishTarget`,
-  t.Intersect(
-    t.Readonly(
-      t.Object({
-        type: t.Literal(PublishTarget.npm),
-        /**
-         * The filename of the package.json file
-         */
-        path: t.String,
-        /**
-         * The "name" field in package.json
-         */
-        packageName: t.String,
-        /**
-         * The "private" field in package.json (defaults to false)
-         */
-        private: t.Boolean,
-        /**
-         * The "publishConfig"."access" field in package.json (defaults to "restricted" if package name stars with "@", otherwise defaults to "public")
-         */
-        publishConfigAccess: PublishConfigAccessCodec,
-      }),
-    ),
-    t.Readonly(
-      t.Partial({
-        registry: NpmRegistryCodec,
-      }),
-    ),
+
+  t.Readonly(
+    t.Object({
+      type: t.Literal(PublishTarget.npm),
+      /**
+       * The filename of the package.json file
+       */
+      path: t.String,
+      /**
+       * The "name" field in package.json
+       */
+      packageName: t.String,
+      /**
+       * The "private" field in package.json (defaults to false)
+       */
+      private: t.Boolean,
+      /**
+       * The "publishConfig"."access" field in package.json (defaults to "restricted" if package name stars with "@", otherwise defaults to "public")
+       */
+      publishConfigAccess: PublishConfigAccessCodec,
+    }),
   ),
 );
 
