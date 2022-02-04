@@ -91,12 +91,18 @@ export async function prepublish(
   }
   const results = await Promise.all(
     pkg.manifest.targetConfigs.map(
-      (targetConfig): Promise<(PrePublishResult | null)[]> =>
-        Promise.all(
-          targets.map((t) =>
-            t.prepublish(config, pkg, targetConfig, packageVersions),
-          ),
-        ),
+      async (targetConfig): Promise<(PrePublishResult | null)[]> => {
+        const results: (PrePublishResult | null)[] = [];
+        for (const t of targets) {
+          // It may not be safe to prepare _or_ publish multiple targets for the same
+          // package concurrently. For example, it may only be possible to authenticate
+          // for one target at a time.
+          results.push(
+            await t.prepublish(config, pkg, targetConfig, packageVersions),
+          );
+        }
+        return results;
+      },
     ),
   );
   return [...prePublishScriptResults, ...results]

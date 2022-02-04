@@ -1,5 +1,6 @@
 import * as t from 'funtypes';
 
+import {NpmRegistryCodec} from './NpmRegistry';
 import {PublishConfigAccessCodec} from './PublishConfigAccess';
 import {TagFormatCodec} from './Strings';
 
@@ -13,27 +14,33 @@ export default PublishTarget;
 
 export const NpmPublishTargetConfigCodec = t.Named(
   `NpmPublishTarget`,
-
-  t.Readonly(
-    t.Object({
-      type: t.Literal(PublishTarget.npm),
-      /**
-       * The filename of the package.json file
-       */
-      path: t.String,
-      /**
-       * The "name" field in package.json
-       */
-      packageName: t.String,
-      /**
-       * The "private" field in package.json (defaults to false)
-       */
-      private: t.Boolean,
-      /**
-       * The "publishConfig"."access" field in package.json (defaults to "restricted" if package name stars with "@", otherwise defaults to "public")
-       */
-      publishConfigAccess: PublishConfigAccessCodec,
-    }),
+  t.Intersect(
+    t.Readonly(
+      t.Object({
+        type: t.Literal(PublishTarget.npm),
+        /**
+         * The filename of the package.json file
+         */
+        path: t.String,
+        /**
+         * The "name" field in package.json
+         */
+        packageName: t.String,
+        /**
+         * The "private" field in package.json (defaults to false)
+         */
+        private: t.Boolean,
+        /**
+         * The "publishConfig"."access" field in package.json (defaults to "restricted" if package name stars with "@", otherwise defaults to "public")
+         */
+        publishConfigAccess: PublishConfigAccessCodec,
+      }),
+    ),
+    t.Readonly(
+      t.Partial({
+        registry: NpmRegistryCodec,
+      }),
+    ),
   ),
 );
 
@@ -71,6 +78,7 @@ export const DockerTargetConfigCodec = t.Named(
       type: t.Literal(PublishTarget.docker),
       image_name: t.Object({local: t.String, remote: t.String}),
       docker_tag_formats: t.Array(TagFormatCodec),
+      skip_auth: t.Boolean,
     }),
   ),
 );

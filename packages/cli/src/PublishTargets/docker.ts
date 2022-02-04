@@ -1,3 +1,5 @@
+import {spawnBuffered} from 'modern-spawn';
+
 import {printTag} from '@rollingversions/tag-format';
 import {PublishTarget} from '@rollingversions/types';
 import {printString} from '@rollingversions/version-number';
@@ -48,6 +50,7 @@ export default createPublishTargetAPI<PublishTarget.docker>({
                 `{{ MAJOR }}`,
                 `latest`,
               ],
+              skip_auth: config.skip_auth === true,
             },
           ],
           dependencies: {
@@ -86,6 +89,12 @@ export default createPublishTargetAPI<PublishTarget.docker>({
       };
     }
 
+    if (!targetConfig.skip_auth) {
+      const remoteNameParts = targetConfig.image_name.remote.split(`/`);
+      remoteNameParts.pop();
+      await authenticateDockerRegistry(remoteNameParts.join(`/`));
+    }
+
     return {ok: true};
   },
 
@@ -109,3 +118,31 @@ export default createPublishTargetAPI<PublishTarget.docker>({
     }
   },
 });
+
+const cache = new Map<string, Promise<void>>();
+async function authenticateDockerRegistry(registry: string): Promise<void> {
+  const cached = cache.get(registry);
+  if (cached) return await cached;
+  const fresh = authenticateDockerRegistryUncached(registry);
+  cache.set(registry, fresh);
+  return await fresh;
+}
+
+async function authenticateDockerRegistryUncached(registry: string) {
+  const gcloudMatch = /^([a-z0-9-]+-docker\.pkg\.dev)\/.+\/.+$/.exec(registry);
+  if (gcloudMatch) {
+    // Authenticate to the Google Cloud Artifact Registry
+    console.warn(`Authenticating gcloud docker registry`);
+    console.warn(`To disable automatic authentication,`);
+    console.warn(`set skip_auth=TRUE in rolling-versions.toml`);
+    console.warn(``);
+    console.warn(`gcloud auth configure-docker ${gcloudMatch[1]}`);
+    console.warn(``);
+    await spawnBuffered(`gcloud`, [
+      `auth`,
+      `configure-docker`,
+      gcloudMatch[1],
+      `--quiet`,
+    ]).getResult();
+  }
+}

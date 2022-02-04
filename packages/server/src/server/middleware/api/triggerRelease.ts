@@ -73,10 +73,10 @@ export default async function triggerRelease(
       if (!response.ok) {
         throw new Error(await response.text());
       }
+
       logger.info(
         `repository_dispatch`,
-        `Dispatched repository event`,
-        await response.json(),
+        `Dispatched repository event: ${await response.text()}`,
       );
       return `https://github.com/${dbRepo.owner}/${
         dbRepo.name

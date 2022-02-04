@@ -5,6 +5,7 @@ import {
   ChangeType,
   ChangeTypeCodec,
   ChangeTypeID,
+  NpmRegistryCodec,
   PublishTarget,
   RollingConfigOptions,
   TagFormatCodec,
@@ -102,6 +103,7 @@ const DockerPackageCodec = t.Named(
       docker_tag_formats: t.Array(TagFormatCodec),
       scripts: t.Partial(GLOBAL_SCRIPTS),
       dependencies: t.Array(t.String),
+      skip_auth: t.Boolean,
     }),
   ),
 );
@@ -127,6 +129,7 @@ const NpmPackageCodec = t.Named(
        */
       dependencies: t.Array(t.String),
       scripts: t.Partial(GLOBAL_SCRIPTS),
+      registry: NpmRegistryCodec,
     }),
   ),
 );

@@ -1,8 +1,13 @@
+import {resolve} from 'path';
+
+import assertNever from 'assert-never';
 import * as t from 'funtypes';
+import {spawnBuffered} from 'modern-spawn';
 import {gt, prerelease} from 'semver';
 
 import {parseRollingConfigOptions} from '@rollingversions/config';
 import {
+  NpmRegistry,
   PackageManifest,
   PublishTarget,
   RollingConfigOptions,
@@ -10,7 +15,7 @@ import {
 import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
 
-import {readRepoFile, writeRepoFile} from '../services/git';
+import {deleteRepoFile, readRepoFile, writeRepoFile} from '../services/git';
 import {getVersions, publish as npmPublish} from '../services/npm';
 import isObject from '../ts-utils/isObject';
 import {PublishConfig} from '../types/publish';
@@ -38,9 +43,85 @@ function versionPrefix(oldVersion: string, {canary}: {canary: boolean}) {
   }
 }
 
+async function writeWithCleanup(
+  dirname: string,
+  path: string,
+  content: string,
+) {
+  const originalFile = await readRepoFile(dirname, path).catch((ex) => {
+    if (ex.code === `ENOENT`) return null;
+    throw ex;
+  });
+  await writeRepoFile(dirname, path, content);
+  return async () => {
+    if (originalFile === null) {
+      await deleteRepoFile(dirname, path);
+    } else {
+      await writeRepoFile(dirname, path, originalFile);
+    }
+  };
+}
+
+const googleAuthCache = new Map<string, Promise<unknown>>();
+async function npmAuthenticate(
+  config: PublishConfig,
+  target: {packageName: string; path: string; registry?: NpmRegistry},
+): Promise<() => Promise<void>> {
+  const registry = target.registry;
+  if (!registry) {
+    return async () => {
+      // Nothing to cleanup
+    };
+  }
+  const scope = target.packageName.split(`/`)[0];
+  const directory = target.path.replace(/\/?package\.json$/, ``);
+  switch (registry.type) {
+    case 'google_artifact_registry': {
+      console.warn(`Authenticating gcloud npm registry`);
+      console.warn(`Writing .npmrc to "${resolve(directory, `.npmrc`)}"`);
+      const cleanupNpmRc = await writeWithCleanup(
+        config.dirname,
+        resolve(directory, `.npmrc`),
+        [
+          `${scope}:registry=https://${registry.location}-npm.pkg.dev/${registry.project}/${registry.repository}/`,
+          `//${registry.location}-npm.pkg.dev/${registry.project}/${registry.repository}/:always-auth=true`,
+        ].join(`\n`),
+      );
+      const cacheKey = `${registry.location}/${registry.project}/${registry.repository}/${scope}`;
+      let authResult = googleAuthCache.get(cacheKey);
+      if (!authResult) {
+        authResult = spawnBuffered(`npx`, [`google-artifactregistry-auth`], {
+          cwd: resolve(config.dirname, directory),
+        }).getResult();
+        googleAuthCache.set(cacheKey, authResult);
+      }
+      await authResult.catch(async (ex) => {
+        await cleanupNpmRc();
+        throw ex;
+      });
+      return cleanupNpmRc;
+    }
+    case 'github_packages': {
+      const cleanupNpmRc = await writeWithCleanup(
+        config.dirname,
+        resolve(directory, `.npmrc`),
+        [
+          `//npm.pkg.github.com/:_authToken=${
+            process.env[registry.auth_token_env ?? `GITHUB_TOKEN`]
+          }`,
+          `${scope}:registry=https://npm.pkg.github.com`,
+          `always-auth=true`,
+        ].join(`\n`),
+      );
+      return cleanupNpmRc;
+    }
+    default:
+      return assertNever(registry);
+  }
+}
 async function withNpmVersion<T>(
   config: PublishConfig,
-  target: {packageName: string; path: string},
+  target: {packageName: string; path: string; registry?: NpmRegistry},
   newVersion: string,
   packageVersions: Map<string, VersionNumber | null>,
   fn: () => Promise<T>,
@@ -74,7 +155,12 @@ async function withNpmVersion<T>(
 
   try {
     await writeRepoFile(config.dirname, target.path, str);
-    return await fn();
+    const cleanupAuth = await npmAuthenticate(config, target);
+    try {
+      return await fn();
+    } finally {
+      await cleanupAuth();
+    }
   } finally {
     await writeRepoFile(config.dirname, target.path, original);
   }
@@ -179,6 +265,7 @@ export default createPublishTargetAPI<PublishTarget.npm>({
                         ? 'public'
                         : 'restricted'
                       : 'public',
+                    registry: config.registry,
                   },
                 ],
                 dependencies: {
