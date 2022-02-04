@@ -10,7 +10,7 @@ import {
 import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
 
-import {deleteRepoFile, readRepoFile, writeRepoFile} from '../services/git';
+import {readRepoFile, writeRepoFile} from '../services/git';
 import {getVersions, publish as npmPublish} from '../services/npm';
 import isObject from '../ts-utils/isObject';
 import {PublishConfig} from '../types/publish';
@@ -65,23 +65,6 @@ async function withNpmVersion<T>(
   setVersions(pkgData.dependencies);
   setVersions(pkgData.optionalDependencies);
   setVersions(pkgData.devDependencies);
-
-  if (target.registry?.package_overrides) {
-    for (const [key, value] of Object.entries(
-      target.registry.package_overrides,
-    )) {
-      if (
-        typeof pkgData[key] === 'object' &&
-        pkgData[key] !== null &&
-        typeof value === 'object' &&
-        value !== null
-      ) {
-        Object.assign(pkgData[key], value);
-      } else {
-        pkgData[key] = value;
-      }
-    }
-  }
 
   const str = stringifyPackage(
     pkgData,
