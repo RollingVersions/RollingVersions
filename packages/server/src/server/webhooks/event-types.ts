@@ -132,6 +132,7 @@ const PullRequestEventSchema = createEventSchema(
       t.Literal('opened'),
       t.Literal('synchronize'),
       t.Literal('closed'),
+      t.Literal(`reopened`),
       t.Literal('auto_merge_enabled'),
       t.Literal('auto_merge_disabled'),
       t.Literal('review_requested'),
