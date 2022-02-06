@@ -255,6 +255,8 @@ function getPullRequestEventMessage(e: PullRequestEvent): string {
       return 'Pull Request Opened';
     case 'closed':
       return 'Pull Request Closed';
+    case 'reopened':
+      return 'Pull Request Reopened';
     case 'edited':
       return 'Pull Request Edited';
     case 'labeled':

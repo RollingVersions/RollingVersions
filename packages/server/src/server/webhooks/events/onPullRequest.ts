@@ -19,6 +19,7 @@ export default async function onPullRequest(
     case 'opened':
     case 'synchronize':
     case 'edited':
+    case 'reopened':
       return await onPullRequestUpdate(e, logger);
     case 'closed':
       return await onPullRequestClosed(e, logger);
