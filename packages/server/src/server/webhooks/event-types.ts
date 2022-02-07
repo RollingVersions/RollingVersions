@@ -68,10 +68,19 @@ const RepositoriesAddedSchema = t.Object({
   sender: t.Object({login: t.String}),
   installation: InstallationSchema,
 });
+export type RepositoriesAdded = t.Static<typeof RepositoriesAddedSchema>;
+
+const RepositoriesRemovedSchema = t.Object({
+  action: t.Literal(`removed`),
+  repositories_removed: t.Array(t.Object({full_name: FullNameSchema})),
+  sender: t.Object({login: t.String}),
+  installation: InstallationSchema,
+});
+export type RepositoriesRemoved = t.Static<typeof RepositoriesRemovedSchema>;
 
 const InstallationRepositoriesEventSchema = createEventSchema(
   `installation_repositories`,
-  RepositoriesAddedSchema,
+  t.Union(RepositoriesAddedSchema, RepositoriesRemovedSchema),
 );
 export type InstallationRepositoriesEvent = t.Static<
   typeof InstallationRepositoriesEventSchema
@@ -95,9 +104,21 @@ const InstallationSuspendedSchema = t.Named(
     installation: InstallationSchema,
   }),
 );
+const InstallationDeletedSchema = t.Named(
+  `InstallationDeleted`,
+  t.Object({
+    action: t.Literal(`deleted`),
+    sender: t.Object({login: t.String}),
+    installation: InstallationSchema,
+  }),
+);
 const InstallationEventSchema = createEventSchema(
   `installation`,
-  t.Union(InstallationCreatedSchema, InstallationSuspendedSchema),
+  t.Union(
+    InstallationCreatedSchema,
+    InstallationSuspendedSchema,
+    InstallationDeletedSchema,
+  ),
 );
 export type InstallationEvent = t.Static<typeof InstallationEventSchema>;
 

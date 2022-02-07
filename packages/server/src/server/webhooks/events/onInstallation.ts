@@ -18,6 +18,7 @@ export default async function onInstallation(
     case 'created':
       return await onInstallationCreated(e, e.payload, logger);
     case 'suspend':
+    case 'deleted':
       // TODO
       break;
     default:
