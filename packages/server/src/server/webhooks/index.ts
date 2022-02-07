@@ -191,8 +191,14 @@ function getEventContext(
             repo_owner: e.payload.sender.login,
             count: e.payload.repositories_added.length,
           };
+        case 'removed':
+          return {
+            message: 'Repository installation removed',
+            repo_owner: e.payload.sender.login,
+            count: e.payload.repositories_removed.length,
+          };
         default:
-          return assertNever(e.payload.action);
+          return assertNever(e.payload);
       }
     case 'installation':
       switch (e.payload.action) {
@@ -205,6 +211,11 @@ function getEventContext(
         case 'suspend':
           return {
             message: 'Installation Suspended',
+            repo_owner: e.payload.sender.login,
+          };
+        case 'deleted':
+          return {
+            message: 'Installation Deleted',
             repo_owner: e.payload.sender.login,
           };
         default:

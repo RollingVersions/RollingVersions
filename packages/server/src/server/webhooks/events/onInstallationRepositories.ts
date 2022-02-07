@@ -7,8 +7,15 @@ import type {Logger} from '../../logger';
 import {updatePullRequestComment} from '../../models/PullRequestComment';
 import {refreshPullRequests} from '../../models/PullRequests';
 import {updatePullRequestStatus} from '../../models/PullRequestStatus';
-import {getRepositoryFromRestParams} from '../../models/Repositories';
-import {InstallationRepositoriesEvent} from '../event-types';
+import {
+  getRepositoryFromRestParams,
+  uninstallRepository,
+} from '../../models/Repositories';
+import {
+  InstallationRepositoriesEvent,
+  RepositoriesAdded,
+  RepositoriesRemoved,
+} from '../event-types';
 
 export default async function onInstallationRepositories(
   e: InstallationRepositoriesEvent,
@@ -16,20 +23,23 @@ export default async function onInstallationRepositories(
 ) {
   switch (e.payload.action) {
     case 'added':
-      return await onInstallationRepositoriesAdded(e, logger);
+      return await onInstallationRepositoriesAdded(e, e.payload, logger);
+    case 'removed':
+      return await onInstallationRepositoriesRemoved(e, e.payload, logger);
     default:
-      return assertNever(e.payload.action);
+      return assertNever(e.payload);
   }
 }
 
 async function onInstallationRepositoriesAdded(
   e: InstallationRepositoriesEvent,
+  payload: RepositoriesAdded,
   logger: Logger,
 ) {
   const client = getClientForEvent(e);
 
   const repos = await Promise.all(
-    e.payload.repositories_added
+    payload.repositories_added
       .filter((repository) => {
         const [owner] = repository.full_name.split('/');
         return owner !== 'sitedata';
@@ -85,4 +95,20 @@ async function onInstallationRepositoriesAdded(
       }
     }
   }
+}
+
+async function onInstallationRepositoriesRemoved(
+  _e: InstallationRepositoriesEvent,
+  payload: RepositoriesRemoved,
+  _logger: Logger,
+) {
+  await Promise.all(
+    payload.repositories_removed.map(async (repository) => {
+      const [owner, name] = repository.full_name.split('/');
+      await uninstallRepository(db, {
+        owner,
+        name,
+      });
+    }),
+  );
 }

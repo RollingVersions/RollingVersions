@@ -74,6 +74,18 @@ export async function getRepositoryFromRestParams(
   return dbRepo;
 }
 
+export async function uninstallRepository(
+  db: Queryable,
+  repo: RestParameterRepository,
+) {
+  await tables
+    .git_repositories(db)
+    .update(
+      {owner: repo.owner, name: repo.name, uninstalled_at: null},
+      {uninstalled_at: new Date()},
+    );
+}
+
 export async function upsertRepositoryFromEventPayload(
   db: Queryable,
   repo: PayloadRepository,
