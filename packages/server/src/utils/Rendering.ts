@@ -18,24 +18,24 @@ export function getVersionShift(
   manifest: PackageManifest,
 ) {
   const newVersion = getNextVersion(currentVersion?.version ?? null, changes, {
-    changeTypes: manifest.changeTypes,
-    versionSchema: manifest.versionSchema,
-    baseVersion: manifest.baseVersion,
+    changeTypes: manifest.change_types,
+    versionSchema: manifest.version_schema,
+    baseVersion: manifest.base_version,
   });
 
   return `(${
     currentVersion?.version
-      ? manifest.tagFormat
+      ? manifest.tag_format
         ? currentVersion.name
         : printString(currentVersion.version)
       : 'unreleased'
   } → ${
     newVersion
-      ? manifest.tagFormat
+      ? manifest.tag_format
         ? printTag(newVersion, {
             packageName: manifest.packageName,
-            versionSchema: manifest.versionSchema,
-            tagFormat: manifest.tagFormat,
+            versionSchema: manifest.version_schema,
+            tagFormat: manifest.tag_format,
             oldTagName: null,
           })
         : printString(newVersion)
@@ -103,7 +103,7 @@ export function renderCommentWithoutState(
       manifest,
     )}\n\n${changesToMarkdown(changeSet, {
       headingLevel: 4,
-      changeTypes: manifest.changeTypes,
+      changeTypes: manifest.change_types,
     })}\n\n[Edit changelog](${url.href})${warnings}`;
   }
 
@@ -128,7 +128,7 @@ export function renderCommentWithoutState(
         manifest,
       )}\n\n${changesToMarkdown(changeSet, {
         headingLevel: 4,
-        changeTypes: manifest.changeTypes,
+        changeTypes: manifest.change_types,
       })}`;
     })
     .join('\n\n')}${

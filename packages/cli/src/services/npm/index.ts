@@ -102,16 +102,19 @@ export async function getProfile(): Promise<
         ),
       },
     };
-  } catch (ex) {
+  } catch (ex: any) {
     return {authenticated: false, message: ex.message};
   }
 }
 
 export async function getVersions(
-  packageName: string,
+  repoDirname: string,
+  path: string,
 ): Promise<Set<string> | null> {
   const result = await parseNPM(
-    spawnBuffered('npm', ['view', packageName, '--json'], {}),
+    spawnBuffered('npm', ['view', '--json'], {
+      cwd: dirname(resolve(repoDirname, path)),
+    }),
   );
   if (!result.ok) {
     if (result.code === 'E404') {

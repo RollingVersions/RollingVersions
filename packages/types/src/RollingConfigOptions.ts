@@ -4,9 +4,9 @@ import {VersioningModeConfig} from './VersioningMode';
 import VersionSchema from './VersionSchema';
 
 export default interface RollingConfigOptions {
-  readonly tagFormat: string | undefined;
-  readonly changeTypes: readonly ChangeType[];
-  readonly versioningMode: VersioningModeConfig;
-  readonly versionSchema: VersionSchema;
-  readonly baseVersion: BaseVersion;
+  readonly tag_format: string | undefined;
+  readonly change_types: readonly ChangeType[];
+  readonly versioning_mode: VersioningModeConfig;
+  readonly version_schema: VersionSchema;
+  readonly base_version: BaseVersion;
 }

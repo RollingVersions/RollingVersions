@@ -3,17 +3,20 @@ import {URL} from 'url';
 
 import {batch} from '@mavenoid/dataloader';
 
-import type {SQLQuery} from '@rollingversions/db';
-import {Queryable, sql} from '@rollingversions/db';
-import {q} from '@rollingversions/db';
-import {tables} from '@rollingversions/db';
-import DbChangeLogEntry from '@rollingversions/db/change_log_entries';
-import type {GitCommits_InsertParameters} from '@rollingversions/db/git_commits';
-import type DbGitCommit from '@rollingversions/db/git_commits';
-import type DbGitRef from '@rollingversions/db/git_refs';
-import type {GitRefs_InsertParameters} from '@rollingversions/db/git_refs';
-import type DbGitRepository from '@rollingversions/db/git_repositories';
-import type DbPullRequest from '@rollingversions/db/pull_requests';
+import {
+  SQLQuery,
+  Queryable,
+  sql,
+  q,
+  tables,
+  DbChangeLogEntry,
+  DbGitCommit_InsertParameters,
+  DbGitCommit,
+  DbGitRef,
+  DbGitRef_InsertParameters,
+  DbGitRepository,
+  DbPullRequest,
+} from '@rollingversions/db';
 import * as git from '@rollingversions/git-http';
 import * as gitObj from '@rollingversions/git-objects';
 
@@ -137,7 +140,7 @@ export async function updateRepoIfChanged(
       const refsToUpsert = remoteRefs
         .filter((ref) => ref.objectID !== localRefsMap.get(ref.refName))
         .map(
-          (ref): GitRefs_InsertParameters => {
+          (ref): DbGitRef_InsertParameters => {
             const match = /^refs\/([^\/]+)\/(.+)$/.exec(ref.refName);
             if (!match) {
               throw new Error(`Invalid ref format "${ref.refName}"`);
@@ -189,7 +192,7 @@ export async function updateRepoIfChanged(
                 objectMode: true,
                 write(batch: git.FetchResponseEntryObject[], _encoding, cb) {
                   const commits = batch
-                    .map((entry): GitCommits_InsertParameters | null => {
+                    .map((entry): DbGitCommit_InsertParameters | null => {
                       if (gitObj.objectIsCommit(entry.body)) {
                         const commit = gitObj.decodeObject(entry.body);
                         // If you use the `-x` option when cherry picking

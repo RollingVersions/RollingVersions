@@ -23,6 +23,7 @@ function mockPackage(
       packageName: packageName,
       targetConfigs: [],
       dependencies: {required: [], optional: [], development: []},
+      scripts: {pre_release: [], post_release: []},
       ...manifest,
     },
     currentVersion: null,

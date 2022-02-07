@@ -4,3 +4,9 @@
 node_modules
 src
 key
+
+!packages/db/src
+packagges/db/src/*
+!packages/db/src/__generated__
+packages/db/src/__generated__/*
+!packages/db/src/__generated__/schema.json

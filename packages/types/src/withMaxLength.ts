@@ -10,6 +10,10 @@ export default function withMaxLength<T extends {readonly length: number}>(
       value.length > maxLength
         ? `Length must not be greater than ${maxLength}`
         : true,
-    {name: `MaxLength<${codec.show ? codec.show(false) : codec.tag}>`},
+    {
+      name: `MaxLength<${
+        codec.show ? codec.show(false) : codec.tag
+      }, ${maxLength.toString(10)}>`,
+    },
   );
 }

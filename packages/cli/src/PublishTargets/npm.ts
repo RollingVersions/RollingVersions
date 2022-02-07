@@ -1,8 +1,13 @@
+import {resolve} from 'path';
+
+import assertNever from 'assert-never';
+import * as t from 'funtypes';
+import {spawnBuffered} from 'modern-spawn';
 import {gt, prerelease} from 'semver';
 
 import {parseRollingConfigOptions} from '@rollingversions/config';
 import {
-  NpmPublishTargetConfig,
+  NpmRegistry,
   PackageManifest,
   PublishTarget,
   RollingConfigOptions,
@@ -10,30 +15,23 @@ import {
 import type VersionNumber from '@rollingversions/version-number';
 import {printString} from '@rollingversions/version-number';
 
-import {readRepoFile, writeRepoFile} from '../services/git';
-import {
-  getProfile,
-  getOwners,
-  getVersions,
-  getOrgRoster,
-  publish as npmPublish,
-} from '../services/npm';
+import {deleteRepoFile, readRepoFile, writeRepoFile} from '../services/git';
+import {getVersions, publish as npmPublish} from '../services/npm';
 import isObject from '../ts-utils/isObject';
 import {PublishConfig} from '../types/publish';
-import createPublishTargetAPI from './baseTarget';
+import createPublishTargetAPI, {GetManifestsResult} from './baseTarget';
 
 const detectIndent = require('detect-indent');
 const detectNewline = require('detect-newline').graceful;
 const stringifyPackage = require('stringify-package');
 
-const CONFIG_KEYS: (keyof RollingConfigOptions)[] = [
-  'baseVersion',
-  'changeTypes',
-  'tagFormat',
-  'versioningMode',
-  'versionSchema',
+const KEYS_TO_CONFIG: [keyof RollingConfigOptions, string][] = [
+  ['base_version', 'baseVersion'],
+  ['change_types', 'changeTypes'],
+  ['tag_format', 'tagFormat'],
+  ['versioning_mode', 'versioningMode'],
+  ['version_schema', 'versionSchema'],
 ];
-
 function versionPrefix(oldVersion: string, {canary}: {canary: boolean}) {
   if (canary) return '';
   switch (oldVersion[0]) {
@@ -45,9 +43,85 @@ function versionPrefix(oldVersion: string, {canary}: {canary: boolean}) {
   }
 }
 
+async function writeWithCleanup(
+  dirname: string,
+  path: string,
+  content: string,
+) {
+  const originalFile = await readRepoFile(dirname, path).catch((ex) => {
+    if (ex.code === `ENOENT`) return null;
+    throw ex;
+  });
+  await writeRepoFile(dirname, path, content);
+  return async () => {
+    if (originalFile === null) {
+      await deleteRepoFile(dirname, path);
+    } else {
+      await writeRepoFile(dirname, path, originalFile);
+    }
+  };
+}
+
+const googleAuthCache = new Map<string, Promise<unknown>>();
+async function npmAuthenticate(
+  config: PublishConfig,
+  target: {packageName: string; path: string; registry?: NpmRegistry},
+): Promise<() => Promise<void>> {
+  const registry = target.registry;
+  if (!registry) {
+    return async () => {
+      // Nothing to cleanup
+    };
+  }
+  const scope = target.packageName.split(`/`)[0];
+  const directory = target.path.replace(/\/?package\.json$/, ``);
+  switch (registry.type) {
+    case 'google_artifact_registry': {
+      console.warn(`Authenticating gcloud npm registry`);
+      console.warn(`Writing .npmrc to "${resolve(directory, `.npmrc`)}"`);
+      const cleanupNpmRc = await writeWithCleanup(
+        config.dirname,
+        resolve(directory, `.npmrc`),
+        [
+          `${scope}:registry=https://${registry.location}-npm.pkg.dev/${registry.project}/${registry.repository}/`,
+          `//${registry.location}-npm.pkg.dev/${registry.project}/${registry.repository}/:always-auth=true`,
+        ].join(`\n`),
+      );
+      const cacheKey = `${registry.location}/${registry.project}/${registry.repository}/${scope}`;
+      let authResult = googleAuthCache.get(cacheKey);
+      if (!authResult) {
+        authResult = spawnBuffered(`npx`, [`google-artifactregistry-auth`], {
+          cwd: resolve(config.dirname, directory),
+        }).getResult();
+        googleAuthCache.set(cacheKey, authResult);
+      }
+      await authResult.catch(async (ex) => {
+        await cleanupNpmRc();
+        throw ex;
+      });
+      return cleanupNpmRc;
+    }
+    case 'github_packages': {
+      const cleanupNpmRc = await writeWithCleanup(
+        config.dirname,
+        resolve(directory, `.npmrc`),
+        [
+          `//npm.pkg.github.com/:_authToken=${
+            process.env[registry.auth_token_env ?? `GITHUB_TOKEN`]
+          }`,
+          `${scope}:registry=https://npm.pkg.github.com`,
+          `always-auth=true`,
+        ].join(`\n`),
+      );
+      return cleanupNpmRc;
+    }
+    default:
+      return assertNever(registry);
+  }
+}
 async function withNpmVersion<T>(
   config: PublishConfig,
-  target: NpmPublishTargetConfig,
+  target: {packageName: string; path: string; registry?: NpmRegistry},
   newVersion: string,
   packageVersions: Map<string, VersionNumber | null>,
   fn: () => Promise<T>,
@@ -55,6 +129,7 @@ async function withNpmVersion<T>(
   const original = await readRepoFile(config.dirname, target.path, 'utf8');
   const pkgData = JSON.parse(original);
   pkgData.version = newVersion;
+
   function setVersions(obj: any) {
     if (obj) {
       for (const key of Object.keys(obj)) {
@@ -71,14 +146,21 @@ async function withNpmVersion<T>(
   setVersions(pkgData.dependencies);
   setVersions(pkgData.optionalDependencies);
   setVersions(pkgData.devDependencies);
+
   const str = stringifyPackage(
     pkgData,
     detectIndent(original).indent,
     detectNewline(original),
   );
+
   try {
     await writeRepoFile(config.dirname, target.path, str);
-    return await fn();
+    const cleanupAuth = await npmAuthenticate(config, target);
+    try {
+      return await fn();
+    } finally {
+      await cleanupAuth();
+    }
   } finally {
     await writeRepoFile(config.dirname, target.path, original);
   }
@@ -117,203 +199,261 @@ const failed = (reason: string): {ok: false; reason: string} => ({
   ok: false,
   reason,
 });
+function jsonParse(
+  path: string,
+  content: string,
+): {ok: true; value: unknown} | {ok: false; reason: string} {
+  try {
+    return {ok: true, value: JSON.parse(content)};
+  } catch (ex: any) {
+    return {ok: false, reason: `Error parsing "${path}": ${ex.message}`};
+  }
+}
 
-export default createPublishTargetAPI<NpmPublishTargetConfig>({
+const PackageDependenciesCodec = t.Record(t.String, t.String);
+const PackageJsonCodec = t.Intersect(
+  t.Object({name: t.String}),
+  t.Partial({
+    dependencies: PackageDependenciesCodec,
+    peerDependencies: PackageDependenciesCodec,
+    optionalDependencies: PackageDependenciesCodec,
+    devDependencies: PackageDependenciesCodec,
+    private: t.Boolean,
+    publishConfig: t.Partial({access: t.String}),
+  }),
+);
+
+export default createPublishTargetAPI<PublishTarget.npm>({
   type: PublishTarget.npm,
-  pathMayContainPackage(filename) {
-    return filename === 'package.json' || filename.endsWith('/package.json');
-  },
-  async getPackageManifest(
-    path,
-    content,
-  ): Promise<
-    {ok: true; manifest: PackageManifest | null} | {ok: false; reason: string}
-  > {
-    let pkgData: unknown;
-    try {
-      pkgData = JSON.parse(content);
-    } catch (ex: any) {
-      return failed(ex.message);
-    }
-    if (!isObject(pkgData)) {
-      return failed(`Expected package.json to be an object`);
-    }
+  getPackageManifests(config, globalConfig) {
+    return [
+      {
+        status: 'pattern',
+        path: config.path,
+        getPackageManifests: (
+          path: string,
+          content: string,
+        ): GetManifestsResult[] => {
+          const jsonParseResult = jsonParse(path, content);
+          if (!jsonParseResult.ok) {
+            return [{status: 'error', reason: jsonParseResult.reason}];
+          }
+          const validateResult = PackageJsonCodec.safeParse(
+            jsonParseResult.value,
+          );
+          if (!validateResult.success) {
+            return [{status: 'error', reason: t.showError(validateResult)}];
+          }
 
-    if (!pkgData.name) {
-      return {ok: true, manifest: null};
-    }
+          const pkg = validateResult.value;
 
-    if (typeof pkgData.name !== 'string') {
-      return failed(`Expected "name" to be a string`);
-    }
-
-    const pkgName = pkgData.name;
-    if (getConfigValue('ignore', pkgData)) {
-      return {ok: true, manifest: null};
-    }
-
-    const customized: (keyof RollingConfigOptions)[] = [];
-    const rawConfig: {
-      -readonly [k in keyof RollingConfigOptions]?: unknown;
-    } = {};
-    for (const configKey of CONFIG_KEYS) {
-      const value = getConfigValue(configKey, pkgData);
-      if (value !== undefined) {
-        rawConfig[configKey] = value;
-        customized.push(configKey);
-      }
-    }
-    if (rawConfig.versioningMode === undefined) {
-      const value = getConfigValue(`versioning`, pkgData);
-      if (value !== undefined) {
-        rawConfig.versioningMode = value;
-        customized.push(`versioningMode`);
-      }
-    }
-
-    const config = parseRollingConfigOptions(rawConfig);
-
-    if (!config.success) {
-      let reason = config.reason;
-      for (const configKey of CONFIG_KEYS) {
-        reason = reason
-          .split(configKey)
-          .join(getConfigName(configKey, pkgData));
-      }
-      return failed(reason);
-    }
-
-    const required = [
-      ...(isObject(pkgData) && isObject(pkgData.dependencies)
-        ? Object.keys(pkgData.dependencies)
-        : []),
-      ...(isObject(pkgData) && isObject(pkgData.peerDependencies)
-        ? Object.keys(pkgData.peerDependencies)
-        : []),
-    ];
-
-    const optional =
-      isObject(pkgData) && isObject(pkgData.optionalDependencies)
-        ? Object.keys(pkgData.optionalDependencies)
-        : [];
-
-    const development =
-      isObject(pkgData) && isObject(pkgData.devDependencies)
-        ? Object.keys(pkgData.devDependencies)
-        : [];
-
-    return {
-      ok: true,
-      manifest: {
-        packageName: pkgName,
-        ...config.value,
-        customized,
-        targetConfigs: [
-          {
-            type: PublishTarget.npm,
-            packageName: pkgName,
-            path,
-            private: pkgData.private === true,
-            publishConfigAccess: pkgName.startsWith('@')
-              ? isObject(pkgData.publishConfig) &&
-                pkgData.publishConfig.access === 'public'
-                ? 'public'
-                : 'restricted'
-              : 'public',
-          },
-        ],
-        dependencies: {required, optional, development},
+          return [
+            {
+              status: 'manifest',
+              manifest: {
+                ...globalConfig,
+                packageName: config.name ?? pkg.name,
+                targetConfigs: [
+                  {
+                    type: PublishTarget.npm,
+                    packageName: pkg.name,
+                    path,
+                    private: pkg.private === true,
+                    publishConfigAccess: pkg.name.startsWith('@')
+                      ? isObject(pkg.publishConfig) &&
+                        pkg.publishConfig.access === 'public'
+                        ? 'public'
+                        : 'restricted'
+                      : 'public',
+                    registry: config.registry,
+                  },
+                ],
+                dependencies: {
+                  required: [
+                    ...(config.dependencies ?? []),
+                    ...(pkg.dependencies ? Object.keys(pkg.dependencies) : []),
+                    ...(pkg.peerDependencies
+                      ? Object.keys(pkg.peerDependencies)
+                      : []),
+                  ],
+                  optional: pkg.optionalDependencies
+                    ? Object.keys(pkg.optionalDependencies)
+                    : [],
+                  development: pkg.devDependencies
+                    ? Object.keys(pkg.devDependencies)
+                    : [],
+                },
+              },
+            },
+          ];
+        },
       },
-    };
+    ];
+  },
+  legacyManifests: {
+    pathMayContainPackage(filename) {
+      return filename === 'package.json' || filename.endsWith('/package.json');
+    },
+    async getPackageManifest(
+      path,
+      content,
+    ): Promise<
+      {ok: true; manifest: PackageManifest | null} | {ok: false; reason: string}
+    > {
+      let pkgData: unknown;
+      try {
+        pkgData = JSON.parse(content);
+      } catch (ex: any) {
+        return failed(ex.message);
+      }
+      if (!isObject(pkgData)) {
+        return failed(`Expected package.json to be an object`);
+      }
+
+      if (!pkgData.name) {
+        return {ok: true, manifest: null};
+      }
+
+      if (typeof pkgData.name !== 'string') {
+        return failed(`Expected "name" to be a string`);
+      }
+
+      const pkgName = pkgData.name;
+      if (getConfigValue('ignore', pkgData)) {
+        return {ok: true, manifest: null};
+      }
+
+      const customized: (keyof RollingConfigOptions)[] = [];
+      const rawConfig: {
+        -readonly [k in keyof RollingConfigOptions]?: unknown;
+      } = {};
+      for (const [configKey, pkgKey] of KEYS_TO_CONFIG) {
+        const value = getConfigValue(pkgKey, pkgData);
+        if (value !== undefined) {
+          rawConfig[configKey] = value;
+          customized.push(configKey);
+        }
+      }
+      if (rawConfig.versioning_mode === undefined) {
+        const value = getConfigValue(`versioning`, pkgData);
+        if (value !== undefined) {
+          rawConfig.versioning_mode = value;
+          customized.push(`versioning_mode`);
+        }
+      }
+
+      const config = parseRollingConfigOptions(rawConfig);
+
+      if (!config.success) {
+        let reason = config.reason;
+        for (const [configKey, pkgKey] of KEYS_TO_CONFIG) {
+          reason = reason.split(configKey).join(getConfigName(pkgKey, pkgData));
+        }
+        return failed(reason);
+      }
+
+      const required = [
+        ...(isObject(pkgData) && isObject(pkgData.dependencies)
+          ? Object.keys(pkgData.dependencies)
+          : []),
+        ...(isObject(pkgData) && isObject(pkgData.peerDependencies)
+          ? Object.keys(pkgData.peerDependencies)
+          : []),
+      ];
+
+      const optional =
+        isObject(pkgData) && isObject(pkgData.optionalDependencies)
+          ? Object.keys(pkgData.optionalDependencies)
+          : [];
+
+      const development =
+        isObject(pkgData) && isObject(pkgData.devDependencies)
+          ? Object.keys(pkgData.devDependencies)
+          : [];
+
+      return {
+        ok: true,
+        manifest: {
+          packageName: pkgName,
+          ...config.value,
+          scripts: {
+            pre_release: [],
+            post_release: [],
+          },
+          customized,
+          targetConfigs: [
+            {
+              type: PublishTarget.npm,
+              packageName: pkgName,
+              path,
+              private: pkgData.private === true,
+              publishConfigAccess: pkgName.startsWith('@')
+                ? isObject(pkgData.publishConfig) &&
+                  pkgData.publishConfig.access === 'public'
+                  ? 'public'
+                  : 'restricted'
+                : 'public',
+            },
+          ],
+          dependencies: {required, optional, development},
+        },
+      };
+    },
   },
   async prepublish(config, pkg, targetConfig, packageVersions) {
     if (targetConfig.private) return {ok: true};
-    const [auth, owners, versions] = await Promise.all([
-      getProfile(),
-      getOwners(targetConfig.packageName),
-      getVersions(targetConfig.packageName),
-    ] as const);
 
-    if (!auth.authenticated) {
-      return {
-        ok: false,
-        reason: 'Could not authenticate to npm: ' + auth.message,
-      };
-    }
-
-    const profile = auth.profile;
-
-    if (profile.tfaOnPublish) {
-      return {
-        ok: false,
-        reason:
-          'This user requires 2fa on publish to npm, which is not supported',
-      };
-    }
-
-    if (!owners) {
-      const orgName = targetConfig.packageName.split('/')[0].substr(1);
-      if (
-        targetConfig.packageName.startsWith('@') &&
-        profile.name !== orgName
-      ) {
-        const orgRoster = await getOrgRoster(orgName);
-        if (!orgRoster[profile.name]) {
-          return {
-            ok: false,
-            reason: `@${profile.name} does not appear to have permission to publish new packages to @${orgName} on npm`,
-          };
-        }
-      }
-    } else {
-      if (!owners.some((m) => m.name === profile.name)) {
-        return {
-          ok: false,
-          reason: `The user @${profile.name} is not listed as a maintainer of ${targetConfig.packageName} on npm`,
-        };
-      }
-    }
     const semverVersion = printString(pkg.newVersion);
-    if (versions) {
-      const max = [...versions]
-        .filter((v) => !prerelease(v))
-        .reduce((a, b) => (gt(a, b) ? a : b), '0.0.0');
-      if (gt(max, semverVersion)) {
-        return {
-          ok: false,
-          reason: `${
-            pkg.packageName
-          } already has a version ${max} on npm, which is greater than the version that would be published (${printString(
-            pkg.newVersion,
-          )}). Please add a tag/release in GitHub called "${
-            pkg.packageName
-          }@${max}" that points at the correct commit for ${max}`,
-        };
-      }
-      if (versions.has(semverVersion)) {
-        return {
-          ok: false,
-          reason: `${
-            targetConfig.packageName
-          } already has a version ${printString(pkg.newVersion)} on npm`,
-        };
-      }
-    }
-
-    await withNpmVersion(
+    return await withNpmVersion(
       config,
       targetConfig,
       semverVersion,
       packageVersions,
       async () => {
+        const versions = await getVersions(
+          config.dirname,
+          targetConfig.path,
+        ).catch(() => {
+          console.warn(
+            `Unable to list past versions for ${targetConfig.packageName}`,
+          );
+          return null;
+        });
+        const semverVersion = printString(pkg.newVersion);
+        if (versions) {
+          const max = [...versions]
+            .filter((v) => !prerelease(v))
+            .reduce((a, b) => (gt(a, b) ? a : b), '0.0.0');
+          if (gt(max, semverVersion)) {
+            return {
+              ok: false,
+              reason: `${
+                pkg.packageName
+              } already has a version ${max} on npm, which is greater than the version that would be published (${printString(
+                pkg.newVersion,
+              )}). Please add a tag/release in GitHub called "${
+                pkg.packageName
+              }@${max}" that points at the correct commit for ${max}`,
+            };
+          }
+          if (versions.has(semverVersion)) {
+            return {
+              ok: false,
+              reason: `${
+                targetConfig.packageName
+              } already has a version ${printString(pkg.newVersion)} on npm`,
+            };
+          }
+        }
+
         await npmPublish(config.dirname, targetConfig.path, {
           dryRun: true,
           canary: config.canary !== null,
         });
+
+        return {ok: true};
       },
     );
-
-    return {ok: true};
   },
   async publish(config, pkg, targetConfig, packageVersions) {
     if (targetConfig.private) return;

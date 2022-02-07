@@ -42,6 +42,7 @@
     "apex-logs-winston": "^1.1.0",
     "assert-never": "^1.2.1",
     "body-parser": "^1.19.0",
+    "cross-fetch": "^3.1.4",
     "cuid": "^2.1.8",
     "deep-equal": "^2.0.5",
     "escape-html": "^1.0.3",
@@ -57,6 +58,7 @@
     "rollingversions": "0.0.0",
     "semver": "^7.3.2",
     "then-retry": "^1.0.0",
+    "toml": "^3.0.0",
     "winston": "^3.3.3"
   },
   "devDependencies": {
@@ -111,7 +113,6 @@
     "tailwindcss": "^1.1.4",
     "ts-loader": "^8.0.11",
     "ts-node": "^9.0.0",
-    "typescript": "^4.1.2",
     "url-loader": "^3.0.0",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10",

@@ -1,8 +1,6 @@
 import * as ft from 'funtypes';
 
-import type {Queryable} from '@rollingversions/db';
-import {tables} from '@rollingversions/db';
-import type DbGitRepository from '@rollingversions/db/git_repositories';
+import {tables, Queryable, DbGitRepository} from '@rollingversions/db';
 
 import batchArray from '../../utils/batchArray';
 import {Logger} from '../logger';

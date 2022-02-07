@@ -108,7 +108,7 @@ export default async function getRepository(
         const currentVersion = getCurrentVersion({
           allVersions,
           branchVersions,
-          versioningMode: manifest.versioningMode,
+          versioningMode: manifest.versioning_mode,
           branchName: branch ?? repo.default_branch_name,
         });
         const [unreleasedChanges, releaseDescription] = await Promise.all([
@@ -143,9 +143,9 @@ export default async function getRepository(
             currentVersion?.ok ? currentVersion.version : null,
             changeSet,
             {
-              changeTypes: manifest.changeTypes,
-              versionSchema: manifest.versionSchema,
-              baseVersion: manifest.baseVersion,
+              changeTypes: manifest.change_types,
+              versionSchema: manifest.version_schema,
+              baseVersion: manifest.base_version,
             },
           ),
         };
@@ -183,5 +183,6 @@ export default async function getRepository(
     cycleDetected: sortResult.circular ? sortResult.packageNames : null,
     packageErrors,
     unreleasedPullRequests,
+    hasReleaseTrigger: getPackageManifestsResult.hasReleaseTrigger,
   };
 }

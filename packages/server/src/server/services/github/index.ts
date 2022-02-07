@@ -4,8 +4,7 @@ import GitHubClient, {
 } from '@github-graph/api';
 import retry, {withRetry} from 'then-retry';
 
-import DbGitCommit from '@rollingversions/db/git_commits';
-import DbGitRepository from '@rollingversions/db/git_repositories';
+import {DbGitCommit, DbGitRepository} from '@rollingversions/db';
 import {PullRequest, Repository} from '@rollingversions/types';
 import isTruthy from 'rollingversions/lib/ts-utils/isTruthy';
 
@@ -317,6 +316,30 @@ export async function getRelease(
         description: result.description ?? ``,
       }
     : null;
+}
+
+export async function getFileContents(
+  client: GitHubClient,
+  params: {
+    repoId: string;
+    commitSha: string;
+    filePath: string;
+  },
+): Promise<string | null> {
+  // GetFileContents
+  const result = asTypeName(
+    `Blob`,
+    asTypeName(
+      `Repository`,
+      (
+        await queries.getFileContents(client, {
+          repoId: params.repoId,
+          expression: `${params.commitSha}:${params.filePath}`,
+        })
+      ).node,
+    )?.object,
+  );
+  return result?.text ?? null;
 }
 
 function asTypeName<TName extends string, TObject>(

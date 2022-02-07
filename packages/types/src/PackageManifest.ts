@@ -3,7 +3,7 @@ import * as t from 'funtypes';
 import {BaseVersionCodec} from './BaseVersion';
 import {ChangeTypeCodec} from './ChangeType';
 import {PackageDependenciesCodec} from './PackageDependencies';
-import {PublishTargetConfigCodec} from './PublishTarget';
+import {PublishTargetConfigCodec, ScriptCodec} from './PublishTarget';
 import {TagFormatCodec} from './Strings';
 import {VersioningModeCodec} from './VersioningMode';
 import {VersionSchemaCodec} from './VersionSchema';
@@ -17,19 +17,25 @@ export const PackageManifestCodec = t.Named(
         dependencies: PackageDependenciesCodec,
         targetConfigs: t.Readonly(t.Array(PublishTargetConfigCodec)),
 
-        tagFormat: t.Union(TagFormatCodec, t.Undefined),
-        changeTypes: t.ReadonlyArray(ChangeTypeCodec),
-        versioningMode: VersioningModeCodec,
-        versionSchema: VersionSchemaCodec,
-        baseVersion: BaseVersionCodec,
+        scripts: t.Readonly(
+          t.Object({
+            pre_release: t.Readonly(t.Array(ScriptCodec)),
+            post_release: t.Readonly(t.Array(ScriptCodec)),
+          }),
+        ),
+        tag_format: t.Union(TagFormatCodec, t.Undefined),
+        change_types: t.ReadonlyArray(ChangeTypeCodec),
+        versioning_mode: VersioningModeCodec,
+        version_schema: VersionSchemaCodec,
+        base_version: BaseVersionCodec,
         customized: t.Readonly(
           t.Array(
             t.Union(
-              t.Literal(`tagFormat`),
-              t.Literal(`changeTypes`),
-              t.Literal(`versioningMode`),
-              t.Literal(`versionSchema`),
-              t.Literal(`baseVersion`),
+              t.Literal(`tag_format`),
+              t.Literal(`change_types`),
+              t.Literal(`versioning_mode`),
+              t.Literal(`version_schema`),
+              t.Literal(`base_version`),
             ),
           ),
         ),

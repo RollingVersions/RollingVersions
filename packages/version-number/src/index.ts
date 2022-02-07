@@ -6,7 +6,9 @@ import {
 import type {
   VersionNumber as VN,
   ChangeTypeID,
-  RollingConfigOptions,
+  ChangeType,
+  BaseVersion,
+  VersionSchema,
 } from '@rollingversions/types';
 
 const MAX_LENGTH = 256;
@@ -322,9 +324,11 @@ export function getNextVersion(
     changeTypes = DEFAULT_CHANGE_TYPES,
     versionSchema = DEFAULT_VERSION_SCHEMA,
     baseVersion = DEFAULT_BASE_VERSION(versionSchema),
-  }: Partial<
-    Pick<RollingConfigOptions, 'changeTypes' | 'versionSchema' | 'baseVersion'>
-  > = {},
+  }: {
+    changeTypes?: readonly ChangeType[];
+    versionSchema?: VersionSchema;
+    baseVersion?: BaseVersion;
+  } = {},
 ): VersionNumber | null {
   let minIndex = -1;
   for (const c of changeSet) {

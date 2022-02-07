@@ -51,6 +51,10 @@ export default function mergePackageManifests(
       packageName: a.packageName,
       dependencies: mergePackageDependencies(a.dependencies, b.dependencies),
       targetConfigs: [...a.targetConfigs, ...b.targetConfigs],
+      scripts: {
+        pre_release: [...a.scripts.pre_release, ...b.scripts.pre_release],
+        post_release: [...a.scripts.post_release, ...b.scripts.post_release],
+      },
     },
   };
 }

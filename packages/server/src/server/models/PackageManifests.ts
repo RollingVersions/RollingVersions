@@ -3,11 +3,14 @@ import Cache from 'quick-lru';
 
 import ChangeSet from '@rollingversions/change-set';
 import {DEFAULT_CONFIG} from '@rollingversions/config';
-import {Queryable, tables} from '@rollingversions/db';
-import DbGitCommit from '@rollingversions/db/git_commits';
-import DbGitRef from '@rollingversions/db/git_refs';
-import DbGitRepository from '@rollingversions/db/git_repositories';
-import DbPullRequest from '@rollingversions/db/pull_requests';
+import {
+  Queryable,
+  tables,
+  DbGitCommit,
+  DbGitRef,
+  DbGitRepository,
+  DbPullRequest,
+} from '@rollingversions/db';
 import {parseTag} from '@rollingversions/tag-format';
 import {
   CurrentVersionTag,
@@ -25,7 +28,6 @@ import groupByKey from '../../utils/groupByKey';
 import type {Logger} from '../logger';
 import {GitHubClient} from '../services/github';
 import {
-  fetchTree,
   getAllTags,
   getAllTagsOnBranch,
   getBranchHeadCommit,
@@ -33,40 +35,39 @@ import {
   isCommitReleased,
   updateRepoIfChanged,
 } from './git';
-import listPackages from './PackageManifests/listPackages';
+import getRollingVersionsConfig from './PackageManifests/getRollingVersionsConfig';
+import listPackages, {
+  GetPackageManifestsResult,
+} from './PackageManifests/listPackages';
 
 export type PackageManifests = Map<string, PackageManifest>;
 
 // `${git_repository_id}:${commit_sha}`
 type CommitID = string;
 
-type GetPackageManifestsResult = {
-  oid: string;
-  packages: Map<string, PackageManifest>;
-  packageErrors: {filename: string; error: string}[];
-};
 const cache = new Cache<CommitID, Promise<GetPackageManifestsResult | null>>({
   maxSize: 30,
 });
-async function getPackageManifestsUncached(
-  _client: GitHubClient,
+
+export async function getRollingVersionsConfigForBranch(
+  db: Queryable,
+  client: GitHubClient,
   repo: DbGitRepository,
-  _source:
-    | {type: 'branch'; name: string}
-    | {type: 'pull_request'; pullRequest: DbPullRequest}
-    | {type: 'commit'; commit: DbGitCommit},
-  commit: DbGitCommit,
+  source: {type: 'branch'; name: string},
   logger: Logger,
-): Promise<null | GetPackageManifestsResult> {
-  const commitFiles = {
-    entries: await fetchTree(repo, commit.commit_sha, logger),
-    oid: commit.commit_sha,
-  };
-  const {packages, packageErrors} = await listPackages(commitFiles.entries);
-
-  return {oid: commitFiles.oid, packages, packageErrors};
+) {
+  const commit = await getBranchHeadCommit(
+    db,
+    client,
+    repo,
+    source.name,
+    logger,
+  );
+  if (!commit) {
+    return null;
+  }
+  return await getRollingVersionsConfig(client, repo, commit.commit_sha);
 }
-
 export async function getPackageManifests(
   db: Queryable,
   client: GitHubClient,
@@ -98,13 +99,7 @@ export async function getPackageManifests(
     return await cached;
   }
   try {
-    const fresh = getPackageManifestsUncached(
-      client,
-      repo,
-      source,
-      commit,
-      logger,
-    );
+    const fresh = listPackages(client, repo, commit.commit_sha, logger);
     cache.set(id, fresh);
     const result = await fresh;
     if (result?.oid !== commit.commit_sha) {
@@ -166,8 +161,8 @@ export function getPackageVersions({
       const version = parseTag(tag.name, {
         allowTagsWithoutPackageName,
         packageName: manifest.packageName,
-        tagFormat: manifest.tagFormat,
-        versionSchema: manifest.versionSchema,
+        tagFormat: manifest.tag_format,
+        versionSchema: manifest.version_schema,
       });
       return version && !isPrerelease(version)
         ? {commitSha: tag.commit_sha, name: tag.name, version}
@@ -258,7 +253,7 @@ export async function getDetailedPackageManifestsForPullRequest(
           ? getCurrentVersion({
               allVersions,
               branchVersions,
-              versioningMode: manifest.versioningMode,
+              versioningMode: manifest.versioning_mode,
               branchName: pullRequest.base_ref_name,
             })
           : {ok: false as const};
@@ -290,6 +285,7 @@ export async function getDetailedPackageManifestsForPullRequest(
           packageName,
           targetConfigs: [],
           dependencies: {development: [], required: [], optional: []},
+          scripts: {pre_release: [], post_release: []},
         },
         currentVersion: null,
         changeSet,

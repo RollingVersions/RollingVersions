@@ -23,6 +23,7 @@ export interface GetRepositoryApiResponse {
     number: number;
     title: string;
   }[];
+  hasReleaseTrigger: boolean;
 }
 
 export interface PastReleasesApiResponse {

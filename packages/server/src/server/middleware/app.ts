@@ -12,6 +12,7 @@ import getPastReleases from './api/getPastReleases';
 import getPullRequest from './api/getPullRequest';
 import getRepository from './api/getRepository';
 import setReleaseDescription from './api/setReleaseDescription';
+import triggerRelease from './api/triggerRelease';
 import updatePullRequest from './api/updatePullRequest';
 import {requiresAuth, getGitHubAccessToken} from './auth';
 import checkPermissions, {
@@ -85,6 +86,7 @@ appMiddleware.get(
       });
       if (!dbRepo) {
         res.status(404).send(`Unable to find the repository/branch`);
+        return;
       }
       const response = await getPastReleases(
         client,
@@ -109,19 +111,22 @@ appMiddleware.post(
   checkRepoPermissions(['edit']),
   async (req, res, next) => {
     try {
-      const repo = parseRepoParams(req);
-      const token = getGitHubAccessToken(req, res);
-      const client = getClientForToken(token);
-      await client.rest.repos.createDispatchEvent({
-        owner: repo.owner,
-        repo: repo.repo,
-        event_type: 'rollingversions_publish_approved',
-        // TODO: include parameters for branch name and commit sha
-      });
-      await new Promise((resolve) => setTimeout(resolve, 4000));
-      res.redirect(
-        `https://github.com/${repo.owner}/${repo.repo}/actions?query=event%3Arepository_dispatch`,
+      const params = parseRepoParams(req);
+      const authToken = getGitHubAccessToken(req, res);
+      const client = getClientForToken(authToken);
+      const redirectTo = await triggerRelease(
+        db,
+        client,
+        {...params, authToken},
+        expressLogger(req, res),
       );
+
+      if (redirectTo) {
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+        return res.redirect(redirectTo);
+      } else {
+        res.status(404).send(`Unable to find the repository/branch`);
+      }
     } catch (ex) {
       next(ex);
     }

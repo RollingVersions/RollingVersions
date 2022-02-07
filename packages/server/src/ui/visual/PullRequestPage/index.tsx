@@ -123,7 +123,7 @@ export default function PullRequestPage({
               packageName={packageName}
               targetConfigs={manifest.targetConfigs}
               changes={changes}
-              changeTypes={manifest.changeTypes}
+              changeTypes={manifest.change_types}
               onChange={onChange}
             />
           </React.Fragment>

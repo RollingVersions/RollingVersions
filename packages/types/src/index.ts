@@ -8,15 +8,12 @@ export type {ChangeSetEntry, default as ChangeSet} from './ChangeSet';
 export type {default as ChangeType} from './ChangeType';
 export type {default as ChangeTypeID} from './ChangeTypeID';
 export type {default as MarkdownString} from './MarkdownString';
+export type {default as NpmRegistry} from './NpmRegistry';
 export type {default as PackageDependencies} from './PackageDependencies';
 export type {default as PackageManifest} from './PackageManifest';
 export {PackageManifestCodec} from './PackageManifest';
 export type {default as PublishConfigAccess} from './PublishConfigAccess';
-export type {
-  PublishTargetConfig,
-  NpmPublishTargetConfig,
-  CustomScriptTargetConfig,
-} from './PublishTarget';
+export type {PublishTargetConfig} from './PublishTarget';
 export type {default as RollingConfigOptions} from './RollingConfigOptions';
 export type {default as VersionBumpType} from './VersionBumpType';
 export type {VersioningModeConfig} from './VersioningMode';
@@ -29,6 +26,7 @@ export {default as withMaxLength} from './withMaxLength';
 export {BaseVersionCodec} from './BaseVersion';
 export {TagFormatCodec} from './Strings';
 export {ChangeTypeCodec} from './ChangeType';
+export {NpmRegistryCodec} from './NpmRegistry';
 export {VersioningModeCodec} from './VersioningMode';
 export {VersionSchemaCodec} from './VersionSchema';
 export {VersionTagCodec} from './VersionTag';

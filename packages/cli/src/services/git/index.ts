@@ -1,4 +1,4 @@
-import {readFile, writeFile} from 'fs';
+import {readFile, writeFile, unlink} from 'fs';
 import {resolve} from 'path';
 
 import {spawnBuffered} from '../../utils/spawn';
@@ -59,6 +59,15 @@ export async function writeRepoFile(
 ) {
   return await new Promise<void>((fulfill, reject) => {
     writeFile(resolve(dirname, filename), data, (err) => {
+      if (err) reject(err);
+      else fulfill();
+    });
+  });
+}
+
+export async function deleteRepoFile(dirname: string, filename: string) {
+  return await new Promise<void>((fulfill, reject) => {
+    unlink(resolve(dirname, filename), (err) => {
       if (err) reject(err);
       else fulfill();
     });

@@ -1,9 +1,11 @@
+import {readFileSync} from 'fs';
+
 import connect, {sql, Queryable, SQLQuery} from '@databases/pg';
 import createTyped, {anyOf, greaterThan, not} from '@databases/pg-typed';
 
-import type DatabaseSchema from './__generated__';
-import {serializeValue} from './__generated__';
+import type DatabaseSchema from './__generated__/_DatabaseSchema';
 
+export * from './__generated__';
 export type {Queryable, SQLQuery};
 
 export type LogMethod = (
@@ -54,5 +56,11 @@ export default db;
 
 export const tables = createTyped<DatabaseSchema>({
   defaultConnection: db,
-  serializeValue,
+  databaseSchema: JSON.parse(
+    readFileSync(
+      process.env.DATABASE_SCHEMA_JSON ??
+        `${__dirname}/__generated__/schema.json`,
+      `utf8`,
+    ),
+  ),
 });

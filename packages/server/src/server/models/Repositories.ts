@@ -1,7 +1,6 @@
 import * as ft from 'funtypes';
 
-import type {Queryable} from '@rollingversions/db';
-import {tables} from '@rollingversions/db';
+import {tables, Queryable} from '@rollingversions/db';
 
 import type {GitHubClient} from '../services/github';
 import {getRepository} from '../services/github';
