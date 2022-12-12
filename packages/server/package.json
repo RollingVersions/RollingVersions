@@ -45,7 +45,7 @@
     "cuid": "^2.1.8",
     "deep-equal": "^2.0.5",
     "escape-html": "^1.0.3",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "funtypes": "^4.1.0",
     "minimatch": "^3.0.4",
     "morgan": "^1.10.0",
